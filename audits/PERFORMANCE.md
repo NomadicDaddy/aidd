@@ -1,7 +1,7 @@
 ---
 title: 'Performance Optimization Audit Framework'
-last_updated: '2026-07-20'
-version: '2.3'
+last_updated: '2026-10-01'
+version: '2.4'
 category: 'Core Technology'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -51,7 +51,7 @@ lifecycle: 'pre-release'
 
 - **Real-time metrics**: Core Web Vitals via `web-vitals` package (LCP, INP, CLS, FCP, TTFB); attached to `logs/crawltest.json`
 - **Backend metrics**: `system_metrics` table populated by `metricsService`
-- **Bundle analysis**: `bun run --cwd frontend build:analyze` (rollup-plugin-visualizer) + `bun run verify-compression` + `bun run check:critical-path` for the structural invariants a size figure cannot express
+- **Bundle analysis**: the target's `build:analyze` (rollup-plugin-visualizer) + `bun run verify-compression` where the target has it + `bun run check:critical-path` for the structural invariants a size figure cannot express. Script names and output paths differ by target; see [Pre-Audit Setup](#pre-audit-setup)
 - **Regression detection**: `crawltest` records per-route web vitals in `logs/crawltest.json`; compare across branches
 
 **Optimization Strategies**
@@ -63,19 +63,25 @@ lifecycle: 'pre-release'
 
 > **Severity Reference**: See [SEVERITY_CLASSIFICATION.md](./SEVERITY_CLASSIFICATION.md) for issue prioritization.
 > **Methodology gate**: See [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md): validate every instrument before reading its output (Phase 0), read the enforcing implementation (cite file:line), falsify every "by design"/"N/A" rationale, never score from a green gate.
+> **Citations**: this file names files, scripts and symbols, not line numbers. Cite the live file:line you read in the report.
 > **Scope boundary**: This audit owns **how fast the application runs**. What it ships and how those bytes are served — chunk graph, artifact contents, compression, cache headers, asset weight — belongs to [BUILD_OUTPUT.md](./BUILD_OUTPUT.md). Phase 4 below delegates there rather than duplicating it.
 
 ## Overview
 
-This unified framework consolidates performance-related auditing across all technology layers of a Spernakit v3 application: frontend React/Vite optimization, backend Elysia/Bun efficiency, Drizzle/SQLite query performance, Tailwind CSS v4 bundle hygiene, and nginx/Docker infrastructure.
+This unified framework consolidates performance-related auditing across all technology layers of a Spernakit v3 application: frontend React/Vite optimization, backend Elysia/Bun efficiency, Drizzle/SQLite query performance, Tailwind CSS v4 bundle hygiene, and the static origin (nginx in the template) and Docker infrastructure.
 
-**Stack reference** (see the target repository's `docs/template/STACK.md`; verify the package
-versions below against the target's `package.json` before scoring):
+**Applicability.** The script names, file paths and service names in this framework are the Spernakit template's unless a line says otherwise. Apply them by target:
 
-- React 19.2 + Vite 8 + Tailwind CSS v4 + TanStack Query 5 + Zustand 5
-- React Compiler (`babel-plugin-react-compiler` at stable `1.0.0` GA) enabled by default; manual `React.memo` / `useMemo` / `useCallback` are settled anti-patterns unless profiling proves need
-- Elysia 1.4 + Bun 1.4.2 + Drizzle ORM 0.45 + SQLite (or PostgreSQL)
-- `web-vitals` 5.3 wired into crawltest for LCP/INP/CLS/FCP/TTFB collection in `logs/crawltest.json`
+- **Spernakit and derived apps**: everything applies. A derived app may lag the template; confirm each script in its own `package.json`.
+- **aidd**: the same frontend stack, but the application binary serves its own static files (`backend/src/staticAssets.ts`), there is no nginx, and the template's `verify-compression`, `optimize-images` and `profile:*` scripts do not exist. Measure delivery by request against the running panel, and audit the database and backend phases against aidd's own modules.
+- **Other targets** (a CLI, a static site, a mobile app): keep the phases that have a subject and record the rest as not applicable with the evidence, for example "no browser bundle is built". Do not score a phase against a layer the target does not have, and do not skip one the target has under another name.
+
+**Stack reference** (see the target repository's stack document, `docs/template/STACK.md` in the template; read exact versions from the target's `package.json` files, which are the only authority):
+
+- React 19 + Vite 8 + Tailwind CSS v4 + TanStack Query 5 + Zustand 5 (major lines as read on 2026-10-01)
+- React Compiler (`babel-plugin-react-compiler`, stable since 1.0.0) enabled by default; manual `React.memo` / `useMemo` / `useCallback` are settled anti-patterns unless profiling proves need
+- Elysia + Bun + Drizzle ORM + SQLite (or PostgreSQL in a dual-dialect Spernakit app)
+- `web-vitals` wired into crawltest for LCP/INP/CLS/FCP/TTFB collection in `logs/crawltest.json`
 
 ## Audit Scope
 
@@ -104,7 +110,7 @@ versions below against the target's `package.json` before scoring):
 
 - Tailwind CSS v4 `@theme` tokens vs arbitrary values
 - Critical CSS and above-the-fold inlining
-- Font loading (`@fontsource-variable/inter`, `font-display: swap`)
+- Font loading (the project's `@fontsource-variable/*` faces, `font-display: swap`)
 - Layout shift prevention (reserved image dimensions, skeleton loaders)
 - Animation cost (`transform`/`opacity` only, no layout-triggering properties)
 
@@ -147,7 +153,9 @@ A byte budget is blind to how bytes are distributed. Moving the framework runtim
 2. **No waterfall** — the entry chunk never _statically_ imports a chunk that is not preloaded. That combination is a serialized round trip by definition: the browser cannot know it needs the chunk until it has fetched and parsed the entry.
 3. **Declared groups emitted** — every chunk group the build config declares appears in the output. A modern bundler may accept a legacy config shape, apply it partially, and warn about nothing.
 
-**Every target MUST ship a gate asserting all three, wired into a smoke mode or CI job.** The template's `scripts/check-critical-path.ts` is the reference implementation (three assertions plus a `--update-budget` regeneration path). Its absence in a target is a **High** finding; so is its presence in `package.json` with no gate invoking it — see Phase 0 below, and note that this catalog's own `verify-minification` sat uninvoked for months while being cited as a control.
+**Every target that ships a browser bundle MUST ship a gate asserting these, wired into a smoke mode or CI job.** The template's `scripts/check-critical-path.ts` is the reference implementation, and aidd carries its own version. Read what the target's copy asserts instead of assuming: the reference script asserts the byte budget, runtime placement (invariant 1) and no waterfall (invariant 2), with a `--update-budget` regeneration path. It does **not** compare declared chunk groups with emitted chunks, so invariant 3 has no gate in either Canon repository and is checked by the auditor at every audit ([BUILD_OUTPUT.md](./BUILD_OUTPUT.md) Phase 3). Invariant 3 applies only where the build config declares groups; a config with no manual chunking has nothing to compare, which you establish by reading the config.
+
+The gate's absence in a target is a **High** finding; so is its presence in `package.json` with no gate invoking it - see Phase 0 below, and note that this catalog's own `verify-minification` sat uninvoked for months while being cited as a control. A target that declares chunk groups and has no gate covering invariant 3 has no regression signal for it between audits; report that as a finding of its own and do the comparison by hand.
 
 Assertion detail and the artifact-level procedure live in [BUILD_OUTPUT.md](./BUILD_OUTPUT.md) Phase 3.
 
@@ -167,6 +175,21 @@ Every script named in this section is a **template** script. A derived applicati
 1. **Present** — read the target's `package.json`; confirm the script exists here.
 2. **Wired** — confirm a smoke mode or CI job invokes it. A script nothing calls has never run.
 3. **Faithful** — confirm it measures what it claims: which build, which server, which statistic. A flag that names a mode is not proof the mode took effect; read the code that consumes the flag.
+4. **Run, not replayed** - a gate step that prints `[CACHED]` did not run. It replays an earlier pass recorded against the same declared inputs, so it is evidence about an earlier build. Take a measurement from a script you ran in this session against the build you produced, and record a cached step as cached. Running a check's own script does not consult the gate's cache; do not force or clear the cache to get a fresh line.
+
+As read on 2026-10-01, the scripts below exist as follows. This is a starting point for assertion 1, not a substitute for it:
+
+| Script                         | Spernakit template                                                                                                                                                                                                                          | aidd                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `build`                        | yes                                                                                                                                                                                                                                         | yes                                                                                             |
+| `build:analyze`                | frontend workspace only (`bun run --cwd frontend build:analyze`); writes `frontend/dist/bundle-analysis.html`                                                                                                                               | root script and a `smoke:qc` step; writes `data/build-analysis/frontend-stats.json` and `.html` |
+| `verify-compression`           | yes; run by the `dev`, `docker-local` and `docker-prod` smoke modes, not by `qc`                                                                                                                                                            | no; measure by request                                                                          |
+| `verify-minification`          | yes, a `qc` step                                                                                                                                                                                                                            | yes, a `smoke:qc` step                                                                          |
+| `check:critical-path`          | yes, a `qc` step                                                                                                                                                                                                                            | yes, a `smoke:qc` step                                                                          |
+| `crawltest`                    | yes. `crawltest` and `crawltest:preview` crawl the same configured `server.frontendUrl`; the mode is a label, and neither starts a server. `crawltest:preview` refuses a dev server and captures no web vitals; only a dev build emits them | yes; read the script to see which server it drives                                              |
+| `crawltest:analyze`            | yes                                                                                                                                                                                                                                         | yes                                                                                             |
+| `profile:cpu` / `profile:heap` | yes                                                                                                                                                                                                                                         | no                                                                                              |
+| `optimize-images`              | yes                                                                                                                                                                                                                                         | no                                                                                              |
 
 Record an instrument record per instrument. **A missing or broken instrument is a High finding, not a reason to narrow scope**, and a report with zero verified instruments is `SKIPPED / data-unavailable` with no score — enforced at report-write time.
 
@@ -175,16 +198,21 @@ Before beginning the audit, collect baseline artifacts:
 ```bash
 # Run the production build and capture bundle stats
 bun run build
-bun run --cwd frontend build:analyze   # opens rollup-plugin-visualizer report
+bun run --cwd frontend build:analyze   # Spernakit; in aidd: bun run build:analyze
 
-# Verify compression is enabled end-to-end
+# Verify compression is enabled end-to-end (Spernakit; needs the servers of the named mode running)
 bun run verify-compression
 bun run verify-minification
 
 # Assert the *shape* of the critical path, not only its size (required gate)
 bun run check:critical-path
 
-# Run crawltest to collect per-route web vitals
+# Run crawltest to collect per-route web vitals. The script does not start a server; it crawls
+# whatever is serving the configured frontend URL.
+# In Spernakit the vitals are harvested from console lines that only a dev build emits, so
+# `bun run crawltest` yields dev numbers that cannot be reported as production, and
+# `bun run crawltest:preview` against a served production build checks crawl correctness and
+# captures no vitals at all. Both run the analysis afterwards.
 bun run crawltest
 bun run crawltest:analyze
 
@@ -195,7 +223,7 @@ bun run profile:heap
 
 Inputs required for the audit:
 
-- `frontend/dist/` build output + `stats.html` from rollup visualizer
+- `frontend/dist/` build output + the bundle analysis report (Spernakit: `frontend/dist/bundle-analysis.html`; aidd: `data/build-analysis/frontend-stats.json` and `frontend-stats.html`)
 - `logs/crawltest.json` report (per-route web vitals, console errors)
 - `backend/src/db/schema/` for index audit
 - `config/{slug}.json` for rate-limit, cache, and backup settings
@@ -211,7 +239,7 @@ Inputs required for the audit:
     Record the resolved build in the instrument record. Where the harness cannot prove which build it measured, the vitals are unusable: raise the instrument finding and do not report the numbers.
 
 2. **Aggregate at p75, never the mean.** Core Web Vitals thresholds are defined at the 75th percentile; averaging hides exactly the tail those thresholds exist to catch, so a page that is fast on most loads and slow on the worst quarter averages out to a passing score. Any dashboard, card, or report surfacing a vitals figure must state its statistic — an unlabelled figure is an unverified instrument. Note also that `reportAllChanges` is appropriate only for CLS and INP; where it is set, those two are worst-intermediate values rather than the Core Web Vitals definitions, and must be labelled as such.
-3. Record bundle sizes from `build:analyze`. Parse `frontend/dist/stats.html` (or the rollup-plugin-visualizer JSON output) for the top-N chunk sizes (gzip and brotli variants) and compare each against the documented budget (critical-path JS ≤170KB gzipped, total ≤300KB, CSS ≤50KB). Where a prior snapshot exists, diff per-chunk sizes across branches so the finding is a quantitative delta, not a presence/absence judgement. **A passing size budget is not a passing critical path** — run the structural invariants (`check:critical-path`) alongside it, since the regression they exist to catch is byte-neutral.
+3. Record bundle sizes from `build:analyze`. Parse the analysis report the target writes (see the table in Pre-Audit Setup for its path; prefer a JSON output where one exists) for the top-N chunk sizes (gzip and brotli variants) and compare each against the documented budget (critical-path JS ≤170KB gzipped, total ≤300KB, CSS ≤50KB). Confirm the report describes the build you are auditing: an analysis left over from an older build attributes bytes to the wrong source. Where a prior snapshot exists, diff per-chunk sizes across branches so the finding is a quantitative delta, not a presence/absence judgement. **A passing size budget is not a passing critical path** — run the structural invariants (`check:critical-path`) alongside it, since the regression they exist to catch is byte-neutral.
 4. Run backend route benchmark to capture p50/p95 distribution.
 5. If Lighthouse lab metrics or bundle-stats artifacts are unavailable at execution time, fall back to the workflow in [LIGHTHOUSE.md](./LIGHTHOUSE.md) and record the gap explicitly rather than scoring on qualitative "React Compiler + lazy active" evidence alone. Where a target has deliberately removed lab measurement, check for an ADR recording that decision before raising it again as a gap.
 6. Do not emit a numeric `Overall Performance Score` unless at least one real measurement artifact was parsed (`logs/crawltest.json`, Lighthouse JSON, bundle analysis output, route benchmark output, or backend metrics). If no measurement artifact is available, mark the report `SKIPPED / data-unavailable` and do not include score-like `N/A`, issue counts, or remediation recommendations.
@@ -220,10 +248,10 @@ Inputs required for the audit:
 
 ### Phase 2: Frontend Audit
 
-1. Grep for `React.memo(`, `useMemo(`, `useCallback(`; escalate only **bare** usages. Treat as a PASS any occurrence carrying a co-located justification comment (profiling-backed) OR a documented referential-stability / effect-dependency reason (e.g., stabilizing a value used in an effect dependency array, or memoizing props passed to an expensive third-party component). React Compiler obviates most usage, so escalate the unjustified remainder rather than every match.
+1. Grep for `React.memo(`, `useMemo(`, `useCallback(`; escalate only **bare** usages. In Spernakit, `check:feature-integration` already fails on manual memoization in a file without a `'use no memo'` directive, so read that check and its result first and spend the manual pass on what it does not cover. Treat as a PASS any occurrence carrying a co-located justification comment (profiling-backed) OR a documented referential-stability / effect-dependency reason (e.g., stabilizing a value used in an effect dependency array, or memoizing props passed to an expensive third-party component). React Compiler obviates most usage, so escalate the unjustified remainder rather than every match.
 2. Grep for `ResponsiveContainer` (recharts); flag any occurrence (replace with `useContainerWidth`).
 3. Grep for `<Cell>` inside recharts `<Bar>` / `<Pie>`; flag (deprecated in recharts v3, causes infinite setState loops; use `fill` in data points).
-4. Inspect route files in `frontend/src/routes.tsx`; confirm every non-critical page uses `React.lazy()` with named-export adapter.
+4. Inspect the file that imports the pages; confirm every non-critical page uses `React.lazy()` with a named-export adapter. In Spernakit that file is `frontend/src/routes/lazyPages.ts` (pages go through its `lazyNamed` helper; `frontend/src/routes.tsx` only assembles the route groups). In aidd it is `frontend/src/App.tsx`.
 5. Check `frontend/src/api/*` for N+1 TanStack Query patterns (multiple queries in a loop vs one batched query).
 6. Grep for `refetchInterval`; flag any polling cadence < 5s without a justifying comment, and flag any polling loop where server-pushed invalidation is the Spernakit-native pattern (`wsStore` WebSocket events + `queryClient.invalidateQueries`). Unbounded or aggressive polling is a real recurring cost (client wakeups, backend fan-out, mobile battery).
 
@@ -456,11 +484,13 @@ async function recordSlowCall({ route, durationMs, metadata }: SlowCallMetric) {
 }
 ```
 
+The snippet shows the shape of a slow-call hook, not an API to look for: `recordRoutePerf` and the import paths are illustrative. Read the target's metrics service for the methods it really has before judging whether slow calls are recorded.
+
 ### Key Performance Indicators
 
 - Route execution p50/p95/p99 distribution (from `system_metrics` table)
 - Drizzle query performance (via pino query timing hook)
-- Bundle size trends (`stats.html` snapshots per release)
+- Bundle size trends (bundle analysis report snapshots per release, plus the recorded budget files' history)
 - Core Web Vitals per route (from crawltest `web-vitals` capture)
 - Lighthouse Performance Score (Lighthouse 12 algorithm)
 - Vite build time per workspace
@@ -557,8 +587,8 @@ Performance problem identified
 │       ├── Offload heavy work to schedulerService / async jobs
 │       └── Cache expensive computations (lru-cache for bounded keys)
 └── Infrastructure issue?
-    ├── Verify gzip + brotli via `bun run verify-compression`
-    ├── nginx cache headers for static assets
+    ├── Verify gzip + brotli via `bun run verify-compression` where present, else by request
+    ├── Cache headers for static assets, measured at the static origin (nginx in the template)
     └── Vite build: inspect chunk splits via rollup-plugin-visualizer
 ```
 
@@ -587,7 +617,7 @@ Performance problem identified
 1. **Tailwind v4 design tokens** via `@theme` instead of arbitrary values
 2. **Critical CSS**: Vite extracts per-route; verify via `verify-minification`
 3. **Font subsetting**: `@fontsource-variable/*` packages with `font-display: swap`
-4. **Brotli + gzip** dual-encoding via nginx
+4. **Brotli + gzip** dual-encoding at the static origin (nginx in the template; the application binary where it serves its own files)
 5. **Container queries**: prefer over media queries for component-scoped responsiveness
 
 ## Audit Checklist
@@ -630,6 +660,7 @@ Performance problem identified
 
 - [ ] Every instrument named in this framework confirmed present in **this** target
 - [ ] Every instrument confirmed invoked by a smoke mode or CI job, not merely present as a script
+- [ ] No measurement taken from a cached gate step; cached steps recorded as cached
 - [ ] Every reported number labelled with its build, its server, and its statistic
 - [ ] Crawl-derived vitals traced to the build that actually served them
 - [ ] A High finding raised for each instrument that failed, rather than the scope narrowed around it
@@ -640,7 +671,7 @@ Performance problem identified
 - [ ] Core Web Vitals within thresholds at **p75** (LCP ≤2.5s, INP ≤200ms, CLS ≤0.1)
 - [ ] Backend routes execute p95 ≤300ms
 - [ ] Drizzle queries use indexed predicates (no in-memory `.filter()`)
-- [ ] Bundle sizes within budget (JS ≤170KB gzipped critical path, as defined operationally)
+- [ ] Bundle sizes within budget (JS ≤170KB gzipped critical path, as defined operationally), judged outside build-to-build variation and against both the recorded limit and this target
 - [ ] Framework runtime in a preloaded chunk
 - [ ] Entry chunk statically imports nothing outside the preload set
 - [ ] Every declared chunk group present in the emitted output
@@ -658,7 +689,7 @@ Performance problem identified
 - [ ] TanStack Query `staleTime` tuned per endpoint
 - [ ] No aggressive `refetchInterval` polling (<5s) where WebSocket invalidation applies
 - [ ] Performance monitoring (web-vitals + backend metrics)
-- [ ] Bundle budget enforced in CI (`build:analyze` regression threshold; per-chunk gzip/brotli sizes from `stats.html` compared against budget across branches)
+- [ ] Bundle budget enforced by the gate CI runs: the total-size budget (`verify-minification` against `scripts/bundle-budget.json`) and the critical-path budget (`check:critical-path` against `scripts/critical-path-budget.json`), each read for what it counts and compared with its headroom. `build:analyze` supplies per-chunk attribution; it is not itself a budget
 
 ### Medium Priority Improvements
 
@@ -666,7 +697,7 @@ Performance problem identified
 - [ ] Compound indexes for multi-column filter + sort
 - [ ] Zustand selectors (not whole-store access)
 - [ ] `useTransition` / `useDeferredValue` for expensive derived UI
-- [ ] nginx caching headers validated
+- [ ] Caching headers validated by request at the static origin
 - [ ] Virtual scrolling for lists >100 items
 
 ### Low Priority Enhancements
@@ -760,6 +791,10 @@ This unified framework coordinates with specialized audits:
 These are pass/fail, not thresholds, and they are the budgets a byte count cannot express. See [Structural Invariants](#structural-invariants-a-size-budget-cannot-see-these).
 
 ### Bundle Size Budgets
+
+These are the catalog's targets. A target also records its own limits in budget files, and the two are not the same thing: a recorded limit may count different assets (every blocking asset, or blocking JavaScript only), may be a regenerated ratchet rather than a fixed ceiling, and may sit above the figure here. Read the check to learn what its number counts, compare like with like, and report the measured total against both the recorded limit and the catalog target. A green gate against a recorded limit above the target is not a pass of the target. State the unit as well: the reference gates print KB as 1024 bytes.
+
+**A budget at its ceiling is not a verdict.** A measured size varies by a few bytes between builds of the same tree (content hashes move, and a bundle that embeds a build stamp compresses differently each time). When the measured total is within that variation of its limit, a single pass or a single fail is noise: re-measure across more than one build, report the result as at ceiling with the headroom and the variation, and raise the missing headroom as the finding. Procedure and severity are in [BUILD_OUTPUT.md](./BUILD_OUTPUT.md) Phase 3.
 
 - **Critical-path JavaScript**: ≤ 170KB (gzipped), where "critical path" is [defined operationally above](#critical-path-operational-definition) — entry + modulepreloads + blocking CSS, not the main chunk alone
 - **Total JavaScript**: ≤ 300KB (gzipped)
@@ -866,5 +901,5 @@ Recommended: [Date] (Quarterly cadence)
 - Performance audit report in `.aidd/audit-reports/PERFORMANCE-YYYY-MM-DD.md` following the Report Template above, including the Phase 0 instrument-validation table.
 - One High `feature.json` per instrument that failed Phase 0 (absent, unwired, or measuring something other than what it claims).
 - One `feature.json` file per distinct finding in `.aidd/features/`, severity mapped per [SEVERITY_CLASSIFICATION.md](./SEVERITY_CLASSIFICATION.md).
-- Updated bundle stats snapshot (`frontend/dist/stats.html`) attached or referenced.
+- Updated bundle analysis snapshot (the report the target's `build:analyze` writes) attached or referenced, with the build it describes.
 - Updated crawltest web-vitals report (`logs/crawltest.json`) referenced for comparison.

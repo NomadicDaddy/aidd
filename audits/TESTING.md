@@ -115,7 +115,7 @@ Capture the current state:
 - List every script in `scripts/` that is a verification entrypoint
 - Enumerate `package.json` scripts starting with `smoke:`, `crawltest`, `check:`, `check-`
 - Enumerate the **full `crawltest*` script set** (e.g. `crawltest`, `crawltest:analyze`, `crawltest:bug`, `crawltest:page`) - do not assume a single `scripts/crawltest.ts` entrypoint. The run/analyze responsibilities may be split across separate files (`crawltest-run.ts` + `crawltest-analyze.ts` in aidd). Locate the JSON results file by inspecting the run script; the path differs across apps
-- Read the repo's smoke source and list the `smoke:qc` step chain. For Spernakit, read `scripts/smoke.json` mode `qc`; for aidd, read `scripts/smoke-qc.ts` `SMOKE_QC_STEPS`.
+- Read the repo's smoke source and list the `smoke:qc` step chain. For Spernakit, read `scripts/smoke.json` mode `qc`; for aidd, read `SMOKE_QC_STEPS` in `scripts/lib/smoke-qc/steps.ts` (`scripts/smoke-qc.ts` is the runner that imports it).
 - Read `config/{slug}.json` `testing.*` block for crawl login, depth, timeout, delays, seed routes
 
 ### 2. Verify `smoke:qc` Pipeline Shape

@@ -142,7 +142,7 @@ Before running the checklist, collect the target-specific context that controls 
 
 - Read the target app's `.aidd/project.md` for tier, stack profile, and documented exemptions.
 - Read root `package.json`, workspace package manifests, `bunfig.toml`, and config files.
-- Read the repo's live `smoke:qc` source: Spernakit uses `scripts/smoke.json` mode `qc`; aidd uses `scripts/smoke-qc.ts` `SMOKE_QC_STEPS`.
+- Read the repo's live `smoke:qc` source: Spernakit uses `scripts/smoke.json` mode `qc`; aidd uses `SMOKE_QC_STEPS` in `scripts/lib/smoke-qc/steps.ts` (`scripts/smoke-qc.ts` is the runner that imports it).
 - Run or inspect `bun run check:feature-integration`, `bun run check:schema-parity`, and the relevant smoke/crawl scripts before filing integration or verification findings.
 - For derived apps, generate or inspect the current template drift evidence before recommending overwrites or merges.
 - For derived apps, read `.templateoverrides` at the app root in full. It lists every file the app deliberately keeps different from the template, with the reason (see Section 8.1).
@@ -746,7 +746,7 @@ the live workspace `package.json` files.
 
 ### smoke:qc Pipeline Steps
 
-Read the repo's live `smoke:qc` source before judging pipeline shape. Spernakit uses `scripts/smoke.json` mode `qc`; aidd uses `scripts/smoke-qc.ts` `SMOKE_QC_STEPS`. Each relevant check should pass clean as part of `bun run smoke:qc`, and the gate must be check-only (`lint` + `format:check`, not `lint:fix` + `format`). Run individual checks when diagnosing failures.
+Read the repo's live `smoke:qc` source before judging pipeline shape. Spernakit uses `scripts/smoke.json` mode `qc`; aidd uses `SMOKE_QC_STEPS` in `scripts/lib/smoke-qc/steps.ts` (`scripts/smoke-qc.ts` is the runner that imports it). Each relevant check should pass clean as part of `bun run smoke:qc`, and the gate must be check-only (`lint` + `format:check`, not `lint:fix` + `format`). Run individual checks when diagnosing failures.
 
 | Check | Criteria                                        | Purpose                                                               |
 | ----- | ----------------------------------------------- | --------------------------------------------------------------------- |

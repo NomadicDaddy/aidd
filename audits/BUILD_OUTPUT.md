@@ -1,7 +1,7 @@
 ---
 title: 'Build Output and Delivery Audit'
-last_updated: '2026-07-21'
-version: '1.1'
+last_updated: '2026-10-01'
+version: '1.2'
 category: 'Performance'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -72,20 +72,22 @@ Every finding in this framework is a **difference between what the configuration
 
 This audit is deliberately **portable**: it requires no project-specific script. Its instruments are the artifact itself and HTTP requests against the running application, both of which exist in every target regardless of build tool or server. Record each per [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md) Phase 0.
 
-| Instrument             | Kind     | How to obtain                                                                      |
-| ---------------------- | -------- | ---------------------------------------------------------------------------------- |
-| Built frontend output  | artifact | Run the project's production build; audit the emitted directory, not a stale one   |
-| Build diagnostics      | log      | Capture the production build's full stdout **and** stderr; do not discard warnings |
-| Container image layers | artifact | `docker create` the release image and inspect its filesystem, or `docker run … ls` |
-| Served responses       | probe    | HTTP requests against the running application at the port it actually serves on    |
-| Chunk import graph     | artifact | Parse the entry HTML and the emitted JS; see Phase 3                               |
+| Instrument             | Kind     | How to obtain                                                                                                                                                                                                           |
+| ---------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Built frontend output  | artifact | Run the project's production build; audit the emitted directory, not a stale one                                                                                                                                        |
+| Build diagnostics      | log      | Capture the production build's full stdout **and** stderr; do not discard warnings. A cached build step prints nothing, so run the build, or read a log the runner retained from the last real build and record its age |
+| Container image layers | artifact | `docker create` the release image and inspect its filesystem, or `docker run … ls`                                                                                                                                      |
+| Served responses       | probe    | HTTP requests against the running application at the port it actually serves on                                                                                                                                         |
+| Chunk import graph     | artifact | Parse the entry HTML and the emitted JS; see Phase 3                                                                                                                                                                    |
 
-The build log is an instrument, not noise. The governing rule below rejects auditing the config
+The build log is an instrument, not noise. The governing rule above rejects auditing the config
 _in place of_ the artifact; it does not license discarding the bundler's own report on that config.
 A build that must be run to produce the artifact has already emitted this for free, and it is the
 only instrument here that reports a defect **before** it reaches `dist`.
 
 Where a target **does** ship a purpose-built gate — the template's `check:critical-path` is the reference implementation, and `PERFORMANCE.md` requires an equivalent — verify it is wired into a smoke mode or CI job before crediting it (Phase 0 assertion 2). A gate present in `package.json` and invoked by nothing has never run.
+
+A wired gate that printed `[CACHED]` has not run either, in this session. A cached step replays an earlier pass recorded against the same declared inputs; it is evidence about the build that existed then. Before crediting a cached artifact gate, read what its cache key hashes: a step that inspects the build output must hash the output itself, not only the sources that produced it, or a stale, partial or hand-edited `dist` sits behind a valid entry. Then measure the build you produced for this audit by running the check's own script against it, which does not consult the gate's cache. Do not regenerate a budget file to obtain a reading.
 
 **If the production build cannot be produced at audit time, this audit is `SKIPPED / data-unavailable` with a High finding.** Do not substitute a dev build; a dev server emits unhashed, unminified, unsplit output and every check below is meaningless against it.
 
@@ -146,11 +148,33 @@ This is a real definition with a real measurement procedure. "The size of the ma
 
 Run all three against the built artifact. Each catches a distinct failure and none implies the others:
 
-1. **Budget** — total compressed bytes of the critical path stay under the project's recorded budget. Catches growth.
+1. **Budget** - total compressed bytes of the critical path stay under the project's recorded budget. Catches growth. Record what the budget counts before comparing anything to it: which assets, which encoding, and whether each limit is a ceiling or a ratchet (see [Reading a recorded budget](#reading-a-recorded-budget)).
 2. **Runtime placement** — the framework runtime (React itself, identified by markers present in its production build and absent from the renderer) lives in a chunk the entry HTML preloads. Catches late discovery.
 3. **Waterfall** — the entry chunk never _statically_ imports a chunk that is not preloaded. That combination is a serialized round trip by definition: the browser cannot know it needs the chunk until it has fetched and parsed the entry. Catches the round trip directly.
 
 The 2026-07-18 build failed assertions 2 and 3 while **passing** assertion 1 at 197.08 KB against a 205 KB budget. An audit that ran only the budget would have reported the build clean, which is exactly what happened.
+
+### Reading a recorded budget
+
+Budgets with the same name measure different things, so read the check before quoting its number:
+
+- **Scope.** A limit may cover every render-blocking asset or the blocking JavaScript alone. A figure for one cannot be compared with a target stated for the other.
+- **Encoding.** Gzip and brotli totals differ by a wide margin for the same files. A check that reads precompressed `.br`/`.gz` files measures what the build emitted; one that compresses in the check measures at whatever level it was written to use. Either is sound only if it matches what the origin serves (Phase 4).
+- **Ceiling or ratchet.** A ratchet records what the build costs today plus a pad, and is regenerated after deliberate growth; it catches accidental growth and says nothing about whether the total is acceptable. A ceiling is a fixed commitment that regeneration must not move. A check whose regeneration path can raise the number it is supposed to hold has no ceiling, whatever the field is called.
+- **Absent file.** A check that skips its budget leg when the budget file is missing, and still exits 0, has not asserted the budget. Treat that run as assertion 1 not executed.
+
+The two reference implementations differ on these points, which is why the file must be read rather than assumed. In the Spernakit template (`scripts/lib/critical-path-budget.ts`) both limits are regenerated from the build with a flat byte pad, and the gzip limit counts blocking JavaScript only. In aidd (`scripts/lib/critical-path/budget.ts`) the gzip limit is a fixed ceiling over the whole critical path that regeneration carries through untouched, and only the brotli limit is a ratchet. A derived app may have regenerated its own numbers; read its file, not the template's.
+
+Compare the measured total against **both** the project's recorded limit and the catalog target in `PERFORMANCE.md`. A recorded limit above the catalog target is not a pass because the gate is green; report the gap.
+
+### A budget at its ceiling
+
+A size check compares two numbers, and the measured one is not exactly repeatable. Two production builds of an unchanged tree can differ by a few bytes after compression: content hashes move inside the import graph, and a bundle that embeds a build stamp (a timestamp, a revision, a version string) compresses slightly differently each time. When the measured total sits within that variation of its limit, one pass and one fail are the same observation.
+
+- **Measure the variation.** Build twice from the same tree and record both totals, or read two retained measurements of the same revision. Note anything in the build config that injects a per-build value.
+- **Compare headroom with it.** Headroom is the limit minus the measured total. Where headroom is smaller than the observed variation, report the result as **at ceiling**, with both numbers. Do not record a pass as a working control, and do not file an over-budget finding from a single failing run; re-measure first.
+- **The finding is the missing headroom.** A gate with no headroom fails on the next unrelated change, or flaps on none, and either way it stops carrying information. Rate it **Medium**; **High** where the gate has already been seen to both pass and fail on one revision. The remedy is to move bytes off the critical path, or for a ratchet to regenerate it with an adequate pad. Raising a ceiling to make room is a product decision, not a remediation.
+- **Check the pad.** Read how the budget writer pads a regenerated limit. A percentage pad scales with the framework runtime, which does not vary, and can be large enough that the ratchet stops ratcheting; a flat pad sized to the observed variation is the sounder shape. A fixed ceiling has no pad at all, so its headroom is whatever the code leaves.
 
 ### Declared groups versus emitted chunks
 
@@ -181,7 +205,9 @@ silently-different grouping is the exact failure this phase exists to catch.
 
 ### Reference implementation
 
-The template ships `scripts/check-critical-path.ts` implementing all three assertions with a `--update-budget` regeneration path, wired into the build smoke mode. Read it before writing a bespoke equivalent. `PERFORMANCE.md` requires an equivalent gate in every target; **its absence in this target is a High finding here**, since without it Phase 3 has no regression signal between audits.
+The template ships `scripts/check-critical-path.ts` implementing all three assertions with a `--update-budget` regeneration path. It is a step of the `qc` smoke mode in `scripts/smoke.json`, placed after the build step whose output it reads; aidd carries its own version of the same script as a step in `SMOKE_QC_STEPS` (`scripts/lib/smoke-qc/steps.ts`). Read the target's copy before writing a bespoke equivalent, and confirm the order: a critical-path step ahead of the build measures the previous build. `PERFORMANCE.md` requires an equivalent gate in every target that ships a browser bundle; **its absence in such a target is a High finding here**, since without it Phase 3 has no regression signal between audits. A target with no browser bundle (a CLI, a library) records this phase as not applicable, with the evidence that nothing is built for a browser.
+
+The script does not check declared chunk groups against emitted chunks. That comparison is the auditor's (see "Declared groups versus emitted chunks" above), and it applies only where the build config declares groups: a config with no manual chunking has nothing to diff, which you establish by reading the config, not by assuming it.
 
 ## Phase 4: Delivery Policy on the Wire
 
@@ -237,29 +263,32 @@ State the finding with both numbers: the dependency's contribution and the route
 
 ## Severity Mapping
 
-| Finding                                                                 | Severity                        |
-| ----------------------------------------------------------------------- | ------------------------------- |
-| Source maps, original sources, or `.env` files reachable over HTTP      | **Critical**                    |
-| Source maps or `.env` files present in the image but not served         | **High**                        |
-| Framework runtime not in a preloaded chunk                              | **High**                        |
-| Entry statically imports a non-preloaded chunk                          | **High**                        |
-| Declared chunk group not present in the emitted output                  | **High**                        |
-| Deprecated build option controlling chunking, preload, or emission      | **High**                        |
-| Two build options set where the tool ignores one in favour of the other | **High**                        |
-| Other deprecation warnings in the build log                             | Medium                          |
-| Text assets served uncompressed                                         | **High**                        |
-| Content-hashed assets not immutably cacheable                           | **High**                        |
-| Entry HTML cacheable                                                    | **High**                        |
-| Legacy font formats shipped beside `woff2`                              | **High**                        |
-| No critical-path gate wired into a smoke mode or CI                     | **High**                        |
-| Critical path over budget                                               | High / Medium by margin         |
-| Incorrect `Content-Type` on a served asset                              | Medium, High if render-blocking |
-| Heavy dependency statically imported behind a conditional subtree       | Medium, High if dominant        |
-| Byte-identical duplicate assets                                         | Medium                          |
-| Oversized or unjustified image format                                   | Medium, High if preloaded       |
-| Redundant font subsets or fixed-weight sets                             | Medium                          |
-| Already-compressed formats re-compressed                                | Low                             |
-| Editor/backup detritus in the artifact                                  | Low                             |
+| Finding                                                                   | Severity                        |
+| ------------------------------------------------------------------------- | ------------------------------- |
+| Source maps, original sources, or `.env` files reachable over HTTP        | **Critical**                    |
+| Source maps or `.env` files present in the image but not served           | **High**                        |
+| Framework runtime not in a preloaded chunk                                | **High**                        |
+| Entry statically imports a non-preloaded chunk                            | **High**                        |
+| Declared chunk group not present in the emitted output                    | **High**                        |
+| Deprecated build option controlling chunking, preload, or emission        | **High**                        |
+| Two build options set where the tool ignores one in favour of the other   | **High**                        |
+| Other deprecation warnings in the build log                               | Medium                          |
+| Text assets served uncompressed                                           | **High**                        |
+| Content-hashed assets not immutably cacheable                             | **High**                        |
+| Entry HTML cacheable                                                      | **High**                        |
+| Legacy font formats shipped beside `woff2`                                | **High**                        |
+| No critical-path gate wired into a smoke mode or CI                       | **High**                        |
+| Critical path over budget (re-measured, outside build-to-build variation) | High / Medium by margin         |
+| Critical path within build-to-build variation of its limit                | Medium, High if seen to flap    |
+| Budget leg skipped (no budget file) while the gate exits 0                | **High**                        |
+| Artifact gate cached on sources only, not on the output it reads          | **High**                        |
+| Incorrect `Content-Type` on a served asset                                | Medium, High if render-blocking |
+| Heavy dependency statically imported behind a conditional subtree         | Medium, High if dominant        |
+| Byte-identical duplicate assets                                           | Medium                          |
+| Oversized or unjustified image format                                     | Medium, High if preloaded       |
+| Redundant font subsets or fixed-weight sets                               | Medium                          |
+| Already-compressed formats re-compressed                                  | Low                             |
+| Editor/backup detritus in the artifact                                    | Low                             |
 
 ## Audit Checklist
 
@@ -278,7 +307,9 @@ State the finding with both numbers: the dependency's contribution and the route
 **Chunk graph**
 
 - [ ] Critical path defined as entry + modulepreloads + blocking CSS, measured compressed
-- [ ] Critical path within recorded budget
+- [ ] Recorded budget read: scope, encoding, ceiling or ratchet, pad
+- [ ] Critical path within recorded budget, with headroom compared against build-to-build variation
+- [ ] No verdict taken from a cached gate step; the build produced for this audit was measured
 - [ ] Framework runtime in a preloaded chunk
 - [ ] Entry statically imports no non-preloaded chunk
 - [ ] Every declared chunk group present in the emitted output
@@ -335,7 +366,8 @@ State the finding with both numbers: the dependency's contribution and the route
 
 ## Critical Path
 
-- Entry + modulepreloads + blocking CSS: [X] KB [encoding] against budget [Y] KB
+- Entry + modulepreloads + blocking CSS: [X] KB [encoding] against budget [Y] KB ([ceiling | ratchet], counts [scope])
+- Headroom: [bytes]; build-to-build variation: [bytes over N builds]; verdict: [within | at ceiling | over]
 - Framework runtime preloaded: [yes/no — chunk name]
 - Entry static imports outside preload set: [none | list]
 - Declared groups missing from output: [none | list]

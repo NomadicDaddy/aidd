@@ -45,7 +45,7 @@ const RUNS_A_COMMAND = new Set(['bisect', 'filter-branch', 'rebase', 'submodule'
 const COMMAND_SEPARATORS = new Set(['\n', ';', '(', ')', '&', '`', '|']);
 
 /** Splits on command separators, honouring quotes or not. */
-function simpleCommands(command: string, honourQuotes: boolean): string[] {
+export function simpleCommands(command: string, honourQuotes: boolean): string[] {
 	const commands: string[] = [];
 	let current = '';
 	let quote: '"' | "'" | null = null;

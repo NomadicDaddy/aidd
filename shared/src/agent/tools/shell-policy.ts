@@ -7,6 +7,7 @@ import {
 	parseTeeDestination,
 	stripSurroundingQuotes,
 } from './shell-policy-dest.ts';
+import { dumpsEnvironment } from './shell-policy-env.ts';
 import { usesDestructiveGit } from './shell-policy-git.ts';
 import { expandsAtRuntime, isPathWithinWorkspaceRoot } from './shell-policy-paths.ts';
 import { maskNullOutputRedirects } from './shell-policy-redirects.ts';
@@ -182,23 +183,36 @@ function checkHomeReferences(command: string, singleQuoteStripped: string): null
 	// --- Environment-dump deny-list (printenv HOME / bare printenv) ---
 	// `printenv` writes env values to stdout, so it leaks the home path (and any inherited
 	// secrets) without naming $HOME in a form the HOME_REFERENCE_PATTERN above would catch.
-	if (HOME_ENV_DUMP_PATTERN.test(command)) {
+	if (HOME_ENV_DUMP_PATTERN.test(command) || dumpsEnvironment(command, HOME_VARIABLE_NAMES)) {
 		return 'ERROR: bash command uses printenv to read the home directory (or dump the environment), which is outside the workspace';
 	}
 	return null;
 }
 
+/**
+ * `cd` or `pushd` in command position with no target (or `--` alone). `cd -` is left to bash: the
+ * tool environment carries no OLDPWD, so with no earlier `cd` in the command it fails, and after
+ * one it returns to a directory this policy already bounded.
+ */
+const HOMEWARD_CD_PATTERN =
+	/(?:^|[;|&(`{\n]|\b(?:builtin|command|do|else|then|time)\s)\s*(?:cd|pushd)(?:\s+--)?[ \t]*(?:$|[;|&)}\n])/;
+
 /** The position-aware checks: `cd`/`pushd` destinations, redirects, and write destinations. */
 function checkPositionalTargets(command: string, root: string): null | string {
 	// --- cd/pushd destination check ---
+	// `cd` with no target goes to the home directory, and every relative path after it is then
+	// read from there while this policy still judges it against the workspace: `cd; cat
+	// .aidd/config.json` read the user-level config.
+	if (HOMEWARD_CD_PATTERN.test(command)) {
+		return "ERROR: bash command uses 'cd' with no target, which leaves the workspace for the home directory";
+	}
 	const cdPattern = /(?:^|[;|&(`]|\s)(?:cd|pushd)\s+(?:--\s+)?("[^"]*"|'[^']*'|[^\s;|&)]+)/g;
 	for (const match of command.matchAll(cdPattern)) {
 		const raw = match[1];
 		if (raw === undefined) continue;
 		const target = stripSurroundingQuotes(raw);
-		// `~`/`~/` are handled (denied) by HOME_REFERENCE_PATTERN above; `-` (previous dir)
-		// and empty are benign relative navigations.
-		if (target === '' || target === '-') continue;
+		// `~`/`~/` are denied by HOME_REFERENCE_PATTERN above; an empty quoted target is a no-op.
+		if (target === '') continue;
 		// Single quotes suppress expansion in bash, so `cd '$lit'` really is a literal name.
 		if (!raw.startsWith("'") && expandsAtRuntime(target)) {
 			return `ERROR: bash command 'cd' target is expanded at runtime and cannot be bounded to the workspace: ${target}`;

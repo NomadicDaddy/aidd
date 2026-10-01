@@ -1,4 +1,5 @@
 import { tokenizeShell } from '../../../shared/src/agent/tools/shell-policy-tokens.ts';
+import { loopVariableIsRead, stripInertHeredocs } from './inert-text.ts';
 import { isNonDisclosingInspection } from './inspection-output.ts';
 import { credentialLabel } from './paths.ts';
 
@@ -124,10 +125,13 @@ function numericPortPreview(tokens: string[], output: unknown): boolean {
 }
 
 export function commandCredentialLabel(
-	command: string,
+	rawCommand: string,
 	returnedOutput?: unknown,
 ): string | undefined {
-	if (isNonDisclosingInspection(command, returnedOutput)) return undefined;
+	if (isNonDisclosingInspection(rawCommand, returnedOutput)) return undefined;
+	// A path inside a heredoc that is written to a file as data was never opened.
+	const command = stripInertHeredocs(rawCommand);
+	const allSegments = pipelines(command).flat();
 	for (const pipeline of pipelines(command)) {
 		const output = tokenizeShell(pipeline.at(-1) ?? '').map((token) => token.text);
 		const input = tokenizeShell(pipeline[0] ?? '')[0]?.text.toLowerCase();
@@ -140,6 +144,9 @@ export function commandCredentialLabel(
 			const tokens = tokenizeShell(segment).map((token) => token.text);
 			const executable = tokens.shift()?.toLowerCase();
 			if (!executable) continue;
+			// A `for` word list names files only if the body opens them. A list that is echoed
+			// or requested over HTTP is text.
+			if (executable === 'for' && !loopVariableIsRead(tokens[0] ?? '', allSegments)) continue;
 			const expandsCommand =
 				segment.includes('`') ||
 				(segment.includes('$(') && tokens.some((token) => token.includes('$')));

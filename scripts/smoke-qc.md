@@ -99,29 +99,33 @@ Steps (in order):
     - The audit eval gate rejects missed defects and false-positive decoys.
 31. `bun run test:media-provenance`
     - The media provenance gate rejects a deliberately marked binary fixture.
-32. `bun run check:gate-conventions`
+32. `bun run test:credential-disclosure`
+    - The credential-disclosure gate fires on a disclosed read and stays quiet on a refused one.
+33. `bun run check:gates-wired`
+    - Every test:* script is run by a smoke:qc step, or excused by name with a reason.
+34. `bun run check:gate-conventions`
     - Every gate follows the conventions in docs/reference/gate-conventions.md.
-33. `bun run check:api-types`
+35. `bun run check:api-types`
     - Independent Director API request and response types match the backend.
-34. `bun run check:audit-evals`
+36. `bun run check:audit-evals`
     - Audit definitions retain a current above-floor planted-defect attestation.
-35. `bun run test:coverage`
+37. `bun run test:coverage`
     - The bun:test suite passes and coverage stays above its thresholds.
-36. `bun run build:frontend`
+38. `bun run build:frontend`
     - The Vite production build of the web surface succeeds.
-37. `bun run check:media-provenance`
+39. `bun run check:media-provenance`
     - Distributed raster media contains no C2PA or JUMBF provenance markers.
-38. `bun run verify-minification`
+40. `bun run verify-minification`
     - Frontend assets are minified and the bundle stays inside its byte budget.
-39. `bun run check:critical-path`
+41. `bun run check:critical-path`
     - The first load keeps its preloaded-chunk shape, not only its byte total (WEB-001).
-40. `bun run check:leak-guard`
+42. `bun run check:leak-guard`
     - The commit-time leak guard still blocks every secret shape it claims to.
-41. `bun run check:credential-disclosure`
+43. `bun run check:credential-disclosure`
     - No retained artifact records a credential-bearing read that returned content.
-42. `bun run check:shared-core`
+44. `bun run check:shared-core`
     - Every shared file is byte-identical in the repositories the manifest sends it to.
-43. `bun run build:analyze`
+45. `bun run build:analyze`
     - Per-module bundle composition is regenerated and attributable to this revision (WEB-001).
 
 ## Fast gate (`bun run smoke:qc:fast`)

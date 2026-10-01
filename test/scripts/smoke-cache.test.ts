@@ -447,6 +447,8 @@ describe('smoke cache', () => {
 			'test:api-types',
 			'test:audit-evals',
 			'test:media-provenance',
+			'test:credential-disclosure',
+			'check:gates-wired',
 			'check:gate-conventions',
 			'check:api-types',
 			'check:audit-evals',

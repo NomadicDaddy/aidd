@@ -163,6 +163,12 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/lib/benchmark/**/*.ts',
 		'scripts/test-audit-evals.ts',
 	],
+	'test:credential-disclosure': [
+		'package.json',
+		'scripts/check-credential-disclosure.ts',
+		'scripts/lib/credential-disclosure/**/*.ts',
+		'scripts/test-credential-disclosure.ts',
+	],
 	'test:gate-conventions': [
 		// The gate and its rule library are the inputs; the fixture the test writes is created and
 		// deleted inside the run, so it can never be a cache input.

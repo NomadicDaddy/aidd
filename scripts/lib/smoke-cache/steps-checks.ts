@@ -130,6 +130,11 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/gate-conventions-allowlist.json',
 		'scripts/lib/gate/**/*.ts',
 	],
+	'check:gates-wired': [
+		'package.json',
+		'scripts/check-gates-wired.ts',
+		'scripts/lib/smoke-qc/**/*.ts',
+	],
 	// The gate scans seven roots; every one of them that exists here is listed. `skills/**/*.ts` is
 	// the reason this entry is not a copy of check:env-spread's: a real violation of this rule can
 	// live under skills/, outside every other scanned root.

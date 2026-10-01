@@ -93,6 +93,7 @@
 		"check:fresh-release": "bun scripts/check-fresh-release.ts",
 		"check:git-window-hide": "bun scripts/check-git-window-hide.ts",
 		"check:feature-integration": "bun scripts/check-feature-integration.ts",
+		"check:gates-wired": "bun scripts/check-gates-wired.ts",
 		"check:gate-conventions": "bun scripts/check-gate-conventions.ts",
 		"check:hook-parity": "bun scripts/check-hook-parity.ts",
 		"check:leak-guard": "bun ./scripts/run-bash.ts scripts/check-leak-guard.sh",

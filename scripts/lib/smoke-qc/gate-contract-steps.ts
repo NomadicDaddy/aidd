@@ -25,6 +25,20 @@ export const GATE_CONTRACT_STEPS = [
 		name: 'test:media-provenance',
 	},
 	{
+		command: ['bun', 'run', 'test:credential-disclosure'],
+		description:
+			'The credential-disclosure gate fires on a disclosed read and stays quiet on a refused one',
+		label: 'test:credential-disclosure',
+		name: 'test:credential-disclosure',
+	},
+	{
+		command: ['bun', 'run', 'check:gates-wired'],
+		description:
+			'Every test:* script is run by a smoke:qc step, or excused by name with a reason',
+		label: 'check:gates-wired',
+		name: 'check:gates-wired',
+	},
+	{
 		command: ['bun', 'run', 'check:gate-conventions'],
 		description: 'Every gate follows the conventions in docs/reference/gate-conventions.md',
 		label: 'check:gate-conventions',

@@ -40,6 +40,7 @@ export const ACTIONABLE_AUDITS: ReadonlySet<string> = new Set([
 	'FRONTEND',
 	'HYGIENE',
 	'LOGIC',
+	'MOBILE',
 	'PERFORMANCE',
 	'REACT_BEST_PRACTICES',
 	'SCHEMA_CONSTRAINTS',

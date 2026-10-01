@@ -3,6 +3,7 @@
 	"requiresPackages": {
 		"COMPOSITION_PATTERNS": ["react"],
 		"CONVEX": ["convex"],
+		"MOBILE": ["expo", "react-native"],
 		"REACT_BEST_PRACTICES": ["react"]
 	},
 	"rules": [

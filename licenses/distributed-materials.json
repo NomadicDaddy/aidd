@@ -31,6 +31,7 @@
 			"audits/LICENSING.md",
 			"audits/LIGHTHOUSE.md",
 			"audits/LOGIC.md",
+			"audits/MOBILE.md",
 			"audits/ORCHESTRATOR_CONCURRENCY.md",
 			"audits/OUTBOUND_SSRF.md",
 			"audits/PERFORMANCE.md",

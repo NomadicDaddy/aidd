@@ -68,7 +68,7 @@ export function MilestoneFormDialog({
 			initialFocus="first"
 			onClose={onClose}
 			open={open}>
-			<DialogPanel className="w-full max-w-lg space-y-4">
+			<DialogPanel className="w-full max-w-lg space-y-4 p-5">
 				<h2 className="text-base font-semibold text-foreground" id="milestone-form-title">
 					{editing ? `Edit ${milestone.name}` : 'New milestone'}
 				</h2>

@@ -65,6 +65,19 @@ describe('Project Detail row and dialog polish', () => {
 		expect(dialog).toContain('text-xs text-muted-foreground ${proseMeasureClass}');
 	});
 
+	test('the milestone form dialog insets its content from the panel border', async () => {
+		const dialog = await detail('MilestoneFormDialog.tsx');
+		const base = await Bun.file(join(SRC, 'components/ui/dialog.tsx')).text();
+
+		// SYS-2: both create and edit share this panel, and it placed its heading, controls, help
+		// and action row flush against the panel border (1px of border, 0px of padding). The
+		// caller owns the inset — p-5, the same 20px every other padded dialog uses — while the
+		// shared DialogPanel base must stay padding-free so callers that pad themselves (or pad a
+		// DialogBody instead) are not doubled.
+		expect(dialog).toContain('<DialogPanel className="w-full max-w-lg space-y-4 p-5">');
+		expect(base).not.toMatch(/PANEL_BASE = '[^']*p-\d/u);
+	});
+
 	test('keeps the dependency panel outside the canvas and explains source rails', async () => {
 		const tab = await detail('DependencyGraphTab.tsx');
 		const components = await detail('dependencyGraphComponents.tsx');

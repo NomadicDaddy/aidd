@@ -3,6 +3,7 @@
 export {
 	buildWriteAllowlistRetryPrompt,
 	captureWriteGuardSnapshot,
+	describeWriteGuardRevert,
 	diffWriteViolations,
 	formatViolationPaths,
 	revertWriteViolations,

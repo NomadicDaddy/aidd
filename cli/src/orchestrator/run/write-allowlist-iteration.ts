@@ -14,6 +14,7 @@ import { writeRunSummary } from './artifacts.ts';
 import { runBackendStreamLoop } from './backend-stream.ts';
 import {
 	buildWriteAllowlistRetryPrompt,
+	describeWriteGuardRevert,
 	diffWriteViolations,
 	formatViolationPaths,
 	revertWriteViolations,
@@ -72,9 +73,24 @@ export async function enforceWriteAllowlistForIteration(
 		input.plan.writeAllowlist ?? [],
 		input.writeGuardBaseline,
 	);
-	if (violations === null || violations.length === 0) {
-		return { kind: 'continue', state: toState(input) };
+	if (violations === null) {
+		// An unreadable worktree is not a clean one: the allowlist was armed and could not be
+		// checked, so the iteration fails instead of passing as if nothing was written.
+		const summary =
+			'write allowlist could not be verified (git status failed); the worktree is unchecked';
+		console.error(`[orchestrator] ${summary}`);
+		endIterationWithViolation(input, summary);
+		await writeRunSummary(
+			input.deps,
+			input.plan,
+			input.acc,
+			'exit_error',
+			orchestratorExitCodes.writeAllowlistViolation,
+			summary,
+		);
+		return { exitCode: orchestratorExitCodes.writeAllowlistViolation, kind: 'return' };
 	}
+	if (violations.length === 0) return { kind: 'continue', state: toState(input) };
 	// Triumvirate: the single-agent retry below would re-run runBackendStreamLoop against a
 	// panel-shaped run, which is wrong — and silently continuing after the revert would
 	// swallow the violation. Revert and fail fast; retrying just the execution stage is a
@@ -85,7 +101,7 @@ export async function enforceWriteAllowlistForIteration(
 			input.writeGuardBaseline,
 			violations,
 		);
-		const summary = `write allowlist violated by triumvirate execution stage: ${formatViolationPaths(violations)} (${describeRevert(failed)}; no retry in triumvirate mode)`;
+		const summary = `write allowlist violated by triumvirate execution stage: ${formatViolationPaths(violations)} (${describeWriteGuardRevert(violations, failed)}; no retry in triumvirate mode)`;
 		console.error(`[orchestrator] ${summary}`);
 		endIterationWithViolation(input, summary);
 		await writeRunSummary(
@@ -108,7 +124,7 @@ export async function enforceWriteAllowlistForIteration(
 	// and the iteration ends where it already was — after a second full backend run. Fail here
 	// instead, and say which paths are still dirty so the operator can see what to clean.
 	if (revertFailed.length > 0) {
-		const summary = `write allowlist violated: ${formatViolationPaths(violations)} — ${describeRevert(revertFailed)}; not retrying over an un-reverted worktree`;
+		const summary = `write allowlist violated: ${formatViolationPaths(violations)} — ${describeWriteGuardRevert(violations, revertFailed)}; not retrying over an un-reverted worktree`;
 		console.error(`[orchestrator] ${summary}`);
 		endIterationWithViolation(input, summary);
 		await writeRunSummary(
@@ -122,7 +138,7 @@ export async function enforceWriteAllowlistForIteration(
 		return { exitCode: orchestratorExitCodes.writeAllowlistViolation, kind: 'return' };
 	}
 	console.warn(
-		`[orchestrator] Write allowlist violated (${formatViolationPaths(violations)}); writes reverted, retrying once.`,
+		`[orchestrator] Write allowlist violated (${formatViolationPaths(violations)}); ${describeWriteGuardRevert(violations, revertFailed)}, retrying once.`,
 	);
 	let state = toState(input);
 	if (!input.stopRequestedAfterRun) {
@@ -163,13 +179,19 @@ export async function enforceWriteAllowlistForIteration(
 		input.plan.writeAllowlist ?? [],
 		input.writeGuardBaseline,
 	);
-	if (recheck === null || recheck.length === 0) return { kind: 'continue', state };
-	const recheckFailed = await revertWriteViolations(
-		runRepoDir(input.plan),
-		input.writeGuardBaseline,
-		recheck,
-	);
-	const summary = `write allowlist violated after retry: ${formatViolationPaths(recheck)} (${describeRevert(recheckFailed)})`;
+	if (recheck !== null && recheck.length === 0) return { kind: 'continue', state };
+	const recheckFailed =
+		recheck === null
+			? []
+			: await revertWriteViolations(
+					runRepoDir(input.plan),
+					input.writeGuardBaseline,
+					recheck,
+				);
+	const summary =
+		recheck === null
+			? 'write allowlist could not be verified after retry (git status failed); the worktree is unchecked'
+			: `write allowlist violated after retry: ${formatViolationPaths(recheck)} (${describeWriteGuardRevert(recheck, recheckFailed)})`;
 	console.error(`[orchestrator] ${summary}`);
 	endIterationWithViolation(input, summary, state.result);
 	await writeRunSummary(
@@ -181,16 +203,6 @@ export async function enforceWriteAllowlistForIteration(
 		summary,
 	);
 	return { exitCode: orchestratorExitCodes.writeAllowlistViolation, kind: 'return' };
-}
-
-// "writes reverted" is a claim about the operator's worktree, and for years it was printed
-// unconditionally while revertWriteViolations' failure list was discarded — so a violation aidd
-// could not clean up (a staged path, a locked index) read exactly like one it had.
-function describeRevert(failed: string[], limit = 8): string {
-	if (failed.length === 0) return 'writes reverted';
-	const shown = failed.slice(0, limit).join(', ');
-	const rest = failed.length > limit ? ` … and ${failed.length - limit} more` : '';
-	return `REVERT FAILED, still dirty: ${shown}${rest}`;
 }
 
 // The guard runs while the state machine still sits in run_agent, and run_agent -> complete

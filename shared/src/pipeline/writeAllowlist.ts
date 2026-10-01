@@ -11,6 +11,7 @@ import { committedPathsSince, gitHead, gitStatusEntries } from './write-allowlis
 // This module is the canonical implementation shared by the CLI orchestrator's
 // --write-allowlist guard and the pipeline's metadata-only backstop.
 
+export { describeWriteGuardRevert } from './write-allowlist/describe.ts';
 export { revertWriteViolations } from './write-allowlist/revert.ts';
 export type { WriteGuardSnapshot, WriteViolation } from './write-allowlist/types.ts';
 

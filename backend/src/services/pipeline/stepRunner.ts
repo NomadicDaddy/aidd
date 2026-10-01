@@ -1,5 +1,6 @@
 import {
 	captureWriteGuardSnapshot,
+	describeWriteGuardRevert,
 	diffWriteViolations,
 	revertWriteViolations,
 	type WriteGuardSnapshot,
@@ -182,35 +183,37 @@ export async function executeStep(
 		}
 		superseded = { dispatch: lastDispatch, row: attemptRow, startedAt: attemptStartedAt };
 	}
-	if (lastDispatch.ok && guardBaseline) {
-		// The metadata-only backstop now REVERTS the non-.aidd/ writes server-side
-		// using the same snapshot/diff/revert logic the CLI --write-allowlist guard
-		// uses, so detected foreign files do not remain on disk after a metadata-only
-		// step violates the boundary.
+	if (guardBaseline) {
+		// The boundary is checked whether or not the dispatch succeeded: a step that wrote
+		// outside .aidd/ and then failed leaves the same foreign files as one that succeeded.
+		// Violations are reverted with the logic the CLI --write-allowlist guard uses.
 		const violations = await diffWriteViolations(
 			context.projectDir,
 			METADATA_ALLOWLIST,
 			guardBaseline,
 		);
-		if (violations !== null && violations.length > 0) {
+		let boundaryError: null | string = null;
+		if (violations === null) {
+			// An unreadable worktree is not a clean one.
+			boundaryError =
+				'Metadata-only session could not be checked against the .aidd/ write boundary (git status failed); the worktree is unverified';
+		} else if (violations.length > 0) {
 			const revertFailed = await revertWriteViolations(
 				context.projectDir,
 				guardBaseline,
 				violations,
 			);
-			// Never claim "writes reverted" over a revert that failed: the operator reads this
-			// message to decide whether their worktree still needs cleaning.
-			const revertSummary =
-				revertFailed.length > 0
-					? `REVERT FAILED, still dirty: ${revertFailed.join(', ')}`
-					: 'writes reverted';
 			const hasDestructive = violations.some((v) => v.destructivelyDiscarded);
 			const violationVerb = hasDestructive ? 'destructively modified' : 'wrote';
+			boundaryError = `Metadata-only session ${violationVerb} outside .aidd/: ${violations
+				.map((v) => v.path)
+				.join(', ')} - ${describeWriteGuardRevert(violations, revertFailed)}`;
+		}
+		if (boundaryError !== null) {
+			const dispatchError = lastDispatch.ok ? undefined : lastDispatch.errorMessage;
 			lastDispatch = {
 				...lastDispatch,
-				errorMessage: `Metadata-only session ${violationVerb} outside .aidd/: ${violations
-					.map((v) => v.path)
-					.join(', ')} — ${revertSummary}`,
+				errorMessage: dispatchError ? `${dispatchError}; ${boundaryError}` : boundaryError,
 				ok: false,
 			};
 		}

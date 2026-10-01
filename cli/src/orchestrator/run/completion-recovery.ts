@@ -1,6 +1,7 @@
 import type { AiddStore } from 'aidd-shared/metadata/store';
 import type { SelectedWork } from 'aidd-shared/modes/types';
 
+import { buildProjectCommandEnv } from 'aidd-shared/subprocess-env';
 import { isAbsolute, join, relative } from 'node:path';
 
 import type { FeatureScopeAudit, GitCommitSummary } from './types.ts';
@@ -157,6 +158,8 @@ async function runRecoveryGate(
 	try {
 		const proc = Bun.spawn(args, {
 			cwd: projectDir,
+			// The project's own gate: the operator's environment without aidd's credentials.
+			env: buildProjectCommandEnv(),
 			stderr: 'ignore',
 			stdout: 'ignore',
 			windowsHide: true,

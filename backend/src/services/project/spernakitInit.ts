@@ -1,3 +1,4 @@
+import { buildProjectCommandEnv } from 'aidd-shared/subprocess-env';
 import { mkdir, rename, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -36,6 +37,8 @@ export async function runTemplateInit(command: string[], cwd: string): Promise<S
 	const proc = Bun.spawn({
 		cmd: command,
 		cwd,
+		// A template's own init command: the operator's environment without the panel's credentials.
+		env: buildProjectCommandEnv(),
 		stderr: 'pipe',
 		stdin: 'ignore',
 		stdout: 'pipe',

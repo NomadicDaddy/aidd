@@ -1,3 +1,5 @@
+import { TELEGRAM_BOT_TOKEN_ENV, WEB_AUTH_TOKEN_ENV } from './config/env-secrets.ts';
+
 /**
  * Allowed environment-variable exceptions.
  *
@@ -117,4 +119,28 @@ export function buildBackendSubprocessEnv(
 ): Record<string, string> {
 	const env = pickEnv(backendEnvKeys, source);
 	return { ...env, ...overrideEnv };
+}
+
+/** Variables aidd consumes itself and no child process has a use for. Compared in upper case. */
+const AIDD_OWN_SECRET_ENV = new Set([TELEGRAM_BOT_TOKEN_ENV, WEB_AUTH_TOKEN_ENV]);
+
+/**
+ * The environment for a command that is the project's own: its start and stop scripts, a
+ * template's init command, its quality gate.
+ *
+ * These are not aidd's code, and they legitimately need the operator's ordinary environment, so
+ * the allowlists above do not fit. What they must not receive is aidd's own credentials. A
+ * `Bun.spawn` with no `env` hands the child everything, including `AIDD_WEB_AUTH_TOKEN` and
+ * `AIDD_TELEGRAM_BOT_TOKEN`, so a project script that dumps its environment into a file puts the
+ * panel's token where the next agent reads it. Windows treats names without regard to case.
+ */
+export function buildProjectCommandEnv(
+	source: NodeJS.ProcessEnv = process.env,
+): Record<string, string> {
+	const env: Record<string, string> = {};
+	for (const [key, value] of Object.entries(source)) {
+		if (value === undefined || AIDD_OWN_SECRET_ENV.has(key.toUpperCase())) continue;
+		env[key] = value;
+	}
+	return env;
 }

@@ -3,6 +3,7 @@ import {
 	killCapturedDescendants,
 	killProcessTree,
 } from 'aidd-shared/lib/processTree';
+import { buildProjectCommandEnv } from 'aidd-shared/subprocess-env';
 import { closeSync, mkdtempSync, openSync, readSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -40,6 +41,8 @@ export interface CommandResult {
 export function spawnCommand(command: CommandArgs, cwd: string): ReturnType<typeof Bun.spawn> {
 	return Bun.spawn([...command], {
 		cwd,
+		// The app's own start script: the operator's environment without the panel's credentials.
+		env: buildProjectCommandEnv(),
 		stderr: 'ignore',
 		stdin: 'ignore',
 		stdout: 'ignore',
@@ -118,6 +121,7 @@ export async function runProjectCommand(
 		capture = createCommandCapture();
 		const child = Bun.spawn([...command], {
 			cwd: projectPath,
+			env: buildProjectCommandEnv(),
 			stderr: capture.stdioFd,
 			stdin: 'ignore',
 			stdout: capture.stdioFd,

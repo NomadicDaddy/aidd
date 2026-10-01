@@ -2,6 +2,14 @@
 // (./revert.ts). They live here rather than in either half so the two can import from each other's
 // vocabulary without a cycle.
 
+/**
+ * Whose changes a checkout can hold. In a run's own worktree every difference from the baseline is
+ * the run's, so undoing it is safe. The live project tree is shared: the operator's uncommitted
+ * edits and anything a teammate writes while the run is going look exactly like the run's own
+ * writes, and reverting there discarded them. The guard reverts only when the checkout is isolated.
+ */
+export type WriteGuardCheckout = 'isolated' | 'shared';
+
 export interface WriteGuardSnapshot {
 	/** Porcelain status line per path (XY codes), for paths dirty at baseline. */
 	entries: Map<string, string>;

@@ -186,7 +186,8 @@ export async function executeStep(
 	if (guardBaseline) {
 		// The boundary is checked whether or not the dispatch succeeded: a step that wrote
 		// outside .aidd/ and then failed leaves the same foreign files as one that succeeded.
-		// Violations are reverted with the logic the CLI --write-allowlist guard uses.
+		// A pipeline step runs in the live project tree, which is shared, so a violation is
+		// reported and fails the step; nothing is reverted (see WriteGuardCheckout).
 		const violations = await diffWriteViolations(
 			context.projectDir,
 			METADATA_ALLOWLIST,
@@ -202,12 +203,13 @@ export async function executeStep(
 				context.projectDir,
 				guardBaseline,
 				violations,
+				'shared',
 			);
 			const hasDestructive = violations.some((v) => v.destructivelyDiscarded);
 			const violationVerb = hasDestructive ? 'destructively modified' : 'wrote';
 			boundaryError = `Metadata-only session ${violationVerb} outside .aidd/: ${violations
 				.map((v) => v.path)
-				.join(', ')} - ${describeWriteGuardRevert(violations, revertFailed)}`;
+				.join(', ')} - ${describeWriteGuardRevert(violations, revertFailed, 'shared')}`;
 		}
 		if (boundaryError !== null) {
 			const dispatchError = lastDispatch.ok ? undefined : lastDispatch.errorMessage;

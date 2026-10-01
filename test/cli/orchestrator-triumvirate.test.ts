@@ -2119,7 +2119,7 @@ describe('orchestrator triumvirate safety envelope', () => {
 	});
 
 	test(
-		'a triumvirate execution stage violating the write allowlist fails fast with reverted writes',
+		'a triumvirate execution stage violating the write allowlist fails fast and leaves the live tree alone',
 		async () => {
 			const store = await makeStore('safety-write-allowlist');
 			await initializeGitProject(store.projectDir);
@@ -2172,13 +2172,15 @@ describe('orchestrator triumvirate safety envelope', () => {
 			});
 
 			expect(exitCode).toBe(orchestratorExitCodes.writeAllowlistViolation);
-			// The violating write was reverted, not kept.
-			expect(await Bun.file(strayPath).exists()).toBe(false);
+			// This run is in the live project tree, which is shared, so the write is reported and
+			// left in place: the guard reverts only inside a run's own worktree.
+			expect(await Bun.file(strayPath).exists()).toBe(true);
 			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
 				.trim()
 				.split(/\r?\n/)
 				.map((line) => JSON.parse(line) as { summary: string });
 			expect(runSummary?.summary).toContain('no retry in triumvirate mode');
+			expect(runSummary?.summary).toContain('NOT reverted, left as they are');
 		},
 		slowOrchestratorTestTimeoutMs,
 	);

@@ -29,12 +29,21 @@ feature records, run history, and reports:
 
 Metadata-only work is held to that boundary **mechanically**. The web pipeline's read-only steps,
 and any CLI run launched with `--write-allowlist .aidd`, declare an `.aidd`-only allowlist: aidd
-snapshots the git worktree before the backend runs, reverts anything written outside the allowlist,
-retries the iteration once with the violation named in the prompt, then fails the run (exit 76) if
-it happens again. A triumvirate run skips the retry and fails on the first violation. A plain
-coding run declares no allowlist because it is allowed to change source. This checks and restores
-worktree changes after execution; it does not sandbox a shell process or prevent it from accessing
-files elsewhere on the host.
+snapshots the git worktree before the backend runs and compares it afterwards. What happens to a
+write outside the allowlist depends on whose checkout it is:
+
+- **A run in its own worktree.** Every difference from the snapshot is the run's, so aidd reverts
+  the out-of-bounds writes, retries the iteration once with the violation named in the prompt, then
+  fails the run (exit 76) if it happens again. A triumvirate run skips the retry and fails on the
+  first violation.
+- **A run or pipeline step in your live project tree.** aidd reverts nothing. It names the paths
+  and fails the run (exit 76) or the step. The comparison cannot tell the run's writes from edits
+  you or another agent made while it ran, and reverting them used to delete work that was never
+  the run's. The files are left exactly as they are for you to sort out.
+
+A plain coding run declares no allowlist because it is allowed to change source. This checks the
+worktree after execution; it does not sandbox a shell process or prevent it from accessing files
+elsewhere on the host.
 
 ## Your project's source code
 

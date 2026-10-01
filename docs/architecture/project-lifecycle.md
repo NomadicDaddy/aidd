@@ -229,8 +229,9 @@ PipelineService.launchRecipe()                      facade
   failed-step summary) instead of a bare `failed`
   (`backend/src/services/pipeline/outcomeSummary.ts`).
 - **Metadata-only sessions** enforce the `.aidd/`-only write boundary by snapshotting the
-  worktree and reverting any out-of-bounds writes server-side, mirroring the CLI
-  `--write-allowlist` guard.
+  worktree and failing a step that wrote outside it, with the paths named. Nothing is reverted:
+  a pipeline step runs in the live project tree, which is shared, and the CLI `--write-allowlist`
+  guard it mirrors reverts only inside a run's own worktree.
 - **Resume**: sessions in flight at a web restart are reconciled by `resumeStaleSessions`,
   which reconstructs nested `recipe-ref` execution, re-attaches to the deepest still-running
   managed run, and unwinds each recipe level before advancing the parent.

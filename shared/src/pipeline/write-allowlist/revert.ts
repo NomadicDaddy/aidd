@@ -1,7 +1,7 @@
 import { rm } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { WriteGuardSnapshot, WriteViolation } from './types.ts';
+import type { WriteGuardCheckout, WriteGuardSnapshot, WriteViolation } from './types.ts';
 
 import { gitCapture, gitStatusEntries, pathExistsInTree } from './git.ts';
 
@@ -15,11 +15,18 @@ import { gitCapture, gitStatusEntries, pathExistsInTree } from './git.ts';
 //
 // Failures are collected, not thrown — and callers MUST report them, because "writes reverted" is
 // a claim about the operator's worktree, not about this function having run.
+//
+// Nothing is reverted in a shared checkout. The diff blames the run for every path that differs
+// from the baseline, which in the live tree includes edits the operator or a teammate made, so a
+// revert there deleted work that was never the run's. Every violating path is returned as not
+// reverted, and the caller fails the step and names them.
 export async function revertWriteViolations(
 	projectDir: string,
 	baseline: WriteGuardSnapshot,
 	violations: WriteViolation[],
+	checkout: WriteGuardCheckout,
 ): Promise<string[]> {
+	if (checkout === 'shared') return violations.map((violation) => violation.path);
 	const failed = new Set<string>();
 	const working = await unwindCommittedViolations(projectDir, baseline, violations);
 	if (working === null) {

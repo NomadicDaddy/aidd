@@ -16,11 +16,13 @@ function violation(path: string, overrides: Partial<WriteViolation> = {}): Write
 
 describe('describeWriteGuardRevert', () => {
 	test('says writes were reverted when every revert succeeded', () => {
-		expect(describeWriteGuardRevert([violation('src/a.ts')], [])).toBe('writes reverted');
+		expect(describeWriteGuardRevert([violation('src/a.ts')], [], 'isolated')).toBe(
+			'writes reverted',
+		);
 	});
 
 	test('names the paths a failed revert left dirty', () => {
-		expect(describeWriteGuardRevert([violation('src/a.ts')], ['src/a.ts'])).toBe(
+		expect(describeWriteGuardRevert([violation('src/a.ts')], ['src/a.ts'], 'isolated')).toBe(
 			'REVERT FAILED, still dirty: src/a.ts',
 		);
 	});
@@ -31,6 +33,7 @@ describe('describeWriteGuardRevert', () => {
 		const text = describeWriteGuardRevert(
 			[violation('notes.md', { destructivelyDiscarded: true })],
 			[],
+			'isolated',
 		);
 		expect(text).not.toContain('writes reverted');
 		expect(text).toContain('NOT restored');
@@ -41,6 +44,7 @@ describe('describeWriteGuardRevert', () => {
 		const text = describeWriteGuardRevert(
 			[violation('src/a.ts'), violation('notes.md', { destructivelyDiscarded: true })],
 			[],
+			'isolated',
 		);
 		expect(text).toBe(
 			'writes reverted; uncommitted edits were discarded and are NOT restored (the committed version is in place): notes.md',
@@ -53,8 +57,31 @@ describe('describeWriteGuardRevert', () => {
 			describeWriteGuardRevert(
 				many.map((path) => violation(path)),
 				many,
+				'isolated',
 				8,
 			),
 		).toContain('… and 2 more');
+	});
+
+	// The live project tree is shared with the operator and other agents, so nothing is reverted
+	// there and the text has to say so: the reader decides which of the paths are theirs.
+	test('says the paths were left in place in a shared checkout, and why', () => {
+		const text = describeWriteGuardRevert([violation('src/a.ts')], ['src/a.ts'], 'shared');
+		expect(text).toContain('NOT reverted');
+		expect(text).toContain('shared');
+		expect(text).toContain('src/a.ts');
+		expect(text).not.toContain('writes reverted');
+		expect(text).not.toContain('REVERT FAILED');
+	});
+
+	test('still reports discarded edits as lost in a shared checkout', () => {
+		const text = describeWriteGuardRevert(
+			[violation('src/a.ts'), violation('notes.md', { destructivelyDiscarded: true })],
+			['src/a.ts', 'notes.md'],
+			'shared',
+		);
+		expect(text).toContain('NOT reverted, left as they are');
+		expect(text).toContain('NOT restored');
+		expect(text).toContain('notes.md');
 	});
 });

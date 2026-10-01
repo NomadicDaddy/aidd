@@ -215,7 +215,9 @@ The non-git fail-open is **closed at two layers**. This section is a regression 
 
 The guard catches what the deny-list cannot see: a destructive operation that makes a **baseline-dirty path become clean**. `diffWriteViolations` builds violations in three passes: paths whose status changed since the baseline, paths committed since the baseline HEAD (`committedPathsSince`), and baseline entries that are no longer in the current status. The third pass records each such non-allowlisted path with `destructivelyDiscarded: true`.
 
-`revertWriteViolations` then acts on the list. For a `destructivelyDiscarded` path, `revertOne` runs `git checkout <baseline.head> -- <path>`.
+`revertWriteViolations` then acts on the list, and only in an isolated checkout. Its last argument is `'isolated'` or `'shared'` (`WriteGuardCheckout` in `write-allowlist/types.ts`). A CLI run passes `'isolated'` when it has its own worktree; a CLI run in the live tree and every pipeline step pass `'shared'`. In a shared checkout the function reverts nothing and returns every violating path, and the caller fails the step and names them: the diff blames the run for every path that differs from the baseline, which in a shared tree includes the operator's and other agents' edits. Confirm each caller passes the value its checkout warrants; a caller that passes `'isolated'` for the live tree brings back the revert that deleted operator work.
+
+In an isolated checkout, for a `destructivelyDiscarded` path, `revertOne` runs `git checkout <baseline.head> -- <path>`.
 
 **What that checkout does and does not do.** It writes the path's content as of the baseline **commit**. The operator's uncommitted edits were never in a commit, so they are not restored. After `git reset --hard` the path already equals the baseline commit, so the checkout changes nothing and reports success. The honest summary of this control is: the discard is **detected**, the step **fails**, and the loss is **not recoverable** by aidd. The code's own comment says the work is recovered only "as far as it can be".
 

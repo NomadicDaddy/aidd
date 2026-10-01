@@ -65,8 +65,12 @@ function lifecycle(db: ReturnType<typeof wrapWebDatabase>['db']): SessionLifecyc
 // The boundary check ran only when the step's dispatch succeeded. A metadata-only step that wrote
 // outside .aidd/ and then failed was never checked, so its writes stayed on disk and its failure
 // message said nothing about them.
+//
+// A pipeline step runs in the live project tree, which the operator and other agents share, so the
+// guard reports the write and fails the step without reverting it: there it cannot tell the step's
+// writes from anyone else's, and reverting used to delete edits that were never the step's.
 describe('metadata-only guard on a step that fails', () => {
-	test('still checks the write boundary, reverts the write and reports it', async () => {
+	test('still checks the write boundary and reports the write, leaving the shared tree alone', async () => {
 		const projectDir = await testTempDir('aidd-guard-failed-step-');
 		const sqlite = new Database(':memory:');
 		try {
@@ -122,8 +126,9 @@ describe('metadata-only guard on a step that fails', () => {
 			expect(outcome.ok).toBe(false);
 			expect(outcome.errorMessage).toContain('backend exited 1');
 			expect(outcome.errorMessage).toContain('src-written-by-step.ts');
-			expect(outcome.errorMessage).toContain('writes reverted');
-			expect(existsSync(outside)).toBe(false);
+			expect(outcome.errorMessage).toContain('NOT reverted');
+			expect(outcome.errorMessage).not.toContain('writes reverted');
+			expect(existsSync(outside)).toBe(true);
 		} finally {
 			sqlite.close();
 			await removeTempTree(projectDir);

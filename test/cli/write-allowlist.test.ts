@@ -51,6 +51,28 @@ describe('write-allowlist guard', () => {
 		expect(await captureWriteGuardSnapshot(dir)).toBeNull();
 	});
 
+	// The long-standing "a web run wiped my uncommitted edits": the diff blames the run for every
+	// path that differs from the baseline, so in a tree the operator shares it reverted their work.
+	test('reverts nothing in a shared checkout and returns every path as not reverted', async () => {
+		const dir = await makeRepo('aidd-wal-shared-');
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+
+		// One file the run wrote and one the operator edited while it ran: indistinguishable.
+		await writeFile(join(dir, 'rogue.ts'), 'new file\n', 'utf8');
+		await writeFile(join(dir, 'tracked.ts'), 'operator edit made during the run\n', 'utf8');
+
+		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
+		if (!violations) throw new Error('Expected violations diff');
+		const failed = await revertWriteViolations(dir, baseline, violations, 'shared');
+
+		expect(failed.sort()).toEqual(['rogue.ts', 'tracked.ts']);
+		expect(await Bun.file(join(dir, 'rogue.ts')).text()).toBe('new file\n');
+		expect(await Bun.file(join(dir, 'tracked.ts')).text()).toBe(
+			'operator edit made during the run\n',
+		);
+	});
+
 	test('detects violations, reverts new files and tracked modifications', async () => {
 		const dir = await makeRepo('aidd-wal-revert-');
 		const baseline = await captureWriteGuardSnapshot(dir);
@@ -68,7 +90,7 @@ describe('write-allowlist guard', () => {
 			'tracked.ts',
 		]);
 
-		const failed = await revertWriteViolations(dir, baseline, violations);
+		const failed = await revertWriteViolations(dir, baseline, violations, 'isolated');
 		expect(failed).toEqual([]);
 		expect(await Bun.file(join(dir, 'tracked.ts')).text()).toBe('original\n');
 		expect(await Bun.file(join(dir, 'rogue.ts')).exists()).toBe(false);
@@ -96,7 +118,7 @@ describe('write-allowlist guard', () => {
 		expect(violations.map((violation) => violation.path)).toEqual(['pwned.txt']);
 		expect(violations[0]?.committed).toBe(true);
 
-		const failed = await revertWriteViolations(dir, baseline, violations);
+		const failed = await revertWriteViolations(dir, baseline, violations, 'isolated');
 		expect(failed).toEqual([]);
 		expect(await Bun.file(join(dir, 'pwned.txt')).exists()).toBe(false);
 		// Legitimate committed .aidd work is preserved as an uncommitted change.
@@ -158,7 +180,7 @@ describe('write-allowlist guard', () => {
 		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
 		if (!violations) throw new Error('Expected violations diff');
 
-		const failed = await revertWriteViolations(dir, baseline, violations);
+		const failed = await revertWriteViolations(dir, baseline, violations, 'isolated');
 		expect(failed).toEqual([]);
 		// Tracked file is restored to the committed version (best-effort recovery).
 		expect(await Bun.file(join(dir, 'tracked.ts')).text()).toBe('original\n');
@@ -215,7 +237,7 @@ describe('write-allowlist guard', () => {
 		if (!violations) throw new Error('Expected violations diff');
 		expect(violations.map((v) => v.path)).toEqual(['.githooks/pre-push']);
 
-		const failed = await revertWriteViolations(dir, baseline, violations);
+		const failed = await revertWriteViolations(dir, baseline, violations, 'isolated');
 		expect(failed).toEqual([]);
 		expect(await Bun.file(join(dir, '.githooks', 'pre-push')).exists()).toBe(false);
 		expect(await diffWriteViolations(dir, ['.aidd'], baseline)).toEqual([]);
@@ -233,7 +255,7 @@ describe('write-allowlist guard', () => {
 		if (!violations) throw new Error('Expected violations diff');
 		expect(violations.map((v) => v.path)).toEqual(['tracked.ts']);
 
-		const failed = await revertWriteViolations(dir, baseline, violations);
+		const failed = await revertWriteViolations(dir, baseline, violations, 'isolated');
 		expect(failed).toEqual([]);
 		// Both halves: worktree content AND the index entry the old revert never touched.
 		expect(await Bun.file(join(dir, 'tracked.ts')).text()).toBe('original\n');
@@ -260,6 +282,8 @@ describe('write-allowlist guard', () => {
 		if (!violations) throw new Error('Expected violations diff');
 		expect(violations.map((v) => v.path)).toEqual(['scratch.txt']);
 
-		expect(await revertWriteViolations(dir, baseline, violations)).toEqual(['scratch.txt']);
+		expect(await revertWriteViolations(dir, baseline, violations, 'isolated')).toEqual([
+			'scratch.txt',
+		]);
 	});
 });

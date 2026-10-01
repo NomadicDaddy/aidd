@@ -1374,15 +1374,14 @@ describe('orchestrator transitions and exit mapping', () => {
 	);
 });
 
-describe('orchestrator write-allowlist revert failures', () => {
+describe('orchestrator write-allowlist in the live tree', () => {
 	test(
-		'does not spend a retry when the revert could not clean the worktree',
+		'reports the violation, leaves the tree alone and does not spend a retry',
 		async () => {
-			// A retry over an un-reverted tree is a paid re-run of a run that cannot pass: the retry
-			// reads the violating content the revert failed to remove, the recheck finds the identical
-			// violation, and the iteration ends where it already was. Here the agent amends the
-			// baseline commit, so baseline HEAD is no longer an ancestor and the guard REFUSES the
-			// mixed reset rather than rewinding onto a divergent history.
+			// A run in the live project tree shares it with the operator, so the guard does not
+			// revert there: it names the paths and fails. A retry over an un-reverted tree is a paid
+			// re-run of a run that cannot pass, so none is spent. The agent here also amends the
+			// baseline commit, which is the case the guard used to refuse to unwind.
 			const store = await makeStore('write-allowlist-revert-failed');
 			await initializeGitProject(store.projectDir);
 			const strayPath = join(store.projectDir, 'stray.ts');
@@ -1411,13 +1410,15 @@ describe('orchestrator write-allowlist revert failures', () => {
 			expect(exitCode).toBe(orchestratorExitCodes.writeAllowlistViolation);
 			// The retry is what this fix withholds: exactly one paid backend run.
 			expect(backend.calls).toBe(1);
-			// And the summary says the worktree is still dirty rather than 'writes reverted'.
+			// And the summary says the path was left in place rather than 'writes reverted'.
 			expect(await Bun.file(strayPath).exists()).toBe(true);
 			const [runSummary] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
 				.trim()
 				.split(/\r?\n/)
 				.map((line) => JSON.parse(line) as { summary: string });
-			expect(runSummary?.summary).toContain('REVERT FAILED, still dirty: stray.ts');
+			expect(runSummary?.summary).toContain('NOT reverted, left as they are');
+			expect(runSummary?.summary).toContain('stray.ts');
+			expect(runSummary?.summary).not.toContain('writes reverted');
 			expect(runSummary?.summary).toContain('not retrying over an un-reverted worktree');
 		},
 		slowOrchestratorTestTimeoutMs,

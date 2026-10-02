@@ -254,6 +254,20 @@ describe('shared core check and write', () => {
 		expect(report.findings.filter(isFatal)).toHaveLength(1);
 	});
 
+	// serialtcp, 2026-10-01: core.autocrlf checked its LF hooks out as CRLF and every one of them
+	// read as drifted, although the committed content was the owner's exactly.
+	test('a checkout that differs only in line endings is current, not drifted', () => {
+		const fleet = scratchFleet();
+		put(join(fleet, 'current'), '.githooks/guard.sh', 'guard v2\r\n');
+		put(join(fleet, 'drifted'), '.githooks/guard.sh', 'guard v1\r\n');
+		const report = checkGroup(GUARDS, fleet, join(fleet, 'owner-repo'));
+
+		expect(report.matched).toBe(3);
+		expect(report.findings.filter(isFatal).map((finding) => finding.target)).toEqual([
+			'drifted',
+		]);
+	});
+
 	test('a source the manifest names but the owner does not have is refused outright', () => {
 		const fleet = scratchFleet();
 		const group: SharedCoreGroup = {

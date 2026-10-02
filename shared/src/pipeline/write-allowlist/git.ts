@@ -35,12 +35,14 @@ export async function pathExistsInTree(
 
 export async function gitStatusEntries(projectDir: string): Promise<Map<string, string> | null> {
 	try {
-		const proc = Bun.spawn(['git', 'status', '--porcelain=v1', '--untracked-files=all'], {
-			cwd: projectDir,
-			stderr: 'pipe',
-			stdout: 'pipe',
-			windowsHide: true,
-		});
+		// `--no-renames` reports a move as a deletion and an addition. With rename detection on,
+		// `R  a -> b` named only `b`, so the path the run removed was in no list: a tracked file
+		// moved into `.aidd` passed the boundary, and a reverted move left the original deleted
+		// while the summary said it was reverted.
+		const proc = Bun.spawn(
+			['git', 'status', '--porcelain=v1', '--untracked-files=all', '--no-renames'],
+			{ cwd: projectDir, stderr: 'pipe', stdout: 'pipe', windowsHide: true },
+		);
 		const [stdout, code] = await Promise.all([readProcessText(proc.stdout), proc.exited]);
 		if (code !== 0) return null;
 		const entries = new Map<string, string>();
@@ -48,8 +50,6 @@ export async function gitStatusEntries(projectDir: string): Promise<Map<string, 
 			if (line.length < 4) continue;
 			const status = line.slice(0, 2);
 			let path = line.slice(3);
-			const arrow = path.indexOf(' -> ');
-			if (arrow !== -1) path = path.slice(arrow + 4);
 			if (path.startsWith('"') && path.endsWith('"')) path = path.slice(1, -1);
 			if (path.length > 0) entries.set(path, status);
 		}

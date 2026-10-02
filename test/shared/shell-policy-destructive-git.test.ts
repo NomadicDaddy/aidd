@@ -49,7 +49,6 @@ describe('shell workspace policy — destructive git commands', () => {
 	test('allows git clean without -f (dry-run, list)', () => {
 		expect(checkBashWorkspacePolicy('git clean -n', cwd)).toBeNull();
 		expect(checkBashWorkspacePolicy('git clean -nd', cwd)).toBeNull();
-		expect(checkBashWorkspacePolicy('git clean -i', cwd)).toBeNull();
 	});
 
 	test('blocks destructive git in a compound command', () => {

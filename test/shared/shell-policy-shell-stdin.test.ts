@@ -27,7 +27,43 @@ describe('shell workspace policy - a shell fed its commands as data', () => {
 		expect(verdict(command)).toContain('disallowed shell construct');
 	});
 
+	// The 2026-10-01 audit: the check named a bare shell directly after the pipe, so a wrapper, a
+	// quoted or `.exe` name, a group, a descriptor on the redirect or another shell went through.
+	// Each ran in a throwaway repository and reset two edited files.
 	test.each([
+		"echo 'printenv' | command sh",
+		"echo 'printenv' | nice sh",
+		"echo 'printenv' | nohup bash",
+		"echo 'printenv' | sh.exe",
+		"echo 'printenv' | bash.exe",
+		`echo 'printenv' | "sh"`,
+		"echo 'printenv' | 'bash'",
+		`echo 'printenv' | "bash" -s`,
+		"echo 'printenv' | (sh)",
+		"echo 'printenv' | { sh; }",
+		"echo 'printenv' | env X=1 sh",
+		"echo 'printenv' | timeout 5 sh",
+		"echo 'printenv' | builtin command sh",
+		'sh 0< cmds.txt',
+		'< cmds.txt sh',
+		"echo 'printenv' | pwsh -Command -",
+		"echo 'printenv' | cmd",
+		'find . -maxdepth 0 -exec sh -c "ls" \\;',
+		'bash -o pipefail -c "ls"',
+		'cmd //c dir',
+	])('denies %s', (command) => {
+		expect(verdict(command)).toContain('disallowed shell construct');
+	});
+
+	test.each([
+		'ls | grep sh',
+		'git log --oneline | grep bash',
+		'ps | grep -c sh',
+		'which bash',
+		'bash scripts/build.sh -c release',
+		'pwsh scripts/x.ps1 -Config foo',
+		'pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/x.ps1',
+		'timeout 60 bun test',
 		'ls | sort',
 		'echo hi | shasum',
 		'echo hi | sha256sum',

@@ -113,7 +113,6 @@ describe('shell workspace policy - destructive git, every spelling', () => {
 		'git clean -n',
 		'git clean -n -f',
 		'git clean --dry-run --force',
-		'git clean -i',
 		'git checkout main',
 		'git checkout -b feature',
 		'git checkout -- src/file.ts',

@@ -11,6 +11,7 @@ import { dumpsEnvironment } from './shell-policy-env.ts';
 import { usesDestructiveGit } from './shell-policy-git.ts';
 import { expandsAtRuntime, isPathWithinWorkspaceRoot } from './shell-policy-paths.ts';
 import { maskNullOutputRedirects } from './shell-policy-redirects.ts';
+import { runsTextAsCommands } from './shell-policy-shells.ts';
 
 /**
  * Environment variables that name a directory outside the project. Each one is supplied to the
@@ -122,14 +123,18 @@ function evaluateBashWorkspacePolicy(command: string, cwd: string): null | strin
 	// --- Destructive git command deny-list (Critical: silent worktree destruction) ---
 	// These discard uncommitted work without naming a path, so the write-allowlist guard's
 	// dirty-path diff cannot detect them. See shell-policy-git.ts for the forms recognised.
-	if (usesDestructiveGit(command)) {
+	if (usesDestructiveGit(command, root)) {
 		return 'ERROR: bash command uses a destructive git operation (e.g. git reset --hard, git checkout ., git clean) that can silently discard uncommitted work outside the write-allowlist boundary';
 	}
 
 	// --- Dangerous construct deny-list (Critical: eval/subshell/base64 bypass) ---
 	// Block eval, bash -c, sh -c, exec, source, and dotted sourcing. These
 	// constructs allow runtime string expansion that bypasses static filtering.
-	if (DANGEROUS_CONSTRUCT_PATTERN.test(command) || SHELL_FROM_STDIN_PATTERN.test(stripped)) {
+	if (
+		DANGEROUS_CONSTRUCT_PATTERN.test(command) ||
+		SHELL_FROM_STDIN_PATTERN.test(stripped) ||
+		runsTextAsCommands(command)
+	) {
 		return 'ERROR: bash command uses a disallowed shell construct (eval, bash -c, exec, source, or a shell fed its commands through a pipe or redirect) that bypasses static safety checks';
 	}
 

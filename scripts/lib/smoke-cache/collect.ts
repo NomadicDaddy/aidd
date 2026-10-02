@@ -35,6 +35,8 @@ interface CachedFileRead {
 export interface SmokeCacheEvaluationContext {
 	fileReads: Map<string, CachedFileRead>;
 	globMatches: Map<string, Promise<string[]>>;
+	/** The `format:check` input list. One enumeration asks Prettier about every candidate file. */
+	prettierDependencies: null | Promise<string[]>;
 	repositoryFiles: null | Promise<string[]>;
 }
 
@@ -42,6 +44,7 @@ export function createSmokeCacheEvaluationContext(): SmokeCacheEvaluationContext
 	return {
 		fileReads: new Map(),
 		globMatches: new Map(),
+		prettierDependencies: null,
 		repositoryFiles: null,
 	};
 }
@@ -49,6 +52,7 @@ export function createSmokeCacheEvaluationContext(): SmokeCacheEvaluationContext
 export function clearSmokeCacheEvaluationContext(context: SmokeCacheEvaluationContext): void {
 	context.fileReads.clear();
 	context.globMatches.clear();
+	context.prettierDependencies = null;
 	context.repositoryFiles = null;
 }
 
@@ -177,7 +181,14 @@ export async function collectDependencies(
 	context?: SmokeCacheEvaluationContext,
 ): Promise<string[]> {
 	if (step === 'format:check') {
-		return await collectPrettierDependencies(projectRoot, STEP_DEPENDENCIES[step] ?? []);
+		// One gate run asked for this list three times, and each asks Prettier about every
+		// candidate file. The context is cleared after every executed step, so the list cannot
+		// outlive work that changes the file set.
+		const collect = () =>
+			collectPrettierDependencies(projectRoot, STEP_DEPENDENCIES[step] ?? []);
+		if (context === undefined) return await collect();
+		context.prettierDependencies ??= collect();
+		return await context.prettierDependencies;
 	}
 
 	const allowGeneratedOutput = isGeneratedOutputStep(step);

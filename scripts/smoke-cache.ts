@@ -173,8 +173,8 @@ export async function canSkipStep(
 export async function getSmokeCacheStatus(
 	projectRoot: string,
 	steps = Object.keys(STEP_DEPENDENCIES),
+	context = createSmokeCacheEvaluationContext(),
 ): Promise<SmokeCacheStatusEntry[]> {
-	const context = createSmokeCacheEvaluationContext();
 	const cache = await readEvaluationCache(projectRoot, context);
 	const entries: SmokeCacheStatusEntry[] = [];
 

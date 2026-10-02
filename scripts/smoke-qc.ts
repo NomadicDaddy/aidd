@@ -145,10 +145,14 @@ export async function runSmokeQc(args: SmokeQcArgs, projectRoot = cwd()): Promis
 	if (!args.fast) {
 		await sweepOrphanTestTempTrees(projectRoot);
 	}
+	// One context for the projection and the skip loop: nothing runs between them, so the
+	// dependency lists and hashes the projection computed are the ones the loop needs.
+	const cacheContext = createSmokeCacheEvaluationContext();
 	const projectedMs = projectUncachedWallTimeMs(
 		await getSmokeCacheStatus(
 			projectRoot,
 			steps.map((step) => step.name),
+			cacheContext,
 		),
 	);
 	if (shouldWarnProjectedWallTime(projectedMs)) {
@@ -162,7 +166,6 @@ export async function runSmokeQc(args: SmokeQcArgs, projectRoot = cwd()): Promis
 	// step mask every later gate, which is how violations accumulate unseen behind it. This
 	// matches spernakit's qc mode, which learned the same lesson (scripts/smoke.ts).
 	const failedSteps: string[] = [];
-	const cacheContext = createSmokeCacheEvaluationContext();
 
 	for (const step of steps) {
 		if (await canSkipStep(projectRoot, step.name, args.force, cacheContext)) {

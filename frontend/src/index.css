@@ -48,7 +48,10 @@
 	--raised-foreground: #1a1d26;
 	--border: #e2e5ea;
 	--control-border: #848c9a;
-	--accent: #0d9488;
+	/* teal-700, the same value --ring already moved to and for the same reason. teal-600 measured
+	   3.74:1 as link text on --card and as white text on a primary button: both are text, so both
+	   answer to 4.5:1. teal-700 is 5.47 on --card, 5.06 on --background, and 5.47 white-on-it. */
+	--accent: #0f766e;
 	--accent-foreground: #ffffff;
 	--accent-muted: #f0fdfa;
 	--accent-muted-foreground: #134e4a;

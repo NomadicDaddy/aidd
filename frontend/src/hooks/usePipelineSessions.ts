@@ -8,6 +8,8 @@ import {
 } from '../api/pipelineSessions.ts';
 import { retryUnlessClientError } from '../api/retry.ts';
 
+// poll-justified: the session REPORT key, ['pipeline-session-report', id], is outside the
+// ['pipeline-sessions'] prefix the WebSocket invalidation covers, so this poll is its live signal.
 const ACTIVE_SESSION_POLL_MS = 3000;
 
 export function usePipelineSessionReport(id: string | undefined) {

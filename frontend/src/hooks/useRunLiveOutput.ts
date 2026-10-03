@@ -12,6 +12,8 @@ import {
 	useWebSocketSubscribe,
 } from './useWebSocket.ts';
 
+// poll-justified: only while a selected run has produced no output yet, to backfill a log whose
+// first WebSocket chunks arrived before this view subscribed.
 const EMPTY_SELECTED_RUN_OUTPUT_POLL_MS = 2_000;
 
 // Live run output: WebSocket run_output chunks are the steady-state source, appended in

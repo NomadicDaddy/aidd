@@ -189,7 +189,7 @@ describe('Settings application-root validation', () => {
 		expect(rendered.blockedToolbar).toContain('role="alert"');
 		expect(rendered.blockedToolbar).toContain('text-red-700');
 		expect(rendered.blockedToolbar).toContain('does not exist.');
-		expect(rendered.blockedToolbar).not.toContain('text-amber-600');
+		expect(rendered.blockedToolbar).not.toContain('text-amber-700');
 
 		const blockedSave = rendered.blockedToolbar.slice(
 			rendered.blockedToolbar.lastIndexOf('<button'),

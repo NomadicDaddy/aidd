@@ -32,7 +32,9 @@ export type Tone = 'violet' | WebRunOutcomeTone;
 
 /** Foreground text/icon color for a tone (light + dark). */
 export const toneText: Record<Tone, string> = {
-	amber: 'text-amber-600 dark:text-amber-300',
+	// amber-700, not 600: the only tone on the 600 shade, and the only one under 4.5:1 for text -
+	// 3.19 on --card, 2.95 on --background. 700 measures 5.02 and 4.64.
+	amber: 'text-amber-700 dark:text-amber-300',
 	emerald: 'text-emerald-700 dark:text-emerald-300',
 	neutral: 'text-muted-foreground',
 	red: 'text-red-700 dark:text-red-300',
@@ -47,7 +49,7 @@ export const toneText: Record<Tone, string> = {
  * truth: the next change to what "informational" means would miss every one of them.
  */
 export const toneTextHover: Record<Tone, string> = {
-	amber: 'hover:text-amber-600 dark:hover:text-amber-300',
+	amber: 'hover:text-amber-700 dark:hover:text-amber-300',
 	emerald: 'hover:text-emerald-700 dark:hover:text-emerald-300',
 	neutral: 'hover:text-muted-foreground',
 	red: 'hover:text-red-700 dark:hover:text-red-300',

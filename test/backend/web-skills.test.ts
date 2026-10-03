@@ -70,7 +70,9 @@ describe('skills routes', () => {
 
 		const listResponse = await app.handle(new Request('http://localhost/api/v1/skills'));
 		expect(listResponse.status).toBe(200);
-		expect(await listResponse.json()).toEqual({ skills: [demoSkill] });
+		// The catalog leaves the SKILL.md body out; the read below still returns it.
+		const { body: _body, ...listedSkill } = demoSkill;
+		expect(await listResponse.json()).toEqual({ skills: [listedSkill] });
 
 		const readResponse = await app.handle(new Request('http://localhost/api/v1/skills/demo'));
 		expect(readResponse.status).toBe(200);

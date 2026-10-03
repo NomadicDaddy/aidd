@@ -1,4 +1,4 @@
-import type { SkillDefinition } from '../../api/types/skills.ts';
+import type { SkillSummary } from '../../api/types/skills.ts';
 import type { SkillCategoryFilter } from '../../lib/catalogCuration.ts';
 
 import { FilterSearch } from '../../components/shared/FilterFields.tsx';
@@ -26,7 +26,7 @@ export function SkillsFilterToolbar({
 	query: string;
 	setCategory: (category: SkillCategoryFilter) => void;
 	setQuery: (query: string) => void;
-	skills: SkillDefinition[];
+	skills: SkillSummary[];
 }) {
 	const categoryCounts = new Map<SkillCategoryFilter, number>([['all', skills.length]]);
 	for (const skill of skills) {

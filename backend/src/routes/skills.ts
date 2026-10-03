@@ -36,9 +36,17 @@ async function referencesForSkill(context: WebContext, id: string): Promise<stri
 	return [...recipeReferences, ...maturityReferences];
 }
 
+/**
+ * The catalog without each SKILL.md body: the bodies were 93% of a 727 KB response, and the only
+ * reader of one, the Skills page, fetches the selected skill from GET /:id instead.
+ */
+async function catalogEntries(context: WebContext) {
+	return (await context.skillService.listSkills()).map(({ body: _body, ...skill }) => skill);
+}
+
 export function createSkillsRoutes(context: WebContext) {
 	return new Elysia({ prefix: '/api/v1/skills' })
-		.get('/', async () => ({ skills: await context.skillService.listSkills() }))
+		.get('/', async () => ({ skills: await catalogEntries(context) }))
 		.post(
 			'/imports/preview',
 			async ({ body }) => ({

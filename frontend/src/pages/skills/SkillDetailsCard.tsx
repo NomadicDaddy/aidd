@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { Link } from 'react-router';
 
-import type { SkillDefinition } from '../../api/types/skills.ts';
+import type { SkillSummary } from '../../api/types/skills.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
@@ -33,7 +33,7 @@ export function SkillDetailsCard({
 	skill,
 }: {
 	onDelete: () => void;
-	skill: SkillDefinition;
+	skill: SkillSummary;
 }) {
 	const supportCount = skill.supportPaths.length;
 	const headerAction = (

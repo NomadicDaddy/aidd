@@ -28,6 +28,9 @@ export interface ImportedSkillRecord {
 	sourceSha256: string;
 }
 
+/** A catalog entry: every field but the SKILL.md body, which `getSkill(id)` returns. */
+export type SkillSummary = Omit<SkillDefinition, 'body'>;
+
 export interface SkillDefinition {
 	allowedTools?: string;
 	body: string;

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 import type { ResourceUsageRow } from '../../api/types.ts';
 import type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
-import type { SkillDefinition } from '../../api/types/skills.ts';
+import type { SkillSummary } from '../../api/types/skills.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { LaunchForm } from '../../components/shared/LaunchForm.tsx';
@@ -88,7 +88,7 @@ export function SkillsPage() {
 	const selected = filtered.find((skill) => skill.id === selectedId) ?? filtered[0] ?? null;
 	const catalogSelectedId = catalogHasSelection ? (selected?.id ?? null) : null;
 
-	function launch(skill: SkillDefinition): void {
+	function launch(skill: SkillSummary): void {
 		if (!projectDir) return;
 		const request = {
 			args,

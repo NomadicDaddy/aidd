@@ -1,7 +1,12 @@
 import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
 
 import type { BackendName, PipelineSessionRecord } from './types.ts';
-import type { SkillCategory, SkillDefinition, SkillImportPreview } from './types/skills.ts';
+import type {
+	SkillCategory,
+	SkillDefinition,
+	SkillImportPreview,
+	SkillSummary,
+} from './types/skills.ts';
 
 import { apiGet, apiSend } from './client.ts';
 
@@ -25,8 +30,8 @@ export async function deleteSkillImport(id: string): Promise<void> {
 	await apiSend<{ deleted: true }>(`/api/v1/skills/imports/${id}`, 'DELETE');
 }
 
-export async function listSkills(): Promise<SkillDefinition[]> {
-	const response = await apiGet<{ skills: SkillDefinition[] }>('/api/v1/skills');
+export async function listSkills(): Promise<SkillSummary[]> {
+	const response = await apiGet<{ skills: SkillSummary[] }>('/api/v1/skills');
 	return response.skills;
 }
 

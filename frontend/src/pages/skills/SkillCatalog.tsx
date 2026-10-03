@@ -1,5 +1,5 @@
 import type { ResourceUsageRow } from '../../api/types.ts';
-import type { SkillDefinition } from '../../api/types/skills.ts';
+import type { SkillSummary } from '../../api/types/skills.ts';
 import type { FilterRegister } from '../../lib/filterFields.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
@@ -11,7 +11,7 @@ import { MATURITY_SKILL_IDS, RECIPE_SKILL_IDS } from '../../lib/catalogCuration.
 import { cn } from '../../lib/cn.ts';
 import { formatUsageBadge } from '../../lib/usageBadge.ts';
 
-function skillSummary(skill: SkillDefinition): string {
+function skillSummary(skill: SkillSummary): string {
 	return skill.description || skill.usage || skill.title;
 }
 
@@ -40,7 +40,7 @@ export function SkillCatalog({
 	loading: boolean;
 	onSelect: (id: string) => void;
 	selectedId: null | string;
-	skills: SkillDefinition[];
+	skills: SkillSummary[];
 	total: number;
 	usageByResourceId: Map<string, ResourceUsageRow>;
 }) {
@@ -109,7 +109,7 @@ function SkillCatalogRow({
 	skill,
 	usage,
 }: {
-	skill: SkillDefinition;
+	skill: SkillSummary;
 	usage: ResourceUsageRow | undefined;
 }) {
 	const usageLine = formatUsageBadge(usage);

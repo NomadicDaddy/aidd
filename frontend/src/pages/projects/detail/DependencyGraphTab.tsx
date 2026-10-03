@@ -11,6 +11,7 @@ import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { useLaunchRun, useRuns } from '../../../hooks/useRuns.ts';
 import { useViewportFill } from '../../../hooks/useViewportFill.ts';
 import { cn } from '../../../lib/cn.ts';
+import { hasInFlightRun } from '../../runs/runsUtils.ts';
 import { dependencyFilterRegister } from './dependencyFilterRegister.ts';
 import { GRAPH_ZOOM_DEFAULT } from './dependencyGraphComponents.tsx';
 import { DependencyGraphFilters } from './DependencyGraphFilters.tsx';
@@ -65,8 +66,7 @@ export function DependencyGraphTab({
 	const runs = useRuns(projectPath);
 	const hasActiveRun =
 		projectPath.trim().length > 0 &&
-		(runs.data?.pages.some((page) => page.runs.some((run) => run.status === 'running')) ??
-			false);
+		hasInFlightRun(runs.data?.pages.flatMap((page) => page.runs) ?? []);
 	const sourceOptions = sortedSourceOptions(features);
 	const milestoneOptions = milestoneFilterOptions(features, roadmap);
 	const filteredDirectories = features

@@ -48,6 +48,15 @@ export function inFlightRuns(runs: readonly RunRecord[]): RunRecord[] {
 	return runs.filter((run) => !isTerminalStatus(run.status)).sort(compareRunsByLiveness);
 }
 
+// Whether a launch control should hold. A QUEUED run counts: the backend has accepted it and
+// will execute it, so a second Launch is a second paid run of the same work. The feature row and
+// the dependency graph used to check `status === 'running'` alone, while the banner above them
+// already listed queued runs as in progress - the page said a run was coming and the button
+// offered another.
+export function hasInFlightRun(runs: readonly RunRecord[]): boolean {
+	return runs.some((run) => !isTerminalStatus(run.status));
+}
+
 // "2 running · 3 queued" when anything is queued; undefined otherwise so callers keep their copy.
 export function inFlightBreakdown(runs: readonly RunRecord[]): string | undefined {
 	const queued = runs.filter((run) => run.status === 'queued').length;

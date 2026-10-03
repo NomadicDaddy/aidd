@@ -16,6 +16,7 @@ import {
 	useUpdateProjectFeatureStatus,
 } from '../../../hooks/useProjects.ts';
 import { useLaunchRun, useRuns } from '../../../hooks/useRuns.ts';
+import { hasInFlightRun } from '../../runs/runsUtils.ts';
 import { priorityFilterOptions } from './featurePriorityFilters.ts';
 import { compareFeatures } from './features-list-sort.ts';
 import {
@@ -90,8 +91,7 @@ export function useFeaturesTab({
 	// feature over and over. Mirror the page-level ActiveRunsBanner here: while any run for this
 	// project is in progress, the row reflects it (button disabled + "Run active") so a launch is
 	// clearly registered. Same `useRuns(projectPath)` source the banner uses (deduped by key).
-	const hasActiveRun =
-		runs.data?.pages.some((page) => page.runs.some((run) => run.status === 'running')) ?? false;
+	const hasActiveRun = hasInFlightRun(runs.data?.pages.flatMap((page) => page.runs) ?? []);
 	const total = features.length;
 	const milestoneOptions = roadmap?.milestoneOrder ?? Object.keys(roadmap?.milestones ?? {});
 	const sourceOptions = sortedSourceOptions(features);

@@ -48,21 +48,28 @@ export interface ProjectProfileEntry {
 // A project's assurance profile and audit overrides are constant across one audit-manager
 // listing. Load each project's values lazily once and share them across every audit in the
 // listAuditManager call, mirroring the freshnessContexts memoization in definitionSummary.
-export type ProjectProfileCache = Map<string, ProjectProfileEntry>;
+// The cache holds the pending load, not its result: every audit reaches every project at once,
+// and a cache filled only on completion missed for all of them (1,240 loads for 54 projects).
+export type ProjectProfileCache = Map<string, Promise<ProjectProfileEntry>>;
 
-async function resolveProfileEntry(
-	cache: ProjectProfileCache,
-	projectPath: string,
-): Promise<ProjectProfileEntry> {
-	const cached = cache.get(projectPath);
-	if (cached) return cached;
+async function loadProfileEntry(projectPath: string): Promise<ProjectProfileEntry> {
 	const [profile, overrides, packages] = await Promise.all([
 		readProjectAssuranceProfile(projectPath),
 		loadAuditProfileOverrides(projectPath),
 		projectDependencyNames(projectPath),
 	]);
-	const entry: ProjectProfileEntry = { overrides, packages, profile };
-	cache.set(projectPath, entry);
+	return { overrides, packages, profile };
+}
+
+function resolveProfileEntry(
+	cache: ProjectProfileCache,
+	projectPath: string,
+): Promise<ProjectProfileEntry> {
+	let entry = cache.get(projectPath);
+	if (!entry) {
+		entry = loadProfileEntry(projectPath);
+		cache.set(projectPath, entry);
+	}
 	return entry;
 }
 

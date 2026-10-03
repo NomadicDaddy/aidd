@@ -70,7 +70,25 @@ export async function scanCliActiveRunProjectDirs(
 	return [...projectDirs];
 }
 
-export async function listCliActiveRuns(ctx: CliActiveRunsContext): Promise<RunRecord[]> {
+/**
+ * How long a walk of the application roots is reused. The walk finds which projects hold CLI run
+ * records; the records themselves are always read fresh. Every first page of the runs list and the
+ * sidebar's active count used to repeat the walk, about 240 ms each on this fleet. A project that
+ * gets its first CLI run therefore shows in the list up to this long late; a lookup by run id that
+ * misses walks again at once, so Stop and output never wait on it.
+ */
+const PROJECT_DIR_REUSE_MS = 10_000;
+let projectDirWalk: { at: number; dirs: string[]; key: string } | undefined;
+
+async function cliActiveRunProjectDirs(
+	ctx: CliActiveRunsContext,
+	fresh: boolean,
+): Promise<string[]> {
+	const key = JSON.stringify([ctx.config.web.allowedRoots, ctx.config.web.ignoredFolders]);
+	const now = Date.now();
+	if (!fresh && projectDirWalk?.key === key && now - projectDirWalk.at < PROJECT_DIR_REUSE_MS) {
+		return projectDirWalk.dirs;
+	}
 	const projectDirs = new Set<string>();
 	await Promise.all(
 		ctx.config.web.allowedRoots.map(async (root) => {
@@ -82,8 +100,16 @@ export async function listCliActiveRuns(ctx: CliActiveRunsContext): Promise<RunR
 			}
 		}),
 	);
+	projectDirWalk = { at: now, dirs: [...projectDirs], key };
+	return projectDirWalk.dirs;
+}
+
+export async function listCliActiveRuns(
+	ctx: CliActiveRunsContext,
+	fresh = false,
+): Promise<RunRecord[]> {
 	const rows = await Promise.all(
-		[...projectDirs].map((projectDir) =>
+		(await cliActiveRunProjectDirs(ctx, fresh)).map((projectDir) =>
 			readCliActiveRunRecords(projectDir, { includeCompleted: true }).catch(
 				(error: unknown) => {
 					webLogger.warn({ error, projectDir }, 'Failed to read CLI active runs');
@@ -111,8 +137,9 @@ export async function findCliActiveRun(
 	ctx: CliActiveRunsContext,
 	id: string,
 ): Promise<CliActiveRunRecord | undefined> {
-	const allRuns = await listCliActiveRuns(ctx);
-	const match = allRuns.find((run) => run.id === id);
+	const match =
+		(await listCliActiveRuns(ctx)).find((run) => run.id === id) ??
+		(await listCliActiveRuns(ctx, true)).find((run) => run.id === id);
 	if (!match) return undefined;
 	const records = await readCliActiveRunRecords(match.projectPath, {
 		includeCompleted: true,

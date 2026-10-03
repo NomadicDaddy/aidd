@@ -250,7 +250,10 @@ export function FeatureDetailsDialog({
 												    them: without this the two keys would look absent from
 												    the record rather than derived from elsewhere. */}
 													{row.derived ? (
-														<span className="block text-xs text-muted-foreground/70">
+														// Full muted, not /70: at 70% it measured 3.09:1 light and 4.04:1
+														// dark, under the 4.5:1 text floor at 12px. The smaller size already
+														// sets it below the key it qualifies.
+														<span className="block text-xs text-muted-foreground">
 															derived
 														</span>
 													) : null}

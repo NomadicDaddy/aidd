@@ -91,6 +91,7 @@
 			"docs/reference/what-aidd-modifies.md",
 			"frontend/public/favicon.svg",
 			"frontend/public/site.webmanifest",
+			"frontend/public/theme-init.js",
 			"licenses/distributed-materials.json",
 			"prompts/_cli/claude-code.md",
 			"prompts/_cli/cline.md",

@@ -50,12 +50,26 @@ function safeRelativePath(configuredPath: string): string {
 	return normalizedPath;
 }
 
-export async function listTrackedFiles(
+/**
+ * Files under the distributed surfaces that a release would carry: tracked files and untracked ones
+ * git does not ignore. Untracked files count because the gate's job is to catch a new file before it
+ * is committed; listing tracked files only let a new unclassified panel script pass a full gate and
+ * fail only once committed (fa764811).
+ */
+export async function listDistributableFiles(
 	root: string,
 	targets: readonly string[],
 ): Promise<string[]> {
 	const safeTargets = targets.map(safeRelativePath);
-	const proc = Bun.spawn(['git', '-C', root, 'ls-files', '--', ...safeTargets], {
+	const command = [
+		'ls-files',
+		'--cached',
+		'--others',
+		'--exclude-standard',
+		'--',
+		...safeTargets,
+	];
+	const proc = Bun.spawn(['git', '-C', root, ...command], {
 		stderr: 'pipe',
 		stdout: 'pipe',
 		windowsHide: true,
@@ -66,7 +80,7 @@ export async function listTrackedFiles(
 		new Response(proc.stdout).text(),
 	]);
 	if (code !== 0) {
-		throw new Error(`Cannot enumerate distributed tracked files: ${stderr.trim()}`);
+		throw new Error(`Cannot enumerate distributed files: ${stderr.trim()}`);
 	}
 	const trackedPaths = uniqueSorted(
 		stdout
@@ -103,7 +117,7 @@ export async function discoverDistributedPaths(
 		...surfaces.publicDocumentRoots,
 		...surfaces.publicStaticAssetRoots,
 	].map(safeRelativePath);
-	const paths = new Set(await listTrackedFiles(root, targets));
+	const paths = new Set(await listDistributableFiles(root, targets));
 	for (const registeredPath of registeredPaths) {
 		const safePath = safeRelativePath(registeredPath);
 		if (belongsToSurfaces(safePath, surfaces)) paths.add(safePath);

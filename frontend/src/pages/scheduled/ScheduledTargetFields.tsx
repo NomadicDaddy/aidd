@@ -14,6 +14,7 @@ import { useRecipes } from '../../hooks/useRecipes.ts';
 import { useSkills } from '../../hooks/useSkills.ts';
 import { cn } from '../../lib/cn.ts';
 import { fieldLabelClass, selectClass, textareaClass } from '../../lib/formStyles.ts';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { compactFieldMeasureClass } from '../../lib/typography.ts';
 import { autoParameters } from '../recipes/recipe-parameters.ts';
 import { findTargetRecipe } from './scheduledTargetRecipe.ts';
@@ -148,6 +149,7 @@ export function ScheduledTargetFields({
 			{targetType === 'skill' && (
 				<FieldRow label="Arguments">
 					<Input
+						{...machineTextProps}
 						onChange={(e) => onArgsChange(e.target.value)}
 						placeholder="--filter remediation-*"
 						value={args}

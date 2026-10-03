@@ -14,6 +14,7 @@ import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow, FormGrid } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { TabPanel } from '../../components/ui/tabs.tsx';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { compactFieldMeasureClass } from '../../lib/typography.ts';
 import { DirectorProfileSection } from '../director/DirectorProfileSection.tsx';
 import { BackendDefaultsTable } from './BackendDefaultsTable.tsx';
@@ -82,6 +83,7 @@ export function SettingsSectionTabs({
 							hint="Resolves bare project names and provides the fallback discovery root."
 							label="Fallback discovery root">
 							<Input
+								{...machineTextProps}
 								className="font-mono"
 								onChange={(event) =>
 									setField('applicationsRoot', nullableText(event.target.value))

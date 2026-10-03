@@ -11,6 +11,7 @@ import { Input } from '../../components/ui/input.tsx';
 import { useSkillImports } from '../../hooks/useSkills.ts';
 import { SKILL_CATEGORY_FILTERS } from '../../lib/catalogCuration.ts';
 import { fieldErrorClass, selectClass } from '../../lib/formStyles.ts';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { toneText } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 
@@ -151,6 +152,7 @@ export function SkillImportDialog({ onClose, open }: { onClose: () => void; open
 						    the only path on this surface set in Geist Sans — the skill id, the
 						    support-file paths and the model chip beside it are all mono. */}
 						<Input
+							{...machineTextProps}
 							className="font-mono"
 							name="skillImportPath"
 							onChange={(event) => {

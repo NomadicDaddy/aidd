@@ -7,6 +7,7 @@ import { Button, IconButton } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldRow, FormGrid } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { ListEditor } from './ListEditor.tsx';
 
 export function SharedMetadataSection({
@@ -71,6 +72,7 @@ export function SharedMetadataSection({
 							<FormGrid className="flex-1 gap-2 @min-[45rem]:grid-cols-2">
 								<FieldRow label="Source">
 									<Input
+										{...machineTextProps}
 										aria-label={`Shared file ${index + 1} source`}
 										className="font-mono"
 										onChange={(event) =>
@@ -82,6 +84,7 @@ export function SharedMetadataSection({
 								</FieldRow>
 								<FieldRow label="Target (optional)">
 									<Input
+										{...machineTextProps}
 										aria-label={`Shared file ${index + 1} target`}
 										className="font-mono"
 										onChange={(event) =>

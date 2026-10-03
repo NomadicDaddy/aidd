@@ -5,6 +5,7 @@ import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
 import { textareaClass } from '../../lib/formStyles.ts';
+import { machineTextProps } from '../../lib/machineText.ts';
 
 // The optional project spec source (none / pasted text / file path), shared by the create lane.
 export function ProjectSpecField({
@@ -53,6 +54,7 @@ export function ProjectSpecField({
 			) : null}
 			{specKind === 'path' ? (
 				<Input
+					{...machineTextProps}
 					onChange={(event) => setSpecPath(event.target.value)}
 					placeholder="/path/to/spec.md"
 					value={specPath}

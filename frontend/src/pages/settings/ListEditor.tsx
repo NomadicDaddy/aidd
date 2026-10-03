@@ -7,6 +7,7 @@ import { Button, IconButton } from '../../components/ui/button.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { cn } from '../../lib/cn.ts';
 import { fieldErrorClass } from '../../lib/formStyles.ts';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { sectionCaptionClass } from '../../lib/typography.ts';
 import { describeListEntry } from './settingsUtils.ts';
 
@@ -85,6 +86,7 @@ export function ListEditor({
 								<div className="min-w-0 space-y-1" key={index}>
 									<div className="flex min-w-0 gap-2">
 										<Input
+											{...machineTextProps}
 											aria-describedby={error ? errorId : undefined}
 											aria-invalid={Boolean(error) || undefined}
 											aria-label={`${label} entry ${index + 1}`}

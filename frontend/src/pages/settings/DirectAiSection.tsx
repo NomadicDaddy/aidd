@@ -11,6 +11,7 @@ import { FieldCheckbox, FieldRow, FormGrid } from '../../components/ui/field.tsx
 import { Input } from '../../components/ui/input.tsx';
 import { providerLabel, providerOptions } from '../../lib/backends.ts';
 import { selectClass } from '../../lib/formStyles.ts';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { directAiBaseUrlValidationError } from './settingsBaseUrlValidation.ts';
 import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
 
@@ -113,6 +114,7 @@ export function DirectAiSection({
 						}
 						label="Model">
 						<Input
+							{...machineTextProps}
 							className="font-mono"
 							disabled={disabled}
 							onChange={(event) =>
@@ -132,6 +134,7 @@ export function DirectAiSection({
 						}
 						label="Base URL">
 						<Input
+							{...machineTextProps}
 							className="font-mono"
 							disabled={disabled}
 							inputMode="url"

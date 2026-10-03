@@ -5,6 +5,7 @@ import { FieldRow, FormGrid } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { backendOptions } from '../../lib/backends.ts';
 import { selectClass } from '../../lib/formStyles.ts';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { nullableText, textValue } from './settingsUtils.ts';
 
 export function TriumvirateSection({
@@ -51,6 +52,7 @@ export function TriumvirateSection({
 				</FieldRow>
 				<FieldRow label="Secondary Model">
 					<Input
+						{...machineTextProps}
 						className="font-mono"
 						onChange={(event) =>
 							setTriumvirateField('secondaryModel', nullableText(event.target.value))
@@ -80,6 +82,7 @@ export function TriumvirateSection({
 				</FieldRow>
 				<FieldRow label="Overseer Model">
 					<Input
+						{...machineTextProps}
 						className="font-mono"
 						onChange={(event) =>
 							setTriumvirateField('overseerModel', nullableText(event.target.value))
@@ -109,6 +112,7 @@ export function TriumvirateSection({
 				</FieldRow>
 				<FieldRow label="Execution Model">
 					<Input
+						{...machineTextProps}
 						className="font-mono"
 						onChange={(event) =>
 							setTriumvirateField('execModel', nullableText(event.target.value))

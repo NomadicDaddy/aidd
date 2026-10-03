@@ -11,6 +11,7 @@ import { Input } from '../../components/ui/input.tsx';
 import { useLaunchDefaults } from '../../hooks/useLaunchDefaults.ts';
 import { backendOptions } from '../../lib/backends.ts';
 import { selectClass } from '../../lib/formStyles.ts';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { toneText } from '../../lib/tones.ts';
 import { EffectiveModelHint } from './EffectiveModelHint.tsx';
 import { nullableText, shadowingBackendModel, textValue } from './settingsUtils.ts';
@@ -102,6 +103,7 @@ export function GeneralDefaultsSection({
 					}
 					label="Default Model">
 					<Input
+						{...machineTextProps}
 						className="font-mono"
 						onChange={(event) => setField('model', nullableText(event.target.value))}
 						placeholder={baseDisplay.modelPlaceholder}
@@ -135,6 +137,7 @@ export function GeneralDefaultsSection({
 					}
 					label="Code Model">
 					<Input
+						{...machineTextProps}
 						className="font-mono"
 						onChange={(event) =>
 							setField('codeModel', nullableText(event.target.value))
@@ -156,6 +159,7 @@ export function GeneralDefaultsSection({
 					}
 					label="Audit Model">
 					<Input
+						{...machineTextProps}
 						className="font-mono"
 						onChange={(event) =>
 							setField('auditModel', nullableText(event.target.value))

@@ -6,6 +6,7 @@ import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { formatZonedDate } from '../../lib/formatters.ts';
 import { fieldErrorClass, fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { toneText } from '../../lib/tones.ts';
 import { compactFieldMeasureClass, microLabelClass } from '../../lib/typography.ts';
 import { useScheduledDraft } from './scheduledDraftContext.ts';
@@ -92,6 +93,7 @@ export function ScheduleFields(props: ScheduleFieldsProps) {
 						label="Five-field cron"
 						required>
 						<Input
+							{...machineTextProps}
 							className="font-mono"
 							onBlur={() => {
 								props.onValidate();

@@ -13,6 +13,7 @@ import { Input } from '../../components/ui/input.tsx';
 import { SecretInput } from '../../components/ui/secret-input.tsx';
 import { providerLabel, providerOptions } from '../../lib/backends.ts';
 import { selectClass } from '../../lib/formStyles.ts';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { compactFieldMeasureClass } from '../../lib/typography.ts';
 import { providerBaseUrlValidationError } from './settingsBaseUrlValidation.ts';
 import { nullableText, textValue } from './settingsUtils.ts';
@@ -141,6 +142,7 @@ function ProviderCard({
 					<FormGrid className="@min-[45rem]:grid-cols-2 @min-[61rem]:grid-cols-3">
 						<FieldRow error={baseUrlError} label="Base URL">
 							<Input
+								{...machineTextProps}
 								className="font-mono"
 								inputMode="url"
 								onChange={(event) =>
@@ -153,6 +155,7 @@ function ProviderCard({
 						</FieldRow>
 						<FieldRow label="Model">
 							<Input
+								{...machineTextProps}
 								className="font-mono"
 								onChange={(event) =>
 									update({ model: nullableText(event.target.value) })

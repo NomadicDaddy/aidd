@@ -3,6 +3,7 @@ import type { WebConfigSettings } from '../../api/types.ts';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldCheckbox, FieldRow, FormGrid } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { nullableText, textValue } from './settingsUtils.ts';
 
 export function SpernakitScaffoldingSection({
@@ -26,6 +27,7 @@ export function SpernakitScaffoldingSection({
 					hint="Optional path to a local Spernakit checkout's init script. When set, Spernakit apps are created from that checkout; leave empty to clone the template on demand."
 					label="Spernakit Init Script">
 					<Input
+						{...machineTextProps}
 						className="font-mono"
 						onChange={(event) =>
 							setField('spernakitInitScript', nullableText(event.target.value))
@@ -38,6 +40,7 @@ export function SpernakitScaffoldingSection({
 					hint="Owner/repo cloned when no init script is configured. Defaults to NomadicDaddy/spernakit."
 					label="Spernakit Template Repo">
 					<Input
+						{...machineTextProps}
 						onChange={(event) =>
 							setField('spernakitTemplateRepo', nullableText(event.target.value))
 						}
@@ -49,6 +52,7 @@ export function SpernakitScaffoldingSection({
 					hint="Optional git tag or branch to clone. Changing it rebuilds the cached clone."
 					label="Spernakit Template Ref">
 					<Input
+						{...machineTextProps}
 						className="font-mono"
 						onChange={(event) =>
 							setField('spernakitTemplateRef', nullableText(event.target.value))

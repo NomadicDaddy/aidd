@@ -6,6 +6,7 @@ import { ConfirmDialog } from '../../components/shared/ConfirmDialog.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { FieldCheckbox, FieldRow, FormGrid } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { proseMeasureClass } from '../../lib/typography.ts';
 import { ListEditor } from './ListEditor.tsx';
 
@@ -68,6 +69,7 @@ export function NetworkAccessSection({
 								hint="Saving a new hostname restarts aidd-web and reloads this page."
 								label="Hostname">
 								<Input
+									{...machineTextProps}
 									onChange={(event) => setField('hostname', event.target.value)}
 									placeholder="127.0.0.1"
 									value={form.hostname}

@@ -5,6 +5,7 @@ import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { backendLabel } from '../../lib/backends.ts';
 import { selectClass } from '../../lib/formStyles.ts';
+import { machineTextProps } from '../../lib/machineText.ts';
 import { toneText } from '../../lib/tones.ts';
 import { nullableNumber, nullableText, numberValue, textValue } from './settingsUtils.ts';
 
@@ -75,6 +76,7 @@ export function BackendDefaultFields({
 					label="Model"
 					labelHidden={!showLabels}>
 					<Input
+						{...machineTextProps}
 						aria-label={`${cliLabel} model`}
 						className="font-mono"
 						onChange={(event) =>

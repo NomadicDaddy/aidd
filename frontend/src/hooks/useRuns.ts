@@ -16,6 +16,7 @@ import {
 	launchRun,
 	stopRun,
 } from '../api/runs.ts';
+import { reportFailure } from '../lib/failureToast.ts';
 import { beginLaunch, endLaunch, trackLaunchedRun } from '../lib/launchedRuns.ts';
 import { clearStopRequested, markStopRequested } from '../lib/stopRequests.ts';
 
@@ -154,13 +155,20 @@ export function useRunControls() {
 		void queryClient.invalidateQueries({ queryKey: ['projects'] });
 	};
 	return {
-		kill: useMutation({ mutationFn: killRun, onSuccess }),
+		kill: useMutation({
+			mutationFn: killRun,
+			onError: reportFailure('Killing the run'),
+			onSuccess,
+		}),
 		stop: useMutation({
 			mutationFn: stopRun,
 			// Mark at click time so the row flips to "Stopping…" immediately; the refetch then
 			// carries the server-derived RunRecord.stopRequested. Roll back if the request fails
 			// (e.g. the run turned terminal first) so the row never shows a stop that never landed.
-			onError: (_error, id) => clearStopRequested(id),
+			onError: (error, id) => {
+				clearStopRequested(id);
+				reportFailure('Stopping the run')(error);
+			},
 			onMutate: (id) => markStopRequested(id),
 			onSuccess,
 		}),

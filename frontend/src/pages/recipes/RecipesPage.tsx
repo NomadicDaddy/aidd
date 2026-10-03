@@ -19,6 +19,7 @@ import { useRecipes } from '../../hooks/useRecipes.ts';
 import { useTelemetryResources } from '../../hooks/useTelemetry.ts';
 import { catalogFilterSearchParams, readCatalogQuery } from '../../lib/catalogFilterParams.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
+import { reportFailure } from '../../lib/failureToast.ts';
 import { filterRegister } from '../../lib/filterFields.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { recipeLaunchBlocker, resolveRecipeLaunchProject } from './recipe-launch.ts';
@@ -124,6 +125,7 @@ export function RecipesPage() {
 		recipes.launchRecipe.mutate(
 			{ id: selectedRecipe.id, launchTarget, parameters, projectDir: targetProject.path },
 			{
+				onError: reportFailure('Launching the recipe'),
 				onSuccess: (session) => {
 					toast.success('Pipeline session started');
 					// Land in the unified Runs feed with the new session selected and expanded;

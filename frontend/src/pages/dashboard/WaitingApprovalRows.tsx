@@ -16,6 +16,7 @@ import {
 	useUpdateProjectFeatureStatus,
 } from '../../hooks/useProjectFeatures.ts';
 import { riskLabel, riskTone } from '../../lib/directorConstants.ts';
+import { reportFailure } from '../../lib/failureToast.ts';
 import { formatRelativeAge } from '../../lib/formatters.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { SuggestionSummary } from './SuggestionSummary.tsx';
@@ -146,6 +147,7 @@ export function SuggestionRow({
 							// Mirrors the Director page: a race lost to the auto-launcher is
 							// news, not an error, and the row must not report a failure.
 							launchSuggestion.mutate(suggestion.id, {
+								onError: reportFailure('Launching the suggestion'),
 								onSuccess(outcome) {
 									if (outcome.claimedElsewhere) {
 										toast.info(
@@ -168,7 +170,11 @@ export function SuggestionRow({
 					<Button
 						aria-label={`Dismiss suggestion: ${suggestion.title}`}
 						disabled={pending}
-						onClick={() => dismissSuggestion.mutate(suggestion.id)}
+						onClick={() =>
+							dismissSuggestion.mutate(suggestion.id, {
+								onError: reportFailure('Dismissing the suggestion'),
+							})
+						}
 						size="compact"
 						variant="ghost">
 						<X className="h-3.5 w-3.5" />
@@ -205,10 +211,10 @@ export function WaitingFeatureRow({
 							aria-label={`Approve feature: ${title}`}
 							disabled={pending}
 							onClick={() =>
-								approveMutation.mutate({
-									decisionRequired: false,
-									featureId: feature.id,
-								})
+								approveMutation.mutate(
+									{ decisionRequired: false, featureId: feature.id },
+									{ onError: reportFailure('Approving the feature') },
+								)
 							}
 							size="compact"
 							variant="secondary">
@@ -219,7 +225,10 @@ export function WaitingFeatureRow({
 							aria-label={`Dismiss feature: ${title}`}
 							disabled={pending}
 							onClick={() =>
-								dismissMutation.mutate({ featureId: feature.id, status: 'backlog' })
+								dismissMutation.mutate(
+									{ featureId: feature.id, status: 'backlog' },
+									{ onError: reportFailure('Dismissing the feature') },
+								)
 							}
 							size="compact"
 							variant="ghost">

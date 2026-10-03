@@ -9,6 +9,7 @@ import { usePipelineSessions } from '../../hooks/usePipelineSessions.ts';
 import { useProjectNames } from '../../hooks/useProjects.ts';
 import { useContinueRun, useRunControls, useRunRecord, useRuns } from '../../hooks/useRuns.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
+import { reportFailure } from '../../lib/failureToast.ts';
 import { consumeInitialRunScroll } from './runsUtils.ts';
 import {
 	buildProjectRouteIdByPath,
@@ -205,6 +206,7 @@ export function useRunsPage() {
 			target: '/api/v1/pipeline-sessions/:id/stop',
 		});
 		pipelineSessions.stopSession.mutate(id, {
+			onError: reportFailure('Stopping the session'),
 			onSuccess: () => toast.success('Session stopped'),
 		});
 	}

@@ -12,6 +12,7 @@ import {
 	saveRecipe,
 } from '../api/recipes.ts';
 import { retryUnlessClientError } from '../api/retry.ts';
+import { reportFailure } from '../lib/failureToast.ts';
 
 export function useRecipe(id: string | undefined) {
 	return useQuery({
@@ -34,7 +35,13 @@ export function useRecipes() {
 		void queryClient.invalidateQueries({ queryKey: ['nav-counts'] });
 	};
 	return {
-		deleteRecipe: useMutation({ mutationFn: deleteRecipe, onSuccess: refreshRecipes }),
+		// Hook-level errors where no consumer reports its own. launchRecipe is the exception: two of
+		// its three callers already say what failed in their own words, so the silent one says it too.
+		deleteRecipe: useMutation({
+			mutationFn: deleteRecipe,
+			onError: reportFailure('Deleting the recipe'),
+			onSuccess: refreshRecipes,
+		}),
 		launchRecipe: useMutation({
 			mutationFn: launchRecipe,
 			onSuccess: () => {
@@ -46,6 +53,7 @@ export function useRecipes() {
 		recipes,
 		reloadRecipe: useMutation({
 			mutationFn: reloadRecipe,
+			onError: reportFailure('Reloading the recipe'),
 			onSuccess: (recipe) => {
 				queryClient.setQueryData(['recipe', recipe.id], recipe);
 				refreshRecipes();
@@ -53,10 +61,12 @@ export function useRecipes() {
 		}),
 		reloadRecipes: useMutation({
 			mutationFn: reloadRecipes,
+			onError: reportFailure('Reloading the recipes'),
 			onSuccess: refreshRecipes,
 		}),
 		saveRecipe: useMutation({
 			mutationFn: (recipe: RecipeDefinition) => saveRecipe(recipe),
+			onError: reportFailure('Saving the recipe'),
 			onSuccess: (recipe) => {
 				queryClient.setQueryData(['recipe', recipe.id], recipe);
 				refreshRecipes();

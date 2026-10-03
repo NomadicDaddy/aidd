@@ -134,8 +134,10 @@ export function RecipeDetailPage() {
 	function confirmDelete(): void {
 		if (!id) return;
 		recipes.deleteRecipe.mutate(id, {
-			onSettled: () => setShowDeleteConfirm(false),
+			// Closed on success only. Closing on settle hid the confirmation the moment a delete
+			// failed, so the only sign anything had gone wrong went with it.
 			onSuccess: () => {
+				setShowDeleteConfirm(false);
 				toast.success('Recipe deleted');
 				navigate('/recipes');
 			},

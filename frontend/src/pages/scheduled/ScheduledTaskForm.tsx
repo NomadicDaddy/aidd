@@ -1,6 +1,5 @@
 import type { ScheduledTaskUpdate } from 'aidd-shared/contracts/scheduled-tasks';
 
-import { type Dispatch, type SetStateAction } from 'react';
 import { toast } from 'sonner';
 
 import type { ScheduleIssue } from './scheduleBuilder.ts';
@@ -8,8 +7,6 @@ import type { ScheduledSaveTarget } from './scheduledSaveReadiness.ts';
 
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
-import { FieldRow } from '../../components/ui/field.tsx';
-import { Input } from '../../components/ui/input.tsx';
 import { useScheduledTasks } from '../../hooks/useScheduledTasks.ts';
 import { buildSchedule, scheduleIssue } from './scheduleBuilder.ts';
 import { useScheduledDraft } from './scheduledDraftContext.ts';
@@ -21,7 +18,11 @@ import {
 	ScheduledFixedScopeSection,
 	ScheduledScopeAndSafetySections,
 } from './ScheduledScopeSafetySections.tsx';
-import { ScheduledFixedTarget, ScheduledTargetFields } from './ScheduledTargetFields.tsx';
+import {
+	ScheduledFixedTarget,
+	ScheduledNameField,
+	ScheduledTargetFields,
+} from './ScheduledTargetFields.tsx';
 import { useTargetRecipe } from './scheduledTargetRecipe.ts';
 import { ScheduleFields } from './ScheduleFields.tsx';
 import { buildScheduledTarget } from './targetBuilder.ts';
@@ -36,7 +37,8 @@ export function ScheduledTaskForm({
 }) {
 	// The draft lives on the route, not here: the page shell guards this form's exits and needs the
 	// same answer to "is anything unsaved?" that the form does.
-	const { dirty, draft, patch, scheduleDirty, scheduleTouched, task, touchSchedule } =
+	// It reads the draft only to save it; every field writes through the context itself.
+	const { dirty, draft, scheduleDirty, scheduleTouched, task, touchSchedule } =
 		useScheduledDraft();
 	const {
 		applyChanges,
@@ -103,12 +105,6 @@ export function ScheduledTaskForm({
 	});
 	const pristineEdit = Boolean(task) && !dirty && !saveReadiness.blocked;
 	const saveDisabled = saveReadiness.blocked || pristineEdit;
-	// The parameter editor updates one key of a map it does not own, so it needs the functional
-	// form; `patch` takes it and applies it against the draft the provider holds.
-	const setParameters: Dispatch<SetStateAction<Record<string, string>>> = (update) =>
-		patch((current) => ({
-			parameters: typeof update === 'function' ? update(current.parameters) : update,
-		}));
 	function save(): void {
 		let input: ScheduledTaskUpdate;
 		try {
@@ -161,44 +157,11 @@ export function ScheduledTaskForm({
 				<div className={`grid gap-3 sm:grid-cols-2 ${scheduledFormTwoColumnMeasureClass}`}>
 					{system ? (
 						<>
-							<FieldRow label="Name" required>
-								<Input
-									onChange={(event) => patch({ name: event.target.value })}
-									placeholder="Nightly hygiene sweep"
-									value={name}
-								/>
-							</FieldRow>
+							<ScheduledNameField />
 							<ScheduledFixedTarget />
 						</>
 					) : (
-						<ScheduledTargetFields
-							args={args}
-							nameField={
-								<FieldRow label="Name" required>
-									<Input
-										onChange={(event) => patch({ name: event.target.value })}
-										placeholder="Nightly hygiene sweep"
-										value={name}
-									/>
-								</FieldRow>
-							}
-							onArgsChange={(value) => patch({ args: value })}
-							onPromptChange={(value) => patch({ prompt: value })}
-							onTargetIdChange={(value) => patch({ targetId: value })}
-							onTargetTypeChange={(nextType) =>
-								patch({
-									applyChanges: nextType === 'recipe',
-									parameters: {},
-									targetId: '',
-									targetType: nextType,
-								})
-							}
-							parameters={parameters}
-							prompt={prompt}
-							setParameters={setParameters}
-							targetId={targetId}
-							targetType={targetType}
-						/>
+						<ScheduledTargetFields />
 					)}
 				</div>
 			</ScheduledFormSection>

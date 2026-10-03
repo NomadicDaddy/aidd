@@ -1,5 +1,3 @@
-import type { Dispatch, ReactNode, SetStateAction } from 'react';
-
 import { default as Lock } from 'lucide-react/dist/esm/icons/lock';
 import { useId } from 'react';
 
@@ -17,22 +15,23 @@ import { fieldLabelClass, selectClass, textareaClass } from '../../lib/formStyle
 import { machineTextProps } from '../../lib/machineText.ts';
 import { compactFieldMeasureClass } from '../../lib/typography.ts';
 import { autoParameters } from '../recipes/recipe-parameters.ts';
+import { useScheduledDraft } from './scheduledDraftContext.ts';
 import { findTargetRecipe } from './scheduledTargetRecipe.ts';
 
 type TargetType = SelectableTargetType;
 
-interface ScheduledTargetFieldsProps {
-	args: string;
-	nameField: ReactNode;
-	onArgsChange: (value: string) => void;
-	onPromptChange: (value: string) => void;
-	onTargetIdChange: (value: string) => void;
-	onTargetTypeChange: (value: TargetType) => void;
-	parameters: Record<string, string>;
-	prompt: string;
-	setParameters: Dispatch<SetStateAction<Record<string, string>>>;
-	targetId: string;
-	targetType: TargetType;
+/** The task's name, read from and written to the draft like every other field of this form. */
+export function ScheduledNameField() {
+	const { draft, patch } = useScheduledDraft();
+	return (
+		<FieldRow label="Name" required>
+			<Input
+				onChange={(event) => patch({ name: event.target.value })}
+				placeholder="Nightly hygiene sweep"
+				value={draft.name}
+			/>
+		</FieldRow>
+	);
 }
 
 export function ScheduledFixedTarget() {
@@ -59,19 +58,22 @@ export function ScheduledFixedTarget() {
 	);
 }
 
-export function ScheduledTargetFields({
-	args,
-	nameField,
-	onArgsChange,
-	onPromptChange,
-	onTargetIdChange,
-	onTargetTypeChange,
-	parameters,
-	prompt,
-	setParameters,
-	targetId,
-	targetType,
-}: ScheduledTargetFieldsProps) {
+/**
+ * The target half of the scheduled form. It reads and writes the draft through the route's context,
+ * the way its sibling ScheduleFields does; it used to take ten props the form only passed back down,
+ * plus four one-line patch wrappers and a SetStateAction adapter for the parameters.
+ */
+export function ScheduledTargetFields() {
+	const { draft, patch } = useScheduledDraft();
+	const { args, parameters, prompt, targetId, targetType } = draft;
+	// Changing the kind of target invalidates everything chosen for the old one.
+	const onTargetTypeChange = (nextType: TargetType) =>
+		patch({
+			applyChanges: nextType === 'recipe',
+			parameters: {},
+			targetId: '',
+			targetType: nextType,
+		});
 	const recipeQuery = useRecipes();
 	const skillQuery = useSkills();
 	const auditQuery = useAuditManager();
@@ -123,7 +125,7 @@ export function ScheduledTargetFields({
 					required>
 					<textarea
 						className={textareaClass}
-						onChange={(event) => onPromptChange(event.target.value)}
+						onChange={(event) => patch({ prompt: event.target.value })}
 						placeholder="Summarize the open findings and file the ones that still reproduce."
 						rows={5}
 						value={prompt}
@@ -133,7 +135,7 @@ export function ScheduledTargetFields({
 				<FieldRow label="Target" required>
 					<select
 						className={cn(selectClass, targetNameClass)}
-						onChange={(e) => onTargetIdChange(e.target.value)}
+						onChange={(e) => patch({ targetId: e.target.value })}
 						value={targetId}>
 						<option value="">Select target</option>
 						{targetType === 'audit' && <option value="*">All audits</option>}
@@ -145,12 +147,12 @@ export function ScheduledTargetFields({
 					</select>
 				</FieldRow>
 			)}
-			{nameField}
+			<ScheduledNameField />
 			{targetType === 'skill' && (
 				<FieldRow label="Arguments">
 					<Input
 						{...machineTextProps}
-						onChange={(e) => onArgsChange(e.target.value)}
+						onChange={(e) => patch({ args: e.target.value })}
 						placeholder="--filter remediation-*"
 						value={args}
 					/>
@@ -161,9 +163,11 @@ export function ScheduledTargetFields({
 					<FieldRow key={parameter.name} label={parameter.name}>
 						<Input
 							onChange={(event) =>
-								setParameters((current) => ({
-									...current,
-									[parameter.name]: event.target.value,
+								patch((current) => ({
+									parameters: {
+										...current.parameters,
+										[parameter.name]: event.target.value,
+									},
 								}))
 							}
 							placeholder={parameter.description ?? parameter.name}

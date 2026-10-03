@@ -404,7 +404,8 @@ test('Scheduled forms group fields and make every save gate visible', async () =
 	);
 	expect(picker).toContain('{projects.length} of {availableProjects.length} selected');
 	expect(picker).toContain('onClick={() => onChange([])}');
-	expect(form).toContain('placeholder="Nightly hygiene sweep"');
+	// The name field moved into ScheduledTargetFields as ScheduledNameField, read from context.
+	expect(target).toContain('placeholder="Nightly hygiene sweep"');
 	expect(target).toContain('placeholder="--filter remediation-*"');
 	expect(target).toContain('name: item.id');
 	expect(target).toContain("targetType === 'skill' ? undefined : 'font-mono'");
@@ -424,7 +425,7 @@ test('Scheduled forms group fields and make every save gate visible', async () =
 		target.indexOf('<FieldRow label="Target" required>'),
 	);
 	expect(target.indexOf('<FieldRow label="Target" required>')).toBeLessThan(
-		target.indexOf('{nameField}'),
+		target.indexOf('<ScheduledNameField />'),
 	);
 	expect(safety).toContain('customBadge');
 	expect(safety).toContain('label="Launch target"');
@@ -583,4 +584,25 @@ test('The scheduled draft provider resets on close and on switching tasks, witho
 	expect(provider).toContain('dirty: isDraftDirty(state.draft, state.initial)');
 	expect(provider).toContain('scheduleDirty: isScheduleDirty(state.draft, state.initial)');
 	expect(context).toContain('use(ScheduledDraftContext)');
+});
+
+test('The target fields read the draft from context instead of ten drilled props', async () => {
+	const [target, form] = await Promise.all([
+		source('frontend/src/pages/scheduled/ScheduledTargetFields.tsx'),
+		source('frontend/src/pages/scheduled/ScheduledTaskForm.tsx'),
+	]);
+	expect(target).toContain('useScheduledDraft()');
+	expect(target).toContain('export function ScheduledTargetFields() {');
+	for (const drilled of [
+		'onArgsChange=',
+		'onPromptChange=',
+		'onTargetIdChange=',
+		'setParameters=',
+		'nameField=',
+	]) {
+		expect(form).not.toContain(drilled);
+	}
+	// One Name field, rendered by both branches, not two copies of the same FieldRow.
+	expect(form.split('<ScheduledNameField />')).toHaveLength(2);
+	expect(form).not.toContain('<FieldRow label="Name"');
 });

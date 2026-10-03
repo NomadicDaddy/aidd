@@ -30,6 +30,15 @@ export async function listSkills(): Promise<SkillDefinition[]> {
 	return response.skills;
 }
 
+/** One skill with its SKILL.md body. The list omits bodies; this is the only reader of one. */
+export async function getSkill(id: string, signal?: AbortSignal): Promise<SkillDefinition> {
+	const response = await apiGet<{ skill: SkillDefinition }>(
+		`/api/v1/skills/${encodeURIComponent(id)}`,
+		{ signal },
+	);
+	return response.skill;
+}
+
 export async function importSkill(input: SkillImportRequest): Promise<SkillDefinition> {
 	const response = await apiSend<{ skill: SkillDefinition }>(
 		'/api/v1/skills/imports',

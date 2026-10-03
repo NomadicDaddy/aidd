@@ -203,7 +203,7 @@ describe('the skills page puts the catalog first', () => {
 		// it is what makes the headings real.
 		expect(card).toContain('<MarkdownContent');
 		expect(card).toContain('markdown={body}');
-		expect(page).toContain('<SkillDefinitionCard body={selected.body} />');
+		expect(page).toContain('<SkillDefinitionCard skillId={selected.id} />');
 		for (const source of [card, page]) expect(source).not.toContain('whitespace-pre-wrap');
 	});
 });

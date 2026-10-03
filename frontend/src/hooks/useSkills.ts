@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
 	deleteSkillImport,
+	getSkill,
 	importSkill,
 	listSkills,
 	previewSkillImport,
@@ -12,6 +13,18 @@ import {
 
 export function useSkillCatalog() {
 	return useQuery({ queryFn: listSkills, queryKey: ['skills'] });
+}
+
+/**
+ * One skill's full definition, for the detail pane. The catalog list carries every skill's
+ * metadata but, after the list is slimmed, no SKILL.md bodies: those were 93% of a 727 KB response
+ * that the Telemetry page and the schedule form downloaded only to read ids and titles.
+ */
+export function useSkill(id: string) {
+	return useQuery({
+		queryFn: ({ signal }) => getSkill(id, signal),
+		queryKey: ['skills', 'detail', id],
+	});
 }
 
 export function useSkills() {

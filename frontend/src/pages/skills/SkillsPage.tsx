@@ -218,7 +218,7 @@ export function SkillsPage() {
 										setProjectDir={setProjectDir}
 									/>
 								</div>
-								<SkillDefinitionCard body={selected.body} />
+								<SkillDefinitionCard skillId={selected.id} />
 							</div>
 						</div>
 					) : (

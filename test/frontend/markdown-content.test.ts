@@ -910,7 +910,7 @@ describe('no surface shows markdown source', () => {
 		// skill definition were nowhere in the accessibility tree.
 		expect(card).toContain('markdown={body}');
 		expect(card).toContain('variant="embedded"');
-		expect(page).toContain('<SkillDefinitionCard body={selected.body} />');
+		expect(page).toContain('<SkillDefinitionCard skillId={selected.id} />');
 		for (const source of [card, page]) {
 			expect(source).not.toMatch(/<pre[^>]*>\s*\{(selected\.body|body)\}/);
 			expect(source).not.toContain('whitespace-pre-wrap');

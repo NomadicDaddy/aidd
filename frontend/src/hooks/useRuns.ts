@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import type {
 	DirectiveRunLaunchRequest,
@@ -6,7 +6,6 @@ import type {
 	RunOutputWindowRequest,
 } from '../api/types.ts';
 
-import { listRuns, type RunsPage } from '../api/listRuns.ts';
 import {
 	continueRun,
 	getRun,
@@ -19,11 +18,7 @@ import {
 import { reportFailure } from '../lib/failureToast.ts';
 import { beginLaunch, endLaunch, trackLaunchedRun } from '../lib/launchedRuns.ts';
 import { clearStopRequested, markStopRequested } from '../lib/stopRequests.ts';
-
-// Backstop poll cadence for the Active runs table. The steady-state signal is the WebSocket
-// run_status broadcast; this only self-heals a row left stale by a missed terminal broadcast,
-// so it runs solely while a `running` row is visible and stops once everything is terminal.
-const ACTIVE_RUNS_POLL_MS = 15_000;
+import { useRunsList } from './useRunsList.ts';
 
 export function useLaunchRun() {
 	const queryClient = useQueryClient();
@@ -103,36 +98,13 @@ export function useRunOutputWindow() {
 	});
 }
 
+/**
+ * The run list. The query itself lives in useRunsList.ts so the app shell can read it without
+ * this module's mutations; this stays a function rather than a re-export so source scans that
+ * follow one hook into another (the dashboard initial-request test) still reach the query.
+ */
 export function useRuns(projectPath?: string, options?: { topLevel?: boolean }) {
-	const topLevel = options?.topLevel === true;
-	return useInfiniteQuery<
-		RunsPage,
-		Error,
-		{ pageParams: (string | undefined)[]; pages: RunsPage[] },
-		[string, string, string],
-		string | undefined
-	>({
-		getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-		initialPageParam: undefined,
-		queryFn: ({ pageParam, signal }) =>
-			listRuns(
-				{
-					...(projectPath ? { projectPath } : {}),
-					...(pageParam ? { cursor: pageParam } : {}),
-					...(topLevel ? { topLevel } : {}),
-				},
-				signal,
-			),
-		// Stays under the ['runs'] prefix so run_status WebSocket invalidation covers it.
-		queryKey: ['runs', projectPath ?? 'all', topLevel ? 'top' : 'all'],
-		refetchInterval: (query) => {
-			const hasActiveRun = query.state.data?.pages.some((page) =>
-				page.runs.some((run) => run.status === 'queued' || run.status === 'running'),
-			);
-			return hasActiveRun ? ACTIVE_RUNS_POLL_MS : false;
-		},
-		refetchIntervalInBackground: false,
-	});
+	return useRunsList(projectPath, options);
 }
 
 // Fallback single-record lookup for a selected run that is not in the loaded list —

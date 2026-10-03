@@ -1,7 +1,7 @@
 ---
 title: 'Frontend Development, Performance, and UI Audit'
-last_updated: '2026-08-30'
-version: '2.4'
+last_updated: '2026-10-03'
+version: '3.0'
 category: 'Frontend'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -16,47 +16,79 @@ lifecycle: 'pre-release'
 
 ## Executive Summary
 
-**🎯 Critical Frontend Priorities**
+**What this audit checks, for any target with a user interface**
 
-- **React 19+ Patterns**: Modern React patterns, hooks, Actions, and component design
-- **Tailwind CSS v4**: CSS-first configuration with `@theme` blocks, utility optimization
+- **Accessibility correctness**: semantic structure, focus, keyboard operability, labelled controls
+- **Interaction behaviour**: dialogs, loading, error and empty states, feedback on every action
+- **Loading performance**: Core Web Vitals where they can be measured, bundle and asset weight
+- **Stack conformance**: the conventions of the stack the target ACTUALLY uses, established in
+  Step 0. A convention of a stack the target does not use is not a finding at any severity.
+
+**⚡ Performance thresholds**
+
+> **Detailed Metrics**: See [PERFORMANCE.md](./PERFORMANCE.md) for thresholds and how they are measured, and [LIGHTHOUSE.md](./LIGHTHOUSE.md) for parsing a lab report.
+
 - **Core Web Vitals**: LCP ≤2.5s, INP ≤200ms, CLS ≤0.1 (INP replaced FID March 2024)
-- **Bundle Optimization**: JavaScript <170KB gzipped (critical path), CSS <50KB gzipped
-- **Performance**: Frontend operations optimized for user experience
-
-**📋 Essential Standards (Required)**
-
-- **Component Design**: Proper React patterns, state management, lifecycle
-- **CSS Organization**: Tailwind v4 patterns, utility ordering, responsive design
-- **Performance Metrics**: Meet Core Web Vitals thresholds
-- **Accessibility**: WCAG AA compliance, semantic HTML, focus management
-- **Bundle Size**: Optimized bundles with code splitting and lazy loading
-
-**⚡ Performance Requirements**
-
-> **Detailed Metrics**: See [PERFORMANCE.md](./PERFORMANCE.md) for comprehensive thresholds, Lighthouse scoring weights, and optimization strategies.
-
-- **Core Web Vitals**: LCP ≤2.5s, INP ≤200ms, CLS ≤0.1
 - **Bundle Targets**: JavaScript <170KB gzipped (critical path), CSS <50KB gzipped
 
 ## Table of Contents
 
 1. [Scope and Boundaries](#scope-and-boundaries)
-2. [Pre-Audit Setup](#pre-audit-setup)
-3. [React 19+ Best Practices](#react-19-best-practices)
-4. [Tailwind CSS v4 Standards](#tailwind-css-v4-standards)
-5. [Performance Optimization](#performance-optimization)
-6. [Accessibility](#accessibility)
-7. [Verification](#verification)
-8. [Audit Checklist](#audit-checklist)
-9. [Report Template](#report-template)
-10. [Deliverables and Success Criteria](#deliverables-and-success-criteria)
+2. [Step 0: Establish the target's stack](#step-0-establish-the-targets-stack)
+3. [Pre-Audit Setup](#pre-audit-setup)
+4. [React 19+ Best Practices](#react-19-best-practices)
+5. [Tailwind CSS v4 Standards](#tailwind-css-v4-standards)
+6. [Styling without a utility framework](#styling-without-a-utility-framework)
+7. [Modal UX Standards](#modal-ux-standards)
+8. [Performance Optimization](#performance-optimization)
+9. [Interaction behaviour in DOM-scripted interfaces](#interaction-behaviour-in-dom-scripted-interfaces)
+10. [Accessibility](#accessibility)
+11. [Verification](#verification)
+12. [Audit Checklist](#audit-checklist)
+13. [Report Template](#report-template)
+14. [Deliverables and Success Criteria](#deliverables-and-success-criteria)
 
 ## Scope and Boundaries
 
-This audit owns **React patterns, client/server state management, performance, bundle optimization, and accessibility correctness** (semantic structure, focus, keyboard operability, ARIA). It defers **visual semantics, copy, layout polish, and design-system conformance** to [WEB_DESIGN_GUIDELINES.md](./WEB_DESIGN_GUIDELINES.md). When a finding is primarily about visual presentation or design-token usage, file it under WEB_DESIGN_GUIDELINES to avoid double-reporting; file it here when it is about React/state/perf/bundle/a11y behavior.
+This audit owns **interaction behaviour, client/server state management, performance, bundle optimization, accessibility correctness** (semantic structure, focus, keyboard operability, ARIA), **and the conventions of whichever UI stack the target uses**. It defers **visual semantics, copy, layout polish, and design-system conformance** to [WEB_DESIGN_GUIDELINES.md](./WEB_DESIGN_GUIDELINES.md). When a finding is primarily about visual presentation or design-token usage, file it under WEB_DESIGN_GUIDELINES to avoid double-reporting; file it here when it is about behaviour, state, performance, bundle weight or accessibility correctness.
 
-> **Spernakit applicability**: Spernakit verifies the frontend with `crawltest` (end-to-end route discovery, content assertions, interaction testing) and `smoke:qc` (typecheck, lint, build, format check). The stack intentionally has **no unit-test framework** (vitest/jest/@testing-library); their absence is by design, not a finding.
+> **Spernakit applicability** (targets with `spernakit_version` in the root manifest): Spernakit verifies the frontend with `crawltest` (end-to-end route discovery, content assertions, interaction testing) and `smoke:qc` (typecheck, lint, build, format check). The stack intentionally has **no unit-test framework** (vitest/jest/@testing-library); their absence is by design, not a finding.
+
+## Step 0: Establish the target's stack
+
+Do this before reading any other section. Every stack-specific section below opens with the
+condition under which it applies, and that condition is answered here.
+
+1. **Find the UI source.** Do not assume `frontend/src`. Read the project manifest and the build
+   configuration and record the directory or directories that hold the interface. Examples seen
+   in this fleet: `frontend/src/**/*.tsx` (a Vite React app), `src/**/*.astro` with `src/styles`
+   and `src/scripts` (an Astro site), `src/desktop/*.ts` with `index.html` and plain `.css` (an
+   Electron renderer written against the DOM).
+2. **Record what is installed**, from the manifest that owns the UI, not from memory:
+
+    | Question                               | How to answer it                                 | Sections it turns on             |
+    | -------------------------------------- | ------------------------------------------------ | -------------------------------- |
+    | Is `react` a dependency?               | manifest                                         | React 19+ Best Practices         |
+    | Is the React Compiler compiling?       | build output, see "React Compiler" below         | compiler-dependent rules only    |
+    | Is `@tanstack/react-query` installed?  | manifest                                         | Server State with TanStack Query |
+    | Is `zustand` installed?                | manifest                                         | Client State with Zustand        |
+    | Is there a `components/ui` shadcn set  | directory listing, `components.json`             | shadcn/ui Component Patterns     |
+    | Is `tailwindcss` v4 installed AND used | manifest, plus an `@import 'tailwindcss'` in CSS | Tailwind CSS v4 Standards        |
+    | Is there a served URL to measure?      | dev/preview script, or a deployed address        | measured Core Web Vitals         |
+    | Does the target derive from Spernakit  | `spernakit_version` in the root manifest         | every "Spernakit" note           |
+
+3. **Write the answers at the top of the report**, under "Stack established". A section that Step
+   0 turned off is recorded as **Not applicable: the target does not use X** and contributes
+   nothing to the score, in either direction.
+4. **A search that matched zero files is a wrong path until proven otherwise.** Before recording
+   "no findings" from any scan in this audit, confirm the scan's path and glob match at least one
+   file of the target's UI source. A clean result from a directory that does not exist is the
+   most common false pass this audit produces.
+
+Why this step exists: this audit was written against one stack. Run as written against an Astro
+site or a DOM-scripted desktop renderer, it reported Critical findings for not using TanStack
+Query, Zustand and shadcn in projects that had no reason to, and scored half the report against
+libraries that were not installed.
 
 ## Pre-Audit Setup
 
@@ -70,48 +102,48 @@ Consult these before forming findings; they anchor frontend findings to project-
 
 ### Required Tools and Verification
 
-```bash
-# Verify versions (check frontend/package.json or use bun pm ls)
-grep -E '"react"|"react-dom"|"tailwindcss"|"typescript"' frontend/package.json
-# Expected from the current Spernakit manifests: React 19.2.x, Tailwind 4.3.x, TypeScript 6.x
-
-# Bundle analysis — rollup-plugin-visualizer is already a frontend devDependency
-bun run --cwd frontend build:analyze   # ANALYZE=true vite build, emits the visualizer report
-
-# Field Core Web Vitals are instrumented via the web-vitals package (already a dependency).
-# Lab metrics, if needed, can be captured with a one-off: bunx lighthouse http://localhost:3330 --view
-```
-
-### Environment Preparation
-
-1. **React DevTools**: Install React DevTools 5.0+ for React 19 debugging
-2. **Lighthouse**: Use Chrome DevTools Lighthouse, or a one-off `bunx lighthouse` run (no persistent install needed)
-3. **Bundle Analyzer**: Use the existing `rollup-plugin-visualizer` via `bun run --cwd frontend build:analyze`
-4. **Performance Monitoring**: Field Core Web Vitals are tracked via the `web-vitals` package already wired into the frontend
-
-### Verification Commands
+Run these against the UI source and manifest recorded in Step 0. `<ui-manifest>` is the `package.json` that owns the interface and `<ui-dir>` its directory; neither is assumed to be `frontend/`.
 
 ```bash
-# Check React Compiler status (enabled by default in the Spernakit template)
-grep -r "react-compiler" frontend/package.json frontend/vite.config.ts
+# Installed versions: read them, do not assume them
+grep -E '"react"|"react-dom"|"tailwindcss"|"typescript"|"astro"|"electron"' <ui-manifest>
 
-# Verify Tailwind v4 configuration
-grep -r "@theme" frontend/src/**/*.css
+# Bundle analysis, where the project defines it (Spernakit and aidd: rollup-plugin-visualizer)
+bun run --cwd <ui-dir> build:analyze
 
-# Analyze bundle size (rollup-plugin-visualizer report)
-bun run --cwd frontend build:analyze
-
-# Run Lighthouse audit (frontend dev server binds to port 3330)
-bunx lighthouse http://localhost:3330 --view
+# Tailwind v4 CSS-first configuration, only when Step 0 found Tailwind in use
+grep -rn "@theme" <ui-source> --include=*.css
 ```
+
+Lab Core Web Vitals come from a Lighthouse report parsed under [LIGHTHOUSE.md](./LIGHTHOUSE.md), against the address the target actually serves (read the port from its configuration; do not assume one). Field metrics come from `web-vitals` where the project wires it. A target with no served URL (a `file://` desktop renderer) has no measurable Core Web Vitals: record **not measured**.
 
 ## React 19+ Best Practices
 
 ### React Compiler Integration
 
-> **Important**: In the Spernakit stack, React Compiler is **enabled by default** via `babel-plugin-react-compiler` (1.0.0) in the frontend build: automatic memoization, no manual `React.memo` needed (see STACK.md). Treat "compiler enabled" as the expected baseline; flag a project only if the compiler has been removed or disabled without justification. See [react.dev/learn/react-compiler](https://react.dev/learn/react-compiler) for background.
+> **Applies when**: `react` is a dependency AND the compiler is configured.
+>
+> **Verify that it is compiling before relying on it.** A configured compiler and a working one
+> are different things: a plugin option that the installed plugin version ignores leaves the
+> configuration in place and compiles nothing, and every source-level check still passes. Build
+> the frontend and search the emitted JavaScript for the compiler's cache sentinel:
+>
+> ```bash
+> grep -l "react.memo_cache_sentinel" <build-output>/assets/*.js | wc -l
+> ```
+>
+> - A non-zero count: the compiler is compiling. Apply the guidance below.
+> - Zero, with the compiler configured: file **High: React Compiler is configured but not
+>   compiling**, and do NOT apply any rule in this audit, or in REACT_BEST_PRACTICES.md, that
+>   suppresses a finding on the grounds that the compiler handles it. Manual memoization in such
+>   a project is doing real work.
+> - Not configured: record it as absent. That is a finding only if the project's own standard
+>   requires it.
+>
+> Grepping `package.json` or `vite.config.ts` for `react-compiler` is not verification. It finds
+> the configuration, which is the thing that can be present and inert.
 
-**Trust the compiler by default**: Let it optimize automatically. Flag manual memoization only
+**Trust a compiler that is verified compiling**: let it optimize automatically. Flag manual memoization only
 when `React.memo`, `useMemo`, or `useCallback` is used without either profiling evidence or a
 documented referential-stability/effect-dependency reason.
 
@@ -148,9 +180,9 @@ already handles the common cases.
 
 ### Server State with TanStack Query
 
-**MANDATORY: Use TanStack Query for server state management**
+> **Applies when** `@tanstack/react-query` is installed. In a React project without it, hand-rolled fetching is a Medium finding only where it demonstrably lacks caching, cancellation or error handling that the screen needs; the absence of the library is not itself a finding.
 
-TanStack Query is the primary pattern for data fetching, caching, and mutations in Spernakit.
+Where it is installed, TanStack Query is the pattern for data fetching, caching, and mutations.
 
 ✅ **Good: TanStack Query for data fetching and mutations**:
 
@@ -202,7 +234,9 @@ function PostList() {
 
 ### Client State with Zustand
 
-**MANDATORY: Use Zustand for global client state (NOT React Context)**
+> **Applies when** `zustand` is installed. React Context for low-frequency values (theme, locale, current user) is not a finding in any project.
+
+Where it is installed, global client state goes through Zustand rather than React Context.
 
 ✅ **Good: Zustand store with persist**:
 
@@ -229,7 +263,7 @@ const useThemeStore = create<ThemeStore>()(
 ❌ **Bad: React Context for state management**:
 
 ```jsx
-// ❌ React Context causes unnecessary re-renders and is not the Spernakit pattern
+// ❌ React Context for frequently changing state re-renders every consumer
 const ThemeContext = createContext();
 function ThemeProvider({ children }) {
 	const [mode, setMode] = useState('system');
@@ -239,12 +273,11 @@ function ThemeProvider({ children }) {
 
 ### shadcn/ui Component Patterns
 
-**MANDATORY: Use shadcn/ui for UI components**
+> **Applies when** the project has a shadcn component set (`components.json`, a `components/ui` directory). The rule is that where a shadcn primitive exists for the control, it is used. A custom component for something shadcn has no primitive for is not a finding.
 
 - Install components via CLI: `bunx shadcn@latest add button`
-- Components live in `frontend/src/components/ui/` (direct imports, no barrel file)
-- Shared application components go in `frontend/src/components/shared/`
-- Layout components go in `frontend/src/components/layout/`
+- Components live in the UI source's `components/ui/` (direct imports, no barrel file)
+- Spernakit-derived targets: shared application components in `components/shared/`, layout components in `components/layout/`
 - Toast notifications use `sonner` via shadcn/ui (NOT react-hot-toast)
 
 ✅ **Good: shadcn/ui with proper imports**:
@@ -276,6 +309,8 @@ function DeleteButton({ onDelete }) {
 ```
 
 ### Actions and Form Handling
+
+> **Applies when** `react` is a dependency.
 
 **Use Actions for simple forms; TanStack Query mutations for forms requiring cache invalidation**
 
@@ -363,6 +398,8 @@ function ContactForm() {
 
 ### useOptimistic Hook Usage
 
+> **Applies when** `react` is a dependency.
+
 **Use for optimistic UI updates**
 
 ✅ **Good: Optimistic Updates**:
@@ -401,6 +438,8 @@ function TodoList({ todos, addTodo }) {
 ```
 
 ### Common React Anti-Patterns
+
+> **Applies when** `react` is a dependency.
 
 **CRITICAL: Avoid these patterns**
 
@@ -442,9 +481,11 @@ useEffect(() => {
 
 ### Error Boundaries and Suspense Fallbacks
 
+> **Applies when** `react` is a dependency.
+
 **Wrap route/page components in error boundaries; provide Suspense fallbacks for lazy routes**
 
-Page-level routes must be resilient to render-time errors and code-split loading. Pair an error boundary around route content with a Suspense fallback for any `lazy()`-loaded page, and let TanStack Query handle data-fetch errors with retry strategies (React Query error boundaries with retry, per STACK.md).
+Page-level routes must be resilient to render-time errors and code-split loading. Pair an error boundary around route content with a Suspense fallback for any `lazy()`-loaded page, and, where TanStack Query is installed, let it handle data-fetch errors with retry strategies.
 
 ✅ **Good: Route wrapped in error boundary + Suspense**:
 
@@ -460,9 +501,11 @@ Page-level routes must be resilient to render-time errors and code-split loading
 
 ## Tailwind CSS v4 Standards
 
+> **Applies when** Tailwind v4 is installed and imported by the project's CSS. A project styled with hand-written CSS and custom properties is audited under [Styling without a utility framework](#styling-without-a-utility-framework) instead.
+
 ### CSS-First Configuration Migration
 
-**MANDATORY: Migrate to CSS-first configuration**
+**CSS-first configuration is the v4 standard**
 
 ✅ **Good: CSS-First Configuration**:
 
@@ -486,19 +529,31 @@ Page-level routes must be resilient to render-time errors and code-split loading
 
 ### Utility Class Organization
 
-**MANDATORY: Follow consistent ordering**
+Not audited here. The Prettier Tailwind plugin enforces class order, so a passing `format:check` is the evidence. Do not re-audit ordering by eye and do not file it as a finding.
 
-✅ **Good: Organized Classes**:
+## Styling without a utility framework
 
-```jsx
-<div className="flex w-full max-w-4xl flex-col items-center gap-4 rounded-lg bg-white p-6 text-lg font-semibold text-gray-900 shadow-md lg:flex-row lg:p-8">
-	Content
-</div>
-```
+Applies when the target's interface is styled with hand-written CSS.
 
-### Modal UX Standards
+- **Tokens, not literals.** Colours, type steps and spacing that repeat are custom properties
+  defined once. A hex value or a pixel size that appears in three or more rules with the same
+  meaning is a Medium finding; cite each occurrence.
+- **One owner per shared rule.** A declaration that exists to serve one container does not live
+  in a rule shared by many. (`align-self` on a shared chip class, added for one flex row, will
+  misplace the chip in every flex column.) Medium.
+- **No constant that silently depends on another element's size.** A hard-coded offset that must
+  equal the height of something else (a sticky header, a tab strip) is a finding unless it is
+  derived (`calc()` from shared custom properties) or a gate measures it. Medium; High where it
+  has already regressed.
+- **State selectors are complete.** Every interactive element has `:hover`, `:focus-visible` and
+  `:active` treatments that differ from rest and from each other where they mean different
+  things; "current" and "hovered" must not render identically.
+- **`prefers-reduced-motion` and `color-scheme`** are honoured where the project animates or
+  themes.
 
-Frontend modals must follow these behavior rules:
+## Modal UX Standards
+
+Applies to every target. Modals must follow these behavior rules:
 
 - Close on **escape key** or **off-click** by default.
 - Close on **explicit close button** click, if present.
@@ -510,7 +565,9 @@ Frontend modals must follow these behavior rules:
 
 > **Comprehensive Guide**: See [PERFORMANCE.md](./PERFORMANCE.md) for detailed thresholds, optimization decision trees, and performance budgets.
 
-**MANDATORY**: LCP ≤2.5s, INP ≤200ms, CLS ≤0.1
+**Thresholds**: LCP ≤2.5s, INP ≤200ms, CLS ≤0.1.
+
+These are measured values. This audit reads source, and a threshold cannot be ticked from source: the only valid entries are a number taken from a parsed Lighthouse or crawler artifact (see [LIGHTHOUSE.md](./LIGHTHOUSE.md)) or **not measured**.
 
 ### Bundle Optimization
 
@@ -546,9 +603,34 @@ function App() {
 
 **Reserve space for async content and virtualize large lists to protect CLS and INP**
 
-- **Skeleton loaders**: Render skeletons (or fixed-size placeholders) for async views so incoming content does not push layout, which directly protects CLS (STACK.md: "Skeleton loaders — prevent layout shift during data loading"). Spernakit ships shared skeletons under `frontend/src/components/shared/skeletons/`.
-- **Virtualization**: Use `@tanstack/react-virtual` for large lists/tables (10,000+ rows) to keep DOM size and INP in check rather than rendering every row.
+- **Skeleton loaders**: Render skeletons (or fixed-size placeholders) for async views so incoming content does not push layout, which directly protects CLS (STACK.md: "Skeleton loaders — prevent layout shift during data loading"). Spernakit-derived targets ship shared skeletons under `frontend/src/components/shared/skeletons/`.
+- **Virtualization**: Large lists/tables (10,000+ rows) are virtualized to keep DOM size and INP in check rather than rendering every row. Use the virtualizer the target already has (Spernakit ships `@tanstack/react-virtual` behind its data-table primitive); a missing library is not the finding, an unvirtualized 10,000-row render is.
 - **Route preloading**: Preload lazy route chunks on hover/focus so navigation does not stall on a cold chunk fetch (STACK.md: "route preloading on hover/focus").
+
+## Interaction behaviour in DOM-scripted interfaces
+
+Applies when the interface is driven by hand-written DOM code rather than a component framework
+(an Electron renderer, Astro islands, plain scripts).
+
+- **Every state the user causes is acknowledged on screen.** A click that starts work shows that
+  it started; a failure names the operation that failed and carries the underlying reason.
+- **Errors that persist can be dismissed**, and a second error after a dismissal is still shown.
+- **Asynchronous redraws preserve what the user chose.** A list or control group that is rebuilt
+  when data arrives must restore selection, focus and scroll position. Read each function that
+  replaces children and trace what was selected before it ran. High where a choice is lost.
+- **Controls are not usable before the state they act on is loaded.** A control that is on screen
+  while the form behind it is still being reset must be disabled or inert until the load settles,
+  or its effect is silently wiped. High.
+- **Event listeners are added once.** A setup function that can run more than once must not
+  attach duplicate listeners. Medium.
+- **No `innerHTML` with interpolated data.** Use `textContent` and node construction. This is a
+  security finding as well as a correctness one; cross-file it under SECURITY.md.
+- **Native dialogs**: `showModal()` for modal work, Escape and outside-click closing guarded by
+  the same unsaved-changes check as the close button, focus returned to the opener on close.
+
+Testing note for auditors who drive the interface: a scripted `element.click()` ignores `inert`
+and `disabled`-by-ancestor. To check that a control is protected, send real input, and include a
+step where the same input must succeed.
 
 ## Accessibility
 
@@ -557,71 +639,77 @@ function App() {
 **MANDATORY: WCAG AA correctness**
 
 - **Semantic HTML**: Use landmark and semantic elements (`<nav>`, `<main>`, `<button>`, headings in order) instead of `div`/`span` with click handlers.
-- **Focus management**: Visible focus indicators on all interactive elements; move focus into dialogs/popovers on open and restore it on close (Radix handles this for shadcn/ui primitives; verify custom wrappers preserve it).
-- **Keyboard operability**: Every interaction reachable and operable by keyboard; ties into the global `useKeyboardShortcuts` system. No mouse-only affordances.
+- **Focus management**: Visible focus indicators on all interactive elements; move focus into dialogs/popovers on open and restore it on close (Radix handles this for shadcn/ui primitives; verify custom wrappers and hand-written dialogs preserve it).
+- **Keyboard operability**: Every interaction reachable and operable by keyboard. No mouse-only affordances. (Spernakit-derived targets: ties into the global `useKeyboardShortcuts` system.)
 - **Labelled controls**: All inputs have associated `<label>`s or `aria-label`; icon-only buttons have accessible names.
-- **ARIA on interactive wrappers**: Custom components built on Radix expose correct `aria-*` roles/states; do not strip ARIA when restyling.
+- **ARIA on interactive wrappers**: Custom components expose correct `aria-*` roles/states, whether built on Radix or by hand; do not strip ARIA when restyling.
 - **Color contrast**: Text and essential UI meet WCAG AA contrast (defer token-level enforcement to WEB_DESIGN_GUIDELINES).
 - **Reduced motion**: Honor `prefers-reduced-motion` for animations and transitions.
 
 ## Verification
 
-Frontend health is verified through two canonical commands, not a unit-test suite:
+Frontend health is verified through the project's own gates, not a unit-test suite:
 
-- **`bun run smoke:qc`**, the mandatory quality gate: typecheck, lint, production build, and Prettier format check (plus drift/config/schema/feature-integration checks). Must pass before any commit.
-- **`bun run crawltest`**: end-to-end route discovery, content assertions, and interaction testing against the running app; the primary way frontend behavior is verified.
+- **The project's quality gate.** `bun run smoke:qc` where it exists; otherwise the project's
+  equivalent typecheck, lint, build and format checks. Record which command was run.
+- **End-to-end behaviour, where the project has it.** `bun run crawltest` in projects that carry
+  it. A project without crawltest is not asked for crawltest evidence; record what was used
+  instead (a build-output gate, a link check, a scripted window probe).
 
-There is **no vitest/jest/@testing-library** in the stack; absence of unit tests is by design and must not be filed as a finding. Use `bun run --cwd frontend build:analyze` (rollup-plugin-visualizer) for bundle inspection and the `web-vitals` instrumentation for field Core Web Vitals.
+Spernakit and derived apps have no vitest/jest/@testing-library by design. Whether another
+project should have unit tests is TESTING.md's question, not this audit's.
 
 ## Audit Checklist
 
 ### **Critical Frontend Checks** 🚨
 
-#### React 19+ and State Management
+#### Every target
 
-- [ ] **High**: React Compiler enabled (template default); no manual memoization without profiling evidence or documented referential-stability/effect-dependency justification
-- [ ] **Critical**: TanStack Query used for all server state (data fetching, mutations, cache)
-- [ ] **Critical**: Zustand used for global client state (NOT React Context for state)
-- [ ] **Critical**: shadcn/ui used for UI components (NOT custom CSS components)
-- [ ] **High**: Actions (useActionState) or TanStack Query mutations used for form submissions
-- [ ] **Critical**: No hooks in conditionals
-- [ ] **Critical**: All useEffect dependencies complete
-- [ ] **Critical**: No legacy class components
-- [ ] **High**: Route/page components wrapped in error boundaries; lazy routes have Suspense fallbacks
+- [ ] **High**: Semantic HTML and landmarks (no `div`/`span` click targets)
+- [ ] **High**: Visible focus on every interactive element; focus moved into and restored from dialogs
+- [ ] **High**: Every interaction operable by keyboard
+- [ ] **High**: Every control labelled; icon-only buttons have an accessible name
+- [ ] **High**: Each user-caused state change is acknowledged on screen; failures say what failed
+- [ ] **Medium**: `prefers-reduced-motion` honoured
+- [ ] **Critical where measured**: LCP ≤2.5s, INP ≤200ms, CLS ≤0.1. Record **not measured** when no
+      Lighthouse or crawler artifact was parsed. A value read from source is not a measurement.
+- [ ] **High where measured**: critical-path JavaScript <170KB gzipped, CSS <50KB gzipped
 
-#### Tailwind CSS v4
+#### Only when Step 0 turned the section on
 
-- [ ] **Critical**: CSS-first configuration with @theme
-- [ ] **Critical**: Consistent utility class ordering
-- [ ] **Critical**: No legacy tailwind.config.js
-- [ ] **Critical**: Modern utilities used (text-balance, @container)
-
-#### Performance
-
-- [ ] **Critical**: LCP ≤2.5s
-- [ ] **Critical**: INP ≤200ms
-- [ ] **Critical**: CLS ≤0.1
-- [ ] **Critical**: JavaScript bundle <170KB gzipped critical path
-- [ ] **Critical**: CSS bundle <50KB gzipped
+- [ ] **High** (React + compiler verified compiling): no manual memoization without profiling
+      evidence or a documented referential-stability reason
+- [ ] **High** (React, compiler configured): the compiler is actually compiling (cache sentinel
+      present in the build output)
+- [ ] **Critical** (React): no hooks in conditionals; effect dependencies complete
+- [ ] **High** (React): route components wrapped in error boundaries; lazy routes have fallbacks
+- [ ] **High** (TanStack Query installed): server state goes through it
+- [ ] **High** (Zustand installed): global client state goes through it
+- [ ] **High** (shadcn set present): shadcn primitives used where one exists for the control
+- [ ] **High** (Tailwind v4 used): CSS-first configuration with `@theme`; no legacy
+      `tailwind.config.js`
+- [ ] **Not audited here** (Tailwind): utility class ordering. The prettier Tailwind plugin
+      enforces it; a passing `format:check` is the evidence.
+- [ ] **Medium** (hand-written CSS): repeated values are tokens; no constant that must equal
+      another element's size
+- [ ] **High** (DOM-scripted): asynchronous redraws preserve selection, focus and scroll
+- [ ] **High** (DOM-scripted): no control usable before the state it acts on has loaded
 
 ### **High Priority Checks** ⚠️
 
 - [ ] **High**: Code splitting implemented
 - [ ] **High**: Images optimized and lazy loaded
 - [ ] **High**: Skeleton loaders (or fixed-size placeholders) on async views to protect CLS
-- [ ] **High**: Large lists/tables virtualized via `@tanstack/react-virtual` (10,000+ rows)
+- [ ] **High**: Large lists/tables (10,000+ rows) virtualized
 - [ ] **Medium**: Lazy route chunks preloaded on hover/focus
-- [ ] **Medium**: Avoid deep prop drilling (3+ levels) of cross-cutting state; prefer Zustand for global state and TanStack Query for server state. Local 1-2 level prop passing is expected and not a finding.
+- [ ] **Medium** (React): Avoid deep prop drilling (3+ levels) of cross-cutting state; prefer the project's store for global state and its query layer for server state. Local 1-2 level prop passing is expected and not a finding.
 - [ ] **High**: Components follow single responsibility
 
 #### Accessibility (WCAG AA correctness)
 
-- [ ] **High**: Semantic HTML and landmark elements used (not div/span with click handlers)
-- [ ] **High**: Visible focus indicators; focus moved into and restored from dialogs/popovers
-- [ ] **High**: All interactions keyboard-operable (no mouse-only affordances)
-- [ ] **High**: All controls labelled (label / aria-label); icon-only buttons have accessible names
-- [ ] **Medium**: Custom Radix-based wrappers expose correct `aria-*` roles/states
-- [ ] **Medium**: `prefers-reduced-motion` honored for animations
+The four High accessibility lines are in "Every target" above.
+
+- [ ] **Medium**: Custom wrappers expose correct `aria-*` roles/states
 
 ## Report Template
 
@@ -630,35 +718,38 @@ There is **no vitest/jest/@testing-library** in the stack; absence of unit tests
 
 ## Executive Summary
 
-**Overall Frontend Score**: [Score]/100
-**React Score**: [Score]/25
-**Tailwind CSS Score**: [Score]/25
-**Performance Score**: [Score]/25
-**Accessibility Score**: [Score]/25
+## Stack established (Step 0)
+
+- UI source: [paths]
+- React: [version / not used] · Compiler: [compiling / configured but not compiling / absent]
+- Server state: [TanStack Query / other / n/a] · Client state: [Zustand / other / n/a]
+- Component set: [shadcn / custom / n/a] · Styling: [Tailwind v4 / hand-written CSS]
+- Measurable URL: [address / none]
+
+**Overall Frontend Score**: [Score]/100, over the sections that applied
+**Sections applied**: [list] · **Not applicable**: [list, each with the reason]
+**Accessibility and interaction**: [Score]
+**Stack conformance**: [Score, or "n/a"]
+**Performance**: [Score, or "not measured"]
 
 **Critical Issues**: [Number]
 **High Priority Issues**: [Number]
 
-## React 19+ Assessment
+## Stack conformance (applied sections only)
 
-- **React Compiler**: [Enabled/Disabled] (enabled by default in the Spernakit template)
-- **Actions Usage**: [Percentage]% of forms using useActionState
-- **Hook Compliance**: [Percentage]% (no hooks in conditionals)
-- **Legacy Patterns**: [Number] found (class components, manual form handling)
-
-## Tailwind CSS v4 Assessment
-
-- **CSS-First Config**: [Yes/No]
-- **Modern Utilities**: [Percentage]%
-- **Class Organization**: [Score]/10
+- **React** (if used): hook compliance, legacy patterns found, forms using Actions or mutations
+- **Tailwind v4** (if used): CSS-first config [Yes/No]
+- **Hand-written CSS** (if used): repeated literals, size-coupled constants
+- **DOM-scripted behaviour** (if used): redraws that lose state, controls live before load
 
 ## Performance Metrics
 
 ### Core Web Vitals
 
-- **LCP**: [X.X]s (Target: ≤2.5s)
-- **INP**: [XXX]ms (Target: ≤200ms)
-- **CLS**: [0.XX] (Target: ≤0.1)
+- **LCP**: [X.X]s or not measured (Target: ≤2.5s)
+- **INP**: [XXX]ms or not measured (Target: ≤200ms)
+- **CLS**: [0.XX] or not measured (Target: ≤0.1)
+- **Source of the numbers**: [artifact path, or "none parsed"]
 
 ### Bundle Sizes
 
@@ -683,7 +774,7 @@ There is **no vitest/jest/@testing-library** in the stack; absence of unit tests
 
 ### Short-term (1-4 weeks)
 
-1. [Tailwind CSS migration]
+1. [Stack conformance]
 2. [Bundle optimization]
 3. [Code splitting]
 
@@ -694,13 +785,16 @@ There is **no vitest/jest/@testing-library** in the stack; absence of unit tests
 **Next Review**: [Date + 1 month]
 ```
 
+A section that did not apply is never scored as full marks. The overall score is computed over
+applied sections only, and the report says which they were.
+
 ## Deliverables and Success Criteria
 
 A completed frontend audit produces:
 
-- **Scored report** following the template above (overall /100, with React, Tailwind, Performance, and Accessibility each /25).
+- **Scored report** following the template above, opening with "Stack established" and scored over applied sections only.
 - **Prioritized findings** with severity per [SEVERITY_CLASSIFICATION.md](./SEVERITY_CLASSIFICATION.md), each anchored to a file:line and a concrete remediation.
 - **Remediation timeline** grouping findings into Immediate (0-7 days) and Short-term (1-4 weeks) buckets.
-- **Verification evidence**: confirmation that `bun run smoke:qc` passes and `bun run crawltest` runs clean against the audited build.
+- **Verification evidence**: the project's own gate (`bun run smoke:qc` where it exists) passes, plus `bun run crawltest` only in projects that carry it. Name the command that was run.
 
-**Success criteria**: zero unaddressed Critical/High findings, Core Web Vitals within targets (LCP ≤2.5s, INP ≤200ms, CLS ≤0.1), bundle budgets met (JS <170KB gzipped critical path, CSS <50KB gzipped), and accessibility correctness checks passing.
+**Success criteria**: zero unaddressed Critical/High findings, Core Web Vitals within targets where measured (LCP ≤2.5s, INP ≤200ms, CLS ≤0.1), bundle budgets met (JS <170KB gzipped critical path, CSS <50KB gzipped), and accessibility correctness checks passing.

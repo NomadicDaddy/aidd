@@ -1,6 +1,6 @@
 ---
 title: 'React Best Practices Audit (Vercel)'
-last_updated: '2026-08-30'
+last_updated: '2026-10-03'
 version: '2.7'
 category: 'Frontend'
 priority: 'High'
@@ -50,10 +50,10 @@ plus explicit aidd/Spernakit adaptations. Rules are prioritized by impact from c
 Before beginning the audit, establish a quality baseline and verify the target application is correctly configured:
 
 1. **Run quality checks**: `bun run smoke:qc` must pass to establish a clean baseline.
-2. **Verify React Compiler**: Open `frontend/vite.config.ts` and confirm `babel-plugin-react-compiler` is present in the Babel plugins array.
+2. **Verify React Compiler is compiling, not merely configured**: Build the frontend and count the emitted chunks that carry the compiler's cache sentinel: `grep -l "react.memo_cache_sentinel" frontend/dist/assets/*.js | wc -l`. A non-zero count means it compiles. Zero with `babel-plugin-react-compiler` configured is itself a **High** finding (configured but not compiling: a plugin option the installed plugin version ignores leaves the configuration in place and compiles nothing), and it turns off every compiler-based suppression in this audit. Finding the plugin name in `vite.config.ts` or `package.json` is not verification.
 3. **Verify bundle optimization**: Confirm `lucideDirectImportsPlugin` is present in `frontend/vite.config.ts`.
 4. **Inspect bundle output**: Run `bun run build:frontend` and review the generated chunks in `frontend/dist/assets/`. Look for unexpectedly large chunks (>300KB) that should be code-split.
-5. **Check for manual memoization**: Search `frontend/src` for `useMemo`, `useCallback`, `React.memo`, and `memo(`. In compiler-enabled projects these should be rare (only justified by `'use no memo'` or measurable hot paths).
+5. **Check for manual memoization**: Search `frontend/src` for `useMemo`, `useCallback`, `React.memo`, and `memo(`. In projects where the compiler is verified compiling these should be rare (only justified by `'use no memo'` or measurable hot paths).
 6. **Review data-fetching patterns**: Search for raw `fetch()` inside `useEffect`; all server state should use TanStack Query (`useQuery`, `useMutation`).
 
 ## Spernakit Applicability
@@ -90,7 +90,7 @@ These rules reference Next.js/RSC-only features and should be **skipped** during
 
 ### React Compiler Impact
 
-**`babel-plugin-react-compiler`** is enabled in all spernakit apps via `vite.config.ts`. It automatically handles memoization, JSX hoisting, and dependency tracking. The following rules become **informational only** in compiler-enabled projects; the compiler handles these automatically:
+Where **`babel-plugin-react-compiler`** is verified compiling (Pre-Audit Setup step 2), it automatically handles memoization, JSX hoisting, and dependency tracking. Do not assume this from the stack: a target can configure the compiler and compile nothing. In projects where compilation is verified, the following rules become **informational only**; the compiler handles these automatically:
 
 | Rule                                        | What Compiler Handles                       |
 | ------------------------------------------- | ------------------------------------------- |
@@ -100,7 +100,7 @@ These rules reference Next.js/RSC-only features and should be **skipped** during
 | 5.14 (Split combined hook computations)     | Automatic fine-grained dependency tracking  |
 | 6.3 (Hoist static JSX)                      | Automatic static element hoisting           |
 
-**Audit guidance**: With React Compiler enabled (all spernakit apps), **suppress** these patterns entirely: do not report them, not even as low-priority findings. Only surface a finding when the component carries a `'use no memo'` directive (which opts out of compiler optimization) **or** has a profiled, measurable hot path that the compiler demonstrably failed to handle.
+**Audit guidance**: With React Compiler **verified compiling**, **suppress** these patterns entirely: do not report them, not even as low-priority findings. Where the compiler is absent, or configured but not compiling, these five rules apply in full and manual memoization is doing real work. Only surface a finding when the component carries a `'use no memo'` directive (which opts out of compiler optimization) **or** has a profiled, measurable hot path that the compiler demonstrably failed to handle.
 
 ### Rules That Fully Apply
 
@@ -554,7 +554,7 @@ function CodePanel({ code }: { code: string }) {
 
 > **Spernakit note**: Use `React.lazy()` with named export adaptation (`.then(m => ({ default: m.Name }))`), not `next/dynamic`.
 
-> **Common finding**: Recharts (~300KB) is the #1 heavy dependency in spernakit apps. Chart components in widget/dashboard pages should be lazy-loaded with Suspense rather than statically imported. Follow the existing lazy-load pattern used in analytics pages.
+> **Common finding, where present**: Recharts (~300KB) is the heaviest dependency in the Spernakit apps that use it; a target without Recharts has no finding here. Chart components in widget/dashboard pages should be lazy-loaded with Suspense rather than statically imported. Follow the existing lazy-load pattern used in analytics pages.
 
 ### 2.5 Prefer Statically Analyzable Paths
 
@@ -1056,7 +1056,7 @@ function Profile({ user, loading }: Props) {
 }
 ```
 
-> **Note**: If React Compiler is enabled (all spernakit apps), manual memoization is handled automatically. **Suppress** this rule in compiler-enabled projects; only flag if the component uses `'use no memo'` or has a profiled, measurable hot path the compiler failed to optimize.
+> **Note**: If React Compiler is verified compiling (see [React Compiler Impact](#react-compiler-impact)), manual memoization is handled automatically. **Suppress** this rule in compiler-enabled projects; only flag if the component uses `'use no memo'` or has a profiled, measurable hot path the compiler failed to optimize.
 
 ### 5.3 Narrow Effect Dependencies
 
@@ -1232,7 +1232,7 @@ const UserAvatar = memo(function UserAvatar({ onClick = NOOP }: { onClick?: () =
 <UserAvatar />; // Memoization works
 ```
 
-> **Note**: If React Compiler is enabled (all spernakit apps), this is handled automatically. **Suppress** this rule in compiler-enabled projects; only flag if the component uses `'use no memo'` or has a profiled, measurable hot path.
+> **Note**: If React Compiler is verified compiling (see [React Compiler Impact](#react-compiler-impact)), this is handled automatically. **Suppress** this rule in compiler-enabled projects; only flag if the component uses `'use no memo'` or has a profiled, measurable hot path.
 
 ### 5.9 Derive State During Render, Not in Effects
 
@@ -1300,7 +1300,7 @@ function Header({ user, notifications }: Props) {
 }
 ```
 
-> **Note**: If React Compiler is enabled (all spernakit apps), it skips memoization for trivial expressions automatically. **Suppress** this rule in compiler-enabled projects; only flag if the component uses `'use no memo'` or has a profiled, measurable hot path.
+> **Note**: If React Compiler is verified compiling (see [React Compiler Impact](#react-compiler-impact)), it skips memoization for trivial expressions automatically. **Suppress** this rule in compiler-enabled projects; only flag if the component uses `'use no memo'` or has a profiled, measurable hot path.
 
 ### 5.11 Put Interaction Logic in Event Handlers
 
@@ -1500,7 +1500,7 @@ useEffect(() => {
 }, [pageTitle]);
 ```
 
-> **Note**: If React Compiler is enabled (all spernakit apps), it automatically optimizes dependency tracking. **Suppress** this rule in compiler-enabled projects; only flag if there is a profiled, measurable performance issue.
+> **Note**: If React Compiler is verified compiling (see [React Compiler Impact](#react-compiler-impact)), it automatically optimizes dependency tracking. **Suppress** this rule in compiler-enabled projects; only flag if there is a profiled, measurable performance issue.
 
 ### 5.15 Use useDeferredValue for Expensive Derived Renders
 
@@ -1634,7 +1634,7 @@ function Container() {
 }
 ```
 
-> **Note**: If React Compiler is enabled (all spernakit apps), the compiler automatically hoists static JSX elements. **Suppress** this rule in compiler-enabled projects; only flag if the component uses `'use no memo'`.
+> **Note**: If React Compiler is verified compiling (see [React Compiler Impact](#react-compiler-impact)), the compiler automatically hoists static JSX elements. **Suppress** this rule in compiler-enabled projects; only flag if the component uses `'use no memo'`.
 
 ### 6.4 Optimize SVG Precision
 

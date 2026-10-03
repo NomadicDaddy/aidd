@@ -1,7 +1,7 @@
 ---
 title: 'Lighthouse Report Processing with Business Context'
-last_updated: '2026-06-28'
-version: '2.2'
+last_updated: '2026-10-03'
+version: '2.3'
 category: 'Performance'
 priority: 'Medium'
 estimated_time: '1-2 hours'
@@ -39,12 +39,17 @@ result is **SKIPPED / data-unavailable** with a concise record of what was attem
 
 Your primary goal is to transform raw Lighthouse JSON data (Lighthouse v11+) into a clear, concise, and actionable performance analysis that directly connects technical metrics to business outcomes. Record the actual `lighthouseVersion` from each artifact instead of assuming a current major line. You will compare desktop and mobile reports for the same URL to highlight platform-specific issues and guide optimization efforts with clear ROI justification.
 
-**Business Context**: For a self-hosted multi-user application (spernakit-based), performance directly impacts:
+**Business Context**: Derive it from the target, do not assume it. Read the project profile (`.aidd/project-profile.json`: deployment, exposure, bucket) and the deployment configuration, and state at the top of the report which of these the target is:
 
-- **User satisfaction and retention**: Slow pages erode trust in the tool
+- **Public site on an edge or CDN** (a static or server-rendered site reachable by anyone). Search visibility, first-visit load on a cold cache and edge caching are the point. SEO and caching findings carry full weight.
+- **Self-hosted or internal application** (signed-in users on a network the operator controls). Interactivity and perceived quality matter most; hosting cost is bandwidth and CPU on the operator's own machine; SEO is usually irrelevant and CDN advice usually does not apply.
+- **Local tool** (served on loopback to one person). Only interactivity and bundle weight are meaningful.
+
+In every case performance affects:
+
+- **User satisfaction and retention**: Slow pages erode trust
 - **Conversion/activation**: First-run experience determines whether a user continues
-- **Cost of hosting**: Heavy bundles and unoptimized assets increase bandwidth and CPU costs on self-hosted infrastructure
-- **Perceived quality**: Internal tools with poor performance get replaced
+- **Perceived quality**: Slow tools and slow sites get replaced
 
 **Stakeholder Value**:
 
@@ -52,7 +57,7 @@ Your primary goal is to transform raw Lighthouse JSON data (Lighthouse v11+) int
 - **Engineering**: Clear, measurable targets tied to user experience
 - **Operations / self-hosters**: Predictable resource consumption
 
-> **Note on public-web metrics**: Industry statistics (e.g., "100ms delay costs 1% of sales") apply to consumer e-commerce and may not translate to self-hosted internal tools. Use them only when the application is actually deployed publicly with conversion funnels.
+> **Note on public-web metrics**: Industry statistics (e.g., "100ms delay costs 1% of sales") apply to consumer e-commerce. Use them only when the target is actually deployed publicly with conversion funnels.
 
 ## Input Requirements
 
@@ -71,7 +76,7 @@ The user should provide this data, clearly identifying which is which. You shoul
 
 ### Spernakit-Specific Input: crawltest Web Vitals
 
-Spernakit applications also emit **field-mode-style** Web Vitals via `bun run crawltest` (see `scripts/crawltest.ts` and `scripts/crawltest-analyze.ts`). The crawler uses the `web-vitals` library (v5) in-page and writes results to `logs/crawltest.json`.
+Spernakit applications also emit **field-mode-style** Web Vitals via `bun run crawltest` (see `scripts/crawltest.ts` and `scripts/crawltest-analyze.ts`). The crawler uses the `web-vitals` library in-page (read the installed version from the manifest) and writes results to `logs/crawltest.json`.
 
 - **Use crawltest data** to identify pages that regress across multiple routes or build runs.
 - **Use Lighthouse data** for a deep, single-page diagnostic with opportunity/diagnostic breakdowns.
@@ -95,6 +100,10 @@ This audit processes Lighthouse JSON. When no JSON is handed over (the common ca
 
 3. **Crawltest fallback.** If the Lighthouse CLI or Chrome is unavailable, fall back to field-mode crawler output: run `bun run crawltest` (or `bun run crawltest:preview` against a built preview) and read the emitted `logs/crawltest.json`. This provides web-vitals field data even when Lighthouse lab capture is not possible.
 
+### No Served URL
+
+Lighthouse measures a page fetched over HTTP. A target whose interface is not served (a desktop renderer loading `file://`, for example an Electron window) has nothing to measure. Do not start a server the project does not define in order to manufacture one. Record what the interface is, mark the report **SKIPPED / data-unavailable** under the rule below, and stop. That outcome is expected for such targets and is not a defect in the target.
+
 ### Data-Availability Rule (SKIPPED vs. PASS)
 
 - When **at least one** real artifact (Lighthouse JSON or `logs/crawltest.json`) was parsed, proceed with the workflow and report only the scores supported by that data.
@@ -109,8 +118,9 @@ Follow these steps to analyze the provided JSON reports.
 
 1. **Parse JSON:** Ingest the two JSON strings and parse them into structured objects.
 2. **Initial Validation:** For each report, verify the presence of essential top-level keys: `categories`, `audits`, `finalUrl`, `fetchTime`, `lighthouseVersion`, `configSettings`.
-3. **Version Check:** Record `lighthouseVersion`. Reports from Lighthouse <11 lack INP support; flag such reports and recommend rerunning with a current version.
-4. **Identify Key Information:** From each report, extract and store:
+3. **Version Check:** Record `lighthouseVersion`. Reports from Lighthouse <11 lack INP support; flag such reports and recommend rerunning with a current version. The version also decides which audit ids exist: Lighthouse 13 replaced most "opportunity" audits with **insight** audits (see [Audit ids by Lighthouse version](#audit-ids-by-lighthouse-version)).
+4. **A missing audit key is never "no issue".** Before reading `audits['<id>']`, check that the key exists in this report. An absent key means "not present in this Lighthouse version": look up its replacement in the table, and if neither id exists, write **not reported by this Lighthouse version** for that item. Reading `undefined` and concluding the page has no third-party cost or no caching problem is the false pass this rule exists to prevent.
+5. **Identify Key Information:** From each report, extract and store:
     - **URL Tested:** `finalUrl`
     - **Timestamp:** `fetchTime`
     - **Device Type:** `configSettings.formFactor` (`mobile` or `desktop`)
@@ -178,8 +188,8 @@ Create a detailed comparison table for these key metrics, showing the values for
 
 The "Opportunities" section in Lighthouse suggests improvements with the highest potential impact.
 
-1. **Filter for Opportunities:** Iterate through the `audits` object. Identify audits where `details.type === 'opportunity'`.
-2. **Extract Savings:** For each opportunity, extract `details.overallSavingsMs` (for time) or `details.overallSavingsBytes` (for data).
+1. **Filter for Opportunities:** Iterate through the `audits` object. In Lighthouse 11 and 12 these are audits where `details.type === 'opportunity'`. In Lighthouse 13 most of them are insight audits instead: ids ending in `-insight`, with a score below 1. Collect both kinds; a report where the `opportunity` filter finds almost nothing is a Lighthouse 13 report, not a fast page.
+2. **Extract Savings:** For a legacy opportunity, extract `details.overallSavingsMs` (time) or `details.overallSavingsBytes` (data). For an insight, read `metricSavings` (per-metric milliseconds, for example `metricSavings.LCP`) and the byte figures in `details.items` where present. Where an insight carries no estimate, say so and rank it by which Core Web Vital it names rather than inventing a number.
 3. **Apply Prioritization Framework:** Use the matrix below.
 4. **Summarize Top 3:** List the top 3 opportunities for each platform with justification.
 
@@ -222,11 +232,25 @@ Diagnostics provide additional information about how the page adheres to web dev
 2. **Extract Key Findings:**
     - `audits['mainthread-work-breakdown'].details.items` (time spent on script evaluation, parsing, etc.)
     - `audits['network-requests'].details.items` (large or slow requests)
-    - `audits['critical-request-chains'].details` (render-blocking request chains)
-    - `audits['third-party-summary'].details.items` (third-party script cost)
-    - `audits['uses-long-cache-ttl'].details.items` (self-hosted caching hygiene)
+    - Request chains, third-party cost and cache lifetimes, under whichever id this report carries (see the table below)
 3. **Translate Findings:** Do not just list the data. Translate it into plain language. For example, if "Script Evaluation" is high in the main-thread breakdown, state: "Significant time is being spent executing JavaScript, which can delay interactivity."
-4. **Cross-reference first-party tooling:** When Lighthouse flags compression or unused-JS opportunities (`uses-text-compression`, `unused-javascript`), confirm against the existing spernakit measurement commands before promoting findings: `bun run verify-compression` and `bun run --cwd frontend build:analyze` (rollup-plugin-visualizer). Keep optimization decision-trees in [PERFORMANCE.md](./PERFORMANCE.md); this audit only corroborates, it does not duplicate the guidance.
+4. **Cross-reference first-party tooling:** When Lighthouse flags compression or unused-JS findings (`uses-text-compression` or `document-latency-insight`, `unused-javascript`), confirm against the project's own measurement commands before promoting them. Spernakit-derived targets have `bun run verify-compression` and `bun run --cwd frontend build:analyze` (rollup-plugin-visualizer); on other targets use whatever bundle or asset report the project defines, and say which. Keep optimization decision-trees in [PERFORMANCE.md](./PERFORMANCE.md); this audit only corroborates, it does not duplicate the guidance.
+
+#### Audit ids by Lighthouse version
+
+Verified against `bunx lighthouse --list-all-audits` on 13.5.0 (2026-10-03). Re-run that command when the installed major changes; do not extend this table from memory.
+
+| What it reports           | Lighthouse 11-12 id          | Lighthouse 13 id                  |
+| ------------------------- | ---------------------------- | --------------------------------- |
+| Render-blocking chains    | `critical-request-chains`    | `network-dependency-tree-insight` |
+| Render-blocking resources | `render-blocking-resources`  | `render-blocking-insight`         |
+| Third-party script cost   | `third-party-summary`        | `third-parties-insight`           |
+| Cache lifetimes           | `uses-long-cache-ttl`        | `cache-insight`                   |
+| Text compression          | `uses-text-compression`      | `document-latency-insight`        |
+| HTTP/2 or later           | `uses-http2`                 | `modern-http-insight`             |
+| Animated content format   | `efficient-animated-content` | removed, no replacement           |
+
+Present under the same id in both: the metric audits (`first-contentful-paint`, `largest-contentful-paint`, `total-blocking-time`, `cumulative-layout-shift`, `speed-index`, `interaction-to-next-paint`), `mainthread-work-breakdown`, `network-requests`, `server-response-time`, `unused-javascript`, `bootup-time`.
 
 ### Step 6: Cross-Check with Field/Crawler Data (Spernakit)
 
@@ -238,14 +262,13 @@ Before finalizing recommendations, cross-reference the single-URL Lighthouse vie
 
 ### Step 7: Filter Inapplicable Opportunities
 
-For self-hosted spernakit applications, suppress or de-prioritize opportunities that assume a CDN/edge topology the project does not use. Examples to verify against actual deployment before promoting:
+Weigh each finding against the business context established at the top of the report. Do not apply a blanket rule in either direction.
 
-- `uses-text-compression`: still relevant; spernakit serves via its own HTTP stack.
-- `uses-http2` / `uses-http3`: relevant only if a reverse proxy is configured.
-- `efficient-animated-content` (CDN-served media): often N/A for internal tools.
-- `server-response-time`: relevant, but interpret against local network rather than global edge.
+- **Self-hosted or internal application**: suppress or de-prioritize findings that assume a CDN or edge the project does not use. Text compression stays relevant (the app serves through its own HTTP stack). HTTP/2 and later matter only if a reverse proxy is configured. `server-response-time` is read against the local network, not a global edge.
+- **Public site on an edge or CDN**: caching, compression, HTTP version and SEO findings are in scope at full weight and must not be filtered as "internal tool" noise. Check them against the host's actual response headers before promoting.
+- **Local tool**: network-topology findings are not applicable; say so once.
 
-Call this out explicitly when recommending action so readers with non-public deployments do not chase irrelevant work.
+Use the id this report carries (table above). State explicitly which findings were filtered and why, so a reader with a different deployment does not chase or skip the wrong work.
 
 ### Step 8: Generate the Final Business-Focused Report
 
@@ -384,7 +407,8 @@ The site scores **92** on desktop and **65** on mobile. The 27-point gap indicat
 - [ ] Image optimization implemented (WebP/AVIF)
 - [ ] Code splitting and lazy loading in place
 - [ ] Caching strategies verified against actual deployment (browser + reverse proxy)
-- [ ] Opportunities inapplicable to self-hosted topology explicitly filtered out
+- [ ] Findings inapplicable to the target's established deployment explicitly filtered out, with the reason
+- [ ] Every audit id read was confirmed present in the report; absent ids reported as not reported by this Lighthouse version
 
 ### Low Priority Checks
 

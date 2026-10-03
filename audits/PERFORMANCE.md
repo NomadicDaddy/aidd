@@ -1,6 +1,6 @@
 ---
 title: 'Performance Optimization Audit Framework'
-last_updated: '2026-10-01'
+last_updated: '2026-10-03'
 version: '2.4'
 category: 'Core Technology'
 priority: 'High'
@@ -42,7 +42,7 @@ lifecycle: 'pre-release'
 
 **Essential Optimization Areas**
 
-- **Frontend**: React 19 + React Compiler automatic memoization, Vite 8 code splitting, route-level lazy loading, `@tanstack/react-virtual` for large lists
+- **Frontend**: React 19 + React Compiler automatic memoization (where verified compiling), Vite 8 code splitting, route-level lazy loading, `@tanstack/react-virtual` for large lists
 - **Backend**: Elysia handler execution, Drizzle indexed queries, Bun runtime tuning
 - **CSS**: Tailwind CSS v4 content-aware purging, critical CSS, layout-shift prevention
 - **Infrastructure**: Gzip + Brotli compression and cache headers verified **by request against the target's actual static origin** (which may not be nginx), Docker container warm-up
@@ -79,7 +79,7 @@ This unified framework consolidates performance-related auditing across all tech
 **Stack reference** (see the target repository's stack document, `docs/template/STACK.md` in the template; read exact versions from the target's `package.json` files, which are the only authority):
 
 - React 19 + Vite 8 + Tailwind CSS v4 + TanStack Query 5 + Zustand 5 (major lines as read on 2026-10-01)
-- React Compiler (`babel-plugin-react-compiler`, stable since 1.0.0) enabled by default; manual `React.memo` / `useMemo` / `useCallback` are settled anti-patterns unless profiling proves need
+- React Compiler (`babel-plugin-react-compiler`, stable since 1.0.0) is the intended default. Verify it in the build output before relying on it: `grep -l "react.memo_cache_sentinel" <build-output>/assets/*.js | wc -l` must be non-zero. Configured-but-not-compiling is a High finding in its own right, and in that state manual `React.memo` / `useMemo` / `useCallback` are doing real work. Where compilation is verified, they are settled anti-patterns unless profiling proves need
 - Elysia + Bun + Drizzle ORM + SQLite (or PostgreSQL in a dual-dialect Spernakit app)
 - `web-vitals` wired into crawltest for LCP/INP/CLS/FCP/TTFB collection in `logs/crawltest.json`
 
@@ -130,7 +130,7 @@ This unified framework consolidates performance-related auditing across all tech
 - **Interaction to Next Paint (INP)**: ≤ 200ms (Core Web Vital; replaced FID March 2024)
 - **Cumulative Layout Shift (CLS)**: ≤ 0.1 (Core Web Vital)
 - **First Contentful Paint (FCP)**: ≤ 1.8s (Lighthouse metric, 10% weight)
-- **Total Blocking Time (TBT)**: ≤ 200ms (Lighthouse metric, 30% weight; updated threshold per Lighthouse 12)
+- **Total Blocking Time (TBT)**: ≤ 200ms (Lighthouse metric, 30% weight)
 - **Speed Index (SI)**: ≤ 3.4s (Lighthouse metric, 10% weight)
 - **Time to First Byte (TTFB)**: ≤ 800ms (Core Web Vitals supplemental)
 - **Backend route execution (p95)**: ≤ 300ms
@@ -492,13 +492,13 @@ The snippet shows the shape of a slow-call hook, not an API to look for: `record
 - Drizzle query performance (via pino query timing hook)
 - Bundle size trends (bundle analysis report snapshots per release, plus the recorded budget files' history)
 - Core Web Vitals per route (from crawltest `web-vitals` capture)
-- Lighthouse Performance Score (Lighthouse 12 algorithm)
+- Lighthouse Performance Score (weights as carried by the report's own `categories.performance.auditRefs`)
 - Vite build time per workspace
 - WebSocket broadcast latency
 
-### Lighthouse Performance Scoring (Lighthouse 12 algorithm)
+### Lighthouse Performance Scoring
 
-**Current metric weights:**
+**Current metric weights** (Lighthouse 10 through 13; a report carries its own weights in `categories.performance.auditRefs`, which win over this list if they differ):
 
 - **Total Blocking Time (TBT)**: 30%
 - **Largest Contentful Paint (LCP)**: 25% (Core Web Vital)

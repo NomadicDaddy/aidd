@@ -1,7 +1,7 @@
 ---
 title: 'Web Interface Guidelines Audit (Vercel)'
-last_updated: '2026-08-30'
-version: '1.7'
+last_updated: '2026-10-03'
+version: '1.8'
 category: 'Frontend'
 priority: 'High'
 estimated_time: '2-3 hours'
@@ -46,13 +46,19 @@ animation, typography, performance, navigation, theming, and interaction pattern
 
 ## Spernakit Applicability
 
-This audit fully applies to spernakit applications (React 19 + Vite). All categories are relevant except Section 14 (Hydration Safety) which is SSR-only.
+The 103 upstream checks are DOM, HTML and CSS checks, so they apply to **any** target with a web-rendered interface: a React SPA, a static or server-rendered site, a desktop renderer scripted against the DOM. What changes per target is where the interface lives and which framework notes are relevant, and both are established in [Pre-Audit Setup](#pre-audit-setup) before any scan runs.
+
+For spernakit applications (React 19 + Vite) all categories are relevant except Section 14 (Hydration Safety), which applies only where markup is rendered ahead of the client (SSR, static generation). A statically generated site is the opposite case: Section 14 applies and the React-specific notes do not.
+
+The notes below marked **Spernakit** apply only when the target derives from Spernakit (`spernakit_version` in the root manifest). On any other target, audit the underlying rule and do not flag the absence of a Spernakit hook or component: a project that formats dates with `Intl` directly satisfies 13.1 whether or not it has a `useFormatters` hook.
 
 ### React Compiler / Tailwind CSS 4 Note
 
 `babel-plugin-react-compiler` does NOT affect any of these 103 upstream checks - they are all DOM/HTML/CSS concerns, not render optimization concerns. Tailwind CSS 4.3.x uses CSS-first configuration with `@theme` directive; `focus-visible:ring-*` and `text-wrap` utilities work differently from v3 - verify Tailwind v4 syntax when checking rules in Sections 2 (Focus States) and 5 (Typography).
 
 ### Spernakit-Specific Notes
+
+Spernakit-derived targets only. Each row names how the template satisfies a rule; the rule itself, not the hook, is what every other target is audited against.
 
 | Guideline Area                          | Spernakit Context                                                                                                                                                                        |
 | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -95,41 +101,64 @@ This audit fully applies to spernakit applications (React 19 + Vite). All catego
 
 ## Pre-Audit Setup
 
-Before beginning the audit, prepare search commands to identify web interface guideline violations in the target codebase:
+Before beginning the audit, locate the interface and prepare search commands against it.
 
-1. **Run quality checks**: `bun run smoke:qc` must pass to establish a clean baseline.
-2. **Verify Tailwind CSS v4**: Confirm `tailwindcss` in `frontend/package.json` is v4.x with `@tailwindcss/vite` plugin.
-3. **Identify icon-library accessibility defaults**: Record each icon component library and
+1. **Locate the UI source first.** Do not assume `frontend/src`. Read the manifest and build
+   configuration and record the directories and file types that hold markup, styles and interface
+   scripts. Seen in this fleet: `frontend/src` with `*.tsx` (a Vite React app); `src` with
+   `*.astro`, `src/styles/*.css` and `src/scripts` (an Astro site); `src/desktop/*.ts` with
+   `index.html` and plain `*.css` (an Electron renderer written against the DOM). Every scan below
+   uses `<ui-source>` for those directories and `<ui-globs>` for the matching `-g` filters, for
+   example `-g '*.tsx'`, `-g '*.astro' -g '*.html'`, or `-g '*.ts' -g '*.html'`.
+2. **A scan that matched zero files is a wrong path, not a clean result.** Before recording "no
+   findings" from any scan, confirm its path and globs match the target's UI files:
+    ```bash
+    rg --files <ui-source> <ui-globs> | wc -l    # must be greater than zero
+    ```
+    A zero here means the scan looked at nothing. Fix the path and re-run; never report it as a pass.
+3. **Run the project's quality gate** to establish a clean baseline: `bun run smoke:qc` where it
+   exists, otherwise the project's typecheck, lint, build and format checks. Record which ran.
+4. **Record the styling approach.** Where Tailwind is used, confirm `tailwindcss` in the manifest
+   that owns the UI is v4.x. Where the target uses hand-written CSS, the Tailwind notes in Sections
+   2 and 5 do not apply and the rules are checked against the stylesheets directly.
+5. **Identify icon-library accessibility defaults**: Record each icon component library and
    its installed version. Inspect the rendered DOM or that exact version's implementation before
-   treating an absent JSX `aria-hidden` prop as a violation.
-4. **Scan for missing aria-labels on icon buttons**:
+   treating an absent `aria-hidden` attribute as a violation.
+6. **Scan for missing aria-labels on icon buttons**:
     ```bash
-    rg "<button[^>]*>\s*<\w+Icon" frontend/src/ -g '*.tsx'
+    rg "<button[^>]*>\s*<\w+Icon" <ui-source> <ui-globs>
     ```
-5. **Scan for images without alt text**:
+    Component-style icons only. In hand-written markup, read each `<button>` whose content is an
+    `<svg>` or an image instead.
+7. **Scan for images without alt text**. The look-ahead needs PCRE (`-P`), and `-U` lets it span a
+   tag whose attributes sit on following lines; without both the pattern either fails to parse or
+   matches every image:
     ```bash
-    rg "<img[^>]*(?!alt=)" frontend/src/ -g '*.tsx'
+    rg -U -P -n "<img\b(?![^>]*\balt=)" <ui-source> <ui-globs>
     ```
-6. **Scan for outline-none without focus-visible replacement**:
+8. **Scan for outline-none without focus-visible replacement**:
     ```bash
-    rg "outline-none|outline:\s*none" frontend/src/ -A 5 -g '*.tsx' --type css
+    rg -n "outline-none|outline:\s*(none|0)" <ui-source> -A 5
     ```
-7. **Scan for transition: all**:
+9. **Scan for transition: all**:
     ```bash
-    rg "transition:\s*all|transition-all" frontend/src/
+    rg -n "transition:\s*all|transition-all" <ui-source>
     ```
-8. **Scan for div onClick navigation**:
+10. **Scan for click handlers on non-interactive elements**:
     ```bash
-    rg "div.*onClick.*navigate" frontend/src/ -g '*.tsx'
+    rg -n "<(div|span)[^>]*onClick" <ui-source> <ui-globs>                 # JSX
+    rg -n "addEventListener\(\s*'click'" <ui-source>                       # DOM scripts: read each target element
     ```
-9. **Scan for hardcoded date/number formats**:
+11. **Scan for hardcoded date/number formats**:
     ```bash
-    rg "toFixed\(|getMonth\(|getFullYear\(" frontend/src/ --type ts
+    rg -n "toFixed\(|getMonth\(|getFullYear\(" <ui-source>
     ```
-10. **Scan for missing image dimensions**:
+12. **Scan for missing image dimensions** (multi-line tags need `-U -P`, as in step 7):
     ```bash
-    rg "<img" frontend/src/ -g '*.tsx' | rg -v "width.*height|height.*width"
+    rg -U -P -n "<img\b(?![^>]*\bwidth=)|<img\b(?![^>]*\bheight=)" <ui-source> <ui-globs>
     ```
+    Images sized by a build step (an image component that emits `width`/`height`) are checked in
+    the built output, not the source.
 
 ---
 
@@ -200,7 +229,8 @@ accessible name instead of hiding it.
 </span>
 ```
 
-> **Spernakit note**: Lucide React 1.31.0 adds `aria-hidden="true"` automatically when an icon
+> **Lucide note**: Current Lucide React releases (check the installed version; this was verified on
+> 1.31.0) add `aria-hidden="true"` automatically when an icon
 > receives neither children nor an accessibility prop. Lucide treats `aria-*`, `role`, and `title`
 > as accessibility props; those props or children suppress the automatic fallback. Verify the
 > resulting semantics before filing a finding, and require an explicit `aria-hidden` only when a

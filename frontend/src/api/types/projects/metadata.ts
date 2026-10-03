@@ -206,9 +206,10 @@ export interface ProjectSummary {
 	id: string;
 	/** True when this project is a spernakit template checkout (hidden from the list by default). */
 	isSpernakitTemplate?: boolean;
+	/** The listing omits run and iteration history; read them from `ProjectDetail`. */
 	metadata: {
 		usage: Pick<ProjectMetadata['usage'], 'recentDailyTokens' | 'totals'>;
-	} & Omit<ProjectMetadata, 'usage'>;
+	} & Omit<ProjectMetadata, 'localIterations' | 'localRuns' | 'usage'>;
 	name: string;
 	path: string;
 	phase: ProjectPhase;

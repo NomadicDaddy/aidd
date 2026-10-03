@@ -1,7 +1,7 @@
 ---
 title: 'Watermark, Steganography, and Covert Telemetry Audit'
-last_updated: '2026-08-19'
-version: '1.1'
+last_updated: '2026-10-03'
+version: '1.2'
 category: 'Security'
 priority: 'High'
 estimated_time: '2-4 hours'
@@ -90,7 +90,12 @@ rg -n ' +$' .aidd/tmp/wm-canary.txt
 rg -a -n 'IHDR|caBX|c2pa\.watermarked' .aidd/tmp/wm-canary.png
 ```
 
-All probes must hit. Record versions for `rg`, `git`, `exiftool`, and `c2patool`. Missing metadata
+All probes must hit. A canary proves only the flags and globs it was run with, so before the
+repository sweeps run every Section 1 command with its exact flags and globs, pointed at
+`.aidd/tmp` instead of `.`: the `--glob '*.{ts,tsx,js,json,md}'` sweeps never read a `.txt` file,
+so also write the text canary as `.aidd/tmp/wm-canary.ts` and `.aidd/tmp/wm-canary.md`. Delete the
+canaries before the repository sweeps, or those `-uu` sweeps report the canaries as findings.
+Record versions for `rg`, `git`, `exiftool`, and `c2patool`. Missing metadata
 tools permits byte fallbacks; a failed canary blocks its section. Validate any metadata tool used
 as deciding evidence against a known-positive fixture. Detector unavailability is a coverage
 limit, not a failed canary.
@@ -124,7 +129,8 @@ compatible key cannot verify it.
 Inventory likely provider-generated prose, translations, summaries, docs, and comments. Mark
 short, factual, proofread, or code-heavy samples weak-signal because length and entropy matter.
 
-- Without an official compatible detector, record
+- Anthropic's detection API is a private preview limited to eligible organisations (checked
+  2026-10-03); most audits will not have it. Without an official compatible detector, record
   `UNVERIFIABLE — official compatible detector unavailable`; use overall verdict `PARTIAL` and
   create no finding solely for detector unavailability.
 - With a detector, prove it distinguishes official positive/negative fixtures. Record version,

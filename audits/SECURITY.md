@@ -1,7 +1,7 @@
 ---
 title: 'Security, Authentication, and Authorization Audit'
-last_updated: '2026-08-30'
-version: '3.7'
+last_updated: '2026-10-03'
+version: '3.8'
 category: 'Security'
 priority: 'Critical'
 estimated_time: '3-5 hours (Class A full audit; Class B ~1 hour, mostly the delegated siblings)'
@@ -14,7 +14,7 @@ lifecycle: 'pre-release'
 > **Severity Reference**: See [SEVERITY_CLASSIFICATION.md](./SEVERITY_CLASSIFICATION.md) for issue prioritization.
 > **Methodology gate**: See [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md): read the enforcing implementation (cite file:line), falsify every "by design"/"N/A" rationale, never score from a green gate.
 
-Comprehensive security audit for Spernakit v3 applications (aligned with the v3.11.x-lts stack pin, 2026-06-27) covering authentication (JWT ES256), authorization (5-tier RBAC with Elysia guards), input validation (TypeBox), data protection (AES-256-GCM), and OWASP Top 10 compliance.
+Comprehensive security audit for Spernakit v3 applications (read the target's template version from its `package.json`; facts below were checked against Spernakit 3.47.4 on 2026-10-03) covering authentication (JWT ES256), authorization (5-tier RBAC with Elysia guards), input validation (TypeBox), data protection (AES-256-GCM), and OWASP Top 10 compliance.
 
 ## Executive Summary
 
@@ -29,7 +29,7 @@ Comprehensive security audit for Spernakit v3 applications (aligned with the v3.
 **Essential Standards**
 
 - 5-tier RBAC: SYSOP > ADMIN > MANAGER > OPERATOR > VIEWER
-- Guard coverage: cookie/JWT auth uses `requireAuth` / `requireRoleFresh` / `workspaceAccess`; API-key auth uses the per-route `apiKey` guard with mandatory HMAC request signing
+- Guard coverage: cookie/JWT auth uses `requireAuth` / `requireRoleFresh` and the workspace guards in `guards/workspaceAccess.ts`; API-key requests are authenticated by the global `authPlugin` from `X-API-Key` with mandatory HMAC signature headers, and then capped by the same role guards
 - Password hashing via `Bun.password.hash`/`Bun.password.verify` (`{ algorithm: 'bcrypt' }`) with configurable rounds (`config.security.bcryptRounds`); no third-party bcrypt package
 - Soft delete on core entities, hard delete on security tables (token_blacklist, password_history, rate_limit_entries)
 - No `.env` files: JSON-only configuration via `config/{slug}.json`
@@ -50,12 +50,12 @@ Comprehensive security audit for Spernakit v3 applications (aligned with the v3.
 
 ### Authorization Model
 
-| Guard                    | Purpose                                                                          | Scope                        |
-| ------------------------ | -------------------------------------------------------------------------------- | ---------------------------- |
-| `requireAuth`            | Verify JWT is valid and not blacklisted                                          | Authentication               |
-| `requireRoleFresh(role)` | Re-validate role from database on every request                                  | Authorization (hierarchical) |
-| `workspaceAccess`        | Verify user has access to the requested workspace                                | Multi-tenant isolation       |
-| `apiKey`                 | Authenticate non-interactive API-key requests with mandatory HMAC-SHA256 signing | Non-interactive access       |
+| Guard                    | Purpose                                                                        | Scope                        |
+| ------------------------ | ------------------------------------------------------------------------------ | ---------------------------- |
+| `requireAuth`            | Verify JWT is valid and not blacklisted                                        | Authentication               |
+| `requireRoleFresh(role)` | Re-validate role from database on every request                                | Authorization (hierarchical) |
+| workspace guards         | `guards/workspaceAccess.ts`: verify user has access to the requested workspace | Multi-tenant isolation       |
+| `authPlugin` (API key)   | Authenticate `X-API-Key` requests with mandatory HMAC-SHA256 signature headers | Non-interactive access       |
 
 ### Plugin Pipeline Order
 
@@ -75,9 +75,9 @@ HMAC signing applies to API-key requests (`X-API-Key` plus signature headers). D
 ### Configuration Model
 
 - **Primary**: `config/{slug}.json` (all application configuration)
-- **Secret injection** (Docker only): `configLoader.ts` reads `SECRET_CONFIG_KEYS` from environment (JWT keys, cookie secret, encryption key)
+- **Secret injection** (Docker only): `config/configSecrets.ts` reads `SECRET_CONFIG_KEYS` from environment (JWT keys, cookie secret, encryption key)
 - **No `.env` files**: `bunfig.toml` has `env = false`
-- **No `process.env`**: Except the approved `configLoader.ts` exception
+- **No `process.env`**: Except the approved `configSecrets.ts` exception and the bootstrap `NODE_ENV` read in `configLogger.ts`, which points to it; `bun run check:process-env` enforces the list
 
 ## Applicability & Scope
 
@@ -137,7 +137,8 @@ Focused sibling audits own the dimensions below. **Do not score these dimensions
 ### Verification Commands
 
 ```bash
-# Check for unguarded routes (routes without requireAuth/requireRoleFresh/apiKey)
+# Check for unguarded routes (routes without requireAuth/requireRoleFresh). API-key callers have
+# no per-route guard: authPlugin authenticates them globally and the role guards cap them.
 # (Skip for Class B local-tool targets — no RBAC/guards by design; auth boundary is
 # DELEGATED to PROXY_AUTH_BOUNDARY.md.)
 grep -rn "\.get\|\.post\|\.put\|\.patch\|\.delete" backend/src/routes/ --include="*.ts" | grep -v "requireAuth\|requireRoleFresh\|apiKey\|public\|health\|login\|register\|verify\|reset\|oauth"
@@ -151,7 +152,7 @@ find . -name ".env*" -type f -not -path "*/node_modules/*"
 # `bun run check:process-env` is the canonical scripted gate for this invariant; the manual
 # grep below is a supplementary cross-check.
 bun run check:process-env
-grep -rn "process\.env" backend/src/ --include="*.ts" | grep -v "configLoader\|node_modules"
+grep -rn "process\.env" backend/src/ --include="*.ts" | grep -v "configSecrets\|configLogger\|node_modules"
 
 # Check for hardcoded secrets
 grep -rn "password\s*=\s*['\"]" backend/src/ frontend/src/ --include="*.ts" --include="*.tsx" | grep -v "test\|spec\|mock\|\.d\.ts"
@@ -159,8 +160,8 @@ grep -rn "password\s*=\s*['\"]" backend/src/ frontend/src/ --include="*.ts" --in
 # Check for console.log of sensitive data
 grep -rn "console\.log.*password\|console\.log.*token\|console\.log.*secret\|console\.log.*key" backend/src/ --include="*.ts"
 
-# Verify pino redaction configuration
-grep -rn "redact" backend/src/utils/logger.ts
+# Verify pino redaction configuration (the path list lives beside the logger)
+grep -rn "redact" backend/src/utils/logger.ts backend/src/utils/logRedactPaths.ts
 
 # Validate config security invariants
 # `bun run check:config` is the canonical invariant gate (production startup blocks on it);
@@ -225,15 +226,15 @@ bun run config:validate
 
 ### Guard Coverage
 
-| Check | Criteria                                                            | Remediation                                    |
-| ----- | ------------------------------------------------------------------- | ---------------------------------------------- |
-| `[ ]` | Every mutation endpoint has `requireAuth` or `apiKey` guard         | Add missing guards                             |
-| `[ ]` | Role-protected endpoints use `requireRoleFresh()` (NOT cached role) | Replace stale role checks with fresh DB lookup |
-| `[ ]` | `requireRoleFresh` re-validates from database on every request      | Verify no cached role shortcuts                |
-| `[ ]` | Workspace-scoped endpoints use `workspaceAccess` guard              | Add workspace isolation                        |
-| `[ ]` | No authorization logic in route handlers (use guards)               | Move to guard layer                            |
-| `[ ]` | Frontend `ProtectedRoute` mirrors backend guard requirements        | Verify role requirements match                 |
-| `[ ]` | No reliance solely on frontend guards for security                  | Backend guards are the authority               |
+| Check | Criteria                                                             | Remediation                                    |
+| ----- | -------------------------------------------------------------------- | ---------------------------------------------- |
+| `[ ]` | Every mutation endpoint is behind `requireAuth` / `requireRoleFresh` | Add missing guards                             |
+| `[ ]` | Role-protected endpoints use `requireRoleFresh()` (NOT cached role)  | Replace stale role checks with fresh DB lookup |
+| `[ ]` | `requireRoleFresh` re-validates from database on every request       | Verify no cached role shortcuts                |
+| `[ ]` | Workspace-scoped endpoints use `workspaceAccess` guard               | Add workspace isolation                        |
+| `[ ]` | No authorization logic in route handlers (use guards)                | Move to guard layer                            |
+| `[ ]` | Frontend `ProtectedRoute` mirrors backend guard requirements         | Verify role requirements match                 |
+| `[ ]` | No reliance solely on frontend guards for security                   | Backend guards are the authority               |
 
 ### RBAC Hierarchy
 
@@ -456,7 +457,7 @@ If future code introduces new `dangerouslySetInnerHTML` usages, they MUST be add
 | ----- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `[ ]` | WebSocket connections authenticate via JWT on handshake                      | Verify token validation in ws route                              |
 | `[ ]` | JWT re-validated every 2 minutes via periodic ping                           | Verify ping interval                                             |
-| `[ ]` | Connection rate limiting on WebSocket endpoint                               | Verify `ws/rate-limit.ts`                                        |
+| `[ ]` | Connection rate limiting on WebSocket endpoint                               | Locate the upgrade handler and its limiter; cite file:line       |
 | `[ ]` | Maximum payload length enforced at Bun transport level (not only in handler) | Verify `maxPayloadLength` option on the WS upgrade/configuration |
 | `[ ]` | No sensitive data broadcast to unauthorized connections                      | Verify channel-based pub/sub respects permissions                |
 
@@ -649,7 +650,7 @@ Score **only** the two genuinely SECURITY-unique local rows below. The bearer-to
 - [ ] JWT uses ES256 with HTTP-only cookies
 - [ ] Token blacklist populated on logout and cleaned up on schedule
 - [ ] No `.env` files anywhere; JSON-only config
-- [ ] No `process.env` usage outside `configLoader.ts`
+- [ ] No `process.env` usage outside `configSecrets.ts` (and the bootstrap read in `configLogger.ts`)
 - [ ] No hardcoded secrets in code or logs
 - [ ] TypeBox validation on all route inputs
 - [ ] Drizzle ORM for all queries (no raw SQL concatenation)

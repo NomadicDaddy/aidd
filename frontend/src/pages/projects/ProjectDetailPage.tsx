@@ -15,6 +15,7 @@ import { default as NotebookPen } from 'lucide-react/dist/esm/icons/notebook-pen
 import { default as Settings2 } from 'lucide-react/dist/esm/icons/settings-2';
 import { default as ShieldAlert } from 'lucide-react/dist/esm/icons/shield-alert';
 import { default as ShieldCheck } from 'lucide-react/dist/esm/icons/shield-check';
+import { Suspense } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 
 import { ApiError } from '../../api/client.ts';
@@ -39,22 +40,28 @@ import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { tableColumnClass } from '../../lib/tableStyles.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { ActiveRunsBanner } from './detail/ActiveRunsBanner.tsx';
-import { ArtifactsTab } from './detail/ArtifactsTab.tsx';
-import { AuditsTab } from './detail/AuditsTab.tsx';
 import { BlueprintImplementationCard } from './detail/BlueprintImplementationCard.tsx';
-import { CodeTab } from './detail/CodeTab.tsx';
-import { DependencyGraphTab } from './detail/DependencyGraphTab.tsx';
-import { DiaryTab } from './detail/DiaryTab.tsx';
-import { FeaturesTab } from './detail/FeaturesTab.tsx';
-import { HistoryTab } from './detail/HistoryTab.tsx';
-import { InterviewTab } from './detail/InterviewTab.tsx';
-import { ManagementTab } from './detail/ManagementTab.tsx';
+import {
+	ArtifactsTab,
+	AuditsTab,
+	CodeTab,
+	DependencyGraphTab,
+	DiaryTab,
+	FeaturesTab,
+	HistoryTab,
+	InterviewTab,
+	LazyTabFallback,
+	ManagementTab,
+	MilestonesTab,
+	NotesTab,
+	ProfileTab,
+	ReportsTab,
+	RepositoryTab,
+	RunsTab,
+} from './detail/lazyTabs.tsx';
 import { MaturityOverview } from './detail/MaturityOverview.tsx';
-import { MilestonesTab } from './detail/MilestonesTab.tsx';
-import { NotesTab } from './detail/NotesTab.tsx';
 import { OverviewSummary } from './detail/OverviewSummary.tsx';
 import { OverviewMetadata } from './detail/OverviewTab.tsx';
-import { ProfileTab } from './detail/ProfileTab.tsx';
 import {
 	type DetailTab,
 	projectDetailTabSearchParams,
@@ -62,9 +69,6 @@ import {
 } from './detail/projectDetailNavigation.ts';
 import { ProjectStatusStrip } from './detail/ProjectStatusStrip.tsx';
 import { RecentActivity } from './detail/RecentActivity.tsx';
-import { ReportsTab } from './detail/ReportsTab.tsx';
-import { RepositoryTab } from './detail/RepositoryTab.tsx';
-import { RunsTab } from './detail/RunsTab.tsx';
 import { useCanonicalProjectRoute } from './detail/useCanonicalProjectRoute.ts';
 import { useInterviewDrafts } from './detail/useInterviewDrafts.ts';
 import { OpenInTerminalButton } from './OpenInTerminalButton.tsx';
@@ -199,95 +203,97 @@ export function ProjectDetailPage() {
 					/>
 				</div>
 			</TabPanel>
-			<TabPanel activeTab={tab} id="features" idPrefix="project-detail">
-				<FeaturesTab
-					features={detail.features}
-					projectId={detail.id}
-					projectPath={detail.path}
-					roadmap={detail.metadata.roadmap}
-				/>
-			</TabPanel>
-			<TabPanel activeTab={tab} id="milestones" idPrefix="project-detail">
-				<MilestonesTab projectId={detail.id} />
-			</TabPanel>
-			<TabPanel activeTab={tab} id="dependencies" idPrefix="project-detail">
-				<DependencyGraphTab
-					features={detail.features}
-					projectId={detail.id}
-					projectPath={detail.path}
-					roadmap={detail.metadata.roadmap}
-				/>
-			</TabPanel>
-			<TabPanel activeTab={tab} id="runs" idPrefix="project-detail">
-				<RunsTab
-					localIterations={detail.metadata.localIterations}
-					localRuns={detail.metadata.localRuns}
-					projectPath={detail.path}
-					usage={detail.metadata.usage}
-				/>
-			</TabPanel>
-			<TabPanel activeTab={tab} id="history" idPrefix="project-detail">
-				<HistoryTab
-					features={detail.features}
-					localIterations={detail.metadata.localIterations}
-					localRuns={detail.metadata.localRuns}
-					projectId={detail.id}
-					projectPath={detail.path}
-				/>
-			</TabPanel>
-			<TabPanel activeTab={tab} id="repository" idPrefix="project-detail">
-				<RepositoryTab gitStatus={gitStatus.data?.status} projectId={detail.id} />
-			</TabPanel>
-			<TabPanel activeTab={tab} id="code" idPrefix="project-detail">
-				<CodeTab projectId={detail.id} />
-			</TabPanel>
-			<TabPanel activeTab={tab} id="diary" idPrefix="project-detail">
-				<DiaryTab projectName={detail.name} projectPath={detail.path} />
-			</TabPanel>
-			<TabPanel activeTab={tab} id="notes" idPrefix="project-detail">
-				<NotesTab projectId={detail.id} />
-			</TabPanel>
-			<TabPanel activeTab={tab} id="artifacts" idPrefix="project-detail">
-				<ArtifactsTab
-					artifactCheck={artifactCheckSummary}
-					artifactHealth={detail.artifactHealth}
-					maturity={detail.maturityDetail}
-					projectId={detail.id}
-				/>
-			</TabPanel>
-			<TabPanel activeTab={tab} id="interview" idPrefix="project-detail">
-				<InterviewTab
-					draftAnswers={interviewDrafts.drafts}
-					interview={interview.data}
-					isError={interview.isError}
-					isLoading={interview.isLoading}
-					onDraftChange={interviewDrafts.updateDraft}
-					onDraftSubmitted={interviewDrafts.clearDraft}
-					projectId={detail.id}
-				/>
-			</TabPanel>
-			<TabPanel activeTab={tab} id="reports" idPrefix="project-detail">
-				<ReportsTab
-					features={detail.features}
-					isError={reports.isError}
-					isLoading={reports.isLoading}
-					projectId={detail.id}
-					reports={reports.data}
-				/>
-			</TabPanel>
-			<TabPanel activeTab={tab} id="audits" idPrefix="project-detail">
-				<AuditsTab
-					features={detail.features}
-					projectId={detail.id}
-					projectName={detail.name}
-				/>
-			</TabPanel>
-			<TabPanel activeTab={tab} id="profile" idPrefix="project-detail">
-				<ProfileTab profile={detail.metadata.profile} projectId={detail.id} />
-			</TabPanel>
-			<TabPanel activeTab={tab} id="management" idPrefix="project-detail">
-				<ManagementTab project={detail} />
-			</TabPanel>
+			<Suspense fallback={<LazyTabFallback />}>
+				<TabPanel activeTab={tab} id="features" idPrefix="project-detail">
+					<FeaturesTab
+						features={detail.features}
+						projectId={detail.id}
+						projectPath={detail.path}
+						roadmap={detail.metadata.roadmap}
+					/>
+				</TabPanel>
+				<TabPanel activeTab={tab} id="milestones" idPrefix="project-detail">
+					<MilestonesTab projectId={detail.id} />
+				</TabPanel>
+				<TabPanel activeTab={tab} id="dependencies" idPrefix="project-detail">
+					<DependencyGraphTab
+						features={detail.features}
+						projectId={detail.id}
+						projectPath={detail.path}
+						roadmap={detail.metadata.roadmap}
+					/>
+				</TabPanel>
+				<TabPanel activeTab={tab} id="runs" idPrefix="project-detail">
+					<RunsTab
+						localIterations={detail.metadata.localIterations}
+						localRuns={detail.metadata.localRuns}
+						projectPath={detail.path}
+						usage={detail.metadata.usage}
+					/>
+				</TabPanel>
+				<TabPanel activeTab={tab} id="history" idPrefix="project-detail">
+					<HistoryTab
+						features={detail.features}
+						localIterations={detail.metadata.localIterations}
+						localRuns={detail.metadata.localRuns}
+						projectId={detail.id}
+						projectPath={detail.path}
+					/>
+				</TabPanel>
+				<TabPanel activeTab={tab} id="repository" idPrefix="project-detail">
+					<RepositoryTab gitStatus={gitStatus.data?.status} projectId={detail.id} />
+				</TabPanel>
+				<TabPanel activeTab={tab} id="code" idPrefix="project-detail">
+					<CodeTab projectId={detail.id} />
+				</TabPanel>
+				<TabPanel activeTab={tab} id="diary" idPrefix="project-detail">
+					<DiaryTab projectName={detail.name} projectPath={detail.path} />
+				</TabPanel>
+				<TabPanel activeTab={tab} id="notes" idPrefix="project-detail">
+					<NotesTab projectId={detail.id} />
+				</TabPanel>
+				<TabPanel activeTab={tab} id="artifacts" idPrefix="project-detail">
+					<ArtifactsTab
+						artifactCheck={artifactCheckSummary}
+						artifactHealth={detail.artifactHealth}
+						maturity={detail.maturityDetail}
+						projectId={detail.id}
+					/>
+				</TabPanel>
+				<TabPanel activeTab={tab} id="interview" idPrefix="project-detail">
+					<InterviewTab
+						draftAnswers={interviewDrafts.drafts}
+						interview={interview.data}
+						isError={interview.isError}
+						isLoading={interview.isLoading}
+						onDraftChange={interviewDrafts.updateDraft}
+						onDraftSubmitted={interviewDrafts.clearDraft}
+						projectId={detail.id}
+					/>
+				</TabPanel>
+				<TabPanel activeTab={tab} id="reports" idPrefix="project-detail">
+					<ReportsTab
+						features={detail.features}
+						isError={reports.isError}
+						isLoading={reports.isLoading}
+						projectId={detail.id}
+						reports={reports.data}
+					/>
+				</TabPanel>
+				<TabPanel activeTab={tab} id="audits" idPrefix="project-detail">
+					<AuditsTab
+						features={detail.features}
+						projectId={detail.id}
+						projectName={detail.name}
+					/>
+				</TabPanel>
+				<TabPanel activeTab={tab} id="profile" idPrefix="project-detail">
+					<ProfileTab profile={detail.metadata.profile} projectId={detail.id} />
+				</TabPanel>
+				<TabPanel activeTab={tab} id="management" idPrefix="project-detail">
+					<ManagementTab project={detail} />
+				</TabPanel>
+			</Suspense>
 		</PageRail>
 	);
 }

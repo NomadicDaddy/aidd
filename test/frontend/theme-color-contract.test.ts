@@ -20,6 +20,29 @@ describe('browser theme color contract', () => {
 		expect(css).toContain('background: #0c0f14;');
 	});
 
+	test('applies the saved theme before the first paint', async () => {
+		const [html, init, store] = await Promise.all([
+			Bun.file(resolve(frontendRoot, 'index.html')).text(),
+			Bun.file(resolve(frontendRoot, 'public/theme-init.js')).text(),
+			Bun.file(resolve(frontendRoot, 'src/stores/themeStore.ts')).text(),
+		]);
+		// A classic, blocking script in <head>, ahead of the module entry: the CSP is
+		// script-src 'self', so it is a file, and it must run before the body paints.
+		const initAt = html.indexOf('<script src="/theme-init.js"></script>');
+		const entryAt = html.indexOf('<script src="/src/main.tsx" type="module"></script>');
+		expect(initAt).toBeGreaterThan(-1);
+		expect(initAt).toBeLessThan(html.indexOf('</head>'));
+		expect(initAt).toBeLessThan(entryAt);
+		// The key it reads is the key the store writes.
+		const key = /THEME_STORAGE_KEY = '([^']+)'/.exec(store)?.[1];
+		expect(key).toBeDefined();
+		expect(init).toContain(`localStorage.getItem('${key}')`);
+		expect(store).toContain('name: THEME_STORAGE_KEY');
+		// A plain classic script: no module syntax, nothing evaluated from a string.
+		expect(init).not.toMatch(/\b(?:import|export)\b/);
+		expect(init).not.toMatch(/\beval\s*\(|new Function\b/);
+	});
+
 	test('updates theme-color metadata when the effective application theme changes', async () => {
 		const source = await Bun.file(resolve(frontendRoot, 'src/hooks/useTheme.ts')).text();
 

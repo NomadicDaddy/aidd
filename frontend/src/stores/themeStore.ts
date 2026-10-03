@@ -11,6 +11,13 @@ interface ThemeState {
 	setMode: (mode: ThemeState['mode']) => void;
 }
 
+/**
+ * The localStorage key the theme persists under. public/theme-init.js reads the same key before the
+ * first paint and cannot import this module; test/frontend/theme-color-contract.test.ts holds the
+ * two to the same value.
+ */
+export const THEME_STORAGE_KEY = 'aidd-theme';
+
 export const useThemeStore = create<ThemeState>()(
 	persist(
 		(set, get) => ({
@@ -32,7 +39,7 @@ export const useThemeStore = create<ThemeState>()(
 			},
 		}),
 		{
-			name: 'aidd-theme',
+			name: THEME_STORAGE_KEY,
 			storage: createJSONStorage(() => resilientLocalStorage),
 		},
 	),

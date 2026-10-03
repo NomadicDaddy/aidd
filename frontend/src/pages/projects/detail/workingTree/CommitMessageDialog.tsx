@@ -2,6 +2,7 @@ import { useId, useState } from 'react';
 
 import { Button } from '../../../../components/ui/button.tsx';
 import { Dialog, DialogPanel } from '../../../../components/ui/dialog.tsx';
+import { useGuardedClose } from '../../../../hooks/useGuardedClose.tsx';
 import { textareaClass } from '../../../../lib/formStyles.ts';
 
 // Mirrors commitMessageMaxLength in backend/src/services/git/workingTreeCommit.ts, so the textarea
@@ -27,6 +28,11 @@ export function CommitMessageDialog({
 	const titleId = useId();
 	const descriptionId = useId();
 	const trimmed = message.trim();
+	const guard = useGuardedClose({
+		dirty: trimmed.length > 0,
+		onClose: close,
+		what: 'the commit message',
+	});
 
 	function close() {
 		setMessage('');
@@ -40,47 +46,50 @@ export function CommitMessageDialog({
 	}
 
 	return (
-		<Dialog
-			aria-describedby={descriptionId}
-			aria-labelledby={titleId}
-			initialFocus="first"
-			onClose={close}
-			open={open}>
-			<DialogPanel className="w-full max-w-lg p-5">
-				<h2 className="text-sm font-semibold text-foreground" id={titleId}>
-					{title}
-				</h2>
-				<p className="mt-1 text-xs text-muted-foreground" id={descriptionId}>
-					{description}
-				</p>
-				<textarea
-					aria-label="Commit message"
-					className={`${textareaClass} mt-4`}
-					disabled={isPending}
-					maxLength={commitMessageMaxLength}
-					onChange={(event) => setMessage(event.target.value)}
-					// Ctrl/Cmd+Enter commits, matching every other commit box the user meets.
-					onKeyDown={(event) => {
-						if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
-							event.preventDefault();
-							submit();
-						}
-					}}
-					placeholder="Describe the change…"
-					value={message}
-				/>
-				<div className="mt-4 flex justify-end gap-2">
-					<Button disabled={isPending} onClick={close} variant="secondary">
-						Cancel
-					</Button>
-					<Button
-						disabled={isPending || trimmed.length === 0}
-						onClick={submit}
-						variant="primary">
-						{isPending ? 'Committing…' : 'Commit'}
-					</Button>
-				</div>
-			</DialogPanel>
-		</Dialog>
+		<>
+			<Dialog
+				aria-describedby={descriptionId}
+				aria-labelledby={titleId}
+				initialFocus="first"
+				onClose={guard.requestClose}
+				open={open}>
+				<DialogPanel className="w-full max-w-lg p-5">
+					<h2 className="text-sm font-semibold text-foreground" id={titleId}>
+						{title}
+					</h2>
+					<p className="mt-1 text-xs text-muted-foreground" id={descriptionId}>
+						{description}
+					</p>
+					<textarea
+						aria-label="Commit message"
+						className={`${textareaClass} mt-4`}
+						disabled={isPending}
+						maxLength={commitMessageMaxLength}
+						onChange={(event) => setMessage(event.target.value)}
+						// Ctrl/Cmd+Enter commits, matching every other commit box the user meets.
+						onKeyDown={(event) => {
+							if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+								event.preventDefault();
+								submit();
+							}
+						}}
+						placeholder="Describe the change…"
+						value={message}
+					/>
+					<div className="mt-4 flex justify-end gap-2">
+						<Button disabled={isPending} onClick={close} variant="secondary">
+							Cancel
+						</Button>
+						<Button
+							disabled={isPending || trimmed.length === 0}
+							onClick={submit}
+							variant="primary">
+							{isPending ? 'Committing…' : 'Commit'}
+						</Button>
+					</div>
+				</DialogPanel>
+			</Dialog>
+			{guard.discardDialog}
+		</>
 	);
 }

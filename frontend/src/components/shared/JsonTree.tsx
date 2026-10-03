@@ -1,9 +1,8 @@
-import { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down';
-import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
 import { useState } from 'react';
 
 import { cn } from '../../lib/cn.ts';
 import { toneText } from '../../lib/tones.ts';
+import { DisclosureMarker } from './DisclosureMarker.tsx';
 
 // Hand-rolled collapsible JSON tree. Objects and arrays collapse; the top two levels start
 // expanded so a typical artifact (roadmap.json, feature.json) is scannable on open.
@@ -60,15 +59,16 @@ function JsonNode({
 		? value.map((item, index) => [String(index), item] as [string, JsonValue])
 		: Object.entries(value);
 	const brackets = isArray ? '[…]' : '{…}';
-	const Chevron = expanded ? ChevronDown : ChevronRight;
 
 	return (
 		<div className={depth === 0 ? '' : 'pl-4'}>
 			<button
+				// The chevron says open or shut to the eye only; this says it to a screen reader.
+				aria-expanded={expanded}
 				className="inline-flex items-center gap-1 rounded text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
 				onClick={() => setExpanded((previous) => !previous)}
 				type="button">
-				<Chevron aria-hidden="true" className="h-3 w-3 shrink-0 text-muted-foreground" />
+				<DisclosureMarker open={expanded} />
 				{keyPrefix}
 				<span className="text-muted-foreground">{brackets}</span>
 				<span className="text-[0.65rem] text-muted-foreground">

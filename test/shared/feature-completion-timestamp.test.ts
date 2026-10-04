@@ -34,7 +34,11 @@ async function readStored(projectDir: string): Promise<Record<string, unknown>> 
 
 describe('applyCompletionTimestamp', () => {
 	test('stamps the instant a feature enters completed', () => {
-		const stamped = applyCompletionTimestamp(feature({ status: 'completed' }), AT);
+		const stamped = applyCompletionTimestamp(
+			feature({ status: 'completed' }),
+			feature({ status: 'in_progress' }),
+			AT,
+		);
 		expect(stamped.completedAt).toBe('2026-08-21T10:00:00.000Z');
 	});
 
@@ -42,30 +46,48 @@ describe('applyCompletionTimestamp', () => {
 	// a non-idempotent stamp would re-date every completed feature on every routine metadata write.
 	test('leaves an already-stamped completion alone', () => {
 		const original = feature({ completedAt: '2026-01-01T00:00:00.000Z', status: 'completed' });
-		expect(applyCompletionTimestamp(original, AT)).toBe(original);
+		expect(applyCompletionTimestamp(original, original, AT)).toBe(original);
+	});
+
+	// Features completed before the field existed carry no stamp. Rewriting one for an unrelated
+	// reason is not a completion, so it must not acquire the date of that write: adminware.com's
+	// artifact refresh stamped eleven August completions with 2026-10-04 this way.
+	test('does not date a feature that was already completed on disk', () => {
+		const legacy = feature({ priority: 3, status: 'completed' });
+		const rewritten = applyCompletionTimestamp({ ...legacy, priority: 1 }, legacy, AT);
+		expect(rewritten.completedAt).toBeUndefined();
+	});
+
+	test('keeps the stored instant when a rewrite of a completed feature omits it', () => {
+		const stored = feature({ completedAt: '2026-01-01T00:00:00.000Z', status: 'completed' });
+		const partial = feature({ priority: 1, status: 'completed' });
+		expect(applyCompletionTimestamp(partial, stored, AT).completedAt).toBe(
+			'2026-01-01T00:00:00.000Z',
+		);
 	});
 
 	test('clears the stamp when the feature is reopened, and re-stamps on re-completion', () => {
-		const reopened = applyCompletionTimestamp(
-			feature({ completedAt: '2026-01-01T00:00:00.000Z', status: 'in_progress' }),
-			AT,
-		);
+		const done = feature({ completedAt: '2026-01-01T00:00:00.000Z', status: 'completed' });
+		const reopened = applyCompletionTimestamp({ ...done, status: 'in_progress' }, done, AT);
 		expect(reopened.completedAt).toBeUndefined();
-		expect(applyCompletionTimestamp({ ...reopened, status: 'completed' }, AT).completedAt).toBe(
-			'2026-08-21T10:00:00.000Z',
-		);
+		expect(
+			applyCompletionTimestamp({ ...reopened, status: 'completed' }, reopened, AT)
+				.completedAt,
+		).toBe('2026-08-21T10:00:00.000Z');
 	});
 
 	// `status` is optional on the schema and partial writers exist; an absent status is not a
 	// statement that the feature is open, so it must not delete a real completion instant.
 	test('does not clear the stamp when the record carries no status at all', () => {
 		const partial = { completedAt: '2026-01-01T00:00:00.000Z', id: 'feature-1' } as Feature;
-		expect(applyCompletionTimestamp(partial, AT).completedAt).toBe('2026-01-01T00:00:00.000Z');
+		expect(applyCompletionTimestamp(partial, undefined, AT).completedAt).toBe(
+			'2026-01-01T00:00:00.000Z',
+		);
 	});
 
 	test('leaves an open feature with no stamp untouched', () => {
 		const open = feature({ status: 'in_progress' });
-		expect(applyCompletionTimestamp(open, AT)).toBe(open);
+		expect(applyCompletionTimestamp(open, undefined, AT)).toBe(open);
 	});
 });
 
@@ -81,10 +103,20 @@ describe('writeFeature', () => {
 		expect(Number.isNaN(Date.parse(stored.completedAt as string))).toBe(false);
 	});
 
-	test('reopening a completed feature through the store drops the date', async () => {
+	test('an unrelated rewrite of a feature already completed on disk adds no date', async () => {
 		const projectDir = await project('completed');
 		const store = new FileAiddStore(projectDir);
-		await store.writeFeature(await store.readFeature('feature-1'));
+		await store.writeFeature({ ...(await store.readFeature('feature-1')), priority: 1 });
+		const stored = await readStored(projectDir);
+		expect(stored.priority).toBe(1);
+		expect(stored.completedAt).toBeUndefined();
+	});
+
+	test('reopening a completed feature through the store drops the date', async () => {
+		const projectDir = await project('in_progress');
+		const store = new FileAiddStore(projectDir);
+		const before = await store.readFeature('feature-1');
+		await store.writeFeature({ ...before, passes: true, status: 'completed' });
 		expect(typeof (await readStored(projectDir)).completedAt).toBe('string');
 
 		const completed = await store.readFeature('feature-1');

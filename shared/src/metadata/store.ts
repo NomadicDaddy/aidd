@@ -158,11 +158,12 @@ export class FileAiddStore implements AiddStore {
 			listFeatures: () => this.listFeatures({ includeAudit: true }),
 			readRoadmap: () => this.readRoadmap(),
 		});
-		// Completion instant, stamped here rather than at any one call site: the agent editing
-		// feature.json, a web status edit and the reconcile pass all land in this one writer.
+		// Completion instant, stamped here rather than at any one call site: a web status edit, the
+		// reconcile pass and the orchestrator's post-run stamp all land in this one writer. Only an
+		// entry into completed is dated, judged against the record on disk (see status-policy.ts).
 		// The assignment pass gets the stamped record too — it can persist a priority-synced copy,
 		// and handing it the pre-stamp one would write the timestamp straight back out.
-		const stamped = applyCompletionTimestamp(resolved);
+		const stamped = applyCompletionTimestamp(resolved, existingFeature);
 		// The remediation event lands before feature.json: if the append fails the record stays
 		// in its prior state rather than reading completed with no ledger trace. The ledger, not
 		// the previous status, decides whether this completion is the first (see finding-lifecycle).

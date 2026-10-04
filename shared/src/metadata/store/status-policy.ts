@@ -58,15 +58,28 @@ export function isMilestoneBeyondMvp(roadmap: Roadmap, milestone: string): boole
  * of any kind — measured against the first `Revision <ver> (<date>)` note across this repo's own
  * features it runs a median 15 days late — so it cannot stand in for one.
  *
- * Idempotent: an already-stamped completed feature is returned untouched, so the routine metadata
- * writes that pass through `writeFeature` (milestone edits, priority sync, roadmap assignment) do
- * not keep re-dating a completion. Reopening deletes the stamp rather than leaving a stale instant
- * behind, and re-completing stamps the new one.
+ * Only an entry is stamped: `previous` is the record on disk before this write, and a feature that
+ * was already completed there is not entering anything. Routine metadata writes (milestone edits,
+ * priority sync, roadmap assignment) rewrite completed features constantly; stamping whatever lacked
+ * the field dated features finished months before the field existed with the day of an unrelated
+ * reconcile (adminware.com, 2026-10-04: eleven August completions stamped at once). A rewrite that
+ * omits the field keeps the instant already stored. When the agent flips a feature on disk, the
+ * orchestrator supplies the instant itself (stampCompletedFeatures), which is kept as given.
+ * Reopening deletes the stamp, and re-completing stamps the new one.
  */
-export function applyCompletionTimestamp(feature: Feature, now = new Date()): Feature {
+export function applyCompletionTimestamp(
+	feature: Feature,
+	previous: Feature | undefined,
+	now = new Date(),
+): Feature {
 	if (feature.status === 'completed') {
 		if (typeof feature.completedAt === 'string' && feature.completedAt.length > 0) {
 			return feature;
+		}
+		if (previous?.status === 'completed') {
+			return typeof previous.completedAt === 'string' && previous.completedAt.length > 0
+				? { ...feature, completedAt: previous.completedAt }
+				: feature;
 		}
 		return { ...feature, completedAt: now.toISOString() };
 	}

@@ -87,6 +87,7 @@ const EXPECTED_BUNDLED_SKILL_CATEGORIES = {
 	'update-audits': 'metadata',
 	'update-roadmap': 'metadata',
 	'update-screen-map': 'metadata',
+	'ux-rethink': 'audit-remediation',
 	'validate-build': 'runtime',
 	'validate-tests': 'runtime',
 	'watermark-audit': 'audit-remediation',
@@ -147,6 +148,7 @@ const ARGUMENT_ACCEPTING_SKILL_IDS = new Set([
 	'ui-redesign-planner',
 	'update-roadmap',
 	'update-screen-map',
+	'ux-rethink',
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {

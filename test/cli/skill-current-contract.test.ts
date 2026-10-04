@@ -257,6 +257,7 @@ const DECLARED_SKILL_CONTRACTS = {
 	tester: ['bug2feature', 'testing-scenarios'],
 	'ui-playground-apply': ['ui-playground-sync'],
 	'update-screen-map': ['humanize-docs'],
+	'ux-rethink': ['ui-redesign-planner'],
 	'watermark-audit': ['execute-audit'],
 };
 

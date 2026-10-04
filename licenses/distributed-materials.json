@@ -256,6 +256,8 @@
 			"skills/update-audits/SKILL.md",
 			"skills/update-roadmap/SKILL.md",
 			"skills/update-screen-map/SKILL.md",
+			"skills/ux-rethink/SKILL.md",
+			"skills/ux-rethink/agents/openai.yaml",
 			"skills/validate-build/SKILL.md",
 			"skills/validate-tests/SKILL.md",
 			"skills/watermark-audit/SKILL.md",

@@ -1,0 +1,4 @@
+interface:
+    display_name: 'UX Rethink'
+    short_description: 'Ask whether an interface is the right design, from users and tasks up'
+    default_prompt: "Use $ux-rethink to review this application from first principles: identify its users and their top tasks, walk each task through the running UI, compare the structure with the users' mental model, find what should not exist, and score two or three genuinely different concepts against the current UI."

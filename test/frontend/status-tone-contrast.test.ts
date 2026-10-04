@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
+import {
+	contrast,
+	frontendSource,
+	tailwindColor,
+	themeTokens,
+	token,
+} from '../_helpers/contrast.ts';
+
 const pagesRoot = join(process.cwd(), 'frontend', 'src', 'pages');
 
 // The tone families that carry operational meaning. `600`/`700`/`800` are the light-theme shades:
@@ -156,5 +164,57 @@ describe('status tones carry dark variants', () => {
 		expect(console_).not.toContain('#0a0e14');
 		expect(console_).not.toContain('text-white/');
 		expect(pretty).not.toContain('text-white/');
+	});
+});
+
+describe('status tone text reaches AA on the surfaces it sits on', () => {
+	/** The shades one tone record names, split by theme: `text-amber-700 dark:text-amber-300`. */
+	function recordShades(tones: string, record: string): { dark: string[]; light: string[] } {
+		const start = tones.indexOf(`export const ${record}: Record<Tone, string> = {`);
+		if (start < 0) throw new Error(`no ${record} record in tones.ts`);
+		const block = tones.slice(start, tones.indexOf('};', start));
+		const light: string[] = [];
+		const dark: string[] = [];
+		for (const match of block.matchAll(/(dark:)?(?:hover:)?text-([a-z]+-\d{3})\b/gu)) {
+			const shade = match[2];
+			if (shade) (match[1] ? dark : light).push(shade);
+		}
+		return { dark, light };
+	}
+
+	test('every themed toneText and toneTextHover shade clears 4.5:1 on --card and --background', async () => {
+		const [css, tones] = await Promise.all([
+			frontendSource('index.css'),
+			frontendSource('lib/tones.ts'),
+		]);
+		const failures: string[] = [];
+		let checked = 0;
+
+		for (const record of ['toneText', 'toneTextHover']) {
+			const shades = recordShades(tones, record);
+			// Five status tones, each with a light and a dark shade; `neutral` has neither.
+			expect(shades.light.length).toBe(5);
+			expect(shades.dark.length).toBe(5);
+			for (const [selector, list] of [
+				[':root', shades.light],
+				['.dark', shades.dark],
+			] as const) {
+				const surfaces = themeTokens(css, selector);
+				for (const shade of list) {
+					const colour = await tailwindColor(shade);
+					for (const surface of ['--card', '--background']) {
+						const ratio = contrast(colour, token(surfaces, surface));
+						checked += 1;
+						if (ratio < 4.5)
+							failures.push(
+								`${record} ${shade} on ${selector} ${surface}: ${ratio.toFixed(2)}`,
+							);
+					}
+				}
+			}
+		}
+
+		expect(checked).toBe(40);
+		expect(failures).toEqual([]);
 	});
 });

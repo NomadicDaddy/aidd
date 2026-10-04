@@ -1,70 +1,16 @@
 import { describe, expect, test } from 'bun:test';
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
 
-const FRONTEND_SRC = resolve(import.meta.dir, '../../frontend/src');
-const source = (path: string) => readFile(resolve(FRONTEND_SRC, path), 'utf8');
+import {
+	composite,
+	contrast,
+	frontendSource as source,
+	tailwindColor,
+	themeTokens,
+	token,
+} from '../_helpers/contrast.ts';
 
 /** The WCAG 1.4.11 non-text contrast floor. A focus indicator is a non-text UI component. */
 const FLOOR = 3;
-
-/** Tailwind's red scale, for the two weights the invalid-control ring picks from. */
-const TAILWIND_RED: Record<string, string> = { 'red-400': '#f87171', 'red-600': '#dc2626' };
-
-type Rgb = readonly [number, number, number];
-
-function parseHex(hex: string): Rgb {
-	const channel = (index: number) => Number.parseInt(hex.slice(index, index + 2), 16);
-	return [channel(1), channel(3), channel(5)];
-}
-
-function channelLuminance(value: number): number {
-	const channel = value / 255;
-	return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-}
-
-function luminance([red, green, blue]: Rgb): number {
-	return (
-		0.2126 * channelLuminance(red) +
-		0.7152 * channelLuminance(green) +
-		0.0722 * channelLuminance(blue)
-	);
-}
-
-function contrast(a: Rgb, b: Rgb): number {
-	const [first, second] = [luminance(a), luminance(b)];
-	return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
-}
-
-/**
- * Alpha compositing happens in gamma space in every browser, so the blend is a plain per-channel
- * mix of the two sRGB values. Doing it in linear space here would flatter the result by roughly a
- * tenth of a point and quietly hide a ring that is actually under the floor.
- */
-function composite([fr, fg, fb]: Rgb, [br, bg, bb]: Rgb, alpha: number): Rgb {
-	const mix = (front: number, back: number) => Math.round(front * alpha + back * (1 - alpha));
-	return [mix(fr, br), mix(fg, bg), mix(fb, bb)];
-}
-
-/** The custom-property block for one theme, so `--ring` is read per theme and not once globally. */
-function themeTokens(css: string, selector: string): Map<string, string> {
-	const start = css.indexOf(`${selector} {`);
-	if (start < 0) throw new Error(`no ${selector} block in index.css`);
-	const block = css.slice(start, css.indexOf('\n}', start));
-	const tokens = new Map<string, string>();
-	for (const match of block.matchAll(/^\t(--[a-z-]+):\s*(#[0-9a-f]{6});$/gmu)) {
-		const [, name, value] = match;
-		if (name && value) tokens.set(name, value);
-	}
-	return tokens;
-}
-
-/** Reads one token as a colour, so a renamed or removed token fails loudly instead of as `NaN`. */
-function token(tokens: Map<string, string>, name: string): Rgb {
-	const value = tokens.get(name);
-	if (!value) throw new Error(`no ${name} in this theme block`);
-	return parseHex(value);
-}
 
 /** The alpha the shared class actually ships, so the assertion cannot drift from the class list. */
 function ringAlpha(classList: string, utility: string): number {
@@ -126,9 +72,9 @@ describe('focus ring contrast', () => {
 			[':root', light],
 			['.dark', dark],
 		] as const) {
-			const weight = match?.[1] ?? '';
-			expect(Object.keys(TAILWIND_RED)).toContain(weight);
-			const red = parseHex(TAILWIND_RED[weight] ?? '');
+			// Tailwind's own palette, not a copied hex: v4 moved its reds, and a v3 value here
+			// measured a ring the browser never draws.
+			const red = await tailwindColor(match?.[1] ?? '');
 			const alpha = Number(match?.[2]) / 100;
 			const tokens = themeTokens(css, selector);
 			for (const name of SURFACES) {

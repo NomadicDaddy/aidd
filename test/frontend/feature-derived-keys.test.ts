@@ -102,4 +102,12 @@ describe('the raw block shows the record as feature.json holds it', () => {
 		expect(dialog).toContain('derived: DERIVED_FEATURE_KEYS.includes(key)');
 		expect(dialog).toContain('{row.derived ? (');
 	});
+
+	test('the derived label is subordinate by size, not by fading below AA', async () => {
+		const dialog = await Bun.file(
+			resolve(FRONTEND_SRC, 'pages/projects/detail/FeatureDetailsDialog.tsx'),
+		).text();
+		// `text-muted-foreground/70` measured under 4.5:1 on the dialog surface in both themes.
+		expect(dialog).not.toMatch(/text-muted-foreground\/\d+/u);
+	});
 });

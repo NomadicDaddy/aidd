@@ -102,4 +102,18 @@ describe('disclosures share one marker contract', () => {
 		);
 		expect(source).toContain('aria-hidden="true"');
 	});
+
+	test('the JSON tree toggle says whether it is open and which group it opens', async () => {
+		const source = await Bun.file(
+			join(FRONTEND_SOURCE, 'components', 'shared', 'JsonTree.tsx'),
+		).text();
+
+		// The chevron was the only open/shut signal, and it is decorative to a screen reader.
+		expect(source).toContain('aria-expanded={expanded}');
+		expect(source).toContain('<DisclosureMarker open={expanded} />');
+		// The group exists only while open, so the reference is dropped rather than left dangling.
+		expect(source).toContain('const groupId = useId();');
+		expect(source).toContain('aria-controls={expanded ? groupId : undefined}');
+		expect(source).toContain('<div id={groupId}>');
+	});
 });

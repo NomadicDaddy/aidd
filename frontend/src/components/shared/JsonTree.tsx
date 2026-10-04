@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { cn } from '../../lib/cn.ts';
 import { toneText } from '../../lib/tones.ts';
@@ -42,6 +42,7 @@ function JsonNode({
 	value: JsonValue;
 }) {
 	const [expanded, setExpanded] = useState(depth < defaultExpandedDepth);
+	const groupId = useId();
 	const keyPrefix =
 		label !== null ? <span className="text-foreground">&quot;{label}&quot;: </span> : null;
 
@@ -63,7 +64,9 @@ function JsonNode({
 	return (
 		<div className={depth === 0 ? '' : 'pl-4'}>
 			<button
-				// The chevron says open or shut to the eye only; this says it to a screen reader.
+				// The chevron says open or shut to the eye only; this says it to a screen reader. The
+				// group it controls exists only while open, so the reference is dropped when it is not.
+				aria-controls={expanded ? groupId : undefined}
 				aria-expanded={expanded}
 				className="inline-flex items-center gap-1 rounded text-left hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none max-sm:min-h-11"
 				onClick={() => setExpanded((previous) => !previous)}
@@ -75,16 +78,18 @@ function JsonNode({
 					{entryCountLabel(value)}
 				</span>
 			</button>
-			{expanded
-				? entries.map(([key, child]) => (
+			{expanded ? (
+				<div id={groupId}>
+					{entries.map(([key, child]) => (
 						<JsonNode
 							depth={depth + 1}
 							key={key}
 							label={isArray ? null : key}
 							value={child}
 						/>
-					))
-				: null}
+					))}
+				</div>
+			) : null}
 		</div>
 	);
 }

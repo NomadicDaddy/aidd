@@ -441,6 +441,7 @@ Refactor src/example.ts to extract a helper function.
 - If the directive requires fixes, fix all identified issues
 - Document your work in .aidd/CHANGELOG.md
 - Commit non-ignored changes with descriptive messages; never force-add ignored .aidd metadata
+- If the project directory is not inside a Git repository there is nothing to commit: skip committing and say so
 
 ### PROJECT CONTEXT
 
@@ -472,7 +473,7 @@ Refactor src/example.ts to extract a helper function.
 When you've completed the directive:
 
 1. Document what you did in .aidd/CHANGELOG.md
-2. Commit all non-ignored changes; leave ignored .aidd metadata as validated local state
+2. Commit all non-ignored changes; leave ignored .aidd metadata as validated local state. When the project directory is not inside a Git repository, skip this step and say so; it is not unresolved work
 3. Summarize your work with evidence: files modified, commands run with their actual output, pass/fail per validation, and anything skipped and why
 4. Exit cleanly
 
@@ -498,5 +499,5 @@ For partial or blocked work, report what remains and emit this result instead:
 AIDD_RESULT: {"directiveCompleted":false,"reason":"<exact unresolved requirement>"}
 ```
 
-Never emit directiveCompleted:true with unresolved required work. Missing contracts, invocation restrictions without an applicable scoped replacement, and unverified required checks are blockers. Files, timestamps, or commits alone cannot substitute for this completion result. Before emitting the success marker, document your work in /.aidd/CHANGELOG.md and commit every non-ignored change, per the completion steps above.
+Never emit directiveCompleted:true with unresolved required work. Missing contracts, invocation restrictions without an applicable scoped replacement, and unverified required checks are blockers. Files, timestamps, or commits alone cannot substitute for this completion result. Before emitting the success marker, document your work in /.aidd/CHANGELOG.md and commit every non-ignored change, per the completion steps above. A project directory that is not inside a Git repository has nothing to commit, and that skipped commit is not unresolved work.
 Anti-placeholder rule: the AIDD_RESULT value must be the COMPLETE, valid JSON object with the real contents for this run. Never substitute a placeholder, shorthand, or abbreviation where the JSON belongs — not `{ ... }`, `{ … }`, an ellipsis, or a prose summary. The marker is parsed as brace-balanced JSON, so a placeholder body fails to parse and discards the entire run's work. If the payload is large, emit it in full anyway; if you cannot emit valid JSON, omit the marker entirely rather than emit a malformed one.

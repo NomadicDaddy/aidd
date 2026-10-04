@@ -143,7 +143,7 @@ Do NOT restate the suggestions or fleet summary in this marker; put the complete
 		const readonly = plan.customDirectiveReadonly === true;
 		const closing = readonly
 			? 'This is a read-only directive: the findings or answer in your response ARE the deliverable. Do not commit, write files, or otherwise alter the repository. Emit the success marker only after delivering the full requested review or answer.'
-			: 'Before emitting the success marker, document your work in /.aidd/CHANGELOG.md and commit every non-ignored change, per the completion steps above.';
+			: 'Before emitting the success marker, document your work in /.aidd/CHANGELOG.md and commit every non-ignored change, per the completion steps above. A project directory that is not inside a Git repository has nothing to commit, and that skipped commit is not unresolved work.';
 		return `## aidd RESULT CONTRACT
 
 When you have fully carried out the directive, include exactly one final result marker in your assistant response:

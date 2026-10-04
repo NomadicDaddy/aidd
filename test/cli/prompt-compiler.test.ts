@@ -328,6 +328,16 @@ describe('prompt compiler', () => {
 		// missing_aidd_result; the mutation variant ties it to committing.
 		expect(compiled.text).toContain('AIDD_RESULT: {"directiveCompleted":true}');
 		expect(compiled.text).toContain('commit every non-ignored change');
+		// A directive run against a folder that is not a Git repository (the scheduled news digest
+		// runs on D:/applications) has nothing to commit. Told unconditionally to commit, a codex run
+		// reported directiveCompleted:false for finished work (run_1791130344757_585e9a15).
+		const contract = compiled.text.slice(compiled.text.indexOf('## aidd RESULT CONTRACT'));
+		expect(contract).toContain(
+			'not inside a Git repository has nothing to commit, and that skipped commit is not unresolved work',
+		);
+		expect(compiled.text).toContain(
+			'When the project directory is not inside a Git repository, skip this step and say so',
+		);
 	});
 
 	test('read-only directive prompt strips changelog and commit instructions', async () => {

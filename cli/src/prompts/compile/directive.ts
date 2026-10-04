@@ -23,6 +23,7 @@ const directiveMutationSuffix = `
 - If the directive requires fixes, fix all identified issues
 - Document your work in .aidd/CHANGELOG.md
 - Commit non-ignored changes with descriptive messages; never force-add ignored .aidd metadata
+- If the project directory is not inside a Git repository there is nothing to commit: skip committing and say so
 
 ### PROJECT CONTEXT
 
@@ -54,7 +55,7 @@ const directiveMutationSuffix = `
 When you've completed the directive:
 
 1. Document what you did in .aidd/CHANGELOG.md
-2. Commit all non-ignored changes; leave ignored .aidd metadata as validated local state
+2. Commit all non-ignored changes; leave ignored .aidd metadata as validated local state. When the project directory is not inside a Git repository, skip this step and say so; it is not unresolved work
 3. Summarize your work with evidence: files modified, commands run with their actual output, pass/fail per validation, and anything skipped and why
 4. Exit cleanly
 

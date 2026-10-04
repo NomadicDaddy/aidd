@@ -191,7 +191,7 @@ describe('Project Detail content and admin tabs polish', () => {
 		const tab = await detail('ProfileTab.tsx');
 
 		expect(tab).toContain('const savedPreview = useProfilePreview(projectId, savedInput)');
-		expect(tab).toContain('savedPreview={savedPreview.data}');
+		expect(tab).toContain('savedPreview: savedPreview.data');
 		expect(panel).toContain('savedApplicable.length}→${applicable.length} apply');
 		expect(panel).toContain('{changed ? <StatusDot tone="amber" /> : null}');
 		expect(facet).toContain('has-[:focus-visible]:ring-2');

@@ -489,9 +489,28 @@ describe('profile tab', () => {
 
 		const splitAt = tab.indexOf('@min-[68rem]/profile:grid-cols-[1.5fr_1fr]');
 		const actionAt = tab.indexOf('<EditorActionBar');
-		const desktopRailAt = tab.lastIndexOf('<ComputedProfilePanel');
+		const desktopRailAt = tab.lastIndexOf('<ComputedProfileRail');
 		expect(actionAt).toBeGreaterThan(splitAt);
 		expect(desktopRailAt).toBeGreaterThan(actionAt);
+	});
+
+	test('each computed-profile part is its own component, not a mode of one panel', async () => {
+		const panel = await detail('profile/ComputedProfilePanel.tsx');
+		const tab = await detail('ProfileTab.tsx');
+		// Six `mode` conditionals once chose among three presentations, and the narrow one quietly
+		// dropped the posture reasons. Call sites now name the part they show.
+		expect(panel).not.toMatch(/mode [!=]== '/);
+		expect(tab).not.toContain('mode=');
+		expect(tab).toContain('<ProfilePreviewContext value={previewState}>');
+		for (const part of [
+			'<ProfilePostureCard />',
+			'<ApplicableAuditsCard />',
+			'<ComputedProfileRail />',
+		])
+			expect(tab).toContain(part);
+		// The narrow posture card is the same component the rail uses, so it carries the reasons too.
+		expect(panel).toContain('posture.reasons');
+		expect(panel).toContain('<ProfilePostureCard />');
 	});
 });
 

@@ -194,9 +194,9 @@ describe('project detail density contracts', () => {
 
 	test('places live profile feedback before facets and keeps the full audit list later', async () => {
 		const profile = await detail('ProfileTab.tsx');
-		const summaryAt = profile.indexOf('mode="summary"');
+		const summaryAt = profile.indexOf('<ProfilePostureCard />');
 		const facetsAt = profile.indexOf('profileFacets.map');
-		const auditsAt = profile.indexOf('mode="audits"');
+		const auditsAt = profile.indexOf('<ApplicableAuditsCard />');
 
 		expect(profile).toContain('The profile facets that decide');
 		expect(summaryAt).toBeGreaterThan(-1);

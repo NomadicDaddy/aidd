@@ -15,9 +15,14 @@ import { textareaClass } from '../../../lib/formStyles.ts';
 import { tableColumnClass } from '../../../lib/tableStyles.ts';
 import { proseMeasureCardClass } from '../../../lib/typography.ts';
 import { profileInput, sameProfileInput } from '../profile/profile-helpers.ts';
-import { ComputedProfilePanel } from './profile/ComputedProfilePanel.tsx';
+import {
+	ApplicableAuditsCard,
+	ComputedProfileRail,
+	ProfilePostureCard,
+} from './profile/ComputedProfilePanel.tsx';
 import { FacetCard } from './profile/FacetCard.tsx';
 import { type FacetField, profileFacets } from './profile/profile-facets.ts';
+import { ProfilePreviewContext } from './profile/profilePreviewContext.ts';
 
 export function ProfileTab({
 	profile,
@@ -71,106 +76,93 @@ export function ProfileTab({
 		});
 	}
 
+	const previewState = {
+		dirty,
+		form,
+		isPreviewError: preview.isError,
+		isPreviewing: preview.isFetching,
+		preview: preview.data,
+		savedPreview: savedPreview.data,
+	};
 	return (
-		<div className={`@container/profile space-y-4 ${tableColumnClass}`}>
-			<TabIntro
-				description="The profile facets that decide this project's assurance bucket, and with it which audits apply."
-				title="Profile"
-			/>
-			<div className="grid gap-6 @min-[68rem]/profile:grid-cols-[1.5fr_1fr]">
-				<div className="@container/editor flex flex-col gap-4">
-					{/* Above the form it commits, and sticky, rather than at the foot of the editor.
+		<ProfilePreviewContext value={previewState}>
+			<div className={`@container/profile space-y-4 ${tableColumnClass}`}>
+				<TabIntro
+					description="The profile facets that decide this project's assurance bucket, and with it which audits apply."
+					title="Profile"
+				/>
+				<div className="grid gap-6 @min-[68rem]/profile:grid-cols-[1.5fr_1fr]">
+					<div className="@container/editor flex flex-col gap-4">
+						{/* Above the form it commits, and sticky, rather than at the foot of the editor.
 					    Keeping the bar inside this column also leaves the sticky computed-posture rail
 					    visible beside it instead of painting a full-width strip over the rail's header. */}
-					<EditorActionBar
-						dirty={dirty}
-						onDiscard={resetForm}
-						onSave={saveProfile}
-						pending={updateProfile.isPending}
-						pendingLabel="Saving…"
-						saveLabel="Save profile"
-					/>
-					<div className="@min-[68rem]/profile:hidden">
-						<ComputedProfilePanel
+						<EditorActionBar
 							dirty={dirty}
-							form={form}
-							isPreviewError={preview.isError}
-							isPreviewing={preview.isFetching}
-							mode="summary"
-							preview={preview.data}
-							savedPreview={savedPreview.data}
+							onDiscard={resetForm}
+							onSave={saveProfile}
+							pending={updateProfile.isPending}
+							pendingLabel="Saving…"
+							saveLabel="Save profile"
 						/>
-					</div>
-					{/* Facets are independent settings, so columns may pack each card directly after
+						<div className="@min-[68rem]/profile:hidden">
+							<ProfilePostureCard />
+						</div>
+						{/* Facets are independent settings, so columns may pack each card directly after
 					    the previous one instead of locking both columns to the taller card in a grid row. */}
-					<div className="columns-1 gap-4 @min-[40rem]/editor:columns-2">
-						{profileFacets.map((facet) => (
-							<div className="mb-4 break-inside-avoid" key={facet.field}>
-								<FacetCard
-									facet={facet}
-									onChange={updateField}
-									value={form[facet.field]}
-								/>
-							</div>
-						))}
-					</div>
-					{/* The same header the six FacetCards use, for the same reason: as a hand-styled
+						<div className="columns-1 gap-4 @min-[40rem]/editor:columns-2">
+							{profileFacets.map((facet) => (
+								<div className="mb-4 break-inside-avoid" key={facet.field}>
+									<FacetCard
+										facet={facet}
+										onChange={updateField}
+										value={form[facet.field]}
+									/>
+								</div>
+							))}
+						</div>
+						{/* The same header the six FacetCards use, for the same reason: as a hand-styled
 					    label it was the seventh group in one form wearing a different heading
 					    treatment from the other six, directly below them, and it was not in the
 					    heading tree at all. The visible title is the `CardHeader` h3; the `label`
 					    the textarea needs stays, visually hidden. */}
-					<Card className={proseMeasureCardClass}>
-						<CardHeader
-							className="mb-3"
-							description="Why this profile was chosen, for whoever reviews the posture next."
-							headingLevel={3}
-							title="Notes"
-						/>
-						<label className="sr-only" htmlFor="profile-notes">
-							Notes
-						</label>
-						<textarea
-							className={`${textareaClass} min-h-40`}
-							id="profile-notes"
-							maxLength={4000}
-							onChange={(event) => updateNotes(event.target.value)}
-							placeholder="Optional context for why this profile was chosen."
-							value={form.notes ?? ''}
-						/>
-					</Card>
-					<div className="@min-[68rem]/profile:hidden">
-						<ComputedProfilePanel
-							dirty={dirty}
-							form={form}
-							isPreviewError={preview.isError}
-							isPreviewing={preview.isFetching}
-							mode="audits"
-							preview={preview.data}
-							savedPreview={savedPreview.data}
-						/>
+						<Card className={proseMeasureCardClass}>
+							<CardHeader
+								className="mb-3"
+								description="Why this profile was chosen, for whoever reviews the posture next."
+								headingLevel={3}
+								title="Notes"
+							/>
+							<label className="sr-only" htmlFor="profile-notes">
+								Notes
+							</label>
+							<textarea
+								className={`${textareaClass} min-h-40`}
+								id="profile-notes"
+								maxLength={4000}
+								onChange={(event) => updateNotes(event.target.value)}
+								placeholder="Optional context for why this profile was chosen."
+								value={form.notes ?? ''}
+							/>
+						</Card>
+						<div className="@min-[68rem]/profile:hidden">
+							<ApplicableAuditsCard />
+						</div>
+					</div>
+
+					<div className="hidden @min-[68rem]/profile:block">
+						<ComputedProfileRail />
 					</div>
 				</div>
-
-				<div className="hidden @min-[68rem]/profile:block">
-					<ComputedProfilePanel
-						dirty={dirty}
-						form={form}
-						isPreviewError={preview.isError}
-						isPreviewing={preview.isFetching}
-						preview={preview.data}
-						savedPreview={savedPreview.data}
-					/>
-				</div>
+				<ConfirmDialog
+					confirmLabel="Discard changes"
+					description="You have unsaved profile changes. Leaving this page will discard them."
+					destructive
+					onClose={() => blocker.reset?.()}
+					onConfirm={() => blocker.proceed?.()}
+					open={blocker.state === 'blocked'}
+					title="Discard unsaved changes?"
+				/>
 			</div>
-			<ConfirmDialog
-				confirmLabel="Discard changes"
-				description="You have unsaved profile changes. Leaving this page will discard them."
-				destructive
-				onClose={() => blocker.reset?.()}
-				onConfirm={() => blocker.proceed?.()}
-				open={blocker.state === 'blocked'}
-				title="Discard unsaved changes?"
-			/>
-		</div>
+		</ProfilePreviewContext>
 	);
 }

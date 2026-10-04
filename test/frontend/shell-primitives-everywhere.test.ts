@@ -25,10 +25,10 @@ const APP = 'frontend/src/App.tsx';
 /** Page modules that render their shell through a child rather than inline, and which child. */
 const HEADER_DELEGATES: Record<string, string[]> = {
 	'frontend/src/pages/recipes/RecipeCreatePage.tsx': [
-		'frontend/src/pages/recipes/detail/RecipeEditMode.tsx',
+		'frontend/src/pages/recipes/detail/CreateRecipeEditor.tsx',
 	],
 	'frontend/src/pages/recipes/RecipeDetailPage.tsx': [
-		'frontend/src/pages/recipes/detail/RecipeEditMode.tsx',
+		'frontend/src/pages/recipes/detail/EditRecipeEditor.tsx',
 		'frontend/src/pages/recipes/detail/RecipeNotFound.tsx',
 		'frontend/src/pages/recipes/detail/RecipeOverviewMode.tsx',
 	],

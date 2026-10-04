@@ -146,7 +146,7 @@ describe('responsive steps are chosen against content width', () => {
 		// declares: `SkillsPage` owns the split and the containment for the catalog, and both console
 		// components are rendered nowhere but `RunsPage`, whose root is the container their height
 		// chain gates against. `RecipeMetadataCard` is the same case: it is the recipe form's own
-		// three fields, rendered nowhere but `RecipeEditMode`, whose root declares the container —
+		// fields, rendered only by the two recipe editors, whose roots declare the container —
 		// and it *cannot* declare its own, because the query is on the card element itself and an
 		// element never matches containment it establishes. Both Audits inventory variants render
 		// only in `ProjectDetailPage`, whose root owns their rail-sensitive container. The Features
@@ -192,9 +192,11 @@ describe('responsive steps are chosen against content width', () => {
 			'page-reveal @container',
 		);
 		expect(await read('pages', 'runs', 'RunsPage.tsx')).toContain('page-reveal @container');
-		expect(await read('pages', 'recipes', 'detail', 'RecipeEditMode.tsx')).toContain(
-			'page-reveal @container',
-		);
+		for (const editor of ['CreateRecipeEditor.tsx', 'EditRecipeEditor.tsx']) {
+			expect(await read('pages', 'recipes', 'detail', editor)).toContain(
+				'page-reveal @container',
+			);
+		}
 		expect(await read('pages', 'projects', 'ProjectDetailPage.tsx')).toContain(
 			'page-reveal @container',
 		);

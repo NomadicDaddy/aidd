@@ -10,11 +10,14 @@ import { ConfirmDialog } from '../../components/shared/ConfirmDialog.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useRecipe, useRecipes } from '../../hooks/useRecipes.ts';
 import { useUnsavedGuard } from '../../hooks/useUnsavedGuard.ts';
+import { EditRecipeEditor } from './detail/EditRecipeEditor.tsx';
 import { cleanParameter } from './detail/recipe-detail-form.ts';
-import { RecipeEditMode } from './detail/RecipeEditMode.tsx';
+import { RecipeEditorProvider } from './detail/RecipeEditorProvider.tsx';
+import { LockedRecipeNameField, RecipeNameField } from './detail/RecipeMetadataCard.tsx';
 import { RecipeNotFound } from './detail/RecipeNotFound.tsx';
 import { RecipeOverviewMode } from './detail/RecipeOverviewMode.tsx';
-import { collectStepErrors, type StepDraft, toDrafts, toStep } from './recipe-steps.ts';
+import { emptyRecipeDraft, recipeDraftFields, useRecipeDraft } from './detail/useRecipeDraft.ts';
+import { toDrafts, toStep } from './recipe-steps.ts';
 
 export function RecipeDetailPage() {
 	const { id } = useParams();
@@ -22,46 +25,24 @@ export function RecipeDetailPage() {
 	const recipeQuery = useRecipe(id);
 	const recipes = useRecipes();
 	const [mode, setMode] = useState<'edit' | 'overview'>('overview');
-	const [description, setDescription] = useState('');
-	const [name, setName] = useState('');
-	const [parameters, setParameters] = useState<RecipeParameterDefinition[]>([]);
-	const [steps, setSteps] = useState<StepDraft[]>([]);
+	const draft = useRecipeDraft(emptyRecipeDraft);
+	const { description, hasStepErrors, name, parameters, seed, steps } = draft;
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const seededRecipeIdRef = useRef<string | undefined>(undefined);
 	useDocumentTitle(recipeQuery.data ? `${recipeQuery.data.name} · Recipes` : 'Recipe');
 
 	function seedFormFromRecipe(recipe: RecipeDefinition): void {
-		setName(recipe.name);
-		setDescription(recipe.description ?? '');
-		setParameters(recipe.parameters);
-		setSteps(toDrafts(recipe));
+		seed(recipeDraftFields(recipe));
 	}
 
+	// The ref, not the dependency list, decides when to seed: once per loaded recipe id, so a
+	// refetch of the same recipe never overwrites what is being typed.
 	useEffect(() => {
 		if (!recipeQuery.data) return;
 		if (seededRecipeIdRef.current === recipeQuery.data.id) return;
 		seededRecipeIdRef.current = recipeQuery.data.id;
-		seedFormFromRecipe(recipeQuery.data);
-	}, [recipeQuery.data]);
-
-	function updateStep(stepId: string, patch: Partial<StepDraft>): void {
-		setSteps((current) =>
-			current.map((step) => (step.id === stepId ? { ...step, ...patch } : step)),
-		);
-	}
-
-	const stepErrors = steps.map((step, index) => ({
-		id: step.id,
-		...collectStepErrors(step, index + 1),
-	}));
-	const hasStepErrors = stepErrors.some(
-		(entry) =>
-			entry.configJson ||
-			entry.executionIntent ||
-			entry.preHookJson ||
-			entry.postHookJson ||
-			entry.when,
-	);
+		seed(recipeDraftFields(recipeQuery.data));
+	}, [recipeQuery.data, seed]);
 
 	function save(): void {
 		if (!id || !name.trim()) {
@@ -208,28 +189,22 @@ export function RecipeDetailPage() {
 	}
 
 	return (
-		// A fragment, not a wrapper: `RecipeEditMode` carries `page-reveal` itself now.
+		// A fragment, not a wrapper: the editor frame carries `page-reveal` itself.
 		<>
-			<RecipeEditMode
-				description={description}
+			<RecipeEditorProvider
 				dirty={dirty}
-				hasStepErrors={hasStepErrors}
-				id={id}
-				name={name}
-				nameReadOnly={recipe?.system === true}
+				draft={draft}
 				onCancel={cancelEdit}
-				onReload={reload}
 				onSave={save}
-				parameters={parameters}
-				saving={recipes.saveRecipe.isPending}
-				setDescription={setDescription}
-				setName={setName}
-				setParameters={setParameters}
-				setSteps={setSteps}
-				stepErrors={stepErrors}
-				steps={steps}
-				updateStep={updateStep}
-			/>
+				saving={recipes.saveRecipe.isPending}>
+				<EditRecipeEditor
+					id={id}
+					nameField={
+						recipe?.system === true ? <LockedRecipeNameField /> : <RecipeNameField />
+					}
+					onReload={reload}
+				/>
+			</RecipeEditorProvider>
 			{deleteConfirm}
 			{unsavedConfirm}
 		</>

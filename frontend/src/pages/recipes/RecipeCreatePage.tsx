@@ -10,9 +10,11 @@ import { ConfirmDialog } from '../../components/shared/ConfirmDialog.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useRecipes } from '../../hooks/useRecipes.ts';
 import { useUnsavedGuard } from '../../hooks/useUnsavedGuard.ts';
+import { CreateRecipeEditor } from './detail/CreateRecipeEditor.tsx';
 import { cleanParameter } from './detail/recipe-detail-form.ts';
-import { RecipeEditMode } from './detail/RecipeEditMode.tsx';
-import { collectStepErrors, newStepDraft, type StepDraft, toStep } from './recipe-steps.ts';
+import { RecipeEditorProvider } from './detail/RecipeEditorProvider.tsx';
+import { newRecipeDraft, useRecipeDraft } from './detail/useRecipeDraft.ts';
+import { toStep } from './recipe-steps.ts';
 
 const recipeIdPattern = /^[a-zA-Z0-9_-]+$/;
 
@@ -39,11 +41,8 @@ export function RecipeCreatePage() {
 	const recipes = useRecipes();
 	const [id, setId] = useState('');
 	const [idTouched, setIdTouched] = useState(false);
-	const [name, setName] = useState('');
-	const [description, setDescription] = useState('');
-	const [parameters, setParameters] = useState<RecipeParameterDefinition[]>([]);
-	const [initialSteps] = useState<StepDraft[]>(() => [newStepDraft()]);
-	const [steps, setSteps] = useState<StepDraft[]>(initialSteps);
+	const draft = useRecipeDraft(newRecipeDraft);
+	const { description, hasStepErrors, name, parameters, steps } = draft;
 
 	// Navigate after the success render so the unsaved guard sees a clean form first.
 	const created = recipes.saveRecipe.isSuccess ? recipes.saveRecipe.data : undefined;
@@ -52,36 +51,18 @@ export function RecipeCreatePage() {
 		navigate(`/recipes/${created.id}`, { replace: true });
 	}, [created, navigate]);
 
-	function updateStep(stepId: string, patch: Partial<StepDraft>): void {
-		setSteps((current) =>
-			current.map((step) => (step.id === stepId ? { ...step, ...patch } : step)),
-		);
-	}
-
 	function handleId(value: string): void {
 		setIdTouched(value !== slugifyName(name));
 		setId(value);
 	}
 
 	function handleName(value: string): void {
-		setName(value);
+		draft.setName(value);
 		if (!idTouched) setId(slugifyName(value));
 	}
 
 	const existingIds = new Set((recipes.recipes.data ?? []).map((recipe) => recipe.id));
 	const idError = validateRecipeId(id, existingIds);
-	const stepErrors = steps.map((step, index) => ({
-		id: step.id,
-		...collectStepErrors(step, index + 1),
-	}));
-	const hasStepErrors = stepErrors.some(
-		(entry) =>
-			entry.configJson ||
-			entry.executionIntent ||
-			entry.preHookJson ||
-			entry.postHookJson ||
-			entry.when,
-	);
 
 	function save(): void {
 		if (!name.trim()) {
@@ -137,36 +118,30 @@ export function RecipeCreatePage() {
 			name !== '' ||
 			description !== '' ||
 			parameters.length > 0 ||
-			JSON.stringify(steps) !== JSON.stringify(initialSteps));
+			JSON.stringify(steps) !== JSON.stringify(draft.initial.steps));
 	const blocker = useUnsavedGuard(dirty);
 
 	return (
-		// A fragment, not a wrapper: `RecipeEditMode` carries `page-reveal` itself now, and this div
-		// added nothing but a single-child container for the stagger to find.
+		// A fragment, not a wrapper: the editor frame carries `page-reveal` itself, and a div here
+		// would add nothing but a single-child container for the stagger to find.
 		<>
-			<RecipeEditMode
-				description={description}
+			{/* Typing a name also fills the id until the id is edited by hand, so the editor's name
+			    setter is this page's, not the draft's own. */}
+			<RecipeEditorProvider
 				dirty={dirty}
-				hasStepErrors={hasStepErrors}
-				id={id}
-				idError={idError}
-				idHint={idTouched ? 'Custom id; it no longer updates from Name.' : undefined}
-				name={name}
+				draft={{ ...draft, setName: handleName }}
 				onCancel={() => {
 					void navigate('/recipes');
 				}}
 				onSave={save}
-				parameters={parameters}
-				saving={recipes.saveRecipe.isPending}
-				setDescription={setDescription}
-				setId={handleId}
-				setName={handleName}
-				setParameters={setParameters}
-				setSteps={setSteps}
-				stepErrors={stepErrors}
-				steps={steps}
-				updateStep={updateStep}
-			/>
+				saving={recipes.saveRecipe.isPending}>
+				<CreateRecipeEditor
+					id={id}
+					idError={idError}
+					idHint={idTouched ? 'Custom id; it no longer updates from Name.' : undefined}
+					onIdChange={handleId}
+				/>
+			</RecipeEditorProvider>
 			<ConfirmDialog
 				confirmLabel="Discard changes"
 				description="You have unsaved recipe changes. Leaving this page will discard them."

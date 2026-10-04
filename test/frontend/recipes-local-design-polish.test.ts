@@ -182,7 +182,7 @@ describe('recipe editor fields follow their content', () => {
 		expect(create).toContain('id !== slugifyName(name)');
 		expect(create).not.toContain('(idTouched ||');
 		expect(create).toContain('Custom id; it no longer updates from Name.');
-		expect(metadata).toContain('hint={idHint}');
+		expect(metadata).toContain('hint={hint}');
 		expect(editor).toContain('error={nameError}');
 		expect(collectStepErrors(newStepDraft(), 2).name).toBe('Step name is required');
 		expect(stepNameErrorForDisplay('Step name is required', false, false)).toBeNull();
@@ -200,15 +200,17 @@ describe('recipe editor fields follow their content', () => {
 
 describe('recipe detail keeps one composition across modes', () => {
 	test('edit keeps overview identity and moves reload into the action bar', async () => {
-		const [edit, actionBar] = await Promise.all([
+		const [edit, parts, actionBar] = await Promise.all([
+			read('pages/recipes/detail/EditRecipeEditor.tsx'),
 			read('pages/recipes/detail/RecipeEditMode.tsx'),
 			read('components/shared/EditorActionBar.tsx'),
 		]);
 
 		expect(edit).toContain("breadcrumb={{ label: 'Recipes', to: '/recipes' }}");
-		expect(edit).toContain('description={isCreate ? undefined : description}');
-		expect(edit).toContain('identifier={isCreate ? undefined : id}');
-		expect(edit).toContain('<EditorActionBar');
+		expect(edit).toContain('description={state.description}');
+		expect(edit).toContain('identifier={id}');
+		expect(edit).toContain('<RecipeEditorActionBar');
+		expect(parts).toContain('<EditorActionBar');
 		expect(edit).toContain('<RefreshCw className="h-4 w-4" />');
 		expect(edit).toContain('<RecipePolicyBadges');
 		expect(edit).not.toContain('actions={');

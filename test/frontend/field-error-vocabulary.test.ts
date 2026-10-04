@@ -170,8 +170,9 @@ describe('one vocabulary for an invalid field', () => {
 
 		// Each of these already stops its submit handler and raises a toast, so the form was
 		// refusing work it looked perfectly willing to accept.
-		expect(recipe).toContain('<FieldRow error={idError} hint={idHint} label="Id" required>');
-		expect(recipe).toMatch(/label="Name"\s+required={!nameReadOnly}/);
+		expect(recipe).toContain('<FieldRow error={error} hint={hint} label="Id" required>');
+		// A system recipe's reserved name is a field of its own, shown but never required.
+		expect(recipe).toContain('<FieldRow label="Name" required>');
 		expect(milestone).toContain('required>');
 		expect(create).toContain('<FieldRow error={nameError} label="Name" required>');
 		// The one hand-drawn `*` in the app is gone; the marker travels with `aria-required` now.

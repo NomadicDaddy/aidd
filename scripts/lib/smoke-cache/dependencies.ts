@@ -102,8 +102,10 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 	// set, deliberately its own cache entry so a fast pass never satisfies the uncached full gate.
 	'lint:fast': LINT_DEPENDENCIES,
 	// The compiled snapshots are an input as well as the thing being checked: editing a snapshot by
-	// hand is itself the drift this gate exists to catch.
+	// hand is itself the drift this gate exists to catch. Audit prompts embed audits/<name>.md, so an
+	// audit edit changes the audit snapshots; without it here a stale pass replayed (b6c09220).
 	'prompt:snapshot:check': [
+		'audits/**/*.md',
 		'cli/src/**/*.ts',
 		'cli/src/prompts/snapshots/**/*.md',
 		'prompts/**/*.md',

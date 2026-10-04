@@ -72,6 +72,27 @@ describe('smoke cache invalidation surfaces', () => {
 
 		expect(dependencies).toContain(CI_WORKFLOW_TEST_INPUT);
 	}, 30_000);
+
+	// Audit prompts embed audits/<name>.md verbatim, so the audit snapshots change when an audit
+	// does. With audits/ outside the step's inputs, b6c09220 edited SECURITY.md and the gate replayed
+	// a pass from before the edit while every committed audit snapshot was stale.
+	test('misses the prompt snapshot cache when an audit definition changes', async () => {
+		const root = await createCacheProject();
+		await mkdir(join(root, 'audits'), { recursive: true });
+		await writeFile(join(root, 'audits', 'SECURITY.md'), '# Security');
+		await recordStepSuccess(root, 'prompt:snapshot:check', 123);
+		expect(await canSkipStep(root, 'prompt:snapshot:check')).toBe(true);
+
+		await writeFile(join(root, 'audits', 'SECURITY.md'), '# Security, corrected');
+
+		expect(await canSkipStep(root, 'prompt:snapshot:check')).toBe(false);
+	});
+
+	test("tracks this repository's audit definitions as prompt snapshot dependencies", async () => {
+		const dependencies = await collectDependencies(process.cwd(), 'prompt:snapshot:check');
+
+		expect(dependencies).toContain('audits/SECURITY.md');
+	}, 30_000);
 });
 
 // A step's inputs being unchanged only justifies skipping it while its output still exists.

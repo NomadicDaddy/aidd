@@ -796,15 +796,15 @@ Read referenced audit files when:
 
 ### Guard Coverage
 
-| Check | Criteria                                                            | Remediation                                    |
-| ----- | ------------------------------------------------------------------- | ---------------------------------------------- |
-| `[ ]` | Every mutation endpoint has `requireAuth` or `apiKey` guard         | Add missing guards                             |
-| `[ ]` | Role-protected endpoints use `requireRoleFresh()` (NOT cached role) | Replace stale role checks with fresh DB lookup |
-| `[ ]` | `requireRoleFresh` re-validates from database on every request      | Verify no cached role shortcuts                |
-| `[ ]` | Workspace-scoped endpoints use `workspaceAccess` guard              | Add workspace isolation                        |
-| `[ ]` | No authorization logic in route handlers (use guards)               | Move to guard layer                            |
-| `[ ]` | Frontend `ProtectedRoute` mirrors backend guard requirements        | Verify role requirements match                 |
-| `[ ]` | No reliance solely on frontend guards for security                  | Backend guards are the authority               |
+| Check | Criteria                                                             | Remediation                                    |
+| ----- | -------------------------------------------------------------------- | ---------------------------------------------- |
+| `[ ]` | Every mutation endpoint is behind `requireAuth` / `requireRoleFresh` | Add missing guards                             |
+| `[ ]` | Role-protected endpoints use `requireRoleFresh()` (NOT cached role)  | Replace stale role checks with fresh DB lookup |
+| `[ ]` | `requireRoleFresh` re-validates from database on every request       | Verify no cached role shortcuts                |
+| `[ ]` | Workspace-scoped endpoints use `workspaceAccess` guard               | Add workspace isolation                        |
+| `[ ]` | No authorization logic in route handlers (use guards)                | Move to guard layer                            |
+| `[ ]` | Frontend `ProtectedRoute` mirrors backend guard requirements         | Verify role requirements match                 |
+| `[ ]` | No reliance solely on frontend guards for security                   | Backend guards are the authority               |
 
 ### RBAC Hierarchy
 
@@ -1027,7 +1027,7 @@ If future code introduces new `dangerouslySetInnerHTML` usages, they MUST be add
 | ----- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `[ ]` | WebSocket connections authenticate via JWT on handshake                      | Verify token validation in ws route                              |
 | `[ ]` | JWT re-validated every 2 minutes via periodic ping                           | Verify ping interval                                             |
-| `[ ]` | Connection rate limiting on WebSocket endpoint                               | Verify `ws/rate-limit.ts`                                        |
+| `[ ]` | Connection rate limiting on WebSocket endpoint                               | Locate the upgrade handler and its limiter; cite file:line       |
 | `[ ]` | Maximum payload length enforced at Bun transport level (not only in handler) | Verify `maxPayloadLength` option on the WS upgrade/configuration |
 | `[ ]` | No sensitive data broadcast to unauthorized connections                      | Verify channel-based pub/sub respects permissions                |
 
@@ -1220,7 +1220,7 @@ Score **only** the two genuinely SECURITY-unique local rows below. The bearer-to
 - [ ] JWT uses ES256 with HTTP-only cookies
 - [ ] Token blacklist populated on logout and cleaned up on schedule
 - [ ] No `.env` files anywhere; JSON-only config
-- [ ] No `process.env` usage outside `configLoader.ts`
+- [ ] No `process.env` usage outside `configSecrets.ts` (and the bootstrap read in `configLogger.ts`)
 - [ ] No hardcoded secrets in code or logs
 - [ ] TypeBox validation on all route inputs
 - [ ] Drizzle ORM for all queries (no raw SQL concatenation)

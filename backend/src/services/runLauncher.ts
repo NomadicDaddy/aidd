@@ -6,7 +6,7 @@ import { basename, join } from 'node:path';
 
 import type { RunLaunchRequest, WebRunMode } from '../types.ts';
 
-import { normalizeAuditNames } from './audit/auditHelpers.ts';
+import { normalizeAuditName, normalizeAuditNames } from './audit/auditHelpers.ts';
 import { tokenizeExtraArgs } from './run/extraArgs.ts';
 
 export interface LaunchCommand {
@@ -159,7 +159,10 @@ export async function buildLaunchCommand(
 	// so the CLI's optional-operand parse never mis-consumes a later token.
 	if (input.auditFindings) {
 		args.push('--audit-findings');
-		if (input.auditFindingsSource) args.push(input.auditFindingsSource);
+		// The source is an audit name. Anything else would reach the CLI as a bare token after
+		// --audit-findings, and one starting with -- would be parsed as a flag of its own, past the
+		// protected-flag check that extraArgs gets.
+		if (input.auditFindingsSource) args.push(normalizeAuditName(input.auditFindingsSource));
 	}
 	addOptionalFlag(args, '--spec', input.specFile);
 	// Inline `--flag=value` here and for --skill-args below: both carry free-form text that often

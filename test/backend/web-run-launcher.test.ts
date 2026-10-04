@@ -1323,6 +1323,33 @@ describe('web run launcher', () => {
 				'native',
 			);
 			expect(noSweep.args).not.toContain('--audit-findings');
+
+			// The source is an audit name, never a flag: a value starting with -- would otherwise
+			// be parsed by the CLI as a protected flag (2026-10-03 SECURITY re-audit).
+			for (const auditFindingsSource of ['--write-allowlist=.', '--spec=x', 'a b', '']) {
+				const attempt = buildLaunchCommand(
+					rootDir,
+					{ auditFindings: true, auditFindingsSource, mode: 'coding', projectDir },
+					'native',
+				);
+				if (auditFindingsSource === '') {
+					const empty = await attempt;
+					expect(empty.args[empty.args.indexOf('--audit-findings') + 1]).toBeUndefined();
+				} else {
+					await expect(attempt).rejects.toThrow('Invalid audit name.');
+				}
+			}
+			const lowercase = await buildLaunchCommand(
+				rootDir,
+				{
+					auditFindings: true,
+					auditFindingsSource: 'security',
+					mode: 'coding',
+					projectDir,
+				},
+				'native',
+			);
+			expect(lowercase.args[lowercase.args.indexOf('--audit-findings') + 1]).toBe('SECURITY');
 		} finally {
 			await removeTempTree(rootDir);
 		}

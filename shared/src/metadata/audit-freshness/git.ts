@@ -71,14 +71,21 @@ export async function isGitWorktree(
 	return await context.isGitWorktree;
 }
 
+// Bun.spawn throws (rather than exiting non-zero) when git is not installed. A machine without git
+// has no history to be fresh against, so that is "no answer", never a crash: an audit run would
+// otherwise lose the report it just paid for, and the project pages would 500.
 async function gitOutput(projectDir: string, args: string[]): Promise<null | string> {
-	const proc = Bun.spawn(['git', '-C', projectDir, ...args], {
-		stderr: 'pipe',
-		stdout: 'pipe',
-		windowsHide: true,
-	});
-	if ((await proc.exited) !== 0) return null;
-	return await new Response(proc.stdout).text();
+	try {
+		const proc = Bun.spawn(['git', '-C', projectDir, ...args], {
+			stderr: 'pipe',
+			stdout: 'pipe',
+			windowsHide: true,
+		});
+		if ((await proc.exited) !== 0) return null;
+		return await new Response(proc.stdout).text();
+	} catch {
+		return null;
+	}
 }
 
 // `git log <sha>..HEAD --numstat` and `git log --since=<stamp> --numstat` are pure functions of

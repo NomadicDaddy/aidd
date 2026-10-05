@@ -7,14 +7,19 @@ export interface CommitFilesResult {
 
 // Bun.spawn (never node:child_process) — on Windows the latter leaks the HTTP listen socket into
 // the child and orphans the port. Argv array means no shell interpolation of the paths/message.
+// Bun.spawn throws when git is not installed; that is a failed step, never a thrown request.
 async function gitSuccess(projectDir: string, args: string[]): Promise<boolean> {
-	const proc = Bun.spawn(['git', '-C', projectDir, ...args], {
-		stderr: 'pipe',
-		stdin: 'ignore',
-		stdout: 'pipe',
-		windowsHide: true,
-	});
-	return (await proc.exited) === 0;
+	try {
+		const proc = Bun.spawn(['git', '-C', projectDir, ...args], {
+			stderr: 'pipe',
+			stdin: 'ignore',
+			stdout: 'pipe',
+			windowsHide: true,
+		});
+		return (await proc.exited) === 0;
+	} catch {
+		return false;
+	}
 }
 
 async function isInsideWorkTree(projectDir: string): Promise<boolean> {
@@ -69,6 +74,8 @@ export async function commitFiles(
 	}
 
 	if (!(await gitSuccess(projectDir, ['commit', '-m', message, '--', ...paths]))) {
+		// Unstage again, or the operator's next commit silently carries these records.
+		await gitSuccess(projectDir, ['reset', '-q', '--', ...paths]);
 		trace('error', 'commit-failed');
 		return { committed: false, reason: 'commit-failed' };
 	}

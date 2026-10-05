@@ -22,8 +22,7 @@ export interface SessionOutcome {
 // counting rows would report a partial failure for a step the recipe recovered from. Rows that
 // share a parent, sequence number, step definition and name are attempts at the same step, and the
 // last of them in display order is its outcome — exactly the single row the retry loop used to
-// overwrite in place. The auto-fix run keeps its own identity: it carries a different parent and
-// name, so it stays a step of its own here as it always has.
+// overwrite in place. Auto-fix rows are left out before this runs (see summarizeSessionOutcome).
 function decidingAttempts(topLevel: PipelineStepResultRecord[]): PipelineStepResultRecord[] {
 	const byStep = new Map<string, PipelineStepResultRecord>();
 	for (const step of [...topLevel].sort(
@@ -44,7 +43,10 @@ function decidingAttempts(topLevel: PipelineStepResultRecord[]): PipelineStepRes
 
 // Derives the terminal session status from the persisted step results. Only top-level
 // steps (depth 0, phase 'step') count toward the recipe's own outcome — hooks and nested
-// recipe-ref children are represented by their parent step. A session with at least one
+// recipe-ref children are represented by their parent step. An auto-fix run is a remediation
+// attempt inside one step, not a step of the recipe: counting it let a completed auto-fix make a
+// step that still failed read as partial success, and a failed one mar a step its retry recovered.
+// The step's own deciding attempt is its outcome either way. A session with at least one
 // completed step AND at least one failed step reads as 'completed_with_failures', distinguishing
 // partial success (e.g. 7-of-10 steps produced value before a late failure) from a step-1 crash.
 // `baseOk` is the executor's own ok flag, used only to disambiguate the no-failures case (a clean
@@ -54,7 +56,9 @@ export function summarizeSessionOutcome(
 	stepResults: PipelineStepResultRecord[],
 ): SessionOutcome {
 	const topLevel = decidingAttempts(
-		stepResults.filter((step) => step.depth === 0 && step.phase === 'step'),
+		stepResults.filter(
+			(step) => step.depth === 0 && step.phase === 'step' && step.attemptKind !== 'auto-fix',
+		),
 	);
 	const failedStepNames = topLevel
 		.filter((step) => step.status === 'failed')

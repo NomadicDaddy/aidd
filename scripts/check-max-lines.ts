@@ -47,12 +47,14 @@ function countLines(text: string): number {
 export async function runCheckMaxLines(projectRoot = cwd()): Promise<number> {
 	const findings: Finding[] = [];
 	const warnings: Finding[] = [];
+	const missingRoots: string[] = [];
 	let examined = 0;
 	for (const root of scannedRoots) {
 		const fullRoot = join(projectRoot, root);
 		try {
 			await stat(fullRoot);
 		} catch {
+			missingRoots.push(root);
 			continue;
 		}
 		const files = await collectFiles(fullRoot);
@@ -84,13 +86,22 @@ export async function runCheckMaxLines(projectRoot = cwd()): Promise<number> {
 		return 1;
 	}
 
-	// Rule 5. Every scanned root is skipped when absent, so a rename or a wrong `projectRoot`
-	// leaves nothing to walk and the check reports the same pass it would over a clean tree.
-	// `${MAX_LINES}` below is a threshold, not a count; the count has to be stated separately.
+	// Rule 5. Every root is part of the contract: a renamed or deleted one used to be skipped,
+	// taking its whole tree out of the check while the other roots kept it green.
+	if (missingRoots.length > 0) {
+		console.error(
+			`[FAIL] aidd max-lines check: scanned root(s) missing: ${missingRoots.join(', ')}.`,
+		);
+		console.error('A renamed source root must be renamed in scannedRoots too.');
+		return 1;
+	}
+
+	// Roots that exist but hold no source leave nothing to walk either, and the check would report
+	// the same pass it does over a clean tree. `${MAX_LINES}` below is a threshold, not a count.
 	if (examined === 0) {
 		console.error('[FAIL] aidd max-lines check examined no files.');
 		console.error(
-			`None of the scanned roots exist under ${projectRoot}: ${scannedRoots.join(', ')}.`,
+			`The scanned roots under ${projectRoot} hold no source files: ${scannedRoots.join(', ')}.`,
 		);
 		return 1;
 	}

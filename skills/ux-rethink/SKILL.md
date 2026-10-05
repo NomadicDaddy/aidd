@@ -44,23 +44,26 @@ restyling belongs to one of the skills above.
    seconds. Record which tool drove the run. Stop if nothing can open the app: this review cannot
    be done from source, because every count in it is a count of what a person actually does.
 2. Use realistic data. An empty database hides most of the decisions a real user faces; seed or
-   reuse a representative dataset and say which.
+   reuse a representative dataset and say which. Seeded rows must match the formats the app
+   validates (ids, enums, dates) even where the database column accepts anything; otherwise the
+   walk records the fixture's errors as the product's.
 3. Use throwaway credentials only. Screenshots go into backup mirrors whatever `.gitignore` says.
 4. Write everything under `{app}/.aidd/reports/ux-rethink/{RUN}/` (`{RUN}` = `YYYYMMDD-HHMM`) and
    never overwrite an earlier run. Screenshots go in `screenshots/` inside it.
 
 ## Phase 1: Users and their tasks
 
-1. Name the users: the distinct roles who come to this interface, from the spec, README,
-   `.aidd/assertions.md`, role definitions, support history, and how the owner actually uses it.
-   Cite the source for each. A user nobody can evidence is listed as assumed.
+1. Name the users: the distinct jobs or use cases that bring people to this interface, from the
+   spec, README, `.aidd/assertions.md`, support history, and how the owner actually uses it. Cite
+   the source for each. A user nobody can evidence is listed as assumed. These are not permission
+   tiers: two users with different jobs may hold the same role.
 2. List the five to ten tasks those users come for, most frequent or most consequential first.
    Write each as an outcome, never as a screen: "As an operator, I need to know which teammate is
    blocked, done when I can see who and why" - not "use the roster panel". A task phrased in the
    current UI's vocabulary has already accepted the current design.
 3. For each task record how you know it matters (usage, the owner's words, an issue, a spec clause)
-   or mark it assumed. Show this list to the owner before Phase 2 when they are reachable; a wrong
-   task list makes every later number wrong.
+   or mark it assumed. Name the permission role that would do it in practice. Show this list to the
+   owner before Phase 2 when they are reachable; a wrong task list makes every later number wrong.
 
 ## Phase 2: Walk every task through the current UI
 
@@ -79,6 +82,20 @@ count, per task:
 
 Count what happened on screen, not what the source says should happen. When a task cannot be
 completed, record where it stopped; that is a finding, not a gap in the review.
+
+Walk each task signed in as the role named for it in Phase 1, and start it from a clean entry, with
+no filter or selection carried over from the previous task. A filter that silently carries over is
+itself hidden knowledge: record it, then restart the task clean.
+
+Before recording a stop, classify it:
+
+- **Structural**: the task has no home, or its path follows the implementation. Feeds Phases 3-5.
+- **Defect**: a control exists in the right place and does not work. List it separately; it is
+  ordinary repair work, and Phase 6 scores concepts as if defects were fixed.
+- **Artefact**: caused by the run, not the product: the wrong role, seeded data, missing collected
+  data, or the browser tool. Withdraw it. Before calling an input broken, show the tool can fill a
+  comparable input on that page another way (for example keystrokes instead of a fill). Before
+  recording emptiness as a finding, ask whoever owns the data whether it is expected.
 
 ## Phase 3: Whose model is the structure?
 
@@ -135,7 +152,8 @@ The decision is the owner's. Do not file features or change code from this skill
 Write `{app}/.aidd/reports/ux-rethink/{RUN}/ux-rethink.md` containing, in order:
 
 - The users and task list with their evidence, and what was assumed.
-- The current-UI walkthrough per task with counts and screenshot paths.
+- The current-UI walkthrough per task with its role, counts and screenshot paths.
+- Defects, and withdrawn artefacts with what showed each was not the product.
 - Mental-model mismatches (Phase 3) and removal candidates (Phase 4).
 - Each concept: principle, sketch, walkthrough, counts, removals and new needs.
 - The scoring table, the costs, the recommendation and what would change it.

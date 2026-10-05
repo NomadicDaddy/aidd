@@ -42,19 +42,21 @@ export const readScripts = (repo: string): Scripts | undefined => {
  * guard for anything that can publish.
  */
 export const discoverRepos = (fleetRoot: string, only?: Set<string>): string[] => {
-	const repos = readdirSync(fleetRoot, { withFileTypes: true })
+	const gitRepos = readdirSync(fleetRoot, { withFileTypes: true })
 		.filter((e) => e.isDirectory() && !e.name.endsWith('.old'))
 		.filter((e) => only === undefined || only.has(e.name))
 		.map((e) => join(fleetRoot, e.name))
-		.filter((d) => existsSync(join(d, '.git')))
-		.filter((d) => {
-			const declined = declineReason(d);
-			if (declined !== null) console.log(`  DECLINED ${repoName(d)}: ${declined}`);
-			return declined === null;
-		});
+		.filter((d) => existsSync(join(d, '.git')));
+	const repos = gitRepos.filter((d) => {
+		const declined = declineReason(d);
+		if (declined !== null) console.log(`  DECLINED ${repoName(d)}: ${declined}`);
+		return declined === null;
+	});
 
 	if (only !== undefined) {
-		const found = new Set(repos.map((r) => repoName(r)));
+		// Judged against every git repository found, not the ones left after declines: a declined
+		// repository was found, and calling it missing contradicts the DECLINED line above it.
+		const found = new Set(gitRepos.map((r) => repoName(r)));
 		for (const name of only) {
 			if (!found.has(name))
 				console.error(`  UNKNOWN ${name}: no git repository under ${fleetRoot}`);

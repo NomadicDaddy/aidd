@@ -241,12 +241,9 @@ export async function requestCliRunStop(
 		summary: { runId: run.id, source: 'cli' },
 		target: run.stopFile,
 	});
-	await writeCliActiveRunRecord({
-		...run,
-		heartbeatAt: Date.now(),
-		state: 'stop_requested',
-		summary: 'Stop requested from aidd UI',
-	});
+	// The record stays the CLI's: it rewrites it from memory every few seconds, so a rewrite from
+	// this snapshot would at best last one tick and at worst replace a record the CLI wrote after
+	// the snapshot, such as its terminal one. Clients learn of the request from this broadcast.
 	ctx.hub.broadcast({
 		payload: { source: 'cli', status: 'running', stopRequested: true },
 		runId: run.id,

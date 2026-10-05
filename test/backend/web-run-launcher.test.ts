@@ -762,8 +762,9 @@ describe('web run launcher', () => {
 					state: 'cli-only',
 				});
 				expect(await readFile(join(projectDir, '.aidd', '.stop'), 'utf8')).toContain('T');
+				// The record stays the CLI's own: the stop request lives in the stop file.
 				const [activeRun] = await readCliActiveRunRecords(projectDir);
-				expect(activeRun?.state).toBe('stop_requested');
+				expect(activeRun?.state).toBe('run_agent');
 				// The stop file marks the run's graceful wind-down: the row stays running but now
 				// reports stopRequested so the UI can show "Stopping…" instead of a plain Running.
 				const [after] = await service.listRunsForProject(projectDir);

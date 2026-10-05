@@ -105,6 +105,21 @@ describe('smoke cache', () => {
 		expect(await canSkipStep(root, 'typecheck')).toBe(false);
 	});
 
+	// A run killed mid-write left a torn cache file, and reading it threw: every later smoke:qc
+	// failed until someone deleted the file by hand. A cache is disposable; a miss reruns steps.
+	test('a torn cache file reads as empty and is then rewritten whole', async () => {
+		const root = await createSmokeProject();
+		await writeFile(getSmokeCachePath(root), '{"steps":{"typecheck":{"res');
+
+		expect(await canSkipStep(root, 'typecheck')).toBe(false);
+		await recordStepSuccess(root, 'typecheck', 123);
+		expect(await canSkipStep(root, 'typecheck')).toBe(true);
+		const cache = JSON.parse(await readFile(getSmokeCachePath(root), 'utf8')) as {
+			steps: Record<string, unknown>;
+		};
+		expect(Object.keys(cache.steps)).toEqual(['typecheck']);
+	});
+
 	test('misses fresh-release cache when public baseline content changes', async () => {
 		const root = await createSmokeProject();
 		await mkdir(join(root, 'docs'), { recursive: true });

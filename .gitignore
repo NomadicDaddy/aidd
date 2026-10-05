@@ -25,6 +25,7 @@ dogfood-output/
 screenshots/
 scripts/*-error.png
 scripts/smoke-cache.json
+scripts/smoke-cache.json.*.tmp
 test-html-report/
 test-results/
 testResults.xml

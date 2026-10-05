@@ -64,7 +64,8 @@ export function clearSmokeCacheEvaluationContext(context: SmokeCacheEvaluationCo
  */
 function isIgnored(relativePath: string, allowGeneratedOutput = false): boolean {
 	const normalized = relativePath.replaceAll('\\', '/');
-	if (normalized === SMOKE_CACHE_RELATIVE_PATH) return true;
+	// The cache and the temp file it is written through before the rename over it.
+	if (normalized.startsWith(SMOKE_CACHE_RELATIVE_PATH)) return true;
 	for (const segment of IGNORED_SEGMENTS) {
 		if (allowGeneratedOutput && segment === GENERATED_OUTPUT_PREFIX) continue;
 		if (normalized === segment || normalized.startsWith(`${segment}/`)) return true;

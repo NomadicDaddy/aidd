@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import {
@@ -121,7 +121,12 @@ async function readCache(projectRoot: string): Promise<SmokeCacheFile> {
 			version: 1,
 		};
 	} catch (err) {
-		if (err instanceof Error && 'code' in err && err.code === 'ENOENT') {
+		// A torn file (a run killed mid-write before writes were atomic, or a hand edit) is a cache
+		// miss, not a fatal: the steps simply run, and the next write replaces it whole.
+		const unreadable =
+			err instanceof SyntaxError ||
+			(err instanceof Error && 'code' in err && err.code === 'ENOENT');
+		if (unreadable) {
 			return {
 				steps: {},
 				updatedAt: new Date(0).toISOString(),
@@ -144,7 +149,10 @@ async function readEvaluationCache(
 async function writeCache(projectRoot: string, cache: SmokeCacheFile): Promise<void> {
 	const outputPath = cachePath(projectRoot);
 	await mkdir(dirname(outputPath), { recursive: true });
-	await writeFile(outputPath, `${JSON.stringify(cache, null, '\t')}\n`, 'utf8');
+	// Write beside the cache and rename over it, so a run killed mid-write leaves the old file.
+	const tempPath = `${outputPath}.${process.pid}.tmp`;
+	await writeFile(tempPath, `${JSON.stringify(cache, null, '\t')}\n`, 'utf8');
+	await rename(tempPath, outputPath);
 }
 
 export async function canSkipStep(

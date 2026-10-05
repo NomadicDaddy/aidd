@@ -24,10 +24,11 @@ async function hashFile(projectDir: string, path: string): Promise<string | unde
  * - held: something else was already staged, so nothing was staged or committed; a plain commit
  *   would have carried the operator's staged work under aidd's message.
  * - failed: git refused (a hook, no identity); the records were unstaged again, so the next
- *   commit anyone makes does not silently include them.
+ *   commit anyone makes does not silently include them. `stillStaged` names any that could not be
+ *   unstaged (the reset can fail too, e.g. on a stale index.lock) and must be reported, not assumed.
  */
 export type OwnedMetadataCommit =
-	| { detail: string; kind: 'failed'; paths: string[] }
+	| { detail: string; kind: 'failed'; paths: string[]; stillStaged: string[] }
 	| { hash: string; kind: 'committed'; paths: string[] }
 	| { kind: 'held'; paths: string[]; staged: string[] };
 
@@ -110,7 +111,18 @@ export async function commitOwnedMetadata(
 		return { hash: headAfter, kind: 'committed', paths };
 	}
 	// Leave the index as it was found, or the operator's next commit carries these records.
-	await gitSuccess(projectDir, ['reset', '-q', '--', ...paths]);
+	const unstaged = await gitSuccess(projectDir, ['reset', '-q', '--', ...paths]);
+	const stillStaged = unstaged ? [] : await stagedAmong(projectDir, paths);
 	const detail = committed.ok ? 'git reported success but HEAD did not move' : committed.stderr;
-	return { detail: detail.split(/\r?\n/)[0] ?? '', kind: 'failed', paths };
+	return { detail: detail.split(/\r?\n/)[0] ?? '', kind: 'failed', paths, stillStaged };
+}
+
+/** Which of `paths` the index still holds; all of them when that cannot be read. */
+async function stagedAmong(projectDir: string, paths: string[]): Promise<string[]> {
+	const output = await gitOutput(projectDir, ['diff', '--cached', '--name-only', '--', ...paths]);
+	if (output === undefined) return paths;
+	return output
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
 }

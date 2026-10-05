@@ -76,8 +76,11 @@ export async function writeRunSummary(
 			`left ${metadataCommit.paths.length} aidd metadata record(s) uncommitted: ${metadataCommit.staged.length} other file(s) were already staged, and committing would have carried them too`,
 		);
 	} else if (metadataCommit?.kind === 'failed') {
+		const { detail, paths, stillStaged } = metadataCommit;
 		runEndSummaryParts.push(
-			`could not commit ${metadataCommit.paths.length} aidd metadata record(s), left uncommitted and unstaged: ${metadataCommit.detail}`,
+			stillStaged.length === 0
+				? `could not commit ${paths.length} aidd metadata record(s), left uncommitted and unstaged: ${detail}`
+				: `could not commit ${paths.length} aidd metadata record(s), and ${stillStaged.length} could not be unstaged either; the next commit will include them unless they are unstaged by hand (${stillStaged.join(', ')}): ${detail}`,
 		);
 	}
 	if (residualDirtySourceFiles.length > 0) {

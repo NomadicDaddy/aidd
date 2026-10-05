@@ -175,6 +175,24 @@ describe('run-end metadata commit', () => {
 		expect(await dirtyPaths(dir)).toContain(RECORD);
 	});
 
+	test('reports records it could not unstage instead of claiming it did', async () => {
+		const dir = await repo();
+		await git(dir, ['config', 'core.hooksPath', '.hooks']);
+		await mkdir(join(dir, '.hooks'), { recursive: true });
+		// A hook that fails and leaves a stale index lock behind, so the cleanup reset fails too.
+		await writeFile(
+			join(dir, '.hooks', 'pre-commit'),
+			'#!/bin/sh\necho blocked by hook >&2\ntouch .git/index.lock\nexit 1\n',
+			{ mode: 0o755 },
+		);
+		await writeFile(join(dir, '.aidd', 'features', 'demo', 'feature.json'), '{"id":"demo8"}\n');
+
+		const result = await commitOwnedMetadata(dir, new Map());
+
+		expect(result).toMatchObject({ kind: 'failed', stillStaged: [RECORD] });
+		expect((await git(dir, ['diff', '--cached', '--name-only'])).trim()).toBe(RECORD);
+	});
+
 	test('does nothing in a project that gitignores its .aidd directory', async () => {
 		const dir = await repo('/.aidd/\n');
 		await writeFile(join(dir, '.aidd', 'features', 'demo', 'feature.json'), '{"id":"demo5"}\n');

@@ -7,6 +7,7 @@ import {
 	type CliActiveRunRecord,
 	isCliRunTerminal,
 	readCliActiveRunRecords,
+	runProcessLiveness,
 	writeCliActiveRunRecord,
 } from 'aidd-shared/metadata/active-runs';
 import { metadataPath } from 'aidd-shared/metadata/paths';
@@ -147,14 +148,19 @@ export async function findCliActiveRun(
 	return records.find((run) => run.id === id);
 }
 
-// Whether a CLI run's supervised process is still alive. A run with no recorded pid, a dead pid,
-// or a live pid paired with a stale heartbeat (most likely a reused pid for a run whose original
-// process already exited) is treated as dead, so an explicit Stop/Kill drives the row terminal
-// immediately rather than waiting on a heartbeat or stop file that will never be consumed.
-export function isCliRunProcessAlive(run: CliActiveRunRecord, now = Date.now()): boolean {
+// Whether a CLI run's supervised process is still alive. A run with no recorded pid or a dead pid
+// is treated as dead, so an explicit Stop/Kill drives the row terminal immediately rather than
+// waiting on a heartbeat or stop file that will never be consumed. A live pid behind a stale
+// heartbeat is alive only when its recorded start time proves it is still this run's process; a
+// reused pid, or one whose identity cannot be checked, is never signalled.
+export async function isCliRunProcessAlive(
+	run: CliActiveRunRecord,
+	now = Date.now(),
+): Promise<boolean> {
 	if (run.pid === null) return false;
 	if (!isProcessAlive(run.pid)) return false;
-	return now - run.heartbeatAt <= CLI_ACTIVE_RUN_STALE_MS;
+	if (now - run.heartbeatAt <= CLI_ACTIVE_RUN_STALE_MS) return true;
+	return (await runProcessLiveness(run.pid, run.pidStartId)) === 'alive';
 }
 
 // Re-announce an already-terminal CLI run's recorded outcome. Stop/Kill on a run that has already
@@ -217,7 +223,7 @@ export async function requestCliRunStop(
 		broadcastTerminalCliRun(ctx, run);
 		return;
 	}
-	if (!isCliRunProcessAlive(run)) {
+	if (!(await isCliRunProcessAlive(run))) {
 		await terminalizeCliRun(ctx, run, {
 			exitCode: run.exitCode ?? -1,
 			status: 'stopped',
@@ -256,7 +262,7 @@ export async function killCliRun(
 		broadcastTerminalCliRun(ctx, run);
 		return;
 	}
-	if (isCliRunProcessAlive(run) && run.pid !== null) {
+	if ((await isCliRunProcessAlive(run)) && run.pid !== null) {
 		try {
 			await killProcessTree(run.pid);
 		} catch {

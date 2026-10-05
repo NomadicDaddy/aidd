@@ -3,6 +3,7 @@ import {
 	activeRunsDir,
 	CLI_ACTIVE_RUN_STALE_MS,
 	type CliActiveRunRecord,
+	runProcessLiveness,
 } from 'aidd-shared/metadata/active-runs';
 import { type FSWatcher, watch } from 'node:fs';
 import { mkdir, readdir, readFile, rm, stat } from 'node:fs/promises';
@@ -199,8 +200,15 @@ export class HeartbeatWatcher {
 		// container suspend can advance Date.now() past the staleness window while the process is
 		// still alive and will resume heartbeating once the clock settles. Sweeping such a run to
 		// 'failed' would be a false positive that kills a perfectly healthy long-running session.
-		const pidDead = record.pid !== null && !isProcessAlive(record.pid);
 		const heartbeatAge = now - record.heartbeatAt;
+		let pidDead = record.pid !== null && !isProcessAlive(record.pid);
+		// A live pid behind a stale heartbeat may by now belong to another process: Windows recycles
+		// pids, and a run that died hard (Task Manager, power loss) never wrote a terminal record.
+		// When the run recorded its start time, a mismatch proves the run is gone and it is reaped
+		// like a dead pid; otherwise the laptop-sleep reasoning above holds and it is left running.
+		if (!pidDead && record.pid !== null && heartbeatAge > CLI_ACTIVE_RUN_STALE_MS) {
+			pidDead = (await runProcessLiveness(record.pid, record.pidStartId)) === 'dead';
+		}
 		if (
 			(pidDead && heartbeatAge > DEAD_PID_GRACE_MS) ||
 			(record.pid === null && heartbeatAge > CLI_ACTIVE_RUN_STALE_MS)

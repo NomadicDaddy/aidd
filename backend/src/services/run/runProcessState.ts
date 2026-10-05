@@ -3,6 +3,7 @@ import {
 	activeRunFilePath,
 	CLI_ACTIVE_RUN_STALE_MS,
 	type CliActiveRunRecord,
+	runProcessLiveness,
 } from 'aidd-shared/metadata/active-runs';
 import { runStopFilePath } from 'aidd-shared/metadata/paths';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -55,7 +56,13 @@ export async function resolveRunProcess(
 	}
 	if (!isProcessAlive(pid)) return { alive: false, pid, starting: false };
 	if (heartbeat && Date.now() - heartbeat.heartbeatAt > CLI_ACTIVE_RUN_STALE_MS) {
-		return { alive: false, pid, starting: false };
+		// A stale heartbeat with a live pid is either this run, still working but failing to write
+		// its heartbeat, or a reused pid. Only a recorded start time tells them apart. When it
+		// matches, Stop must leave its request and Kill must signal: driving the row terminal would
+		// leave the run editing the repository with nothing able to stop it. Without a match
+		// (unknown or different) the pid is never signalled.
+		const liveness = await runProcessLiveness(pid, heartbeat.pidStartId ?? null);
+		return { alive: liveness === 'alive', pid, starting: false };
 	}
 	return { alive: true, pid, starting: false };
 }

@@ -1,5 +1,9 @@
 import { isProcessAlive } from 'aidd-shared/lib/processTree';
-import { activeRunFilePath, CLI_ACTIVE_RUN_STALE_MS } from 'aidd-shared/metadata/active-runs';
+import {
+	activeRunFilePath,
+	CLI_ACTIVE_RUN_STALE_MS,
+	runProcessLiveness,
+} from 'aidd-shared/metadata/active-runs';
 import { reapRunFeatureLeases } from 'aidd-shared/metadata/feature-leases';
 import { eq, inArray } from 'drizzle-orm';
 import { rm } from 'node:fs/promises';
@@ -134,7 +138,13 @@ export async function reconcileStaleRuns(ctx: QueriesContext): Promise<ResumeRun
 			// suspend can advance Date.now() past the staleness window while the process is
 			// still alive. Sweeping it to 'failed' would be a false positive that kills a
 			// healthy run. The HeartbeatWatcher will re-evaluate and resume once the web is up.
-			if (heartbeat.pid !== null && isProcessAlive(heartbeat.pid)) {
+			// A pid that now belongs to another process (its recorded start time differs) is not
+			// this run, however alive it is; resuming it would hold a ceiling slot forever.
+			if (
+				heartbeat.pid !== null &&
+				isProcessAlive(heartbeat.pid) &&
+				(await runProcessLiveness(heartbeat.pid, heartbeat.pidStartId ?? null)) !== 'dead'
+			) {
 				resumable.push({ projectPath: run.projectPath, runId: run.id });
 				resumedCount++;
 				continue;

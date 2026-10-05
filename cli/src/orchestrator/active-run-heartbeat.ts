@@ -6,6 +6,7 @@ import {
 	type CliActiveRunRecord,
 	createCliActiveRunRecord,
 	isCliActiveRunSuppressed,
+	ownProcessStartId,
 	sweepStaleActiveRunTempFiles,
 	writeCliActiveRunRecord,
 } from 'aidd-shared/metadata/active-runs';
@@ -73,8 +74,12 @@ export class CliActiveRunHeartbeat {
 		if (!shouldTrackRun(plan, options.externalSource)) return undefined;
 		if (!options.externalSource && isCliActiveRunSuppressed(env)) return undefined;
 		const log = await ActiveRunLog.open(plan, options.logPath);
+		// Recorded beside the pid so the web side can tell this run's process from one that later
+		// receives the same pid (runProcessLiveness), and never signal the wrong one.
+		const pidStartId = await ownProcessStartId().catch(() => null);
 		const heartbeat = new CliActiveRunHeartbeat(
 			createCliActiveRunRecord({
+				pidStartId,
 				...(options.aiddProvenance ? { aiddProvenance: options.aiddProvenance } : {}),
 				backend: plan.backend,
 				commandArgs: options.commandArgs ?? null,

@@ -62,6 +62,7 @@ function makeRecord(overrides: Partial<CliActiveRunRecord> = {}): CliActiveRunRe
 		model: null,
 		outputTokens: null,
 		pid: null,
+		pidStartId: null,
 		projectName: 'demo',
 		projectPath: 'd:/applications/demo',
 		provider: null,

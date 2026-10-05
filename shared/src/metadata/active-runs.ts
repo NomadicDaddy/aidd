@@ -23,6 +23,7 @@ export {
 	isCliActiveRunSuppressed,
 	SUPPRESS_CLI_ACTIVE_RUN_ENV,
 } from './active-runs/environment.ts';
+export { ownProcessStartId, runProcessLiveness } from './active-runs/liveness.ts';
 export { activeRunFilePath, activeRunsDir } from './active-runs/locate.ts';
 export {
 	asRunInitiator,

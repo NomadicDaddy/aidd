@@ -54,6 +54,8 @@ export interface CliActiveRunRecord extends AiddRunDriver, AiddRunProvenance {
 	model: null | string;
 	outputTokens: null | number;
 	pid: null | number;
+	/** The pid's process start time (see runProcessLiveness); null when unknown or not recorded. */
+	pidStartId: null | string;
 	projectName: string;
 	projectPath: string;
 	provider: null | string;
@@ -143,6 +145,9 @@ export function parseCliActiveRunRecord(value: unknown): CliActiveRunRecord | un
 	if (typeof mode !== 'string' || !modeNameSet.has(mode)) return undefined;
 	if (!isStringOrNull(model)) return undefined;
 	if (!(pid === null || isFiniteNumber(pid))) return undefined;
+	const pidStartId = value.pidStartId;
+	if (!(pidStartId === undefined || pidStartId === null || typeof pidStartId === 'string'))
+		return undefined;
 	if (typeof projectName !== 'string' || projectName.length === 0) return undefined;
 	if (typeof projectPath !== 'string' || projectPath.length === 0) return undefined;
 	if (!(provider === undefined || provider === null || typeof provider === 'string')) {
@@ -200,6 +205,7 @@ export function parseCliActiveRunRecord(value: unknown): CliActiveRunRecord | un
 		mode,
 		model,
 		pid,
+		pidStartId: pidStartId ?? null,
 		projectName,
 		projectPath,
 		provider: provider ?? null,
@@ -223,6 +229,7 @@ export function createCliActiveRunRecord(input: {
 	logPath?: null | string;
 	mode: AiddMode;
 	model: string | undefined;
+	pidStartId?: null | string;
 	projectDir: string;
 	provider: string | undefined;
 	reasoningEffort: string;
@@ -261,6 +268,7 @@ export function createCliActiveRunRecord(input: {
 		model: input.model ?? null,
 		outputTokens: null,
 		pid: typeof process.pid === 'number' ? process.pid : null,
+		pidStartId: input.pidStartId ?? null,
 		projectName: basename(input.projectDir),
 		projectPath: input.projectDir,
 		provider: input.provider ?? null,

@@ -19,7 +19,7 @@ import { hasStopRequested } from './stop-request.ts';
 
 export interface PreRunCheckResult {
 	exitCode: number;
-	stopReason: 'completed' | 'exit_error';
+	stopReason: 'completed' | 'exit_error' | 'stop_requested';
 	summary: string;
 }
 
@@ -39,9 +39,11 @@ export async function handlePreRunChecks(
 		const summary = 'stop requested before run';
 		move({ reason: summary, type: 'stopped' });
 		console.log('Stop requested before run.');
+		// The same record a stop between iterations leaves: the ledger and the heartbeat read
+		// stop_requested as stopped, where 'completed' reported a run that never started as done.
 		return {
 			exitCode: orchestratorExitCodes.success,
-			stopReason: 'completed',
+			stopReason: 'stop_requested',
 			summary,
 		};
 	}

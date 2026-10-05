@@ -6,6 +6,7 @@ import type { OrchestratorDeps } from '../../cli/src/orchestrator/run/types.ts';
 
 import {
 	buildRateLimitBudgetSummary,
+	handlePreRunChecks,
 	handleRateLimit,
 } from '../../cli/src/orchestrator/run/run-gates.ts';
 
@@ -65,5 +66,22 @@ describe('handleRateLimit — wall-clock deadline', () => {
 		);
 		expect(result.backoffExceedsDeadline).toBe(false);
 		expect(result.stopRequested).toBe(false);
+	});
+});
+
+describe('handlePreRunChecks — stop before the run', () => {
+	test('a stop found before the first iteration is recorded as stopped, not completed', async () => {
+		const moves: unknown[] = [];
+		const result = await handlePreRunChecks(
+			makePlan(3600),
+			{ store: { hasStopRequested: async () => true } } as unknown as OrchestratorDeps,
+			(move) => moves.push(move),
+		);
+		expect(result).toEqual({
+			exitCode: 0,
+			stopReason: 'stop_requested',
+			summary: 'stop requested before run',
+		});
+		expect(moves).toEqual([{ reason: 'stop requested before run', type: 'stopped' }]);
 	});
 });

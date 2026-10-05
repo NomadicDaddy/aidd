@@ -18,6 +18,7 @@ import {
 	type ResumeRunInfo,
 	terminalStatusFromHeartbeat,
 } from './activeRunHeartbeatFile.ts';
+import { isStartingRun } from './activeRunSweep.ts';
 import { NON_TERMINAL_RUN_STATUSES, RECONCILED_EXIT_CODE } from './types.ts';
 import { reapRunWorktree } from './worktreeReap.ts';
 
@@ -53,6 +54,11 @@ export async function reconcileStaleRuns(ctx: QueriesContext): Promise<ResumeRun
 		const heartbeat = await readHeartbeatRecord(run.projectPath, run.id);
 		const isAuditMode = run.mode === 'audit';
 		if (!heartbeat) {
+			// A detached child between spawn and its first heartbeat looks exactly like this. Failing
+			// it here marked the row failed and reaped its worktree while the child ran on, so its
+			// real outcome was lost and its ceiling slot was handed to another run. The in-session
+			// sweep collects it once it ages past the window, as it already does without a restart.
+			if (isStartingRun(run, now)) continue;
 			await withSqliteRetry(
 				() =>
 					ctx.db

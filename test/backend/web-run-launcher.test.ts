@@ -2769,7 +2769,10 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 			});
 			try {
 				const serviceInternals = service as unknown as { db: WebDatabase };
-				const startedAt = Date.now() - 5000;
+				// Older than the startup grace window: an orphan left over from before the
+				// restart. A row seconds old may still be starting and is spared (see
+				// boot-reconcile-startup-grace.test.ts).
+				const startedAt = Date.now() - 10 * 60_000;
 				await serviceInternals.db.insert(schema.runs).values({
 					backend: 'native',
 					id: 'run_orphan_1',

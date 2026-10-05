@@ -13,6 +13,27 @@ import { readHeartbeatRecord, type SweptRunInfo } from './activeRunHeartbeatFile
 import { NON_TERMINAL_RUN_STATUSES, RECONCILED_EXIT_CODE } from './types.ts';
 import { reapRunWorktree } from './worktreeReap.ts';
 
+/**
+ * A run with no heartbeat yet that is plausibly still coming up: inside the startup grace window,
+ * with no usable pid yet or a recorded pid still alive. A null pid is NOT dead here — detached
+ * launches record the real CLI pid only via the first heartbeat, and on Windows the launch goes
+ * through a relauncher whose own pid never reaches the row. Only a recorded pid that is provably
+ * dead proves an early crash; otherwise the run is caught once it ages past the window. Shared by
+ * this sweep and boot reconciliation, so a web restart during a launch spares the run too.
+ * @param run - The run row's recorded pid and start time.
+ * @param run.pid - The recorded pid, or null before the first heartbeat.
+ * @param run.startedAt - When the run was launched (epoch ms).
+ * @param now - The current time (epoch ms).
+ * @returns True when the run should be left to finish starting.
+ */
+export function isStartingRun(
+	run: { pid: null | number; startedAt: number },
+	now: number,
+): boolean {
+	const withinStartupGrace = now - run.startedAt <= CLI_ACTIVE_RUN_STALE_MS;
+	return withinStartupGrace && (run.pid === null || isPidAlive(run.pid));
+}
+
 // Periodic in-session sweep that closes the one gap boot reconciliation and the file-driven
 // HeartbeatWatcher both leave open: a run whose supervising process dies *before* it ever writes
 // a heartbeat file. Such a row is invisible to HeartbeatWatcher (no file to observe) and stays
@@ -31,16 +52,7 @@ export async function sweepOrphanedRuns(ctx: QueriesContext): Promise<SweptRunIn
 		// transition from there (resume, terminalize, stale-fail). Never second-guess it.
 		const heartbeat = await readHeartbeatRecord(run.projectPath, run.id);
 		if (heartbeat) continue;
-		// Within the startup grace window, spare a run that is plausibly still coming up:
-		// either we have no usable pid yet, or the recorded pid is still alive. A null pid is
-		// NOT treated as dead here — detached launches record the real CLI pid only via the
-		// first heartbeat, and on Windows the launch goes through a cmd/start relauncher whose
-		// own pid never reaches the row, so run.pid stays null until that first heartbeat.
-		// Failing a null-pid row inside the window would kill a perfectly healthy run. Only a
-		// recorded pid that is provably dead proves an early crash worth fast-failing before
-		// the window elapses; otherwise the run is caught once it ages past the window.
-		const withinStartupGrace = now - run.startedAt <= CLI_ACTIVE_RUN_STALE_MS;
-		if (withinStartupGrace && (run.pid === null || isPidAlive(run.pid))) continue;
+		if (isStartingRun(run, now)) continue;
 		const errorMessage = 'Run process exited before writing a heartbeat; reconciled to failed.';
 		let outcome: HeartbeatWriteOutcome;
 		try {

@@ -27,4 +27,12 @@ describe('runProcessLiveness', () => {
 			),
 		).toBe('unknown');
 	});
+
+	test('a process table that cannot be read is unknown for a live pid, not dead', async () => {
+		// readProcessEntry returns null both when the process has gone and when the native table
+		// fails. This process is plainly alive, so a null entry must not be read as its death.
+		expect(await runProcessLiveness(process.pid, 'me', () => Promise.resolve(null))).toBe(
+			'unknown',
+		);
+	});
 });

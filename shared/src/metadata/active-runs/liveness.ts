@@ -24,8 +24,11 @@ export async function runProcessLiveness(
 	if (pid === null || !isProcessAlive(pid)) return 'dead';
 	if (!pidStartId) return 'unknown';
 	const entry = await readEntry(pid);
-	// Gone between the signal probe and the table read.
-	if (!entry) return 'dead';
+	// No entry means the process left between the probe and the table read, or that the table
+	// could not be read at all (readProcessEntry returns null when the Windows native table
+	// fails). Only a second probe tells them apart, and an unreadable table proves nothing: a run
+	// reported dead here is reaped, or loses its pending stop, while it is still working.
+	if (!entry) return isProcessAlive(pid) ? 'unknown' : 'dead';
 	if (!entry.startId) return 'unknown';
 	return entry.startId === pidStartId ? 'alive' : 'dead';
 }

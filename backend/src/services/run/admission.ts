@@ -158,7 +158,6 @@ export async function admitQueuedRuns(ctx: LaunchContext, launchedRunId = ''): P
 						dataDir: ctx.config.web.dataDir,
 						maxConcurrentRuns: ctx.config.web.maxConcurrentRuns,
 						maxConcurrentRunsPerProject: ctx.config.web.maxConcurrentRunsPerProject,
-						useWorktrees: ctx.config.web.useWorktrees,
 					}),
 				{ label: 'run.admit.promote' },
 			);

@@ -73,6 +73,36 @@ async function gitInitRepo(dir: string): Promise<void> {
 	}
 }
 
+// Worktree isolation branches off HEAD, so an isolated launch needs a project with a commit.
+async function gitCommitAll(dir: string): Promise<void> {
+	await gitInitRepo(dir);
+	for (const args of [
+		['-C', dir, 'add', '-A'],
+		[
+			'-C',
+			dir,
+			'-c',
+			'user.name=aidd test',
+			'-c',
+			'user.email=test@aidd.local',
+			'commit',
+			'-qm',
+			'init',
+		],
+	]) {
+		const proc = Bun.spawn(['git', ...args], {
+			stderr: 'pipe',
+			stdout: 'pipe',
+			windowsHide: true,
+		});
+		if ((await proc.exited) !== 0) {
+			throw new Error(
+				`git ${args.join(' ')} failed: ${await new Response(proc.stderr).text()}`,
+			);
+		}
+	}
+}
+
 function leaseServiceFor(projectDir: string, runId: string) {
 	return createFeatureLeaseService({ pid: process.pid, projectDir, runId });
 }
@@ -2651,6 +2681,7 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 		);
 		try {
 			const projectDir = await makeProject(workspace);
+			await gitCommitAll(projectDir);
 			const { service, sqlite } = makeService({
 				allowedRoot: workspace,
 				dataDir: join(workspace, 'data'),
@@ -2671,6 +2702,38 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 				expect(rows).toHaveLength(3);
 				expect(rows.filter((row) => row.status === 'running')).toHaveLength(2);
 				expect(rows.filter((row) => row.status === 'queued')).toHaveLength(1);
+			} finally {
+				service.markDisposed();
+				sqlite.close();
+			}
+		} finally {
+			await removeTempTree(workspace);
+			await removeTempTree(rootDir);
+		}
+	});
+
+	// A project with no commit has nothing to branch from, so its child runs in the live tree. The
+	// launcher used to queue it with --worktree anyway, and admission then counted it as isolated
+	// and let a second mutating run into the same checkout.
+	test('a project with no commit is not counted as worktree-isolated', async () => {
+		const workspace = await testTempDir('aidd-web-worktree-nohead-');
+		const witnessDir = join(workspace, 'spawn-witness');
+		const rootDir = await makeLauncherRoot(
+			`${spawnWitness(witnessDir)}\nawait Bun.sleep(1500);\n`,
+		);
+		try {
+			const projectDir = await makeProject(workspace);
+			const { service, sqlite } = makeService({
+				allowedRoot: workspace,
+				dataDir: join(workspace, 'data'),
+				rootDir,
+				web: { maxConcurrentRuns: 5, maxConcurrentRunsPerProject: 2, useWorktrees: true },
+			});
+			try {
+				const first = await service.launchRun({ projectDir }, { initiator: 'operator' });
+				const second = await service.launchRun({ projectDir }, { initiator: 'operator' });
+				expect(first.worktreePath).toBeNull();
+				expect(second.status).toBe('queued');
 			} finally {
 				service.markDisposed();
 				sqlite.close();

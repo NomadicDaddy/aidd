@@ -36,7 +36,13 @@ export interface CreateRunWorktreeOptions {
  *
  * Returns `null` when the project has no resolvable HEAD (a fresh `git init` with no commits,
  * i.e. the initializer phase) — worktree isolation is meaningless there, so the caller falls
- * back to running against the live tree. */
+ * back to running against the live tree. The web launcher omits `--worktree` in that case, so
+ * admission does not count the run as isolated.
+ *
+ * Throws when a worktree was possible but could not be made (a stale directory or lock blocks
+ * `worktree add`, or the branch switch fails). Falling back to the live tree there would run a
+ * mutating run beside its siblings in one checkout while admission counts it as isolated, which is
+ * exactly what the per-project ceiling exists to prevent. */
 export async function createRunWorktree(
 	projectDir: string,
 	runId: string,
@@ -54,11 +60,15 @@ export async function createRunWorktree(
 	// run branch inside it. This avoids the "branch already checked out" failure class and
 	// makes the base unambiguous for merge-base and rollback.
 	if (!(await gitSuccess(projectDir, ['worktree', 'add', '--detach', dir, baseSha]))) {
-		return null;
+		throw new Error(
+			`Could not create the run's worktree at ${dir} (git worktree add failed; a stale directory or lock?). Not falling back to the live tree.`,
+		);
 	}
 	if (!(await gitSuccess(dir, ['switch', '-c', branch]))) {
 		await gitSuccess(projectDir, ['worktree', 'remove', '--force', dir]);
-		return null;
+		throw new Error(
+			`Could not create branch ${branch} in the run's worktree. Not falling back to the live tree.`,
+		);
 	}
 	// Disable auto-gc in the worktree so a sibling run's gc can't prune our in-flight objects.
 	await gitSuccess(dir, ['config', 'gc.auto', '0']);

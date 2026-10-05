@@ -106,7 +106,6 @@ export interface PromoteOldestQueuedRunArgs {
 	dataDir: string;
 	maxConcurrentRuns: number;
 	maxConcurrentRunsPerProject: number;
-	useWorktrees: boolean;
 }
 
 export type PromoteOldestQueuedRunResult =

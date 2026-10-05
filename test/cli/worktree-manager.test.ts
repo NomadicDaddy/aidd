@@ -71,6 +71,28 @@ describe('worktree-manager', () => {
 		}
 	});
 
+	// A worktree that was possible but could not be made used to return null too, and the run then
+	// edited the live tree beside its siblings while admission counted it as isolated.
+	test('throws, rather than falling back to the live tree, when worktree add is blocked', async () => {
+		const root = await testTempDir('aidd-wt-test-');
+		try {
+			const projectDir = join(root, 'project');
+			await initRepoWithCommit(projectDir);
+			const blocked = join(root, 'wt', 'run1');
+			await mkdir(blocked, { recursive: true });
+			await writeFile(
+				join(blocked, 'leftover.txt'),
+				'a stale directory from an earlier run\n',
+			);
+
+			await expect(
+				createRunWorktree(projectDir, 'run1', { baseDir: join(root, 'wt') }),
+			).rejects.toThrow('Not falling back to the live tree');
+		} finally {
+			await removeTempTree(root);
+		}
+	});
+
 	test('creates an isolated worktree branched off HEAD', async () => {
 		const root = await testTempDir('aidd-wt-test-');
 		try {

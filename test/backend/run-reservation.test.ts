@@ -52,7 +52,6 @@ async function insertReservation(
 					dataDir: '/data',
 					maxConcurrentRuns: 10,
 					maxConcurrentRunsPerProject: 10,
-					useWorktrees: true,
 				})
 			).kind,
 		).toBe('promoted');
@@ -110,7 +109,6 @@ describe('releaseRunReservation', () => {
 			dataDir: '/data',
 			maxConcurrentRuns: 1,
 			maxConcurrentRunsPerProject: 1,
-			useWorktrees: true,
 		});
 		expect(next.kind).toBe('promoted');
 	});

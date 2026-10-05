@@ -73,7 +73,10 @@ export function promoteOldestQueuedRun(
 		.all();
 	for (const row of queued) {
 		const mode = row.mode as WebRunMode;
-		const isolated = args.useWorktrees && mode === 'coding';
+		// Isolation is what the child will actually do, which is fixed in its command at queue
+		// time, not today's config: a run queued without --worktree and promoted after the
+		// setting flips on still runs in the live tree.
+		const isolated = mode === 'coding' && commandHasFlag(row.commandArgsJson, '--worktree');
 		const mutating = mayMutateProject(mode, {
 			directiveReadonly: commandHasFlag(row.commandArgsJson, '--directive-readonly'),
 		});

@@ -40,6 +40,8 @@ async function queueAndPromote(
 ) {
 	await commands.insertQueuedRun({
 		values: runValues(input.id, input.projectPath ?? '/proj/a', {
+			// Isolation is read from the queued command, as the launcher records it.
+			...(input.isolated === true ? { commandArgsJson: JSON.stringify(['--worktree']) } : {}),
 			mode: input.mode ?? 'coding',
 		}),
 	});
@@ -48,7 +50,6 @@ async function queueAndPromote(
 		dataDir: '/data',
 		maxConcurrentRuns: input.maxConcurrentRuns ?? 10,
 		maxConcurrentRunsPerProject: input.configured,
-		useWorktrees: input.isolated === true,
 	});
 }
 
@@ -210,7 +211,6 @@ describe('admission through the mutation clamp', () => {
 			dataDir: '/data',
 			maxConcurrentRuns: 10,
 			maxConcurrentRunsPerProject: 10,
-			useWorktrees: false,
 		});
 		if (promoted.kind !== 'promoted') throw new Error('expected a promotion');
 		expect(promoted.row.startedAt).toBe(admittedAt);

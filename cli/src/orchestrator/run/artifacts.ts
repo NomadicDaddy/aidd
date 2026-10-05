@@ -67,9 +67,17 @@ export async function writeRunSummary(
 		: await commitOwnedMetadata(runRepoDir(plan), acc.dirtyMetadataAtStart);
 	const runEndSummaryParts = [finalSummary];
 	if (reconcileNote !== null) runEndSummaryParts.push(reconcileNote);
-	if (metadataCommit !== undefined) {
+	if (metadataCommit?.kind === 'committed') {
 		runEndSummaryParts.push(
 			`committed ${metadataCommit.paths.length} aidd metadata record(s) written after the run's own commits (${metadataCommit.hash.slice(0, 10)})`,
+		);
+	} else if (metadataCommit?.kind === 'held') {
+		runEndSummaryParts.push(
+			`left ${metadataCommit.paths.length} aidd metadata record(s) uncommitted: ${metadataCommit.staged.length} other file(s) were already staged, and committing would have carried them too`,
+		);
+	} else if (metadataCommit?.kind === 'failed') {
+		runEndSummaryParts.push(
+			`could not commit ${metadataCommit.paths.length} aidd metadata record(s), left uncommitted and unstaged: ${metadataCommit.detail}`,
 		);
 	}
 	if (residualDirtySourceFiles.length > 0) {

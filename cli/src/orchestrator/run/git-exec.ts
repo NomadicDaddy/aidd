@@ -31,6 +31,24 @@ export async function gitSuccess(projectDir: string, args: string[]): Promise<bo
 	}
 }
 
+/** gitSuccess that keeps stderr, so a refusal can be reported. Same no-throw contract. */
+export async function gitRun(
+	projectDir: string,
+	args: string[],
+): Promise<{ ok: boolean; stderr: string }> {
+	try {
+		const proc = Bun.spawn(['git', '-C', projectDir, ...args], {
+			stderr: 'pipe',
+			stdout: 'ignore',
+			windowsHide: true,
+		});
+		const stderr = await new Response(proc.stderr).text();
+		return { ok: (await proc.exited) === 0, stderr: stderr.trim() };
+	} catch (err) {
+		return { ok: false, stderr: err instanceof Error ? err.message : String(err) };
+	}
+}
+
 export async function readGitHead(projectDir: string): Promise<string | undefined> {
 	if (!(await projectOwnsGitRepo(projectDir))) return undefined;
 	const output = await gitOutput(projectDir, ['rev-parse', '--verify', 'HEAD']);

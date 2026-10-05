@@ -70,7 +70,7 @@ describe('run-end metadata commit', () => {
 
 		const committed = await commitOwnedMetadata(dir, new Map());
 
-		expect(committed?.paths).toEqual([RECORD]);
+		expect(committed).toMatchObject({ kind: 'committed', paths: [RECORD] });
 		expect(await dirtyPaths(dir)).toEqual([]);
 		const subject = await git(dir, ['log', '-1', '--pretty=%s']);
 		expect(subject.trim()).toBe('chore(aidd): record run metadata');
@@ -89,7 +89,7 @@ describe('run-end metadata commit', () => {
 		await writeFile(record, '{"id":"demo","status":"waiting_approval"}\n');
 		const committed = await commitOwnedMetadata(dir, before);
 
-		expect(committed?.paths).toEqual([RECORD]);
+		expect(committed).toMatchObject({ kind: 'committed', paths: [RECORD] });
 		expect(await dirtyPaths(dir)).toEqual([]);
 	});
 
@@ -112,7 +112,7 @@ describe('run-end metadata commit', () => {
 
 		const committed = await commitOwnedMetadata(dir, new Map());
 
-		expect(committed?.paths).toEqual([RECORD]);
+		expect(committed).toMatchObject({ kind: 'committed', paths: [RECORD] });
 		// The source edit is still uncommitted, which is the accounting this must not disturb.
 		expect(await dirtyPaths(dir)).toEqual(['src.ts']);
 	});
@@ -124,7 +124,7 @@ describe('run-end metadata commit', () => {
 
 		const committed = await commitOwnedMetadata(dir, new Map());
 
-		expect(committed?.paths).toEqual([RECORD]);
+		expect(committed).toMatchObject({ kind: 'committed', paths: [RECORD] });
 		expect(await dirtyPaths(dir)).toEqual(['.aidd/notes.md']);
 	});
 
@@ -137,6 +137,42 @@ describe('run-end metadata commit', () => {
 		// An uncapturable baseline cannot separate the run's writes from the operator's.
 		expect(await commitOwnedMetadata(dir, undefined)).toBeUndefined();
 		expect(await dirtyPaths(dir)).toEqual([RECORD]);
+	});
+
+	test('never commits files the operator had already staged', async () => {
+		const dir = await repo();
+		await writeFile(join(dir, 'src.ts'), 'export const value = 3;\n');
+		await git(dir, ['add', '--', 'src.ts']);
+		await writeFile(join(dir, '.aidd', 'features', 'demo', 'feature.json'), '{"id":"demo6"}\n');
+
+		const result = await commitOwnedMetadata(dir, new Map());
+
+		expect(result).toEqual({ kind: 'held', paths: [RECORD], staged: ['src.ts'] });
+		expect((await git(dir, ['log', '-1', '--pretty=%s'])).trim()).toBe('baseline');
+		// The operator's staged change is still staged, and still theirs to commit.
+		expect((await git(dir, ['diff', '--cached', '--name-only'])).trim()).toBe('src.ts');
+	});
+
+	test('unstages its records when the commit is refused', async () => {
+		const dir = await repo();
+		await git(dir, ['config', 'core.hooksPath', '.hooks']);
+		await mkdir(join(dir, '.hooks'), { recursive: true });
+		await writeFile(
+			join(dir, '.hooks', 'pre-commit'),
+			'#!/bin/sh\necho blocked by hook >&2\nexit 1\n',
+			{
+				mode: 0o755,
+			},
+		);
+		await writeFile(join(dir, '.aidd', 'features', 'demo', 'feature.json'), '{"id":"demo7"}\n');
+
+		const result = await commitOwnedMetadata(dir, new Map());
+
+		expect(result?.kind).toBe('failed');
+		expect(result?.kind === 'failed' ? result.detail : '').toContain('blocked by hook');
+		expect((await git(dir, ['diff', '--cached', '--name-only'])).trim()).toBe('');
+		// The record itself is untouched on disk, only unstaged.
+		expect(await dirtyPaths(dir)).toContain(RECORD);
 	});
 
 	test('does nothing in a project that gitignores its .aidd directory', async () => {

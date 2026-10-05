@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'bun:test';
 import { join, resolve } from 'node:path';
 
 /**
@@ -34,32 +34,42 @@ interface Markup {
 	open: string;
 }
 
-let markup: Markup | undefined;
+/**
+ * Each subprocess below is started once and shared by every test that reads it. The promise is
+ * memoized, not the value: memoizing the value let each test that ran while the first subprocess
+ * was still loading start another one, and under the full parallel suite each of those also
+ * outran its 15s timeout.
+ */
+let markup: Promise<Markup> | undefined;
+
+/**
+ * Budget for one cold subprocess under the full parallel suite. Measured: about 1s with the
+ * machine idle, and over 15s three times inside smoke:qc (card 74ef8d8a).
+ */
+const SUBPROCESS_BUDGET_MS = 60_000;
 
 /** Renders the real component through React itself, rather than reading its source for intent. */
-async function renderDialogs(): Promise<Markup> {
-	markup ??= JSON.parse(
-		await runInFrontend([
-			"import { createElement } from 'react';",
-			"import { renderToStaticMarkup } from 'react-dom/server';",
-			"import { Dialog, DialogPanel } from './src/components/ui/dialog.tsx';",
-			'const noop = () => {};',
-			'const panel = (children) => createElement(DialogPanel, null, children);',
-			'const dialog = (open, children) =>',
-			'\trenderToStaticMarkup(createElement(Dialog, { onClose: noop, open }, children));',
-			'console.log(',
-			'\tJSON.stringify({',
-			"\t\tclosed: dialog(false, panel('body')),",
-			"\t\tdefaulted: renderToStaticMarkup(panel('body')),",
-			'\t\tnested: dialog(',
-			'\t\t\ttrue,',
-			"\t\t\tcreateElement('section', null, createElement('div', null, panel('deep'))),",
-			'\t\t),',
-			"\t\topen: dialog(true, panel('body')),",
-			'\t}),',
-			');',
-		]),
-	) as Markup;
+function renderDialogs(): Promise<Markup> {
+	markup ??= runInFrontend([
+		"import { createElement } from 'react';",
+		"import { renderToStaticMarkup } from 'react-dom/server';",
+		"import { Dialog, DialogPanel } from './src/components/ui/dialog.tsx';",
+		'const noop = () => {};',
+		'const panel = (children) => createElement(DialogPanel, null, children);',
+		'const dialog = (open, children) =>',
+		'\trenderToStaticMarkup(createElement(Dialog, { onClose: noop, open }, children));',
+		'console.log(',
+		'\tJSON.stringify({',
+		"\t\tclosed: dialog(false, panel('body')),",
+		"\t\tdefaulted: renderToStaticMarkup(panel('body')),",
+		'\t\tnested: dialog(',
+		'\t\t\ttrue,',
+		"\t\t\tcreateElement('section', null, createElement('div', null, panel('deep'))),",
+		'\t\t),',
+		"\t\topen: dialog(true, panel('body')),",
+		'\t}),',
+		');',
+	]).then((output) => JSON.parse(output) as Markup);
 	return markup;
 }
 
@@ -70,7 +80,7 @@ interface GuardReport {
 	modern: string[];
 }
 
-let guard: GuardReport | undefined;
+let guard: Promise<GuardReport> | undefined;
 
 const HOOK_FIXTURE = [
 	"import { createContext, useContext } from 'react';",
@@ -102,47 +112,47 @@ const MODERN_FIXTURE = [
  * fixtures are linted as text: a file written into `frontend/src` would be seen by the sibling
  * suites that scan that tree, and `bun test` runs them in parallel.
  */
-async function reportGuard(): Promise<GuardReport> {
-	guard ??= JSON.parse(
-		await runInFrontend([
-			"import { ESLint } from 'eslint';",
-			"import tseslint from 'typescript-eslint';",
-			`const HOOK = ${JSON.stringify(HOOK_FIXTURE)};`,
-			`const MEMBER = ${JSON.stringify(MEMBER_FIXTURE)};`,
-			`const MODERN = ${JSON.stringify(MODERN_FIXTURE)};`,
-			"const config = (await import('./eslint.config.js')).default;",
-			"const block = config.find((entry) => entry?.rules?.['no-restricted-syntax']);",
-			'const eslint = new ESLint({',
-			'\tbaseConfig: [',
-			'\t\t{',
-			'\t\t\tfiles: block.files,',
-			'\t\t\tlanguageOptions: { parser: tseslint.parser },',
-			"\t\t\trules: { 'no-restricted-syntax': block.rules['no-restricted-syntax'] },",
-			'\t\t},',
-			'\t],',
-			'\tcwd: process.cwd(),',
-			'\toverrideConfigFile: true,',
-			'});',
-			'const lint = async (code) => {',
-			'\tconst [result] = await eslint.lintText(code, {',
-			"\t\tfilePath: process.cwd() + '/src/guard-fixture.tsx',",
-			'\t});',
-			'\treturn result.messages.map((message) => message.message);',
-			'};',
-			'console.log(',
-			'\tJSON.stringify({',
-			'\t\tfiles: block.files,',
-			'\t\thook: await lint(HOOK),',
-			'\t\tmember: await lint(MEMBER),',
-			'\t\tmodern: await lint(MODERN),',
-			'\t}),',
-			');',
-		]),
-	) as GuardReport;
+function reportGuard(): Promise<GuardReport> {
+	guard ??= runInFrontend([
+		"import { ESLint } from 'eslint';",
+		"import tseslint from 'typescript-eslint';",
+		`const HOOK = ${JSON.stringify(HOOK_FIXTURE)};`,
+		`const MEMBER = ${JSON.stringify(MEMBER_FIXTURE)};`,
+		`const MODERN = ${JSON.stringify(MODERN_FIXTURE)};`,
+		"const config = (await import('./eslint.config.js')).default;",
+		"const block = config.find((entry) => entry?.rules?.['no-restricted-syntax']);",
+		'const eslint = new ESLint({',
+		'\tbaseConfig: [',
+		'\t\t{',
+		'\t\t\tfiles: block.files,',
+		'\t\t\tlanguageOptions: { parser: tseslint.parser },',
+		"\t\t\trules: { 'no-restricted-syntax': block.rules['no-restricted-syntax'] },",
+		'\t\t},',
+		'\t],',
+		'\tcwd: process.cwd(),',
+		'\toverrideConfigFile: true,',
+		'});',
+		'const lint = async (code) => {',
+		'\tconst [result] = await eslint.lintText(code, {',
+		"\t\tfilePath: process.cwd() + '/src/guard-fixture.tsx',",
+		'\t});',
+		'\treturn result.messages.map((message) => message.message);',
+		'};',
+		'console.log(',
+		'\tJSON.stringify({',
+		'\t\tfiles: block.files,',
+		'\t\thook: await lint(HOOK),',
+		'\t\tmember: await lint(MEMBER),',
+		'\t\tmodern: await lint(MODERN),',
+		'\t}),',
+		');',
+	]).then((output) => JSON.parse(output) as GuardReport);
 	return guard;
 }
 
 describe('the dialog panel reads its motion state through React 19 `use`', () => {
+	beforeAll(() => renderDialogs(), SUBPROCESS_BUDGET_MS);
+
 	test('an open dialog renders its overlay and hands the panel the same motion state', async () => {
 		const { open } = await renderDialogs();
 
@@ -185,6 +195,8 @@ describe('the dialog panel reads its motion state through React 19 `use`', () =>
 });
 
 describe('the frontend lint gate rejects a return to `useContext`', () => {
+	beforeAll(() => reportGuard(), SUBPROCESS_BUDGET_MS);
+
 	test('the rule covers every TypeScript source in the frontend tree', async () => {
 		expect((await reportGuard()).files).toEqual(['**/*.{ts,tsx}']);
 	});

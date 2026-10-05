@@ -1,6 +1,7 @@
 import type { AgentErrorReason, AgentEvent } from '../types.ts';
 
 import { isProviderFlaggedText } from './flagged-text.ts';
+import { firstNumber, firstString, getPath } from './plain-json.ts';
 import { createPlainUsageReconciler, type PlainUsageReconciler } from './plain-usage.ts';
 import { isRateLimitText } from './rate-limit-text.ts';
 
@@ -10,32 +11,6 @@ function tryJson(line: string): undefined | unknown {
 	} catch {
 		return undefined;
 	}
-}
-
-function getPath(value: unknown, path: string[]): unknown {
-	let current = value;
-	for (const segment of path) {
-		if (typeof current !== 'object' || current === null || !(segment in current))
-			return undefined;
-		current = (current as Record<string, unknown>)[segment];
-	}
-	return current;
-}
-
-function firstString(value: unknown, paths: string[][]): string | undefined {
-	for (const path of paths) {
-		const candidate = getPath(value, path);
-		if (typeof candidate === 'string' && candidate.length > 0) return candidate;
-	}
-	return undefined;
-}
-
-function firstNumber(value: unknown, paths: string[][]): number | undefined {
-	for (const path of paths) {
-		const candidate = getPath(value, path);
-		if (typeof candidate === 'number') return candidate;
-	}
-	return undefined;
 }
 
 function isCommandExecutionStartJson(json: unknown): boolean {
@@ -206,21 +181,39 @@ function parseJsonLine(json: unknown, usage: PlainUsageReconciler): AgentEvent[]
 	return events;
 }
 
+// Claude Code's closing `result` envelope repeats the final assistant message's text verbatim,
+// so emitting it again prints the answer twice. A result that says something the stream did not
+// (or arrives with no message before it) still surfaces.
+function dropRepeatedFinalAnswer(
+	json: unknown,
+	events: AgentEvent[],
+	lastText: string | undefined,
+): AgentEvent[] {
+	if (lastText === undefined || firstString(json, [['type']]) !== 'result') return events;
+	return events.filter((event) => event.type !== 'assistant_text' || event.chunk !== lastText);
+}
+
 /**
  * Line parser for the plain backend. Stateful: token accounting must reconcile a transcript's
- * repeated per-message usage against its terminal cumulative total (see `plain-usage.ts`), so a
- * caller streaming a whole run needs one instance for that run.
+ * repeated per-message usage against its terminal cumulative total (see `plain-usage.ts`), and
+ * the closing result must be compared with the text already streamed, so a caller streaming a
+ * whole run needs one instance for that run.
  */
 export function createPlainBackendParser(): { parseLine: (line: string) => AgentEvent[] } {
 	const usage = createPlainUsageReconciler();
+	let lastText: string | undefined;
 	return {
 		parseLine(line): AgentEvent[] {
 			if (!line.trim()) return [];
 			const tagged = parseTaggedLine(line);
 			if (tagged) return [tagged];
 			const json = tryJson(line);
-			if (json !== undefined) return parseJsonLine(json, usage);
-			return [];
+			if (json === undefined) return [];
+			const events = dropRepeatedFinalAnswer(json, parseJsonLine(json, usage), lastText);
+			for (const event of events) {
+				if (event.type === 'assistant_text') lastText = event.chunk;
+			}
+			return events;
 		},
 	};
 }

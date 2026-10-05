@@ -2744,6 +2744,38 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 		}
 	});
 
+	// A project inside a parent repository has no commit of its own: the CLI will not cut a worktree
+	// from the parent's HEAD and runs in the live tree, so the launcher must not claim isolation.
+	test('a project nested in a parent repository is not counted as worktree-isolated', async () => {
+		const workspace = await testTempDir('aidd-web-worktree-nested-');
+		const witnessDir = join(workspace, 'spawn-witness');
+		const rootDir = await makeLauncherRoot(
+			`${spawnWitness(witnessDir)}\nawait Bun.sleep(1500);\n`,
+		);
+		try {
+			const projectDir = await makeProject(workspace);
+			await gitCommitAll(workspace);
+			const { service, sqlite } = makeService({
+				allowedRoot: workspace,
+				dataDir: join(workspace, 'data'),
+				rootDir,
+				web: { maxConcurrentRuns: 5, maxConcurrentRunsPerProject: 2, useWorktrees: true },
+			});
+			try {
+				const first = await service.launchRun({ projectDir }, { initiator: 'operator' });
+				const second = await service.launchRun({ projectDir }, { initiator: 'operator' });
+				expect(first.worktreePath).toBeNull();
+				expect(second.status).toBe('queued');
+			} finally {
+				service.markDisposed();
+				sqlite.close();
+			}
+		} finally {
+			await removeTempTree(workspace);
+			await removeTempTree(rootDir);
+		}
+	});
+
 	test('recipe service stores pipeline JSON recipes and rejects path-like ids', async () => {
 		const workspace = await testTempDir('aidd-web-recipes-');
 		try {

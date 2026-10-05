@@ -1,7 +1,7 @@
 import type { ResolvedConfig, ResolvedWebConfig } from 'aidd-shared/config';
 
+import { readGitHead } from 'aidd-shared/lib/gitHead';
 import { type CliActiveRunSource, type RunInitiator } from 'aidd-shared/metadata/active-runs';
-import { gitHead } from 'aidd-shared/pipeline/write-allowlist/git';
 import { resolveEffectiveLaunchTarget } from 'aidd-shared/plan/launch-target';
 import { normalizeBackendName } from 'aidd-shared/plan/types';
 import { resolveAiddRunProvenance } from 'aidd-shared/run-provenance';
@@ -106,13 +106,14 @@ export async function launchRun(
 	const effectiveReasoningEffort = target.reasoningEffort;
 	// Worktree isolation is config-gated and only meaningful for coding runs (director runs
 	// write to data/director, not the project tree). The CLI gates on coding mode too. A project
-	// with no commit has nothing to branch from, and the CLI runs it in the live tree; leaving
-	// --worktree off keeps the queued command honest, since admission counts a run as isolated
-	// from that flag.
+	// with no commit of its own (none at all, or only a parent repository's) has nothing to
+	// branch from, and the CLI runs it in the live tree; leaving --worktree off keeps the queued
+	// command honest, since admission counts a run as isolated from that flag. readGitHead is the
+	// CLI's own check, so the two cannot disagree.
 	const useWorktree =
 		ctx.config.web.useWorktrees &&
 		mode === 'coding' &&
-		(await gitHead(projectDir)) !== undefined;
+		(await readGitHead(projectDir)) !== undefined;
 	const command = await buildLaunchCommand(
 		ctx.rootDir,
 		{ ...input, projectDir, worktree: useWorktree },

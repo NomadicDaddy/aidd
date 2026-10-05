@@ -49,18 +49,5 @@ export async function gitRun(
 	}
 }
 
-export async function readGitHead(projectDir: string): Promise<string | undefined> {
-	if (!(await projectOwnsGitRepo(projectDir))) return undefined;
-	const output = await gitOutput(projectDir, ['rev-parse', '--verify', 'HEAD']);
-	return output?.trim() || undefined;
-}
-
-async function projectOwnsGitRepo(projectDir: string): Promise<boolean> {
-	// `--show-prefix` is projectDir's path relative to the repository root, and is empty exactly
-	// when projectDir IS that root. Ask for it rather than comparing `--show-toplevel` against
-	// projectDir: git answers with the resolved real path, so under an aliased path — a Windows
-	// `subst` drive, a symlink, a junction — the two spellings never match, a repository the
-	// project owns reads as a parent's, and every commit the run made goes unattributed.
-	const output = await gitOutput(projectDir, ['rev-parse', '--show-prefix']);
-	return output !== undefined && output.trim() === '';
-}
+// The own-root HEAD check is shared with the web launcher, which must agree with it.
+export { readGitHead } from 'aidd-shared/lib/gitHead';

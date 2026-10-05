@@ -34,7 +34,9 @@ export interface AgentErrorEvent {
 
 export type AgentEvent =
 	| { afterMs: number; type: 'idle_warning' }
-	| { args: unknown; tool: string; type: 'tool_call' }
+	// callId: the backend's own id for one call, when it reports one, so a result can be paired with
+	// its call even when calls interleave (subagents) or never report back.
+	| { args: unknown; callId?: string; tool: string; type: 'tool_call' }
 	| { backend: BackendName; pid?: number; type: 'started' }
 	| {
 			cachedTokens?: number;
@@ -44,6 +46,7 @@ export type AgentEvent =
 			reasoningTokens?: number;
 			type: 'usage';
 	  }
+	| { callId?: string; exitCode?: number; result: unknown; tool: string; type: 'tool_result' }
 	// Incremental live-console text streamed mid-turn (native backend SSE). Presentation-only:
 	// the turn's canonical full text still arrives as one `assistant_text`, so delta events are
 	// excluded from transcripts/result parsing and consumed only by live renderers.
@@ -51,7 +54,6 @@ export type AgentEvent =
 	| { chunk: string; stream: 'stderr' | 'stdout'; type: 'raw_log' }
 	| { chunk: string; type: 'assistant_text' }
 	| { exitCode: number; filesModified: string[]; type: 'done' }
-	| { exitCode?: number; result: unknown; tool: string; type: 'tool_result' }
 	| { raw?: unknown; resetAt?: string; type: 'rate_limit' }
 	| AgentErrorEvent;
 

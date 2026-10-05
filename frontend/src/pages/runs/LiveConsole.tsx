@@ -11,7 +11,6 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
-import { backendConsoleLimit } from '../../lib/backends.ts';
 import { cn } from '../../lib/cn.ts';
 import { entrySearchText, MAX_PRETTY_ENTRIES, parseConsoleEntries } from './consoleEntries.ts';
 import { LiveConsoleControls } from './LiveConsoleControls.tsx';
@@ -138,7 +137,6 @@ export function LiveConsole({
 	const visibleEntries = trimmedFind
 		? entries.filter((entry) => entrySearchText(entry).toLowerCase().includes(findNeedle))
 		: entries;
-	const consoleLimit = backendConsoleLimit(selectedRun?.backend);
 
 	async function copyAll(): Promise<void> {
 		try {
@@ -230,8 +228,6 @@ export function LiveConsole({
 						) : null}
 						{showControls ? (
 							<LiveConsoleNotices
-								consoleLimit={consoleLimit}
-								isPretty={effectiveView === 'pretty'}
 								shownBytes={
 									effectiveView === 'pretty' ? messageBytes : renderedBytes
 								}

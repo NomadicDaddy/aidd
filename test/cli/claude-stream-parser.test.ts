@@ -55,3 +55,53 @@ describe('claude-code closing result', () => {
 		expect(texts).toEqual(['Only answer.']);
 	});
 });
+
+describe('claude-code tool results', () => {
+	test('a result carries the name and id of the call it answers', () => {
+		const events = parsePlainBackendOutput(
+			transcript(
+				{
+					message: {
+						content: [
+							{
+								id: 'toolu_a',
+								input: { file_path: 'a.ts' },
+								name: 'Read',
+								type: 'tool_use',
+							},
+						],
+					},
+					type: 'assistant',
+				},
+				{
+					message: {
+						content: [
+							{ content: 'file a', tool_use_id: 'toolu_a', type: 'tool_result' },
+						],
+					},
+					type: 'user',
+				},
+				{
+					message: {
+						content: [
+							{ content: 'orphan', tool_use_id: 'toolu_gone', type: 'tool_result' },
+						],
+					},
+					type: 'user',
+				},
+			),
+			'',
+			0,
+		);
+		const tools = events.flatMap((event) =>
+			event.type === 'tool_call' || event.type === 'tool_result'
+				? [{ callId: event.callId, tool: event.tool, type: event.type }]
+				: [],
+		);
+		expect(tools).toEqual([
+			{ callId: 'toolu_a', tool: 'Read', type: 'tool_call' },
+			{ callId: 'toolu_a', tool: 'Read', type: 'tool_result' },
+			{ callId: 'toolu_gone', tool: 'unknown', type: 'tool_result' },
+		]);
+	});
+});

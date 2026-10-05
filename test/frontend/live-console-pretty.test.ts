@@ -404,6 +404,49 @@ describe('parseConsoleEntries (other backends)', () => {
 		expect(entries[1]).toMatchObject({ kind: 'tool', title: 'Read src/a.ts', tool: 'Read' });
 	});
 
+	// Results name their call only by tool_use_id. Pairing by name sent every later Bash output to
+	// the call that never returned; pairing the 'unknown' result to the newest call sent a
+	// subagent's Read output to its Bash.
+	test('claude-code results pair by tool_use id across interleaved subagent calls', () => {
+		const call = (id: string, name: string, input: unknown, parent?: string): string =>
+			JSON.stringify({
+				message: { content: [{ id, input, name, type: 'tool_use' }] },
+				...(parent === undefined ? {} : { parent_tool_use_id: parent }),
+				type: 'assistant',
+			});
+		const results = (...pairs: [string, string][]): string =>
+			JSON.stringify({
+				message: {
+					content: pairs.map(([id, content]) => ({
+						content,
+						tool_use_id: id,
+						type: 'tool_result',
+					})),
+				},
+				type: 'user',
+			});
+		const entries = parseConsoleEntries(
+			[
+				call('toolu_parent', 'Bash', { command: 'bun run dev' }),
+				call('toolu_agent', 'Task', { description: 'review' }),
+				call('toolu_read', 'Read', { file_path: 'src/a.ts' }, 'toolu_agent'),
+				call('toolu_ls', 'Bash', { command: 'ls' }, 'toolu_agent'),
+				results(['toolu_read', 'file a'], ['toolu_ls', 'listing']),
+				results(['toolu_agent', 'review done']),
+			].join('\n'),
+			'claude-code',
+		);
+		const tools = entries.flatMap((entry) =>
+			entry.kind === 'tool' ? [{ output: entry.output, tool: entry.tool }] : [],
+		);
+		expect(tools).toEqual([
+			{ output: undefined, tool: 'Bash' },
+			{ output: 'review done', tool: 'Task' },
+			{ output: 'file a', tool: 'Read' },
+			{ output: 'listing', tool: 'Bash' },
+		]);
+	});
+
 	test('claude-code tool-progress heartbeats do not create empty Pretty command cards', () => {
 		const toolUseId = 'toolu_01P3yUbveYXtHAnFxiMVGGfG';
 		const transcript = [

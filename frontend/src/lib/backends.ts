@@ -51,14 +51,3 @@ export function providerLabel(value: null | string | undefined): string {
 export function providerOptions(values: readonly string[]): { label: string; value: string }[] {
 	return values.map((value) => ({ label: providerLabel(value), value }));
 }
-
-// Backends whose CLI streams less than the console can render. Stated up front so an empty
-// section reads as a known limit of that CLI rather than as aidd having dropped the events.
-const consoleStreamLimits: Partial<Record<BackendName, string>> = {
-	grok: 'Grok’s streaming output carries assistant text and reasoning only — its CLI emits no tool events, so this run’s tool calls cannot be shown.',
-};
-
-export function backendConsoleLimit(value: null | string | undefined): string | undefined {
-	if (!value) return undefined;
-	return consoleStreamLimits[value as BackendName];
-}

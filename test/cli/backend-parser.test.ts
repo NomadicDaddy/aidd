@@ -85,13 +85,19 @@ describe('backend parser', () => {
 		expect(call).toEqual([
 			{
 				args: { command: 'bun run smoke:qc:fast', timeout: 600_000 },
+				callId: 'toolu_01P3yUbveYXtHAnFxiMVGGfG',
 				tool: 'Bash',
 				type: 'tool_call',
 			},
 		]);
 		expect(heartbeat).toEqual([]);
 		expect(result).toEqual([
-			{ result: 'fast gate passed', tool: 'unknown', type: 'tool_result' },
+			{
+				callId: 'toolu_01P3yUbveYXtHAnFxiMVGGfG',
+				result: 'fast gate passed',
+				tool: 'Bash',
+				type: 'tool_result',
+			},
 		]);
 	});
 

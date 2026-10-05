@@ -73,12 +73,12 @@ describe('the live console gets the bulk of its column', () => {
 		expect(page).toContain("page.selection === undefined && 'sm:hidden'");
 	});
 
-	test('the truncation notice stays two short paragraphs', async () => {
+	test('the truncation notice stays one short paragraph', async () => {
 		const notices = await read('pages/runs/LiveConsoleNotices.tsx');
 
 		// It read as larger than the output only because the output was 32px. It is still advisory
 		// text and must stay that way — a notice that grows into a block competes with the transcript.
 		expect(notices).toContain('mb-2 text-xs text-muted-foreground');
-		expect((notices.match(/<p /g) ?? []).length).toBe(2);
+		expect((notices.match(/<p /g) ?? []).length).toBe(1);
 	});
 });

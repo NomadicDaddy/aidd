@@ -49,6 +49,10 @@ function tryJson(line: string): unknown {
 	}
 }
 
+function eventCallId(event: AgentEvent): string | undefined {
+	return event.type === 'tool_call' || event.type === 'tool_result' ? event.callId : undefined;
+}
+
 class EntryBuilder {
 	readonly entries: ConsoleEntry[] = [];
 	private readonly pendingTools: { entry: ToolConsoleEntry; pairId?: string }[] = [];
@@ -92,8 +96,10 @@ class EntryBuilder {
 		this.entries.push({ kind: 'note', text, tone });
 	}
 
-	// Pairing: an explicit item id (codex) matches only its own call — commands can complete out
-	// of start order, so a name-based fallback would swap outputs. Without an id, results attach
+	// Pairing: an explicit id (codex's item id, claude-code's tool_use id) matches only its own
+	// call — commands can complete out of start order, subagent calls interleave with the
+	// parent's, and some calls never report back, so a name-based fallback would swap outputs.
+	// Only backends that send no id fall back to names: without an id, results attach
 	// to the oldest unpaired same-tool call; an 'unknown' tool takes the most recent pending
 	// call of any tool.
 	private findPendingIndex(tool: string, pairId: string | undefined): number {
@@ -240,7 +246,9 @@ export function parseConsoleEntries(
 		}
 		const itemId = asRecord(json?.item)?.id;
 		const pairId = typeof itemId === 'string' && itemId.length > 0 ? itemId : undefined;
-		for (const event of events) builder.pushEvent(event, pairId);
+		// A line without an item id (claude-code) can still pair by the call id its parser read
+		// per event; one line may carry several calls or results, each with its own id.
+		for (const event of events) builder.pushEvent(event, pairId ?? eventCallId(event));
 	}
 	// Foreign first: a foreign stage's withheld result belongs to output that appeared earlier in
 	// the transcript than the primary backend's own closing answer.

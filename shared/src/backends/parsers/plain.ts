@@ -1,6 +1,7 @@
 import type { AgentErrorReason, AgentEvent } from '../types.ts';
 
 import { isProviderFlaggedText } from './flagged-text.ts';
+import { parseContentBlocks } from './plain-content.ts';
 import { firstNumber, firstString, getPath } from './plain-json.ts';
 import { createPlainUsageReconciler, type PlainUsageReconciler } from './plain-usage.ts';
 import { isRateLimitText } from './rate-limit-text.ts';
@@ -42,37 +43,6 @@ function parseTaggedLine(line: string): AgentEvent | undefined {
 	return undefined;
 }
 
-function parseContentBlocks(json: unknown): AgentEvent[] {
-	const events: AgentEvent[] = [];
-	const content = getPath(json, ['message', 'content']) ?? getPath(json, ['content']);
-	if (!Array.isArray(content)) return events;
-	for (const block of content) {
-		if (typeof block !== 'object' || block === null) continue;
-		const blockType = (block as Record<string, unknown>).type;
-		if (blockType === 'text') {
-			const text = (block as Record<string, unknown>).text;
-			if (typeof text === 'string' && text.length > 0) {
-				events.push({ chunk: text, type: 'assistant_text' });
-			}
-		} else if (blockType === 'tool_use') {
-			const name = (block as Record<string, unknown>).name;
-			if (typeof name === 'string') {
-				events.push({
-					args: (block as Record<string, unknown>).input,
-					tool: name,
-					type: 'tool_call',
-				});
-			}
-		} else if (blockType === 'tool_result') {
-			const result = (block as Record<string, unknown>).content;
-			if (result !== undefined) {
-				events.push({ result, tool: 'unknown', type: 'tool_result' });
-			}
-		}
-	}
-	return events;
-}
-
 // Claude Code stream-json emits a first-class rate_limit_event carrying the reset epoch;
 // only a rejected status means the run is actually throttled (warnings arrive with other
 // statuses while the run keeps working).
@@ -87,7 +57,11 @@ function parseRateLimitEvent(json: unknown): AgentEvent | undefined {
 	};
 }
 
-function parseJsonLine(json: unknown, usage: PlainUsageReconciler): AgentEvent[] {
+function parseJsonLine(
+	json: unknown,
+	usage: PlainUsageReconciler,
+	toolNames: Map<string, string>,
+): AgentEvent[] {
 	const events: AgentEvent[] = [];
 	const type = firstString(json, [['type']]);
 	if (type === 'rate_limit_event') {
@@ -104,7 +78,7 @@ function parseJsonLine(json: unknown, usage: PlainUsageReconciler): AgentEvent[]
 	if (commandExecution && command) {
 		events.push({ args: { command }, tool: 'bash', type: 'tool_call' });
 	}
-	const blockEvents = parseContentBlocks(json);
+	const blockEvents = parseContentBlocks(json, toolNames);
 	if (blockEvents.length > 0) {
 		events.push(...blockEvents);
 	}
@@ -195,12 +169,14 @@ function dropRepeatedFinalAnswer(
 
 /**
  * Line parser for the plain backend. Stateful: token accounting must reconcile a transcript's
- * repeated per-message usage against its terminal cumulative total (see `plain-usage.ts`), and
- * the closing result must be compared with the text already streamed, so a caller streaming a
- * whole run needs one instance for that run.
+ * repeated per-message usage against its terminal cumulative total (see `plain-usage.ts`), a tool
+ * result is named from the call it answers (see `plain-content.ts`), and the closing result must be
+ * compared with the text already streamed, so a caller streaming a whole run needs one instance
+ * for that run.
  */
 export function createPlainBackendParser(): { parseLine: (line: string) => AgentEvent[] } {
 	const usage = createPlainUsageReconciler();
+	const toolNames = new Map<string, string>();
 	let lastText: string | undefined;
 	return {
 		parseLine(line): AgentEvent[] {
@@ -209,7 +185,11 @@ export function createPlainBackendParser(): { parseLine: (line: string) => Agent
 			if (tagged) return [tagged];
 			const json = tryJson(line);
 			if (json === undefined) return [];
-			const events = dropRepeatedFinalAnswer(json, parseJsonLine(json, usage), lastText);
+			const events = dropRepeatedFinalAnswer(
+				json,
+				parseJsonLine(json, usage, toolNames),
+				lastText,
+			);
 			for (const event of events) {
 				if (event.type === 'assistant_text') lastText = event.chunk;
 			}

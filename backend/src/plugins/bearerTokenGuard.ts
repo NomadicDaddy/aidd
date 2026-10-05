@@ -20,6 +20,11 @@ import { timingSafeEqual } from 'node:crypto';
  * an unauthenticated control plane through a proxy. To serve the UI through a proxy, set
  * `web.authToken` (the browser UI and clients attach it automatically).
  *
+ * The loopback exemption also requires a trusted `Host` hostname. A DNS-rebinding page is served
+ * from the attacker's own name re-pointed at 127.0.0.1, so its requests arrive from a loopback
+ * peer with no forwarding headers; only the foreign `Host` gives it away. An untrusted host must
+ * present the configured token, and with no token configured it is denied.
+ *
  * A panel with no token configured at all is the default local setup and stays open to
  * direct callers — but only while it is loopback-bound. With `web.allowRemote` set and no
  * token, the same panel would answer the network unauthenticated, so it is held to loopback
@@ -123,8 +128,15 @@ export function isPeerAuthorized(
 	return tokensMatch(providedToken, web.authToken);
 }
 
+/**
+ * @param isTrustedHost - Whether the request's `Host` hostname may use the token-free loopback
+ * access (see `buildTrustedRequestHost`). A DNS-rebinding page arrives from a loopback peer with
+ * no forwarding headers, so only its foreign `Host` tells it apart; such a request must present
+ * the configured token, exactly like a remote caller.
+ */
 export function createBearerTokenGuardPlugin(
 	webConfig: Pick<ResolvedWebConfig, 'allowRemote' | 'authToken'>,
+	isTrustedHost: (hostname: string) => boolean,
 ) {
 	return new Elysia({ name: 'bearer-token-guard' }).onBeforeHandle(
 		{ as: 'global' },
@@ -137,14 +149,17 @@ export function createBearerTokenGuardPlugin(
 				? url.searchParams.get('token')
 				: null;
 			const providedToken = headerToken ?? queryToken;
-			if (
-				isPeerAuthorized(
-					webConfig,
-					peerAddress,
-					providedToken,
-					isForwardedRequest(request.headers),
-				)
-			) {
+			const authorized = isTrustedHost(url.hostname)
+				? isPeerAuthorized(
+						webConfig,
+						peerAddress,
+						providedToken,
+						isForwardedRequest(request.headers),
+					)
+				: webConfig.authToken
+					? tokensMatch(providedToken, webConfig.authToken)
+					: false;
+			if (authorized) {
 				return;
 			}
 			set.status = 401;

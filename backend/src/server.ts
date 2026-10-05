@@ -3,10 +3,11 @@ import { join } from 'node:path';
 
 import type { WebContext } from './context.ts';
 
+import { buildAllowedOrigins, buildTrustedRequestHost } from './originPolicy.ts';
 import { createBearerTokenGuardPlugin } from './plugins/bearerTokenGuard.ts';
 import { dataMovementTracePlugin } from './plugins/dataMovementTrace.ts';
 import { errorHandlerPlugin } from './plugins/errorHandler.ts';
-import { createRemoteOriginGuardPlugin } from './plugins/remoteOriginGuard.ts';
+import { createOriginGuardPlugin } from './plugins/originGuard.ts';
 import { requestIdPlugin } from './plugins/requestId.ts';
 import { securityHeadersPlugin } from './plugins/securityHeaders.ts';
 import { createAdminRoutes } from './routes/admin.ts';
@@ -40,10 +41,12 @@ import { serveStaticFile } from './staticAssets.ts';
 export function createWebServer(context: WebContext) {
 	const distDir = join(context.rootDir, 'frontend', 'dist');
 	const traceDefault = () => context.config.web?.traceDataMovement ?? false;
-	// Single-operator listener: CORS, rate-limit, and CSRF plugins are intentionally omitted.
-	// The default bind is loopback, but web.allowRemote lifts that, so the boundary is enforced by
-	// the always-mounted bearer-token guard plus the origin guard below rather than by binding
-	// alone. Request-id (which also emits the per-request pino log) and baseline security headers
+	// Single-operator listener: CORS and rate-limit plugins are intentionally omitted. Binding to
+	// loopback is not a boundary on its own: a page in the operator's browser can reach 127.0.0.1
+	// by DNS rebinding (same-origin, foreign Host) or by a cross-origin simple request (foreign
+	// Origin). Both guards below are therefore mounted for every panel: the bearer guard grants
+	// token-free loopback access only to a trusted Host, and the origin guard refuses a foreign
+	// Origin. Request-id (which also emits the per-request pino log) and baseline security headers
 	// apply to every request.
 	return (
 		new Elysia()
@@ -51,15 +54,19 @@ export function createWebServer(context: WebContext) {
 			.use(requestIdPlugin)
 			.use(securityHeadersPlugin)
 			.use(dataMovementTracePlugin)
-			// Always mounted: the guard allows direct loopback callers without a token but
-			// denies forwarded (reverse-proxied) requests unless they present a configured
-			// token. Mounting it only when a token is set would leave proxied requests
-			// entirely ungated. See bearerTokenGuard.ts.
-			.use(createBearerTokenGuardPlugin(context.config.web ?? { allowRemote: false }))
+			// Always mounted: the guard allows direct loopback callers that name a trusted Host
+			// without a token, but denies forwarded (reverse-proxied) requests and foreign Hosts
+			// unless they present a configured token. See bearerTokenGuard.ts.
 			.use(
-				context.config.web?.allowRemote
-					? createRemoteOriginGuardPlugin(context.config.web)
-					: new Elysia(),
+				createBearerTokenGuardPlugin(
+					context.config.web ?? { allowRemote: false },
+					buildTrustedRequestHost(context.config.web),
+				),
+			)
+			.use(
+				createOriginGuardPlugin(
+					context.config.web ? buildAllowedOrigins(context.config.web) : new Set(),
+				),
 			)
 			.use(createHealthRoutes())
 			.use(createAdminRoutes(context))

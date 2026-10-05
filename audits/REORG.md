@@ -314,7 +314,7 @@ The facade pattern and the ~200-line guideline come from the Spernakit DEVELOPME
 Spernakit and derived apps only. Verify plugins are registered in this order in `createApiApp` (`backend/src/create-api-app.ts`):
 Client IP → Request ID → Logger → CORS → Security Headers → Auth → Password Change Guard → CSRF → Rate Limit → Auth Rate Limit → Workspace → Audit
 
-aidd has a different, shorter chain in `backend/src/server.ts` (error handler, request id, security headers, data-movement trace, bearer-token guard, the remote-origin guard when remote access is enabled, then the routes). Read it there; do not score aidd against the Spernakit order.
+aidd has a different, shorter chain in `backend/src/server.ts` (error handler, request id, security headers, data-movement trace, bearer-token guard with its trusted-Host check, the origin guard, then the routes). Read it there; do not score aidd against the Spernakit order.
 
 **Note**: API-key authentication is handled by `authPlugin` from the `X-API-Key` header; the
 role guard then caps the effective role to the key's scope. Do not invent a separate "API Key"

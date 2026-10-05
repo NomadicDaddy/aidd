@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import type { ResolvedWebConfig } from 'aidd-shared/config';
-import { buildAllowedOrigins, isAllowedOrigin } from '../../backend/src/originPolicy.ts';
+import {
+	buildAllowedOrigins,
+	buildTrustedRequestHost,
+	isAllowedOrigin,
+} from '../../backend/src/originPolicy.ts';
 import { shouldEmitCrossOriginOpenerPolicy } from '../../backend/src/plugins/securityHeaders.ts';
 
 function webConfig(input: Partial<ResolvedWebConfig>): ResolvedWebConfig {
@@ -63,6 +67,28 @@ describe('origin policy', () => {
 		expect(origins.has('http://[fe80::1234]:3210')).toBe(true);
 		expect(origins.has('http://127.0.0.1:3210')).toBe(true);
 		expect(origins.has('http://localhost:3210')).toBe(true);
+	});
+
+	test('trusts loopback and configured hostnames as request hosts, never a foreign name', () => {
+		const loopback = buildTrustedRequestHost(webConfig({}), []);
+		expect(loopback('127.0.0.1')).toBe(true);
+		expect(loopback('localhost')).toBe(true);
+		expect(loopback('[::1]')).toBe(true);
+		expect(loopback('attacker.example')).toBe(false);
+
+		const remote = buildTrustedRequestHost(
+			webConfig({
+				allowedOrigins: ['http://Demo-Host:3210'],
+				allowRemote: true,
+				hostname: '0.0.0.0',
+			}),
+			[{ address: '192.168.1.44', family: 'IPv4', internal: false }],
+		);
+		expect(remote('demo-host')).toBe(true);
+		expect(remote('192.168.1.44')).toBe(true);
+		expect(remote('attacker.example')).toBe(false);
+
+		expect(buildTrustedRequestHost(undefined)('attacker.example')).toBe(false);
 	});
 
 	test('emits COOP only for trustworthy origins', () => {

@@ -370,7 +370,7 @@ warning:
 
 | Config path                       | Type             | Default                                                                                  | Purpose                                                                                                                                                                                                                                                                             |
 | --------------------------------- | ---------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `web.allowedOrigins`              | string array     | none                                                                                     | Extra browser origins allowed when remote access is on.                                                                                                                                                                                                                             |
+| `web.allowedOrigins`              | string array     | none                                                                                     | Extra browser origins (and their hostnames) the panel answers.                                                                                                                                                                                                                      |
 | `web.allowedRoots`                | string array     | `[applicationsRoot]` or parent runtime directory                                         | Filesystem roots available to the web backend.                                                                                                                                                                                                                                      |
 | `web.allowRemote`                 | boolean          | `false`                                                                                  | Allows non-loopback hostnames when true. Requires `authToken`.                                                                                                                                                                                                                      |
 | `web.authToken`                   | string           | none                                                                                     | Access token guarding the API. Clients send it using the `Authorization: Bearer` scheme. Required when `allowRemote` is true.                                                                                                                                                       |
@@ -445,6 +445,14 @@ When `hostname` is `0.0.0.0` or `::`, aidd also allows origins for detected loca
 interface addresses. The effective allowlist always includes the active listener origin and
 loopback aliases; `allowedOrigins` is additive for stable machine names or fixed LAN IPs. Listener
 changes saved from Settings take effect after restarting `aidd-web`.
+
+The same allowlist decides two things on every panel, remote or not. A request whose `Origin` is
+not on it is refused (403), so a page on another site cannot drive the API from your browser. And
+the token-free access a loopback panel grants applies only when the request's `Host` names a
+loopback address or a host on the allowlist; any other name must present `web.authToken` (401
+otherwise). That second rule stops DNS rebinding, where a web page re-points its own domain at
+`127.0.0.1`. If you open the panel through a hosts-file alias such as `http://aidd.local:3210`,
+add that origin to `allowedOrigins`.
 
 To verify a LAN-facing listener without changing config, run:
 

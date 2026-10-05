@@ -8,6 +8,7 @@ import {
 	isLoopbackAddress,
 	isPeerAuthorized,
 } from '../../backend/src/plugins/bearerTokenGuard.ts';
+import { buildTrustedRequestHost } from '../../backend/src/originPolicy.ts';
 
 const TOKEN = 'super-secret-token';
 
@@ -40,7 +41,7 @@ function webConfig(overrides: Partial<ResolvedWebConfig> = {}): ResolvedWebConfi
 // address and treats it as a remote (non-loopback) caller — exactly the path we gate.
 function guardedApp(web: ResolvedWebConfig) {
 	return new Elysia()
-		.use(createBearerTokenGuardPlugin(web))
+		.use(createBearerTokenGuardPlugin(web, buildTrustedRequestHost(web, [])))
 		.get('/api/v1/ping', () => ({ ok: true }))
 		.get('/api/v1/ws', () => ({ ok: true }))
 		.get('/open', () => ({ ok: true }));
@@ -254,6 +255,26 @@ describe('createBearerTokenGuardPlugin (always mounted, no token configured)', (
 			}),
 		);
 		expect(response.status).toBe(401);
+	});
+
+	test('denies a loopback-bound panel to a foreign Host (DNS rebinding)', async () => {
+		const app = guardedApp(webConfig({ allowRemote: false, hostname: '127.0.0.1' }));
+		const response = await app.handle(new Request('http://attacker.example:3210/api/v1/ping'));
+		expect(response.status).toBe(401);
+	});
+
+	test('a foreign Host still authenticates with the configured token', async () => {
+		const app = guardedApp(
+			webConfig({ allowRemote: false, authToken: TOKEN, hostname: '127.0.0.1' }),
+		);
+		const denied = await app.handle(new Request('http://attacker.example:3210/api/v1/ping'));
+		expect(denied.status).toBe(401);
+		const allowed = await app.handle(
+			new Request('http://attacker.example:3210/api/v1/ping', {
+				headers: { authorization: `Bearer ${TOKEN}` },
+			}),
+		);
+		expect(allowed.status).toBe(200);
 	});
 
 	test('accepts a forwarded request that presents the configured token', async () => {

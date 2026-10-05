@@ -1,6 +1,6 @@
 import type { ResolvedWebConfig } from 'aidd-shared/config';
 
-import { isLoopbackHostname, isWildcardHostname } from 'aidd-shared';
+import { isLoopbackHostname, isWildcardHostname, normalizedHostname } from 'aidd-shared';
 import { networkInterfaces } from 'node:os';
 
 export interface OriginInterfaceAddress {
@@ -73,6 +73,25 @@ export function buildAllowedOrigins(
 		addConfiguredOrigin(origins, origin);
 	}
 	return origins;
+}
+
+/**
+ * Builds the test for hostnames a request may name in its `Host` header and still use the panel's
+ * token-free loopback access: loopback names plus the host of every allowed origin. A DNS-rebinding
+ * page reaches the loopback listener from the browser under the attacker's own hostname, so that
+ * name must never qualify. The port is ignored: an attacker controls the name, not the port.
+ */
+export function buildTrustedRequestHost(
+	webConfig: ResolvedWebConfig | undefined,
+	interfaceAddresses?: OriginInterfaceAddress[],
+): (hostname: string) => boolean {
+	const trusted = new Set<string>();
+	if (webConfig) {
+		for (const origin of buildAllowedOrigins(webConfig, interfaceAddresses)) {
+			trusted.add(normalizedHostname(new URL(origin).hostname));
+		}
+	}
+	return (hostname) => isLoopbackHostname(hostname) || trusted.has(normalizedHostname(hostname));
 }
 
 export function isAllowedOrigin(webConfig: ResolvedWebConfig, origin: string): boolean {

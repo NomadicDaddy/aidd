@@ -88,7 +88,7 @@ This audit was authored against a full, multi-user Spernakit deployment. Before 
 **Class B: Local-only / loopback-bound / single-user tool** (e.g., a developer control panel bound to `127.0.0.1`, no user accounts): authentication, 5-tier RBAC, CSRF, token blacklist, password policy, MFA/TOTP, workspace isolation, and OAuth are **N/A by design**; do **not** record their absence as findings. **For Class B targets the substantive audit IS the delegated siblings (see [Related Audits / Delegated Dimensions](#related-audits--delegated-dimensions)); this file's Class-A-only sections are N/A and should be disposed of in one line, not re-derived per section.** The applicable control surface narrows to:
 
 - Loopback / remote-bind enforcement (see [Local-Tool Control Surface](#15-local-tool-control-surface))
-- Remote-origin guard when `allowRemote=true`
+- Request `Host` and `Origin` guards on every panel (DNS rebinding and cross-origin requests from the operator's own browser; audited in [PROXY_AUTH_BOUNDARY.md](./PROXY_AUTH_BOUNDARY.md))
 - Optional `web.authToken` for remote access; this token is the aidd **reduced-equivalent of RBAC role guards** (the single `web.authToken` stands in for role guards; see [PROXY_AUTH_BOUNDARY.md](./PROXY_AUTH_BOUNDARY.md))
 - Transport security headers (Section 5)
 - Secret scrubbing / log redaction (Section 8)
@@ -103,15 +103,15 @@ When auditing a Class B target, state the classification at the top of the repor
 
 Focused sibling audits own the dimensions below. **Do not score these dimensions from this file's defaults or the code's own comments; open the named guard file and trace the enforcing implementation.** They are surfaced here up front, rather than only through in-section delegation pointers, because a pointer buried in the section an auditor is already scoring is easy to read past — the delegation has to be visible before the scoring starts to actually redirect it.
 
-| Sibling audit                                               | Delegated scope (one line)                                                                                                                                         |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [OUTBOUND_SSRF](./OUTBOUND_SSRF.md)                         | Outbound HTTP egress: provider `baseUrl` and webhook/bridge targets; SSRF-pivot risk from attacker-influenced URLs                                                 |
-| [PROXY_AUTH_BOUNDARY](./PROXY_AUTH_BOUNDARY.md)             | Loopback / reverse-proxy trust boundary: bearer-token guard, remote bind, remote-origin guard, WS-upgrade token; `web.authToken` is the reduced-equivalent of RBAC |
-| [SECRET_HANDLING_RETENTION](./SECRET_HANDLING_RETENTION.md) | Secrets at rest / in flight / over time: config file, AI-call log, data-movement trace, run history, log redaction                                                 |
-| [AGENT_TOOL_SANDBOX](./AGENT_TOOL_SANDBOX.md)               | Agent `bash`/file-tool sandbox: workspace-path boundary and target-repo prompt-injection                                                                           |
-| [GIT_DESTRUCTIVE_SAFETY](./GIT_DESTRUCTIVE_SAFETY.md)       | Git-destructive operations + metadata-only write boundary in target repos                                                                                          |
-| [ORCHESTRATOR_CONCURRENCY](./ORCHESTRATOR_CONCURRENCY.md)   | Director cycle state machine: double-spawn, lost transitions, orphaned runs, TOCTOU concurrency windows                                                            |
-| [BUILD_OUTPUT](./BUILD_OUTPUT.md)                           | Disclosure via the shipped artifact: source maps, original sources, and `.env` files present in the build output or the image and reachable over HTTP              |
+| Sibling audit                                               | Delegated scope (one line)                                                                                                                                                    |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [OUTBOUND_SSRF](./OUTBOUND_SSRF.md)                         | Outbound HTTP egress: provider `baseUrl` and webhook/bridge targets; SSRF-pivot risk from attacker-influenced URLs                                                            |
+| [PROXY_AUTH_BOUNDARY](./PROXY_AUTH_BOUNDARY.md)             | Loopback / reverse-proxy trust boundary: bearer-token guard, remote bind, request Host and Origin guards, WS-upgrade token; `web.authToken` is the reduced-equivalent of RBAC |
+| [SECRET_HANDLING_RETENTION](./SECRET_HANDLING_RETENTION.md) | Secrets at rest / in flight / over time: config file, AI-call log, data-movement trace, run history, log redaction                                                            |
+| [AGENT_TOOL_SANDBOX](./AGENT_TOOL_SANDBOX.md)               | Agent `bash`/file-tool sandbox: workspace-path boundary and target-repo prompt-injection                                                                                      |
+| [GIT_DESTRUCTIVE_SAFETY](./GIT_DESTRUCTIVE_SAFETY.md)       | Git-destructive operations + metadata-only write boundary in target repos                                                                                                     |
+| [ORCHESTRATOR_CONCURRENCY](./ORCHESTRATOR_CONCURRENCY.md)   | Director cycle state machine: double-spawn, lost transitions, orphaned runs, TOCTOU concurrency windows                                                                       |
+| [BUILD_OUTPUT](./BUILD_OUTPUT.md)                           | Disclosure via the shipped artifact: source maps, original sources, and `.env` files present in the build output or the image and reachable over HTTP                         |
 
 ## Table of Contents
 
@@ -620,13 +620,13 @@ bunx gitleaks detect --source . --verbose
 >
 > Auth-boundary, outbound-SSRF, and secret-scrubbing verification for aidd-class (Class B) targets is DELEGATED to PROXY_AUTH_BOUNDARY.md, OUTBOUND_SSRF.md, and SECRET_HANDLING_RETENTION.md; do not score those dimensions from this file's defaults or the code's own comments; open the named guard files.
 
-Score **only** the two genuinely SECURITY-unique local rows below. The bearer-token / remote-bind / WS-upgrade-token / remote-origin-guard boundary is now owned by **PROXY_AUTH_BOUNDARY.md**; scoring it here reproduces the exact 88/100 false-pass that audit was created to stop, so those rows are hard pointers, not checks.
+Score **only** the two genuinely SECURITY-unique local rows below. The bearer-token / remote-bind / WS-upgrade-token / request Host-and-Origin boundary is now owned by **PROXY_AUTH_BOUNDARY.md**; scoring it here reproduces the exact 88/100 false-pass that audit was created to stop, so those rows are hard pointers, not checks.
 
-| Check     | Criteria                                                                                                                           | Remediation                                                                                                                                     |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `[ ]`     | Startup self-test probes public interfaces and aborts if the port is externally reachable when `allowRemote=false`                 | Verify the loopback self-test runs on boot and fails closed                                                                                     |
-| `[ ]`     | Path-containment helpers are OS case/separator safe (no Windows allowed-root bypass)                                               | Verify allowed-root checks normalize case and separators on Windows                                                                             |
-| DELEGATED | Loopback / remote-bind default, `web.authToken` requirement on remote bind, WS-upgrade query-token acceptance, remote-origin guard | **Do not score here.** Owned by [PROXY_AUTH_BOUNDARY.md](./PROXY_AUTH_BOUNDARY.md); open `bearerTokenGuard.ts` and trace the forwarded request. |
+| Check     | Criteria                                                                                                                                      | Remediation                                                                                                                                     |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[ ]`     | Startup self-test probes public interfaces and aborts if the port is externally reachable when `allowRemote=false`                            | Verify the loopback self-test runs on boot and fails closed                                                                                     |
+| `[ ]`     | Path-containment helpers are OS case/separator safe (no Windows allowed-root bypass)                                                          | Verify allowed-root checks normalize case and separators on Windows                                                                             |
+| DELEGATED | Loopback / remote-bind default, `web.authToken` requirement on remote bind, WS-upgrade query-token acceptance, request Host and Origin guards | **Do not score here.** Owned by [PROXY_AUTH_BOUNDARY.md](./PROXY_AUTH_BOUNDARY.md); open `bearerTokenGuard.ts` and trace the forwarded request. |
 
 ---
 

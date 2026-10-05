@@ -55,24 +55,58 @@ describe('worktree run setup', () => {
 	test('skips when not requested or outside coding mode', async () => {
 		const root = await project(false);
 		expect(
-			await prepareWorktreeRun({ plan: plan(root), requested: false, runId: 'one' }),
+			await prepareWorktreeRun({
+				launcherManaged: false,
+				plan: plan(root),
+				requested: false,
+				runId: 'one',
+			}),
 		).toBeNull();
 		expect(
-			await prepareWorktreeRun({ plan: plan(root, 'audit'), requested: true, runId: 'two' }),
+			await prepareWorktreeRun({
+				launcherManaged: false,
+				plan: plan(root, 'audit'),
+				requested: true,
+				runId: 'two',
+			}),
 		).toBeNull();
 	});
 
 	test('falls back when the repository has no committed HEAD', async () => {
 		const root = await project(false);
 		expect(
-			await prepareWorktreeRun({ plan: plan(root), requested: true, runId: 'unborn' }),
+			await prepareWorktreeRun({
+				launcherManaged: false,
+				plan: plan(root),
+				requested: true,
+				runId: 'unborn',
+			}),
 		).toBeNull();
+	});
+
+	// The launcher queued the run with --worktree when the project had a HEAD, and admission
+	// counted it as isolated; a HEAD gone by the time the child starts must not quietly put it in
+	// the live tree beside another mutating run.
+	test('a launcher-managed run fails rather than fall back to the live tree', async () => {
+		const root = await project(false);
+		const runPlan = plan(root);
+		await expect(
+			prepareWorktreeRun({
+				launcherManaged: true,
+				plan: runPlan,
+				requested: true,
+				runId: 'admitted',
+				webDataDir: join(root, 'data'),
+			}),
+		).rejects.toThrow('refusing to run against the live tree');
+		expect(runPlan.worktree).toBeUndefined();
 	});
 
 	test('sets the plan worktree and seeds canonical metadata', async () => {
 		const root = await project(true);
 		const runPlan = plan(root);
 		const context = await prepareWorktreeRun({
+			launcherManaged: false,
 			plan: runPlan,
 			requested: true,
 			runId: 'seeded',
@@ -110,6 +144,7 @@ describe('worktree run setup', () => {
 		const root = await project(true);
 		const runPlan = plan(root);
 		await prepareWorktreeRun({
+			launcherManaged: false,
 			plan: runPlan,
 			requested: true,
 			runId: 'preserved',
@@ -129,6 +164,7 @@ describe('worktree run setup', () => {
 		const root = await project(true);
 		const runPlan = plan(root);
 		await prepareWorktreeRun({
+			launcherManaged: false,
 			plan: runPlan,
 			requested: true,
 			runId: 'removed',

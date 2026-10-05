@@ -24,23 +24,33 @@ export interface WorktreeRunContext {
  * is populated (so `runRepoDir(plan)` resolves to the checkout) and the seeded metadata session
  * is returned. Returns null when isolation was not requested, the mode is not coding, or the
  * project has no committed HEAD (initializer phase — falls back to the live tree with a warning).
+ * A launcher-managed run never falls back: the launcher queued it with --worktree only after
+ * finding a HEAD, and admission counted it as isolated from that flag, so a HEAD gone by the time
+ * the child starts must fail the run rather than put a second mutating run in the live tree.
  *
  * Seeding matters: `.aidd/` is gitignored in every supported profile, so the fresh checkout
  * contains NO project metadata. An unseeded worktree store lists zero features and the run ends
  * `no_work` (silent success) regardless of eligible work. Seeding failures throw to the caller,
  * whose rollback path preserves evidence and removes the worktree. */
 export async function prepareWorktreeRun(input: {
+	/** Launched by the web panel or another launcher that counted this run as isolated. */
+	launcherManaged: boolean;
 	plan: RunPlan;
 	requested: boolean;
 	runId: string;
 	webDataDir?: string;
 }): Promise<null | WorktreeRunContext> {
-	const { plan, requested, runId, webDataDir } = input;
+	const { launcherManaged, plan, requested, runId, webDataDir } = input;
 	if (!requested || plan.mode !== 'coding') return null;
 	const worktree = await createRunWorktree(plan.projectDir, runId, {
 		...(webDataDir ? { baseDir: join(webDataDir, 'worktrees') } : {}),
 	});
 	if (worktree === null) {
+		if (launcherManaged) {
+			throw new Error(
+				'--worktree was requested by the launcher, which counted this run as isolated, but the project no longer has a committed HEAD of its own; refusing to run against the live tree.',
+			);
+		}
 		console.warn(
 			'[worktree] --worktree requested but the project has no committed HEAD; running against the live tree.',
 		);

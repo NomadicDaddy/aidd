@@ -219,6 +219,7 @@ export async function run(argv: string[]): Promise<number> {
 			// the catch below (rolling the registered worktree back) and the finally (disposing
 			// the heartbeat) instead of leaking both. See worktree-run-setup.ts.
 			const worktreeRun = await prepareWorktreeRun({
+				launcherManaged: external.runId !== undefined,
 				plan,
 				requested: args.worktree === true,
 				runId,

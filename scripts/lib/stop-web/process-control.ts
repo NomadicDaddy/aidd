@@ -1,3 +1,5 @@
+import { readProcessEntry } from 'aidd-shared/lib/processTable';
+import { parseWebPidRecord, type WebPidRecord } from 'aidd-shared/lib/webPidRecord';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, unlinkSync } from 'node:fs';
 import { join } from 'node:path';
@@ -51,12 +53,13 @@ export function findPidsOnPort(port: number): string[] {
 	return process.platform === 'win32' ? findPidsOnPortWindows(port) : findPidsOnPortUnix(port);
 }
 
+/** EPERM means the process exists but this one may not signal it (an elevated backend). */
 export function isProcessAlive(pid: number): boolean {
 	try {
 		process.kill(pid, 0);
 		return true;
-	} catch {
-		return false;
+	} catch (err: unknown) {
+		return (err as { code?: unknown }).code === 'EPERM';
 	}
 }
 
@@ -75,15 +78,15 @@ export function removePidFile(logsDir: string): void {
 	}
 }
 
-export function readPidFile(logsDir: string): null | number {
+export function readPidFile(logsDir: string): null | WebPidRecord {
 	const path = pidFilePath(logsDir);
 	if (!existsSync(path)) return null;
-	const pid = Number(readFileSync(path, 'utf8').trim());
-	if (!Number.isInteger(pid) || pid <= 0) {
+	const record = parseWebPidRecord(readFileSync(path, 'utf8'));
+	if (!record) {
 		removePidFile(logsDir);
 		return null;
 	}
-	return pid;
+	return record;
 }
 
 export async function waitForPortReleased(port: number, timeoutMs: number): Promise<boolean> {
@@ -132,16 +135,37 @@ export async function killProcessTree(pid: number, label: string): Promise<boole
 	}
 }
 
-export async function stopPidFileProcess(logsDir: string, port: number): Promise<boolean> {
-	const pid = readPidFile(logsDir);
-	if (pid === null) return false;
-	removePidFile(logsDir);
-	if (!isProcessAlive(pid)) {
-		console.log(`   Stale ${pidFileName}.pid found for PID ${pid}; cleaned up`);
+/**
+ * Force-stops the backend named by `backend.pid`, but only when the live process at that pid has
+ * the start time the backend recorded. A crashed backend leaves its file behind, and the pid it
+ * names can belong to any process by the time someone runs `stop:web --force`; `taskkill /T`
+ * would take that process's whole tree with it. The file is removed once it no longer names a
+ * live backend, never before the kill.
+ */
+export async function stopPidFileProcess(
+	logsDir: string,
+	port: number,
+	readEntry: typeof readProcessEntry = readProcessEntry,
+): Promise<boolean> {
+	const record = readPidFile(logsDir);
+	if (record === null) return false;
+	const live = await readEntry(record.pid);
+	if (!live) {
+		console.log(`   Stale ${pidFileName}.pid found for PID ${record.pid}; cleaned up`);
+		removePidFile(logsDir);
 		return false;
 	}
-	console.log(`   Found web backend via ${pidFileName}.pid (PID ${pid})`);
-	return await killProcessTree(pid, `web port ${port}`);
+	if (!record.startId || live.startId !== record.startId) {
+		console.log(
+			`   PID ${record.pid} in ${pidFileName}.pid is not the recorded backend (its start time differs); leaving it alone`,
+		);
+		removePidFile(logsDir);
+		return false;
+	}
+	console.log(`   Found web backend via ${pidFileName}.pid (PID ${record.pid})`);
+	const killed = await killProcessTree(record.pid, `web port ${port}`);
+	if (killed) removePidFile(logsDir);
+	return killed;
 }
 
 /**

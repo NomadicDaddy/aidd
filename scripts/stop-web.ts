@@ -9,7 +9,6 @@ import {
 	findOrphanedSocketPids,
 	findPidsOnPort,
 	isProcessAlive,
-	killProcessTree,
 	reportOrphanedSocket,
 	stopPidFileProcess,
 	waitForPortReleased,
@@ -94,32 +93,24 @@ export interface StopWebResult {
 	 * ungracefully-terminated server. There is no process to kill in this case.
 	 */
 	orphanedSocket: boolean;
+	/**
+	 * Live PIDs still holding the port that are not the recorded backend. They are reported, not
+	 * killed: a PID the OS attributes to an orphaned binding can by now belong to any process.
+	 */
+	unrecognizedPids: number[];
 }
 
+/** Force path: stops only the recorded backend (see stopPidFileProcess), then reports the port. */
 export async function stopWeb(port: number): Promise<StopWebResult> {
-	let killedAny = await stopPidFileProcess(logsDir, port);
-	for (let attempt = 0; attempt < 3; attempt++) {
-		const pids = findPidsOnPort(port)
-			.map(Number)
-			.filter((pid) => pid !== process.pid);
-		const alive = pids.filter((pid) => isProcessAlive(pid));
-		// A PID reported for the port that no longer exists cannot be killed; it
-		// is a stale socket binding, not a running server. Don't pretend we
-		// stopped it.
-		if (alive.length === 0) break;
-		for (const pid of alive) {
-			const killed = await killProcessTree(pid, `web port ${port}`);
-			killedAny = killedAny || killed;
-		}
-		await Bun.sleep(300);
-	}
-
+	const killedAny = await stopPidFileProcess(logsDir, port);
+	if (killedAny) await waitForPortReleased(port, 5_000);
 	const remaining = findPidsOnPort(port)
 		.map(Number)
 		.filter((pid) => pid !== process.pid);
 	const orphanedPids = remaining.filter((pid) => !isProcessAlive(pid));
+	const unrecognizedPids = remaining.filter((pid) => isProcessAlive(pid));
 	const orphanedSocket = remaining.length > 0 && orphanedPids.length === remaining.length;
-	return { killedAny, orphanedPids, orphanedSocket };
+	return { killedAny, orphanedPids, orphanedSocket, unrecognizedPids };
 }
 
 export async function runStopWeb(argv: string[]): Promise<number> {
@@ -167,9 +158,15 @@ export async function runStopWeb(argv: string[]): Promise<number> {
 			console.log('   Re-run with `bun run stop:web -- --force` to use taskkill /F /T.');
 			return 2;
 		}
-		const { killedAny, orphanedPids, orphanedSocket } = await stopWeb(port);
+		const { killedAny, orphanedPids, orphanedSocket, unrecognizedPids } = await stopWeb(port);
 		if (orphanedSocket) {
 			reportOrphanedSocket(port, orphanedPids, listLiveRunningRuns());
+			return 2;
+		}
+		if (unrecognizedPids.length > 0) {
+			console.log(
+				`   Port ${port} is held by PID(s) ${unrecognizedPids.join(', ')}, which are not the backend recorded in logs/backend.pid. Not killing them; stop them yourself if they are yours.`,
+			);
 			return 2;
 		}
 		if (killedAny) {

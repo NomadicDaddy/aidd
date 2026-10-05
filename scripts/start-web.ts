@@ -20,6 +20,12 @@ import { join, resolve } from 'node:path';
 import { parseArgs as parseNodeArgs } from 'node:util';
 
 import { rotateBackendLogs } from './lib/start-web/log-rotation.ts';
+import {
+	type BackendReadiness,
+	probePort,
+	recordedBackendPid,
+	waitForOwnBackend,
+} from './lib/start-web/readiness.ts';
 
 const repoRoot = resolve(import.meta.dirname, '..');
 const logsDir = join(repoRoot, 'logs');
@@ -99,29 +105,30 @@ export function createBackendForegroundSpawnOptions() {
 	};
 }
 
-async function waitForPort(port: number): Promise<boolean> {
-	const deadline = Date.now() + PORT_READY_TIMEOUT_MS;
-	while (Date.now() < deadline) {
-		const available = await new Promise<boolean>((res) => {
-			const socket = new net.Socket();
-			socket.setTimeout(PORT_PROBE_INTERVAL_MS);
-			socket.once('connect', () => {
-				socket.destroy();
-				res(true);
-			});
-			socket.once('error', () => {
-				socket.destroy();
-				res(false);
-			});
-			socket.once('timeout', () => {
-				socket.destroy();
-				res(false);
-			});
-			socket.connect(port, '127.0.0.1');
-		});
-		if (available) return true;
-	}
-	return false;
+/** Waits until the backend we spawned is the one serving the port (see waitForOwnBackend). */
+function awaitOwnBackend(
+	proc: { exited: Promise<null | number>; pid: number },
+	port: number,
+): Promise<BackendReadiness> {
+	let exitCode: null | number = null;
+	void proc.exited.then((code) => {
+		exitCode = code ?? 1;
+	});
+	return waitForOwnBackend(
+		proc.pid,
+		{
+			exitCode: () => exitCode,
+			portOpen: () => probePort(port, PORT_PROBE_INTERVAL_MS),
+			recordedPid: () => recordedBackendPid(logsDir),
+		},
+		PORT_READY_TIMEOUT_MS,
+		PORT_PROBE_INTERVAL_MS,
+	);
+}
+
+/** stop:web exits 2 when it refused or could not finish; a null exit means it was killed. */
+export function stopBlocksStart(exitCode: null | number): boolean {
+	return exitCode !== 0;
 }
 
 async function runForegroundBackend(port: number): Promise<number> {
@@ -142,12 +149,9 @@ async function runForegroundBackend(port: number): Promise<number> {
 	process.once('SIGTERM', stopBackendGracefully);
 	try {
 		console.log(`aidd web control panel starting on port ${port}...`);
-		const startup = await Promise.race([
-			proc.exited.then((exitCode) => ({ exitCode, status: 'exit' as const })),
-			waitForPort(port).then((ready) => ({ ready, status: 'ready' as const })),
-		]);
-		if (startup.status === 'exit') return startup.exitCode ?? 1;
-		if (!startup.ready) {
+		const startup = await awaitOwnBackend(proc, port);
+		if (startup === 'exited') return (await proc.exited) ?? 1;
+		if (startup === 'timeout') {
 			console.error(`Backend failed to start within ${PORT_READY_TIMEOUT_MS / 1000}s`);
 			stopBackendGracefully();
 			return 1;
@@ -215,8 +219,10 @@ async function main(argv: string[]): Promise<number> {
 			windowsHide: true,
 		});
 
-		if (stopResult.exitCode === 1) {
-			console.error('Failed to stop existing backend');
+		if (stopBlocksStart(stopResult.exitCode)) {
+			// Starting anyway would race the old backend for the port, and the readiness probe
+			// could report the old process as the new one.
+			console.error('Failed to stop existing backend; not starting a second one');
 			return 1;
 		}
 	}
@@ -257,8 +263,13 @@ async function main(argv: string[]): Promise<number> {
 
 	console.log(`aidd web control panel starting on port ${port}...`);
 
-	const ready = await waitForPort(port);
-	if (!ready) {
+	const startup = await awaitOwnBackend(proc, port);
+	if (startup === 'exited') {
+		console.error('Backend exited before it was ready');
+		console.error(`Check logs at ${logsDir}/backend.error.log`);
+		return 1;
+	}
+	if (startup === 'timeout') {
 		console.error(`Backend failed to start within ${PORT_READY_TIMEOUT_MS / 1000}s`);
 		console.error(`Check logs at ${logsDir}/backend.error.log`);
 		return 1;

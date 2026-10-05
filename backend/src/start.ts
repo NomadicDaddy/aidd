@@ -265,7 +265,7 @@ export async function startWebServer(
 	// (silent where frontend/src is absent, since the dist is then prebuilt and intended).
 	await warnIfFrontendStale(options.rootDir);
 	app.listen({ hostname: effectiveConfig.web.hostname, port: effectiveConfig.web.port });
-	writeWebPidFile(options.rootDir);
+	await writeWebPidFile(options.rootDir);
 	webLogger.info(
 		{
 			dataDir: effectiveConfig.web.dataDir,

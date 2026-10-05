@@ -4,6 +4,8 @@ import {
 	type ResolvedConfig,
 	WEB_AUTH_TOKEN_ENV,
 } from 'aidd-shared/config';
+import { readProcessEntry } from 'aidd-shared/lib/processTable';
+import { formatWebPidRecord } from 'aidd-shared/lib/webPidRecord';
 import { closeSync, mkdirSync, openSync, rmSync, writeFileSync } from 'node:fs';
 import { networkInterfaces } from 'node:os';
 import { resolve } from 'node:path';
@@ -138,11 +140,21 @@ function webPidFilePath(rootDir: string): string {
 	return resolve(rootDir, 'logs', 'backend.pid');
 }
 
-export function writeWebPidFile(rootDir: string): void {
+/**
+ * Records this process and its start-time token, so `stop:web` can tell this backend from an
+ * unrelated process that later receives the same pid. Written after the port is bound;
+ * `start:web` treats the record naming its child as the readiness signal.
+ */
+export async function writeWebPidFile(rootDir: string): Promise<void> {
 	const path = webPidFilePath(rootDir);
 	try {
+		const startId = (await readProcessEntry(process.pid))?.startId;
 		mkdirSync(resolve(rootDir, 'logs'), { recursive: true });
-		writeFileSync(path, `${process.pid}\n`, 'utf8');
+		writeFileSync(
+			path,
+			formatWebPidRecord(startId ? { pid: process.pid, startId } : { pid: process.pid }),
+			'utf8',
+		);
 	} catch (err) {
 		webLogger.warn({ err, path }, 'failed to write web backend PID file');
 	}

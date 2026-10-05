@@ -14,9 +14,14 @@ import {
 	applyInitialPhaseDetection,
 	assertProjectForRun,
 	clearStaleStopFile,
+	clearUnclaimedProjectStopFile,
 	handleStopSignal,
 	shouldDetectInitialPhase,
 } from '../../cli/src/preflight.ts';
+import {
+	createCliActiveRunRecord,
+	writeCliActiveRunRecord,
+} from '../../shared/src/metadata/active-runs.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
@@ -56,6 +61,44 @@ describe('preflight compatibility', () => {
 
 		await writeFile(stopFile, 'stale\n');
 		await clearStaleStopFile(projectDir);
+		await expect(readFile(stopFile, 'utf8')).rejects.toThrow();
+	});
+
+	// The CLI clears the project-wide stop file at startup, before its own record exists. If another
+	// run is live, the stop may be meant for it, and erasing it leaves that run unstoppable.
+	test('keeps the project stop file while another run may be its target', async () => {
+		const projectDir = await testTempDir('aidd-preflight-claimed-');
+		await handleStopSignal(parseArgs(['--project-dir', projectDir, '--stop']));
+		const stopFile = join(projectDir, '.aidd', '.stop');
+		await writeCliActiveRunRecord({
+			...createCliActiveRunRecord({
+				backend: 'codex',
+				id: 'run_sibling',
+				mode: 'coding',
+				model: undefined,
+				projectDir,
+				provider: undefined,
+				reasoningEffort: 'low',
+			}),
+			state: 'running',
+		});
+
+		await clearUnclaimedProjectStopFile(projectDir);
+		await expect(readFile(stopFile, 'utf8')).resolves.toContain('T');
+
+		await writeCliActiveRunRecord({
+			...createCliActiveRunRecord({
+				backend: 'codex',
+				id: 'run_sibling',
+				mode: 'coding',
+				model: undefined,
+				projectDir,
+				provider: undefined,
+				reasoningEffort: 'low',
+			}),
+			state: 'completed',
+		});
+		await clearUnclaimedProjectStopFile(projectDir);
 		await expect(readFile(stopFile, 'utf8')).rejects.toThrow();
 	});
 

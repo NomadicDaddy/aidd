@@ -1,3 +1,4 @@
+import { pendingStopTarget } from 'aidd-shared/metadata/active-runs';
 import { stopFilePath } from 'aidd-shared/metadata/paths';
 import { and, notInArray } from 'drizzle-orm';
 import { rm, stat } from 'node:fs/promises';
@@ -30,7 +31,8 @@ export async function guardPendingProjectStop(db: WebDatabase, projectDir: strin
 			),
 		)
 		.limit(1);
-	const pendingFor = liveSiblings[0]?.id;
+	// A direct-CLI run has no row until it ends, so the run records are read too.
+	const pendingFor = liveSiblings[0]?.id ?? (await pendingStopTarget(projectDir)) ?? undefined;
 	if (pendingFor !== undefined) {
 		throw new RunControlError(
 			`A stop is pending for run ${pendingFor} in this project; wait for it to stop before launching another run`,

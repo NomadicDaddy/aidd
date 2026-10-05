@@ -2,8 +2,10 @@ import type { ParsedArgs } from 'aidd-shared/args/index';
 import type { RunPlan } from 'aidd-shared/plan/types';
 import type { Stats } from 'node:fs';
 
+import { pendingStopTarget } from 'aidd-shared/metadata/active-runs';
 import { detectInitialPhase, type InitialPhase } from 'aidd-shared/metadata/onboarding';
 import { stopFilePath } from 'aidd-shared/metadata/paths';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { access, mkdir, rm, stat, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
@@ -104,4 +106,43 @@ async function assertProjectDirectory(projectDir: string): Promise<void> {
 
 export async function clearStaleStopFile(projectDir: string, stopFile?: string): Promise<void> {
 	await rm(stopFile ?? stopFilePath(projectDir), { force: true });
+}
+
+/**
+ * Clears the project-wide stop file at startup, unless another run may still be its target.
+ * Called before this run's own record exists, so any live record found belongs to another run:
+ * an `aidd --stop` aimed at a run already going must survive this launch, or that run is left with
+ * nothing able to stop it. The file then stays, and this run honours it too.
+ */
+export async function clearUnclaimedProjectStopFile(
+	projectDir: string,
+	stopFile?: string,
+): Promise<void> {
+	if ((await pendingStopTarget(projectDir)) !== null) return;
+	await clearStaleStopFile(projectDir, stopFile);
+}
+
+/** Turns Ctrl+C or SIGTERM into a stop request the run honours; a second signal force-quits. */
+export function installStopSignalHandler(stopFile: string): void {
+	let stopRequested = false;
+	const handler = (signal: NodeJS.Signals): void => {
+		if (stopRequested) {
+			console.error(`\nReceived ${signal} again — exiting immediately.`);
+			process.exit(130);
+		}
+		stopRequested = true;
+		try {
+			mkdirSync(dirname(stopFile), { recursive: true });
+			writeFileSync(stopFile, new Date().toISOString());
+			console.error(
+				`\nReceived ${signal} — stop requested. aidd will exit after the active iteration stops or finishes. Press again to force-quit.`,
+			);
+		} catch (err) {
+			console.error(
+				`\nReceived ${signal} — failed to write .stop file: ${err instanceof Error ? err.message : String(err)}`,
+			);
+		}
+	};
+	process.on('SIGINT', handler);
+	process.on('SIGTERM', handler);
 }

@@ -9,7 +9,6 @@ import { resolveMilestone, UnknownMilestoneError } from 'aidd-shared/metadata/ro
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { readAiddVersion, resolveAiddRunProvenance } from 'aidd-shared/run-provenance';
 import { resolveRootDir } from 'aidd-shared/runtime';
-import { mkdirSync, writeFileSync } from 'node:fs';
 import { mkdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
@@ -40,36 +39,14 @@ import {
 	applyInitialPhaseDetection,
 	assertProjectForRun,
 	clearStaleStopFile,
+	clearUnclaimedProjectStopFile,
 	handleStopSignal,
+	installStopSignalHandler,
 } from './preflight.ts';
 import { runDriverForPlan } from './run-driver.ts';
 import { prepareSkillRun } from './skill-run.ts';
 
 const rootDir = resolveRootDir(import.meta.url, 2);
-
-function installStopSignalHandler(stopFile: string): void {
-	let stopRequested = false;
-	const handler = (signal: NodeJS.Signals): void => {
-		if (stopRequested) {
-			console.error(`\nReceived ${signal} again — exiting immediately.`);
-			process.exit(130);
-		}
-		stopRequested = true;
-		try {
-			mkdirSync(dirname(stopFile), { recursive: true });
-			writeFileSync(stopFile, new Date().toISOString());
-			console.error(
-				`\nReceived ${signal} — stop requested. aidd will exit after the active iteration stops or finishes. Press again to force-quit.`,
-			);
-		} catch (err) {
-			console.error(
-				`\nReceived ${signal} — failed to write .stop file: ${err instanceof Error ? err.message : String(err)}`,
-			);
-		}
-	};
-	process.on('SIGINT', handler);
-	process.on('SIGTERM', handler);
-}
 
 export async function run(argv: string[]): Promise<number> {
 	try {
@@ -180,7 +157,7 @@ export async function run(argv: string[]): Promise<number> {
 				await initGitAfterScaffold(plan.projectDir, plan.writeAllowlist);
 			}
 		}
-		await clearStaleStopFile(plan.projectDir, plan.stopPolicy.stopFile);
+		await clearUnclaimedProjectStopFile(plan.projectDir, plan.stopPolicy.stopFile);
 		installStopSignalHandler(plan.stopPolicy.stopFile);
 		const backend = createBackend(plan.backend, modeToSurface(plan.mode));
 		const external = resolveExternalRunContext();

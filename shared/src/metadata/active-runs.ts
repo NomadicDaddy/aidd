@@ -1,5 +1,6 @@
 import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 
+import { runProcessLiveness } from './active-runs/liveness.ts';
 import { ACTIVE_RUNS_DIR, activeRunFilePath, activeRunsDir } from './active-runs/locate.ts';
 import {
 	ACTIVE_RUN_TEMP_STALE_MS,
@@ -156,4 +157,25 @@ export async function readCliActiveRunRecords(
 		}
 	}
 	return records.sort((a, b) => b.startedAt - a.startedAt);
+}
+
+/**
+ * A run in this project that a pending project-wide stop request may still be meant for: a
+ * non-terminal CLI record whose heartbeat is fresh, or stale with a process not proven gone.
+ * Read from the run records, not the web's runs table, because a direct-CLI run has no row until
+ * it ends; an `aidd --stop` aimed at it must not be erased by the next launch. Unknown liveness
+ * counts as live: keeping a stale stop file costs one refused launch, erasing a live one costs a
+ * run nobody can stop.
+ * @returns The id of such a run, or null when none remains.
+ */
+export async function pendingStopTarget(projectDir: string): Promise<null | string> {
+	const records = await readCliActiveRunRecords(projectDir, {
+		staleMs: Number.POSITIVE_INFINITY,
+	});
+	const now = Date.now();
+	for (const record of records) {
+		if (now - record.heartbeatAt <= CLI_ACTIVE_RUN_STALE_MS) return record.id;
+		if ((await runProcessLiveness(record.pid, record.pidStartId)) !== 'dead') return record.id;
+	}
+	return null;
 }

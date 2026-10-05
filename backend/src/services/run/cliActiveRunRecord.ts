@@ -5,6 +5,7 @@ import { type CliActiveRunRecord, isCliRunTerminal } from 'aidd-shared/metadata/
 import type { RunRecord, WebRunMode, WebRunStatus } from '../../types.ts';
 
 import { canonicalProjectPath, encodeProjectId } from '../../paths.ts';
+import { terminalStatusFromHeartbeat } from './activeRunHeartbeatFile.ts';
 import { exactOrReconstructedRunCommand } from './commandMetadata.ts';
 import { canonicalRunProjectName } from './types.ts';
 
@@ -23,7 +24,9 @@ export function pathsMatch(left: string, right: string): boolean {
 
 export function cliRunWebStatus(run: CliActiveRunRecord): WebRunStatus {
 	if (!isCliRunTerminal(run)) return 'running';
-	return run.state === 'completed' ? 'completed' : run.state === 'stopped' ? 'stopped' : 'failed';
+	// The same mapping the heartbeat watcher and ingest use, so a parked run (waiting_approval)
+	// reads as parked on every path rather than as failed on some.
+	return terminalStatusFromHeartbeat(run);
 }
 
 export function toCliRunRecord(run: CliActiveRunRecord): RunRecord {

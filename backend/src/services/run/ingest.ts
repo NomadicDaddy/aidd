@@ -14,6 +14,7 @@ import type { WebRunStatus } from '../../types.ts';
 import { withSqliteRetry } from '../../db/retry.ts';
 import { webLogger } from '../../logger.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
+import { terminalStatusFromHeartbeat } from './activeRunHeartbeatFile.ts';
 import { scanCliActiveRunProjectDirs } from './cliActiveRuns.ts';
 import { resolveHeartbeatContinuationValue } from './continuation.ts';
 
@@ -53,12 +54,9 @@ export async function ingestCompletedCliRuns(ctx: IngestContext): Promise<number
 			// deleting the heartbeat so HeartbeatWatcher never loses the evidence needed to update a row.
 			const completedAt = record.completedAt ?? Date.now();
 			const durationMs = record.durationMs ?? completedAt - record.startedAt;
-			const finalStatus: WebRunStatus =
-				record.state === 'completed'
-					? 'completed'
-					: record.state === 'stopped'
-						? 'stopped'
-						: 'failed';
+			// The one mapping every terminal path shares, so a run parked on a merge conflict
+			// (waiting_approval) is ingested as parked, not as failed.
+			const finalStatus: WebRunStatus = terminalStatusFromHeartbeat(record);
 			// Persist continuation eligibility for runs that finished while the panel was down so
 			// the Continue affordance still surfaces. Ingest never auto-chains — a boot-time launch
 			// burst would be surprising; the opt-in auto path is reserved for live terminalization.

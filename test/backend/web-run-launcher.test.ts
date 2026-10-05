@@ -28,6 +28,7 @@ import type { RunLaunchRequest } from '../../backend/src/types.ts';
 import {
 	activeRunsDir,
 	type CliActiveRunRecord,
+	createCliActiveRunRecord,
 	readCliActiveRunRecords,
 	writeCliActiveRunRecord,
 } from 'aidd-shared/metadata/active-runs';
@@ -3018,6 +3019,46 @@ ${heartbeatTerminator({ state: 'stopped', exitCode: 130 })}`,
 				expect(reused?.status).toBe('failed');
 				expect(reused?.exitCode).toBe(-1);
 				expect(reused?.errorMessage).toContain('before writing a heartbeat');
+			} finally {
+				service.markDisposed();
+				sqlite.close();
+			}
+		} finally {
+			await removeTempTree(workspace);
+			await removeTempTree(rootDir);
+		}
+	});
+
+	// A run parked on a merge conflict ends waiting_approval. Ingest used to fold that into failed,
+	// so the same run read "Awaiting approval" or "Failed" depending on which poller won.
+	test('ingestCompletedCliRuns keeps a parked run waiting_approval, not failed', async () => {
+		const workspace = await testTempDir('aidd-web-ingest-parked-');
+		const rootDir = await makeLauncherRoot('console.log("ok");\n');
+		try {
+			const projectDir = join(workspace, 'demo-project');
+			const runId = 'run_ingest_parked';
+			await writeCliActiveRunRecord({
+				...createCliActiveRunRecord({
+					backend: 'native',
+					id: runId,
+					mode: 'coding',
+					model: undefined,
+					projectDir,
+					provider: undefined,
+					reasoningEffort: 'low',
+				}),
+				completedAt: Date.now() - 1000,
+				state: 'waiting_approval',
+				stopReason: 'merge_conflict_parked',
+			});
+			const { service, sqlite } = makeService({
+				allowedRoot: workspace,
+				dataDir: join(workspace, 'data'),
+				rootDir,
+			});
+			try {
+				expect(await service.ingestCompletedCliRuns()).toBe(1);
+				expect((await service.getRun(runId))?.status).toBe('waiting_approval');
 			} finally {
 				service.markDisposed();
 				sqlite.close();

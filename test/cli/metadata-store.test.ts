@@ -210,6 +210,25 @@ describe('FileAiddStore feature compatibility', () => {
 		expect(structured.ok).toBe(true);
 	});
 
+	// Two writers allocating at once (a live run beside a worktree run persisting its evidence)
+	// both read the same highest index; the plain write let the later one replace the earlier
+	// one's transcript. Every iteration has to keep its own file.
+	test('concurrent iteration writes each claim their own index', async () => {
+		const store = await makeStore('iteration-race');
+		const pending: Promise<number>[] = [];
+		for (let i = 0; i < 6; i++) pending.push(store.writeIteration({ log: `run ${i}` }));
+		const indexes: number[] = [];
+		for (const write of pending) indexes.push(await write);
+
+		expect(new Set(indexes).size).toBe(6);
+		const logs: string[] = [];
+		for (const index of indexes) {
+			const stem = String(index).padStart(3, '0');
+			logs.push(await readFile(join(store.metadataDir, 'iterations', `${stem}.log`), 'utf8'));
+		}
+		expect(logs.sort()).toEqual(['run 0', 'run 1', 'run 2', 'run 3', 'run 4', 'run 5']);
+	});
+
 	// An audit found a still-valid GitHub PAT sitting in 17 iteration logs: the transcript is raw
 	// backend output, so anything the agent read out of `.env` was persisted verbatim.
 	test('redacts secrets from the iteration transcript and its structured sidecar', async () => {

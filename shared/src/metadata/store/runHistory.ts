@@ -27,20 +27,44 @@ async function nextIterationIndex(iterationsDir: string): Promise<number> {
 	return indexes.length === 0 ? 1 : Math.max(...indexes) + 1;
 }
 
+function iterationLogPath(iterationsDir: string, index: number): string {
+	return join(iterationsDir, `${String(index).padStart(3, '0')}.log`);
+}
+
+// Exclusive create (`wx`) claims the index. Another writer (a worktree run persisting its evidence,
+// or a second live writer) can take the same slot between the directory read and this write, and a
+// plain write would replace that run's transcript; the loser moves on to the next free slot.
+async function claimIterationIndex(iterationsDir: string, log: string): Promise<number> {
+	for (let index = await nextIterationIndex(iterationsDir); ; index++) {
+		try {
+			await writeFile(iterationLogPath(iterationsDir, index), log, { flag: 'wx' });
+			return index;
+		} catch (err) {
+			if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+		}
+	}
+}
+
 export async function writeIteration(
 	metadataDir: string,
 	record: IterationRecord,
 ): Promise<number> {
 	const iterationsDir = join(metadataDir, 'iterations');
 	await mkdir(iterationsDir, { recursive: true });
-	const index = record.index ?? (await nextIterationIndex(iterationsDir));
-	const stem = String(index).padStart(3, '0');
 	// The transcript is raw backend output: every file the agent read and every command it echoed
 	// lands here verbatim, `.env` included. Live console text is already scrubbed on its way out by
 	// StreamingSecretScrubber, but this file is written from the accumulated record and bypassed
 	// that pass entirely — an audit found a still-valid GitHub PAT in 17 iteration logs of one
 	// project. Scrub at the only choke point every iteration artifact goes through.
-	await writeFile(join(iterationsDir, `${stem}.log`), scrubSecrets(record.log));
+	const log = scrubSecrets(record.log);
+	// An explicit index rewrites an iteration this run already claimed.
+	let index = record.index;
+	if (index === undefined) {
+		index = await claimIterationIndex(iterationsDir, log);
+	} else {
+		await writeFile(iterationLogPath(iterationsDir, index), log);
+	}
+	const stem = String(index).padStart(3, '0');
 	if (record.structured) {
 		await writeFile(
 			join(iterationsDir, `${stem}.json`),

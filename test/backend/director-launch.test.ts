@@ -1441,7 +1441,7 @@ describe('DirectorService.runCycle context', () => {
 							projectId: 'sample-project',
 							reasoning: 'The project has audit work that should be scheduled.',
 							riskLevel: 'HIGH',
-							suggestedArgs: { audit: 'SECURITY' },
+							suggestedArgs: { auditNames: 'SECURITY', deployCommand: 'rm -rf .' },
 							suggestedRecipe: null,
 							taskType: 'audit_backlog',
 							title: 'Review security audit backlog',
@@ -1484,7 +1484,8 @@ describe('DirectorService.runCycle context', () => {
 				.where(eq(suggestions.cycleId, result.cycleId));
 			expect(suggestionRows).toHaveLength(1);
 			expect(suggestionRows[0]?.title).toBe('Review security audit backlog');
-			expect(suggestionRows[0]?.suggestedArgs).toBe('{"audit":"SECURITY"}');
+			// The model's args are untrusted: only the targeting allowlist is persisted.
+			expect(suggestionRows[0]?.suggestedArgs).toBe('{"auditNames":"SECURITY"}');
 			const cycle = (
 				await db.select().from(directorCycles).where(eq(directorCycles.id, result.cycleId))
 			)[0];
@@ -2028,6 +2029,56 @@ describe('DirectorService.launchSuggestion', () => {
 			expect(row?.launchedPipelineSessionId).toBe('pipe_recipe');
 			expect(row?.launchedRunId).toBeNull();
 			expect(row?.status).toBe('launched');
+		} finally {
+			sqlite.close();
+			await removeTempTree(workspace);
+			await removeTempTree(rootDir);
+		}
+	});
+
+	test('passes a suggestion only its targeting args, never shell-bound recipe parameters', async () => {
+		// A suggestion is model-written from repository text, so its args are untrusted; deploy.json
+		// runs {deployCommand} in bash and quotes {healthUrl} in double quotes.
+		const { db, hub, projectDir, projectService, rootDir, runService, sqlite, workspace } =
+			await makeWorkspace();
+		try {
+			const projectSlug = projectDir.split(/[\\/]/).pop()!;
+			await seedSuggestion(db, {
+				id: 'sug_hostile',
+				projectId: projectSlug,
+				suggestedArgs: JSON.stringify({
+					application: 'other-app',
+					deployCommand: 'echo pwned > owned.txt',
+					feature: 'archive-cli-command-suite',
+					filterValue: 'x"; id; "',
+					healthUrl: '"; id; "',
+				}),
+				suggestedRecipe: 'deploy',
+			});
+			let launchedParameters: Record<string, string> | undefined;
+			const suggestionService = new DirectorSuggestionService(
+				db,
+				hub,
+				projectService,
+				runService,
+				{
+					findRecipeByName: async () => ({
+						id: 'deploy',
+						name: 'deploy',
+						parameters: [],
+						steps: [],
+					}),
+					launchRecipe: async (input) => {
+						launchedParameters = input.parameters;
+						throw new Error('captured; nothing launches in this test');
+					},
+				},
+			);
+
+			await expect(suggestionService.launchSuggestion('sug_hostile')).rejects.toThrow(
+				'captured',
+			);
+			expect(launchedParameters).toEqual({ feature: 'archive-cli-command-suite' });
 		} finally {
 			sqlite.close();
 			await removeTempTree(workspace);

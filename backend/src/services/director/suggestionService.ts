@@ -1,6 +1,7 @@
 import type { RunInitiator } from 'aidd-shared/metadata/active-runs';
 
 import { buildSuggestionPrompt } from 'aidd-shared/contracts/director';
+import { filterSuggestedArgs } from 'aidd-shared/contracts/director-suggested-args';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 
 import type { WebDatabase } from '../../db/client.ts';
@@ -16,16 +17,14 @@ import { suggestions } from '../../db/schema.ts';
 // Parses the persisted suggestedArgs JSON string into a flat string map. The director
 // stores args as JSON (see DirectorSuggestionRecord.suggestedArgs); a malformed or
 // non-object value yields an empty map so launch falls back to a plain prompt run.
+// The targeting allowlist is applied again here, at the point the args become recipe
+// parameters, so a row stored before the normalizer filtered them cannot reach a shell step.
 function parseSuggestedArgs(value: null | string): Record<string, string> {
 	if (!value) return {};
 	try {
 		const parsed: unknown = JSON.parse(value);
 		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
-		const out: Record<string, string> = {};
-		for (const [key, entry] of Object.entries(parsed)) {
-			if (typeof entry === 'string') out[key] = entry;
-		}
-		return out;
+		return filterSuggestedArgs(parsed as Record<string, unknown>);
 	} catch {
 		return {};
 	}

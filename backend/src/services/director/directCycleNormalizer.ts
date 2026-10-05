@@ -7,6 +7,7 @@ import type {
 } from 'aidd-shared';
 
 import { dedupDirectorSuggestions, directorRiskLevels, directorTaskTypes } from 'aidd-shared';
+import { filterSuggestedArgs } from 'aidd-shared/contracts/director-suggested-args';
 
 import type { FleetSummary } from './types.ts';
 
@@ -180,17 +181,18 @@ function normalizeEvidence(value: unknown): Record<string, unknown> {
 	return isRecord(value) ? value : {};
 }
 
+// The model's args are untrusted (see director-suggested-args.ts): anything outside the targeting
+// allowlist is dropped here, before it is stored or shown as launchable.
 function normalizeSuggestedArgs(value: unknown): null | Record<string, string> {
 	if (value === null || value === undefined) return null;
 	if (!isRecord(value)) throw new Error('Direct AI director suggestedArgs must be an object.');
-	const result: Record<string, string> = {};
-	for (const [key, entry] of Object.entries(value)) {
+	for (const entry of Object.values(value)) {
 		if (typeof entry !== 'string') {
 			throw new Error('Direct AI director suggestedArgs values must be strings.');
 		}
-		result[key] = entry;
 	}
-	return Object.keys(result).length > 0 ? result : null;
+	const kept = filterSuggestedArgs(value);
+	return Object.keys(kept).length > 0 ? kept : null;
 }
 
 function normalizeRiskLevel(value: unknown, index: number): DirectorRiskLevel {

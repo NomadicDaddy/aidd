@@ -1654,6 +1654,70 @@ describe('web database and project APIs', () => {
 		expect(typeof approval.approvedAt).toBe('string');
 	});
 
+	// The blocking context explains why the feature waits for a person. Once the person has decided,
+	// the approval carries the outcome; a context left behind kept the "why this was parked" notice
+	// on an approved feature and told the next agent reading feature.json it was still blocked.
+	test('approval clears the blocking context it answered', async () => {
+		const tmpDir = canonicalProjectPath(
+			await testTempDir('aidd-web-feature-approval-context-'),
+		);
+		const allowedRoot = join(tmpDir, 'allowed');
+		const projectDir = join(allowedRoot, 'sample-project');
+		const featurePath = join(projectDir, '.aidd', 'features', 'feature-parked', 'feature.json');
+		await mkdir(join(projectDir, '.aidd', 'features', 'feature-parked'), { recursive: true });
+		await Bun.write(
+			featurePath,
+			JSON.stringify({
+				blockingContext: {
+					commands: [],
+					outcomeStatus: 'blocked',
+					outputExcerpt: 'Two columns claim the order.',
+					parkedAt: '2026-07-04T12:00:00.000Z',
+					reason: 'Which ordering column wins?',
+				},
+				category: 'Core',
+				dependencies: [],
+				id: 'feature-parked',
+				passes: false,
+				priority: 1,
+				status: 'waiting_approval',
+				title: 'feature-parked',
+			}),
+		);
+		const service = new ProjectService({
+			allowRemote: false,
+			allowedOrigins: [],
+			allowedRoots: [allowedRoot],
+			dataDir: resolve(process.cwd(), 'data'),
+			hostname: '127.0.0.1',
+			ignoredFolders: ['.git', 'node_modules'],
+			maxConcurrentRuns: 2,
+			maxConcurrentRunsPerProject: 2,
+			autoChainLimit: 3,
+			autoChainRuns: false,
+			useWorktrees: false,
+			port: 3210,
+			spernakitFleetManifest: null,
+			spernakitInitScript: null,
+			spernakitTemplateRef: null,
+			showSpernakitProject: false,
+			spernakitTemplateRepo: 'NomadicDaddy/spernakit',
+			templates: [],
+			traceDataMovement: true,
+		});
+
+		const approved = await service.features.approveFeature(
+			encodeProjectId(projectDir),
+			'feature-parked',
+			{ decision: 'Use display_order only.', decisionRequired: true },
+		);
+
+		expect(approved.blockingContext).toBeUndefined();
+		const onDisk = JSON.parse(await readFile(featurePath, 'utf8')) as Record<string, unknown>;
+		expect(onDisk.blockingContext).toBeUndefined();
+		expect(onDisk.status).toBe('backlog');
+	});
+
 	test('approving a parked post-MVP feature returns it to backlog despite the roadmap', async () => {
 		const tmpDir = canonicalProjectPath(
 			await testTempDir('aidd-web-feature-approval-roadmap-'),

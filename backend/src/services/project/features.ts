@@ -109,8 +109,11 @@ export async function approveFeature(
 	if (input.decisionRequired && !input.decision?.trim()) {
 		throw new HttpError('Approval decision is required', 400);
 	}
+	// The blocking context is the question this approval answers; left behind, it kept an approved
+	// feature reading as parked to the UI and to the next agent that reads feature.json.
+	const { blockingContext: _answered, ...unblocked } = feature;
 	const approvedFeature: Feature = {
-		...feature,
+		...unblocked,
 		approval: {
 			approvedAt: new Date().toISOString(),
 			decision: input.decisionRequired ? input.decision : null,

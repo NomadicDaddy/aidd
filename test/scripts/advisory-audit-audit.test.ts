@@ -171,6 +171,11 @@ describe('advisory audit: parsing and the store check', () => {
 		});
 		expect(garbage.status).toBe('unswept');
 		expect(garbage.error).toContain('no parseable JSON');
+		// An empty {} beside exit 2 is a failed audit, not a clean tree.
+		const failed = await auditTree({ ...base, runner: () => Promise.resolve(output('{}', 2)) });
+		expect(failed.status).toBe('unswept');
+		expect(failed.exitCode).toBe(2);
+		expect(failed.error).toContain('exited 2');
 	});
 
 	test('a clean tree with no node_modules is audited, flagged not installed, with no store check', async () => {

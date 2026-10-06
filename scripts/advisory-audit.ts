@@ -26,7 +26,7 @@ import { parseArgs } from 'node:util';
 
 import type { RunRecord, SkippedLockfile, TreeAudit } from './lib/advisory-audit/types.ts';
 
-import { auditTree, runBunAudit } from './lib/advisory-audit/audit.ts';
+import { type AuditRunner, auditTree, runBunAudit } from './lib/advisory-audit/audit.ts';
 import { enumerateRoots, treeKey } from './lib/advisory-audit/enumerate.ts';
 import { readHolds } from './lib/advisory-audit/holds.ts';
 import { historyLine, renderReport } from './lib/advisory-audit/report.ts';
@@ -82,12 +82,15 @@ async function readOwners(out: string): Promise<Record<string, string[]>> {
 
 export async function runAdvisoryAudit(options: {
 	ignored: ReadonlySet<string>;
+	/** Injected by tests; the script runs the real `bun audit --json`. */
+	now?: Date | undefined;
 	out: string;
 	roots: string[];
+	runner?: AuditRunner | undefined;
 	timeoutMs: number;
 	tree?: string | undefined;
 }): Promise<number> {
-	const now = new Date();
+	const now = options.now ?? new Date();
 	const stamp = now
 		.toISOString()
 		.replace(/[-:]/g, '')
@@ -99,22 +102,23 @@ export async function runAdvisoryAudit(options: {
 	const owners = await readOwners(options.out);
 
 	const scanned = options.tree
-		? [
-				{
-					entries: (
-						await enumerateRoots([options.tree], 0, options.ignored, owners)
-					).flatMap((r) => r.entries),
-					root: options.tree,
-				},
-			]
+		? await enumerateRoots([options.tree], 0, options.ignored, owners)
 		: await enumerateRoots(options.roots, 4, options.ignored, owners);
 	const trees: TreeAudit[] = [];
 	const skipped: SkippedLockfile[] = [];
 	const noSurface: string[] = [];
-	for (const { entries, root } of scanned) {
+	const missingRoots: string[] = [];
+	const runner = options.runner ?? runBunAudit;
+	for (const { entries, readable, root } of scanned) {
+		// A root that cannot be read is UNSWEPT; only a readable root with no lockfile has no surface.
+		if (!readable) {
+			missingRoots.push(root);
+			console.error(`[advisory-audit] ${root}: UNSWEPT (root cannot be read)`);
+			continue;
+		}
 		if (entries.length === 0) noSurface.push(root);
 		for (const entry of entries) {
-			if (entry.kind === 'artifact') {
+			if (entry.kind === 'artifact' || entry.kind === 'foreign') {
 				skipped.push({
 					key: treeKey(entry),
 					lockPath: entry.lockPath,
@@ -128,13 +132,18 @@ export async function runAdvisoryAudit(options: {
 				entry.kind === 'clone'
 					? `${basename(entry.root)}/${entry.parentTree ?? ''} (clone ${relative(entry.root, entry.treeDir).split('\\').join('/')})`
 					: treeKey(entry);
-			const previousPackages =
-				previous?.trees.find((t) => t.key === key)?.findings.map((f) => f.package) ?? [];
+			// Re-check what the previous record named as a finding OR as LOCK-ONLY: a store that
+			// still links the old version must keep being reported after the audit goes clean.
+			const previousTree = previous?.trees.find((t) => t.key === key);
+			const previousPackages = [
+				...(previousTree?.findings.map((f) => f.package) ?? []),
+				...(previousTree?.lockOnly.map((l) => l.package) ?? []),
+			];
 			const audit = await auditTree({
 				key,
 				owners: entry.owners,
 				previousPackages,
-				runner: runBunAudit,
+				runner,
 				timeoutMs: options.timeoutMs,
 				treeDir: entry.treeDir,
 			});
@@ -147,7 +156,9 @@ export async function runAdvisoryAudit(options: {
 		}
 	}
 	const record: RunRecord = {
+		command: 'bun audit --json',
 		generatedAt: now.toISOString(),
+		missingRoots,
 		noSurface,
 		roots: scanned.map((s) => s.root),
 		skipped,
@@ -166,10 +177,10 @@ export async function runAdvisoryAudit(options: {
 	const line = historyLine(record, previous, holds, now);
 	await writeFile(join(options.out, 'history.md'), `${line}\n`, { encoding: 'utf8', flag: 'a' });
 	console.log(line);
-	const unswept = trees.filter((t) => t.status === 'unswept').length;
+	const unswept = trees.filter((t) => t.status === 'unswept').length + record.missingRoots.length;
 	if (unswept > 0)
 		console.error(
-			`[advisory-audit] ${String(unswept)} tree(s) UNSWEPT; the run is incomplete.`,
+			`[advisory-audit] ${String(unswept)} tree(s) or root(s) UNSWEPT; the run is incomplete.`,
 		);
 	return unswept > 0 ? 1 : 0;
 }

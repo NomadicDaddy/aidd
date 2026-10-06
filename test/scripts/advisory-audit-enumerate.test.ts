@@ -96,6 +96,23 @@ describe('advisory audit enumeration', () => {
 		expect(classifyLockfile(join(root, 'orphan', 'bun.lock'), root).owners).toEqual([]);
 	});
 
+	test('an unreadable root is reported unreadable, never as no npm surface', async () => {
+		root = await testTempDir('aidd-advisory-missing-');
+		const [missing, present] = await enumerateRoots([join(root, 'no-such-root'), root]);
+		expect(missing).toMatchObject({ entries: [], readable: false });
+		expect(present?.readable).toBe(true);
+	});
+
+	test('a lockfile of another package manager is listed as foreign, not audited', async () => {
+		root = await testTempDir('aidd-advisory-foreign-');
+		await mkdir(join(root, 'npm-app'), { recursive: true });
+		await writeFile(join(root, 'npm-app', 'package-lock.json'), '{}\n');
+		const [scanned] = await enumerateRoots([root]);
+		expect(scanned?.entries).toHaveLength(1);
+		expect(scanned?.entries[0]).toMatchObject({ kind: 'foreign', owners: [] });
+		expect(scanned?.entries[0]?.reason).toContain('package-lock.json');
+	});
+
 	// aidd-build-proofs-public holds whole vendored source trees, and the panel's ignoredFolders
 	// names what aidd itself does not discover; neither is a tree anyone fixes.
 	test('proof trees and the panel ignored folders are skipped with their reason', async () => {

@@ -13,23 +13,42 @@ export function findingKey(tree: string, pkg: string, ghsa: string): string {
 	return `${tree} ${pkg} ${ghsa}`;
 }
 
-function findingKeys(record: RunRecord): Set<string> {
+function findingKeys(trees: TreeAudit[]): Set<string> {
 	const keys = new Set<string>();
-	for (const tree of record.trees)
+	for (const tree of trees)
 		for (const f of tree.findings) keys.add(findingKey(tree.key, f.package, f.ghsa));
 	return keys;
 }
 
-/** Findings present now and absent last run, and the reverse. A first run has no "closed". */
-export function diffRuns(
-	current: RunRecord,
-	previous: null | RunRecord,
-): { closed: string[]; opened: string[] } {
-	const now = findingKeys(current);
-	const before = previous === null ? new Set<string>() : findingKeys(previous);
+export interface RunDiff {
+	/** Previous findings whose tree was audited this run and no longer reports them. */
+	closed: string[];
+	opened: string[];
+	/** Previous findings whose tree is UNSWEPT or absent this run: unknown, not closed. */
+	unverified: string[];
+}
+
+/**
+ * What changed between two runs. A finding counts as closed only when its tree was audited this
+ * run and no longer reports it; a tree that is UNSWEPT or missing now cannot close anything.
+ */
+export function diffRuns(current: RunRecord, previous: null | RunRecord): RunDiff {
+	const now = findingKeys(current.trees);
+	const audited = new Set(current.trees.filter((t) => t.status === 'audited').map((t) => t.key));
+	const closed: string[] = [];
+	const unverified: string[] = [];
+	for (const tree of previous?.trees ?? []) {
+		for (const f of tree.findings) {
+			const key = findingKey(tree.key, f.package, f.ghsa);
+			if (now.has(key)) continue;
+			(audited.has(tree.key) ? closed : unverified).push(key);
+		}
+	}
+	const before = previous === null ? new Set<string>() : findingKeys(previous.trees);
 	return {
-		closed: [...before].filter((key) => !now.has(key)).sort(),
+		closed: closed.sort(),
 		opened: [...now].filter((key) => !before.has(key)).sort(),
+		unverified: unverified.sort(),
 	};
 }
 
@@ -42,6 +61,13 @@ function countBySeverity(trees: TreeAudit[]): string {
 		.sort((a, b) => severityRank(a[0]) - severityRank(b[0]))
 		.map(([severity, n]) => `${String(n)} ${severity}`)
 		.join(', ');
+}
+
+function unsweptNames(record: RunRecord): string[] {
+	return [
+		...record.missingRoots.map((root) => `${root} (root unreadable)`),
+		...record.trees.filter((t) => t.status === 'unswept').map((t) => t.key),
+	];
 }
 
 function treeBlock(tree: TreeAudit, holds: Hold[], now: Date): string[] {
@@ -65,17 +91,16 @@ function treeBlock(tree: TreeAudit, holds: Hold[], now: Date): string[] {
 		(a, b) => severityRank(a.severity) - severityRank(b.severity),
 	);
 	lines.push('');
+	const exit = tree.exitCode === undefined ? 'unknown' : String(tree.exitCode);
 	if (sorted.length === 0)
-		lines.push(`Findings: none (bun audit exit 0, ${String(tree.durationMs)}ms).`);
+		lines.push(`Findings: none (bun audit exit ${exit}, ${String(tree.durationMs)}ms).`);
 	for (const f of sorted) {
 		const hold = findHold(holds, tree.key, f.package, f.ghsa);
-		const suffix =
-			hold === undefined
-				? ''
-				: (() => {
-						const status = holdStatus(hold, now);
-						return ` — held by ${hold.owner} since ${hold.date} (${String(status.ageDays)} days, ${hold.blockedOn})${status.stale ? ' **STALE HOLD**' : ''}: ${hold.reason}`;
-					})();
+		let suffix = '';
+		if (hold !== undefined) {
+			const status = holdStatus(hold, now);
+			suffix = ` — held by ${hold.owner} since ${hold.date} (${String(status.ageDays)} days, ${hold.blockedOn})${status.stale ? ' **STALE HOLD**' : ''}: ${hold.reason}`;
+		}
 		lines.push(
 			`- ${f.severity}: ${f.package} ${f.vulnerableVersions} — [${f.ghsa}](${f.url}) ${f.title}${suffix}`,
 		);
@@ -84,34 +109,38 @@ function treeBlock(tree: TreeAudit, holds: Hold[], now: Date): string[] {
 	return lines;
 }
 
+function list(items: string[], empty: string): string[] {
+	return items.length === 0 ? [empty] : items.map((k) => `- ${k}`);
+}
+
 export function renderReport(
 	record: RunRecord,
 	previous: null | RunRecord,
 	holds: Hold[],
 	now: Date,
 ): string {
-	const { closed, opened } = diffRuns(record, previous);
-	const unswept = record.trees.filter((t) => t.status === 'unswept');
+	const { closed, opened, unverified } = diffRuns(record, previous);
+	const unswept = unsweptNames(record);
 	const lockOnlyTrees = record.trees.filter((t) => t.lockOnly.length > 0);
 	const staleHolds = holds.map((h) => holdStatus(h, now)).filter((s) => s.stale);
 	const lines: string[] = [
 		`# Advisory audit — ${record.generatedAt}`,
 		'',
-		`Roots: ${record.roots.join(', ')}. Trees audited: ${String(record.trees.length)}. UNSWEPT: ${unswept.length === 0 ? 'none' : unswept.map((t) => t.key).join(', ')}. Artifact lockfiles skipped: ${String(record.skipped.length)}. No npm surface: ${record.noSurface.length === 0 ? 'none' : record.noSurface.join(', ')}.`,
+		`Roots: ${record.roots.join(', ')}. Trees audited: ${String(record.trees.filter((t) => t.status === 'audited').length)}. UNSWEPT: ${unswept.length === 0 ? 'none' : unswept.join(', ')}. Artifact lockfiles skipped: ${String(record.skipped.length)}. No npm surface: ${record.noSurface.length === 0 ? 'none' : record.noSurface.join(', ')}.`,
 		'',
 		`Findings: ${countBySeverity(record.trees)}. LOCK-ONLY trees: ${lockOnlyTrees.length === 0 ? 'none' : lockOnlyTrees.map((t) => t.key).join(', ')}. Stale holds: ${String(staleHolds.length)}.`,
 		'',
 		'## New since last report',
 		'',
-		...(opened.length === 0 ? ['none'] : opened.map((k) => `- ${k}`)),
+		...list(opened, 'none'),
 		'',
 		'## Closed since last report',
 		'',
-		...(previous === null
-			? ['first run, nothing to compare']
-			: closed.length === 0
-				? ['none']
-				: closed.map((k) => `- ${k}`)),
+		...(previous === null ? ['first run, nothing to compare'] : list(closed, 'none')),
+		'',
+		'## Not re-checked (tree UNSWEPT or absent this run)',
+		'',
+		...list(unverified, 'none'),
 		'',
 		'## Trees',
 		'',
@@ -132,9 +161,9 @@ export function historyLine(
 	holds: Hold[],
 	now: Date,
 ): string {
-	const { closed, opened } = diffRuns(record, previous);
-	const unswept = record.trees.filter((t) => t.status === 'unswept').map((t) => t.key);
+	const { closed, opened, unverified } = diffRuns(record, previous);
+	const unswept = unsweptNames(record);
 	const lockOnly = record.trees.filter((t) => t.lockOnly.length > 0).map((t) => t.key);
 	const stale = holds.filter((h) => holdStatus(h, now).stale).length;
-	return `${record.generatedAt} | trees ${String(record.trees.length)} | unswept: ${unswept.length === 0 ? 'none' : unswept.join(', ')} | lock-only: ${lockOnly.length === 0 ? 'none' : lockOnly.join(', ')} | findings: ${countBySeverity(record.trees)} | new ${String(opened.length)} | closed ${String(closed.length)} | stale holds ${String(stale)} | artifacts skipped ${String(record.skipped.length)}`;
+	return `${record.generatedAt} | trees ${String(record.trees.length)} | unswept: ${unswept.length === 0 ? 'none' : unswept.join(', ')} | lock-only: ${lockOnly.length === 0 ? 'none' : lockOnly.join(', ')} | findings: ${countBySeverity(record.trees)} | new ${String(opened.length)} | closed ${String(closed.length)} | not re-checked ${String(unverified.length)} | stale holds ${String(stale)} | artifacts skipped ${String(record.skipped.length)} | no surface: ${record.noSurface.length === 0 ? 'none' : record.noSurface.join(', ')}`;
 }

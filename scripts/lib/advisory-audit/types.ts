@@ -19,6 +19,8 @@ export interface LockOnly {
 export interface TreeAudit {
 	durationMs: number;
 	error?: string;
+	/** bun audit's exit code: 0 clean, 1 findings; anything else is UNSWEPT whatever stdout held. */
+	exitCode?: number;
 	findings: AuditFinding[];
 	key: string;
 	lockOnly: LockOnly[];
@@ -53,7 +55,11 @@ export interface SkippedLockfile {
 }
 
 export interface RunRecord {
+	/** The command each tree was audited with, kept so the record says what produced it. */
+	command: string;
 	generatedAt: string;
+	/** Configured roots that could not be read at all: UNSWEPT, never "no npm surface". */
+	missingRoots: string[];
 	noSurface: string[];
 	roots: string[];
 	skipped: SkippedLockfile[];

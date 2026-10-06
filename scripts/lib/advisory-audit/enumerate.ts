@@ -2,7 +2,10 @@ import { readdir } from 'node:fs/promises';
 import { basename, dirname, join, relative, sep } from 'node:path';
 
 /** What a lockfile is, which decides whether it is audited and where its findings are reported. */
-export type LockfileKind = 'artifact' | 'clone' | 'project';
+export type LockfileKind = 'artifact' | 'clone' | 'foreign' | 'project';
+
+/** Lockfiles of other package managers: listed so the gap is visible, never audited by bun. */
+const FOREIGN_LOCKFILES = new Set(['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock']);
 
 export interface LockfileEntry {
 	kind: LockfileKind;
@@ -64,6 +67,14 @@ export function classifyLockfile(
 	const rel = segments(relative(root, treeDir));
 	const treeName = rel[0] ?? basename(root);
 	const base = { lockPath, owners: owners[treeName] ?? [], root, treeDir, treeName };
+	if (basename(lockPath) !== 'bun.lock') {
+		return {
+			...base,
+			kind: 'foreign',
+			owners: [],
+			reason: `not a bun tree (${basename(lockPath)}); not audited`,
+		};
+	}
 	const artifact = rel.find((part) => isArtifactSegment(part, ignored));
 	if (artifact !== undefined) {
 		return {
@@ -105,7 +116,8 @@ export async function findLockfiles(root: string, maxDepth = 4): Promise<string[
 			return;
 		}
 		for (const entry of entries) {
-			if (entry.isFile() && entry.name === 'bun.lock') found.push(join(dir, entry.name));
+			if (entry.isFile() && (entry.name === 'bun.lock' || FOREIGN_LOCKFILES.has(entry.name)))
+				found.push(join(dir, entry.name));
 			else if (
 				entry.isDirectory() &&
 				depth < maxDepth &&
@@ -119,18 +131,32 @@ export async function findLockfiles(root: string, maxDepth = 4): Promise<string[
 	return found.sort();
 }
 
-/** A root with no lockfile at all has no npm surface; the report says so instead of "clean". */
+export interface ScannedRoot {
+	entries: LockfileEntry[];
+	/** False when the root could not be read at all: that is UNSWEPT, never "no npm surface". */
+	readable: boolean;
+	root: string;
+}
+
+/** A readable root with no lockfile at all has no npm surface; the report says so instead of "clean". */
 export async function enumerateRoots(
 	roots: string[],
 	maxDepth = 4,
 	ignored: ReadonlySet<string> = new Set(),
 	owners: OwnerMap = {},
-): Promise<{ entries: LockfileEntry[]; root: string }[]> {
-	const result: { entries: LockfileEntry[]; root: string }[] = [];
+): Promise<ScannedRoot[]> {
+	const result: ScannedRoot[] = [];
 	for (const root of roots) {
-		const lockfiles = await findLockfiles(root, maxDepth);
+		let readable = true;
+		try {
+			await readdir(root);
+		} catch {
+			readable = false;
+		}
+		const lockfiles = readable ? await findLockfiles(root, maxDepth) : [];
 		result.push({
 			entries: lockfiles.map((path) => classifyLockfile(path, root, ignored, owners)),
+			readable,
 			root,
 		});
 	}

@@ -38,7 +38,9 @@ const tree = (key: string, overrides: Partial<TreeAudit> = {}): TreeAudit => ({
 });
 
 const record = (trees: TreeAudit[]): RunRecord => ({
+	command: 'bun audit --json',
 	generatedAt: NOW.toISOString(),
+	missingRoots: [],
 	noSurface: ['D:\\scripts'],
 	roots: ['D:\\applications', 'D:\\scripts'],
 	skipped: [
@@ -113,13 +115,37 @@ describe('advisory audit: report', () => {
 				findings: [finding('@modelcontextprotocol/sdk', 'GHSA-6qxp-vccf-f47h')],
 			}),
 		]);
-		expect(diffRuns(after, before)).toEqual({
+		expect(diffRuns(after, before)).toMatchObject({
 			closed: [findingKey('applications/aidd', 'proxy-addr', 'GHSA-jqcg-44mw-7w3h')],
 			opened: [
 				findingKey('applications/aidd', '@modelcontextprotocol/sdk', 'GHSA-6qxp-vccf-f47h'),
 			],
 		});
 		expect(diffRuns(after, null).closed).toEqual([]);
+		expect(diffRuns(after, before).unverified).toEqual([]);
+	});
+
+	// A finding whose tree is UNSWEPT or gone this run was not re-checked; calling it closed is the
+	// false closure Roger reproduced on 154c0603.
+	test('a previous finding in a tree that is UNSWEPT or absent now is not re-checked, not closed', () => {
+		const before = record([
+			tree('applications/a', { findings: [finding('left-pad', 'GHSA-aaaa-aaaa-aaaa')] }),
+			tree('applications/b', { findings: [finding('right-pad', 'GHSA-bbbb-bbbb-bbbb')] }),
+			tree('applications/c', { findings: [finding('mid-pad', 'GHSA-cccc-cccc-cccc')] }),
+		]);
+		const after = record([
+			tree('applications/a', { error: 'bun audit exited 2', status: 'unswept' }),
+			tree('applications/c'),
+		]);
+		const diff = diffRuns(after, before);
+		expect(diff.closed).toEqual([
+			findingKey('applications/c', 'mid-pad', 'GHSA-cccc-cccc-cccc'),
+		]);
+		expect(diff.unverified).toEqual([
+			findingKey('applications/a', 'left-pad', 'GHSA-aaaa-aaaa-aaaa'),
+			findingKey('applications/b', 'right-pad', 'GHSA-bbbb-bbbb-bbbb'),
+		]);
+		expect(historyLine(after, before, [], NOW)).toContain('| closed 1 | not re-checked 2 |');
 	});
 
 	test('LOCK-ONLY comes first in a tree block, UNSWEPT is named in the header, holds show their age', () => {
@@ -165,7 +191,7 @@ describe('advisory audit: report', () => {
 		const quiet = record([tree('applications/aidd')]);
 		const line = historyLine(quiet, null, [], NOW);
 		expect(line).toBe(
-			`${NOW.toISOString()} | trees 1 | unswept: none | lock-only: none | findings: 0 | new 0 | closed 0 | stale holds 0 | artifacts skipped 1`,
+			`${NOW.toISOString()} | trees 1 | unswept: none | lock-only: none | findings: 0 | new 0 | closed 0 | not re-checked 0 | stale holds 0 | artifacts skipped 1 | no surface: D:\\scripts`,
 		);
 	});
 });

@@ -215,14 +215,21 @@ export async function auditTree(input: {
 	};
 	const output = await input.runner(input.treeDir, input.timeoutMs);
 	const findings = parseAuditJson(output.stdout);
-	if (output.timedOut || findings === null) {
+	// bun audit exits 0 clean and 1 with findings. Any other code is a failed audit even when
+	// stdout parses (an empty `{}` beside exit 2 is not a clean tree), so it is UNSWEPT.
+	const failed = output.exitCode !== 0 && output.exitCode !== 1;
+	if (output.timedOut || findings === null || failed) {
+		const firstStderr = output.stderr.trim().split('\n')[0] ?? '';
 		const error = output.timedOut
 			? `bun audit timed out after ${String(input.timeoutMs)}ms`
-			: `bun audit exited ${String(output.exitCode)} with no parseable JSON: ${output.stderr.trim().split('\n')[0] ?? ''}`;
+			: findings === null
+				? `bun audit exited ${String(output.exitCode)} with no parseable JSON: ${firstStderr}`
+				: `bun audit exited ${String(output.exitCode)}: ${firstStderr}`;
 		return {
 			...base,
 			durationMs: Date.now() - started,
 			error,
+			exitCode: output.exitCode,
 			findings: [],
 			status: 'unswept',
 		};
@@ -235,6 +242,7 @@ export async function auditTree(input: {
 	return {
 		...base,
 		durationMs: Date.now() - started,
+		exitCode: output.exitCode,
 		findings,
 		lockOnly,
 		notInstalled,

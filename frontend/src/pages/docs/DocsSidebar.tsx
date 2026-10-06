@@ -1,10 +1,10 @@
 import { NavLink } from 'react-router';
 
+import { DOC_SECTIONS, DOCS_SIDEBAR_GROUPS } from '../../components/shared/docs/docs-manifest.ts';
 import { Card } from '../../components/ui/card.tsx';
 import { cn } from '../../lib/cn.ts';
 import { touchTargetRowClass } from '../../lib/touchTarget.ts';
 import { sectionCaptionClass } from '../../lib/typography.ts';
-import { DOC_SECTIONS, DOCS_SIDEBAR_GROUPS } from './docs-manifest.ts';
 import { docsCurrentLocationClass, docsNavigationFocusClass } from './docsNavigationStyles.ts';
 
 /**

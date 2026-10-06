@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router';
 
+import { getDocBody } from '../../components/shared/docs/docs-content.ts';
+import { DEFAULT_DOC_SLUG, docSectionBySlug } from '../../components/shared/docs/docs-manifest.ts';
 import { MarkdownContent } from '../../components/shared/MarkdownContent.tsx';
 import { renderMarkdownInline } from '../../components/shared/markdownInline.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
@@ -10,8 +12,6 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { cn } from '../../lib/cn.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
 import { markdownHeadings, markdownSummary } from '../../lib/markdownBlocks.ts';
-import { getDocBody } from './docs-content.ts';
-import { DEFAULT_DOC_SLUG, docSectionBySlug } from './docs-manifest.ts';
 import { DocsNavigationRail } from './DocsNavigationRail.tsx';
 import { DocsNotFound } from './DocsNotFound.tsx';
 import { DocsOutline } from './DocsOutline.tsx';

@@ -6,12 +6,12 @@ import { Link } from 'react-router';
 import { cn } from '../../lib/cn.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { sectionCaptionClass } from '../../lib/typography.ts';
-import { docSectionBySlug } from '../../pages/docs/docs-manifest.ts';
 import { IconButton } from '../ui/button.tsx';
 import { Dialog } from '../ui/dialog.tsx';
+import { docSectionBySlug } from './docs/docs-manifest.ts';
 
 const HelpDrawerBody = lazy(() =>
-	import('../../pages/docs/HelpDrawerBody.tsx').then((m) => ({ default: m.HelpDrawerBody })),
+	import('./docs/HelpDrawerBody.tsx').then((m) => ({ default: m.HelpDrawerBody })),
 );
 
 const TITLE_ID = 'help-drawer-title';

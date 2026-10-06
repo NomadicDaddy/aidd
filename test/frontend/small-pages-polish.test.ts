@@ -10,7 +10,7 @@ function read(path: string): Promise<string> {
 describe('the docs rail groups in the accessibility tree, not just on screen', () => {
 	test('one nav per documentation-owned group without mirroring the shell rail', async () => {
 		const docs = await read('frontend/src/pages/docs/DocsSidebar.tsx');
-		const manifest = await read('frontend/src/pages/docs/docs-manifest.ts');
+		const manifest = await read('frontend/src/components/shared/docs/docs-manifest.ts');
 
 		// Guides and Reference are documentation concepts. The shell remains the sole owner of its
 		// Overview, Activity, Catalog, and System groups and their destination labels.

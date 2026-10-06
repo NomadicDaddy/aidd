@@ -10,7 +10,7 @@ import {
 	DOC_GROUP_ORDER,
 	DOC_SECTIONS,
 	DOCS_SIDEBAR_GROUPS,
-} from '../../frontend/src/pages/docs/docs-manifest.ts';
+} from '../../frontend/src/components/shared/docs/docs-manifest.ts';
 
 const FRONTEND_SOURCE = resolve(import.meta.dir, '../../frontend/src');
 

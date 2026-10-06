@@ -6,7 +6,7 @@
  * access is needed at runtime in any deployment mode.
  */
 
-const modules = import.meta.glob('../../../content/docs/*.md', {
+const modules = import.meta.glob('../../../../content/docs/*.md', {
 	eager: true,
 	import: 'default',
 	query: '?raw',

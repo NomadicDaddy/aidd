@@ -1,4 +1,4 @@
-import { MarkdownContent } from '../../components/shared/MarkdownContent.tsx';
+import { MarkdownContent } from '../MarkdownContent.tsx';
 import { getDocBody } from './docs-content.ts';
 
 /**

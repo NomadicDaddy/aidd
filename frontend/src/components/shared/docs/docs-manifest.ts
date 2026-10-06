@@ -13,10 +13,7 @@
  * copy never claims every page has a `?` button.
  */
 
-import {
-	NAV_DESTINATION_GROUPS,
-	type NavDestinationPath,
-} from '../../components/layout/nav-destinations.ts';
+import { NAV_DESTINATION_GROUPS, type NavDestinationPath } from '../../layout/nav-destinations.ts';
 
 type ShellNavGroup = (typeof NAV_DESTINATION_GROUPS)[number]['label'];
 

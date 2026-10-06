@@ -1,13 +1,13 @@
 import { NOT_FOUND_PAGE_MARKER } from 'aidd-shared/contracts/frontend-routes';
 import { Link } from 'react-router';
 
+import { DEFAULT_DOC_SLUG } from '../../components/shared/docs/docs-manifest.ts';
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { PageRail } from '../../components/shared/PageRail.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
 import { proseMeasureCardClass } from '../../lib/typography.ts';
-import { DEFAULT_DOC_SLUG } from './docs-manifest.ts';
 import { DocsNavigationRail } from './DocsNavigationRail.tsx';
 
 const PAGE_RAIL = pageRailByContentType.reading;

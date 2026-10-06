@@ -7,7 +7,10 @@ import {
 	markdownSummary,
 	parseMarkdownBlocks,
 } from '../../frontend/src/lib/markdownBlocks.ts';
-import { DOC_GROUP_ORDER, DOC_SECTIONS } from '../../frontend/src/pages/docs/docs-manifest.ts';
+import {
+	DOC_GROUP_ORDER,
+	DOC_SECTIONS,
+} from '../../frontend/src/components/shared/docs/docs-manifest.ts';
 import { docsNeighbors } from '../../frontend/src/pages/docs/docsPagination.ts';
 
 const DOCS_DIR = resolve(import.meta.dir, '../../frontend/content/docs');

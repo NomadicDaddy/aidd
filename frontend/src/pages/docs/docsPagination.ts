@@ -1,4 +1,8 @@
-import { DOC_SECTIONS, DOCS_SIDEBAR_GROUPS, type DocSection } from './docs-manifest.ts';
+import {
+	DOC_SECTIONS,
+	DOCS_SIDEBAR_GROUPS,
+	type DocSection,
+} from '../../components/shared/docs/docs-manifest.ts';
 
 interface DocsNeighbors {
 	next: DocSection | undefined;

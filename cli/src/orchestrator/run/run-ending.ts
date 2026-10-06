@@ -114,6 +114,23 @@ export async function endRunIfBudgetTooThinForIteration(input: {
 	);
 }
 
+/** Loop-top guard: the deadline has passed, or too little of it remains to fit another iteration.
+ * Returns the first exit code that ends the run, undefined to proceed. */
+export async function endRunIfOutOfTime(input: {
+	acc: RunAccumulator;
+	deps: OrchestratorDeps;
+	lastSummary: string;
+	move: MoveFn;
+	plan: RunPlan;
+	runStartedAtMs: number;
+}): Promise<number | undefined> {
+	const expired = await endRunIfWallClockExpired(input);
+	if (expired !== undefined) return expired;
+	// The deadline has not passed, but it may be too close to fit another iteration. Stopping
+	// here ends the run deliberately instead of letting the watchdog kill an agent mid-edit.
+	return await endRunIfBudgetTooThinForIteration(input);
+}
+
 export async function finalizeMaxIterationsRun(input: {
 	acc: RunAccumulator;
 	deps: OrchestratorDeps;

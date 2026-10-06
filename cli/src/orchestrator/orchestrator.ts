@@ -21,17 +21,13 @@ import {
 	iterationProvedCleanBaseline,
 } from './run/prompt-context.ts';
 import { warnIfBudgetExceeded } from './run/run-accumulator.ts';
-import {
-	endRunIfBudgetTooThinForIteration,
-	endRunIfWallClockExpired,
-	finalizeMaxIterationsRun,
-} from './run/run-ending.ts';
+import { endRunIfOutOfTime, finalizeMaxIterationsRun } from './run/run-ending.ts';
 import { initializeOrchestratorRun } from './run/startup.ts';
 import { createStateMove } from './run/state-move.ts';
 import { type OrchestratorDeps } from './run/types.ts';
 import { recordIterationCheckpoint } from './run/worktree-manager.ts';
 import { enforceWriteAllowlistForIteration } from './run/write-allowlist-iteration.ts';
-import { captureWriteGuardSnapshot } from './run/write-allowlist.ts';
+import { captureIterationWriteGuardBaseline } from './run/write-guard-baseline.ts';
 
 export type {
 	OrchestratorDeps,
@@ -63,7 +59,7 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 	// required — see iterationProvedCleanBaseline. Consumed (and cleared) at the next compile.
 	let previousIterationVerifiedBaseline = false;
 	while (plan.scope.maxIterations === null || iteration < plan.scope.maxIterations) {
-		const wallClockExit = await endRunIfWallClockExpired({
+		const outOfTimeExit = await endRunIfOutOfTime({
 			acc,
 			deps,
 			lastSummary,
@@ -71,18 +67,7 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 			plan,
 			runStartedAtMs,
 		});
-		if (wallClockExit !== undefined) return wallClockExit;
-		// The deadline has not passed, but it may be too close to fit another iteration. Stopping
-		// here ends the run deliberately instead of letting the watchdog kill an agent mid-edit.
-		const thinBudgetExit = await endRunIfBudgetTooThinForIteration({
-			acc,
-			deps,
-			lastSummary,
-			move,
-			plan,
-			runStartedAtMs,
-		});
-		if (thinBudgetExit !== undefined) return thinBudgetExit;
+		if (outOfTimeExit !== undefined) return outOfTimeExit;
 		const dirtyTreeExit = await handleModeDirtyTreeSkip(deps, plan, acc, iteration, move);
 		if (dirtyTreeExit !== undefined) return dirtyTreeExit;
 		const selection = await selectAndClaimIterationWork({
@@ -117,21 +102,15 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 		await armBaselineNoteIfNeeded(promptContext, plan, previousIterationVerifiedBaseline);
 		previousIterationVerifiedBaseline = false;
 		const compiled = await promptContext.compile(promptPlan);
+		// Before the backend starts: a guard that cannot be armed ends the run here.
+		const guard = await captureIterationWriteGuardBaseline({ acc, deps, move, plan });
+		if (guard.kind === 'return') return guard.exitCode;
+		const writeGuardBaseline = guard.baseline;
 		move({ plan, prompt: compiled, type: 'run_agent' });
 		const startedAtMs = Date.now();
 		const startedAt = new Date(startedAtMs).toISOString();
 		const featureSnapshotBefore = await captureFeatureCompletionSnapshot(deps.store);
 		const gitHeadBefore = await readGitHead(runRepoDir(plan));
-		// Covers triumvirate too: its execution stage writes to the real worktree.
-		let writeGuardBaseline: Awaited<ReturnType<typeof captureWriteGuardSnapshot>> = null;
-		if (plan.writeAllowlist !== undefined) {
-			writeGuardBaseline = await captureWriteGuardSnapshot(runRepoDir(plan));
-			if (writeGuardBaseline === null) {
-				console.warn(
-					'[orchestrator] --write-allowlist requested but the project is not a git repository; writes cannot be guarded this iteration.',
-				);
-			}
-		}
 		const iterationArtifactIndex = await writeStartedIterationArtifact({
 			acc,
 			compiled,
@@ -181,7 +160,7 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 		} = iterationRun.state;
 		const { triumvirateArtifacts } = iterationRun.state;
 
-		if (plan.writeAllowlist !== undefined && writeGuardBaseline !== null) {
+		if (writeGuardBaseline !== null) {
 			const writeGuard = await enforceWriteAllowlistForIteration({
 				acc,
 				activeProgress,

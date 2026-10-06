@@ -148,6 +148,21 @@ const completedWithUncommittedSource: WebRunOutcome = {
 	tone: 'amber',
 };
 
+// Damage to another run's record outranks the other completed-with-caveat outcomes: the victim
+// run fails on a missing file, and the records have to come back from git history.
+const completedWithDestroyedLeasedFeatures: WebRunOutcome = {
+	label: 'Completed · deleted leased work',
+	title: 'The run finished cleanly but deleted feature records another live run was working on; restore them from git history before accepting either run.',
+	tone: 'amber',
+};
+
+function completedOutcome(summary: null | string | undefined): WebRunOutcome {
+	if (hasDestroyedLeasedFeatureMarker(summary)) return completedWithDestroyedLeasedFeatures;
+	if (hasParkedWorkMarker(summary)) return completedWithParkedWork;
+	if (hasUncommittedSourceMarker(summary)) return completedWithUncommittedSource;
+	return executionStatusPresentation.completed;
+}
+
 export function classifyWebRun(run: WebRunOutcomeInput): WebRunOutcome {
 	if (hasUnfinalizedAgentResultMarker(run.summary)) {
 		return {
@@ -216,9 +231,7 @@ export function classifyWebRun(run: WebRunOutcomeInput): WebRunOutcome {
 		};
 	}
 	if (run.stopReason === 'completed' && (run.exitCode ?? 0) === 0) {
-		if (hasParkedWorkMarker(run.summary)) return completedWithParkedWork;
-		if (hasUncommittedSourceMarker(run.summary)) return completedWithUncommittedSource;
-		return executionStatusPresentation.completed;
+		return completedOutcome(run.summary);
 	}
 	if (run.stopReason === 'no_work') {
 		return { label: 'No work', title: 'No actionable work was selected.', tone: 'neutral' };
@@ -245,9 +258,7 @@ export function classifyWebRun(run: WebRunOutcomeInput): WebRunOutcome {
 		return { label: 'Error', title: 'Run ended with an error.', tone: 'red' };
 	}
 	if (run.status === 'completed' && (run.exitCode ?? 0) === 0) {
-		if (hasParkedWorkMarker(run.summary)) return completedWithParkedWork;
-		if (hasUncommittedSourceMarker(run.summary)) return completedWithUncommittedSource;
-		return executionStatusPresentation.completed;
+		return completedOutcome(run.summary);
 	}
 	const decoded = decodeExitCode(run.exitCode);
 	if (decoded) return decoded;

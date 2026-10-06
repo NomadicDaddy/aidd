@@ -273,6 +273,34 @@ describe('classifyWebRun', () => {
 			}),
 		).toBe('warnings');
 	});
+
+	// audit-feature-integration-1790861354: the orchestrator wrote this marker so the offending run
+	// would not ledger as a clean success, and nothing in production read it.
+	test('downgrades a completed run that deleted another live run’s leased feature records', () => {
+		const summary =
+			'coding completed feature-x; destroyed_leased_features: feature-y (leased by run_2)';
+		for (const run of [
+			{ exitCode: 0, status: 'completed' as const, stopReason: 'completed', summary },
+			{ exitCode: 0, status: 'completed' as const, stopReason: null, summary },
+		]) {
+			const outcome = classifyWebRun(run);
+			expect(outcome.label).toBe('Completed · deleted leased work');
+			expect(outcome.tone).toBe('amber');
+			expect(outcome.title).toContain('git history');
+			expect(classifyWebRunTelemetryBucket(run)).toBe('warnings');
+		}
+	});
+
+	test('deleted leased work outranks the parked-work and dirty-tree markers', () => {
+		const outcome = classifyWebRun({
+			exitCode: 0,
+			status: 'completed',
+			stopReason: 'completed',
+			summary:
+				'parked_work: feature-x; uncommitted_source_files: 2; destroyed_leased_features: feature-y',
+		});
+		expect(outcome.label).toBe('Completed · deleted leased work');
+	});
 });
 
 describe('classifyWebRunTelemetryBucket', () => {

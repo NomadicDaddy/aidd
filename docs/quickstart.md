@@ -47,7 +47,10 @@ bun run start -- --version   # matches the checked-in VERSION file
 
 ## First CLI run (metadata checks)
 
-Every CLI command is `bun run start -- <flags>`. Start by checking a project's `.aidd/`
+Every CLI command is `bun run start -- <flags>`. Every mode targets `--project-dir`, and the flag
+defaults to the current working directory. `bun run start` runs from the aidd repository root, so
+a bare `bun run start` with no `--project-dir` starts a coding run against the aidd checkout
+itself; the control panel is `bun run start:web`. Start by checking a project's `.aidd/`
 metadata. These commands do not change application code:
 
 ```powershell

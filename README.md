@@ -89,6 +89,10 @@ bun run start -- --project-dir C:\path\to\your-app --audit SECURITY
 bun run start -- --web
 ```
 
+- `--project-dir` defaults to the current directory, and `bun run start` runs from the aidd
+  repository root: a bare `bun run start` starts a coding run against the aidd checkout itself.
+  The control panel is `bun run start:web`.
+
 ## Workflows
 
 - **[Recipes](docs/reference/recipes.md)**: multi-step pipelines (`name`, `description`,

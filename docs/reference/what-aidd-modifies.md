@@ -1,8 +1,9 @@
 # What aidd Can Modify
 
-aidd is a local tool. It runs on your machine, works against project folders you point it at, and
-talks to an AI backend you configure. This page describes its file changes, Git operations,
-shell access, and network activity.
+aidd is a local tool. It runs on your machine, works against the project folder named by
+`--project-dir` (the current directory when the flag is omitted, which is the aidd checkout itself
+under `bun run start`), and talks to an AI backend you configure. This page describes its file
+changes, Git operations, shell access, and network activity.
 
 Most managed writes go to the selected project, aidd's runtime data, or user configuration.
 That is not a host-level filesystem boundary: agent and recipe shell commands can access other

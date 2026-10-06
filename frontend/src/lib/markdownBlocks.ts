@@ -1,24 +1,19 @@
+import { type MarkdownDefinitionsBlock, parseMarkdownDefinitions } from './markdownDefinitions.ts';
 import { type MarkdownListBlock, parseMarkdownList } from './markdownLists.ts';
 import { type MarkdownTableBlock, parseMarkdownTable } from './markdownTables.ts';
 
 export type MarkdownBlock =
 	| { code: string; type: 'code' }
-	| { entries: MarkdownDefinition[]; type: 'definitions' }
 	| { level: 1 | 2 | 3; text: string; type: 'heading' }
 	| { lines: string[]; type: 'quote' }
 	| { text: string; type: 'paragraph' }
 	| { type: 'hr' }
+	| MarkdownDefinitionsBlock
 	| MarkdownListBlock
 	| MarkdownTableBlock;
 
-export interface MarkdownDefinition {
-	definition: string;
-	term: string;
-}
-
 const HEADING = /^(#{1,3})\s+(.*)$/;
 const QUOTE = /^>\s?(.*)$/;
-const DEFINITION = /^:\s+(.+)$/;
 const HR = /^(?:---+|\*\*\*+|___+)$/;
 // A skill definition is mostly fenced examples. Without this the fence lines became paragraphs
 // reading "```bash" and their contents were reflowed as prose, which is what a command example
@@ -87,6 +82,19 @@ function stripComments(lines: string[]): string[] {
 	return out;
 }
 
+/** Consecutive `>` lines from `index`, in the same { block, nextIndex } shape as the other parsers. */
+function parseQuote(lines: string[], index: number): { block: MarkdownBlock; nextIndex: number } {
+	const quoteLines: string[] = [];
+	let cursor = index;
+	while (cursor < lines.length) {
+		const inner = QUOTE.exec((lines[cursor] ?? '').trim());
+		if (!inner) break;
+		quoteLines.push(inner[1] ?? '');
+		cursor++;
+	}
+	return { block: { lines: quoteLines, type: 'quote' }, nextIndex: cursor };
+}
+
 export function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
 	const lines = stripComments(stripFrontmatter(markdown).split(/\r?\n/));
 	const blocks: MarkdownBlock[] = [];
@@ -143,43 +151,18 @@ export function parseMarkdownBlocks(markdown: string): MarkdownBlock[] {
 			index = table.nextIndex - 1;
 			continue;
 		}
-		const quote = QUOTE.exec(trimmed);
-		if (quote) {
+		if (QUOTE.test(trimmed)) {
 			flushParagraph();
-			const quoteLines: string[] = [];
-			let cursor = index;
-			while (cursor < lines.length) {
-				const inner = QUOTE.exec((lines[cursor] ?? '').trim());
-				if (!inner) break;
-				quoteLines.push(inner[1] ?? '');
-				cursor++;
-			}
-			blocks.push({ lines: quoteLines, type: 'quote' });
-			index = cursor - 1;
+			const quote = parseQuote(lines, index);
+			blocks.push(quote.block);
+			index = quote.nextIndex - 1;
 			continue;
 		}
-		const firstDefinition = DEFINITION.exec((lines[index + 1] ?? '').trim());
-		if (firstDefinition) {
+		const definitions = parseMarkdownDefinitions(lines, index);
+		if (definitions !== null) {
 			flushParagraph();
-			const entries: MarkdownDefinition[] = [];
-			let cursor = index;
-			while (cursor + 1 < lines.length) {
-				const term = (lines[cursor] ?? '').trim();
-				const marker = DEFINITION.exec((lines[cursor + 1] ?? '').trim());
-				if (term.length === 0 || !marker) break;
-				const definition = [marker[1] ?? ''];
-				cursor += 2;
-				while (cursor < lines.length) {
-					const continuation = lines[cursor] ?? '';
-					const nextMarker = DEFINITION.exec((lines[cursor + 1] ?? '').trim());
-					if (continuation.trim().length === 0 || nextMarker) break;
-					definition.push(continuation.trim());
-					cursor++;
-				}
-				entries.push({ definition: definition.join(' '), term });
-			}
-			blocks.push({ entries, type: 'definitions' });
-			index = cursor - 1;
+			blocks.push(definitions.block);
+			index = definitions.nextIndex - 1;
 			continue;
 		}
 		const list = parseMarkdownList(lines, index);

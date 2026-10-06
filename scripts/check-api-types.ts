@@ -13,7 +13,9 @@ import { parseArgs } from 'node:util';
 
 import type { ApiTypePair } from './lib/api-types/inventory.ts';
 
+import { checkApiCoverage } from './lib/api-types/coverage.ts';
 import {
+	discoverApiModules,
 	discoverBackendEndpoints,
 	discoverFrontendEndpoints,
 	discoverFrontendModules,
@@ -71,6 +73,8 @@ export function runApiTypes(projectRoot = cwd()): number {
 			console.error('[FAIL] check:api-types examined no endpoints or type contracts.');
 			return 1;
 		}
+		const coverage = checkApiCoverage(inventory, discoverApiModules(root));
+		findings.push(...coverage.findings);
 		if (findings.length === 0) {
 			findings.push(...checkTypeParity(root, pairs).map((finding) => finding.message));
 		}
@@ -84,7 +88,9 @@ export function runApiTypes(projectRoot = cwd()): number {
 		}
 		console.log(
 			`[OK] check:api-types -- ${endpointCount} endpoint(s) and ${pairs.length} ` +
-				'request/response contract(s) examined; backend and frontend types match.',
+				'request/response contract(s) examined; backend and frontend types match. ' +
+				`${coverage.covered} of ${coverage.modules} frontend API module(s) have contracts; ` +
+				`${coverage.unchecked} are listed as unchecked.`,
 		);
 		return 0;
 	} catch (err) {

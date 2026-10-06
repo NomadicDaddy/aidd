@@ -86,6 +86,7 @@ const inventory = {
 			pathPrefix: '/api/v1/example',
 		},
 	],
+	uncheckedModules: [] as { module: string; reason: string }[],
 };
 
 function resetFixture(frontend = frontendTypes): void {
@@ -129,7 +130,7 @@ try {
 	assert(result.exitCode === 1, `A missing response field must fail:\n${result.output}`);
 
 	resetFixture();
-	write('scripts/api-type-inventory.json', '{"surfaces":[]}\n');
+	write('scripts/api-type-inventory.json', '{"surfaces":[],"uncheckedModules":[]}\n');
 	result = runCheck();
 	assert(
 		result.exitCode === 1 && result.output.includes('contains no API surfaces'),
@@ -157,6 +158,41 @@ try {
 	assert(
 		result.exitCode === 1 && result.output.includes('lacks an inventory surface'),
 		`An un-inventoried frontend API module must fail:\n${result.output}`,
+	);
+
+	// A module whose path is computed names no endpoint the literal scan can read, so it used to
+	// pass unseen. It must have a contract surface or be listed as unchecked, with a reason.
+	const computedModule =
+		'declare function apiGet<T>(path: string): Promise<T>;\n' +
+		'declare function projectPath(id: string): string;\n' +
+		'export const getProject = (id: string) => apiGet<unknown>(projectPath(id));\n';
+	// resetFixture rewrites the fixture's files but keeps extras, so drop the previous scenario's.
+	rmSync(join(fixtureRoot, 'frontend/src/api/uninventoried.ts'), { force: true });
+	resetFixture();
+	write('frontend/src/api/computed.ts', computedModule);
+	result = runCheck();
+	assert(
+		result.exitCode === 1 && result.output.includes('not listed in uncheckedModules'),
+		`An API module with neither a contract nor an unchecked listing must fail:\n${result.output}`,
+	);
+
+	resetFixture();
+	write('frontend/src/api/computed.ts', computedModule);
+	write(
+		'scripts/api-type-inventory.json',
+		`${JSON.stringify(
+			{
+				...inventory,
+				uncheckedModules: [{ module: 'frontend/src/api/computed.ts', reason: 'not yet' }],
+			},
+			null,
+			'\t',
+		)}\n`,
+	);
+	result = runCheck();
+	assert(
+		result.exitCode === 0 && result.output.includes('1 of 2 frontend API module(s)'),
+		`A listed unchecked module must pass and be counted:\n${result.output}`,
 	);
 
 	console.log(`[OK] API type parity test passed (${checks} assertions).`);

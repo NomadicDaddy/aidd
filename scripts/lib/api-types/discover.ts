@@ -132,3 +132,28 @@ export function discoverFrontendEndpoints(path: string): Set<string> {
 	visit(file);
 	return endpoints;
 }
+
+/**
+ * Frontend API modules that call the backend at all, whether or not the path is a literal:
+ * `apiGet(projectApiPath(id))` names no endpoint the literal scan can read, and is exactly the
+ * module a coverage count would otherwise miss.
+ */
+export function discoverApiModules(root: string): string[] {
+	return frontendApiFiles(root)
+		.filter((path) => {
+			const file = source(path);
+			let calls = false;
+			function visit(node: ts.Node): void {
+				if (calls) return;
+				if (ts.isCallExpression(node)) {
+					const name = callName(node);
+					if (name === 'apiGet' || name === 'apiSend') calls = true;
+				}
+				ts.forEachChild(node, visit);
+			}
+			visit(file);
+			return calls;
+		})
+		.map((path) => relative(root, path).replaceAll('\\', '/'))
+		.sort();
+}

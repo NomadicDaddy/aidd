@@ -227,5 +227,111 @@
 			"frontendModule": "frontend/src/api/telemetry.ts",
 			"pathPrefix": "/api/v1/telemetry"
 		}
+	],
+	"uncheckedModules": [
+		{
+			"module": "frontend/src/api/activePipelineSessionCount.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/admin.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/appLauncher.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/audits.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/client.ts",
+			"reason": "Transport module: its one call is the health probe, which carries no response contract."
+		},
+		{
+			"module": "frontend/src/api/diary.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/launchDefaults.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/listRuns.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/maturity.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/metrics.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/navCounts.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/pipelineSessions.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/projectMilestones.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/projectNames.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/projectNotes.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/projectProfiles.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/projects.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/projects/repository.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/projects/workingTree.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/recipes.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/runs.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/scheduledTasks.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/settings.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/settingsConfig.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/skills.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		},
+		{
+			"module": "frontend/src/api/terminal.ts",
+			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
+		}
 	]
 }

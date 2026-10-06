@@ -23,8 +23,15 @@ export interface ApiTypeSurface {
 	pathPrefix: string;
 }
 
+/** A frontend API module with no contract inventory yet, listed so the gap is explicit. */
+export interface ApiUncheckedModule {
+	module: string;
+	reason: string;
+}
+
 export interface ApiTypeInventory {
 	surfaces: ApiTypeSurface[];
+	uncheckedModules: ApiUncheckedModule[];
 }
 
 function record(value: unknown, label: string): Record<string, unknown> {
@@ -79,6 +86,14 @@ function surface(value: unknown, label: string): ApiTypeSurface {
 	};
 }
 
+function uncheckedModule(value: unknown, label: string): ApiUncheckedModule {
+	const parsed = record(value, label);
+	return {
+		module: text(parsed.module, `${label}.module`),
+		reason: text(parsed.reason, `${label}.reason`),
+	};
+}
+
 export function readApiTypeInventory(path: string): ApiTypeInventory {
 	let value: unknown;
 	try {
@@ -91,7 +106,13 @@ export function readApiTypeInventory(path: string): ApiTypeInventory {
 	}
 	const parsed = record(value, 'inventory');
 	if (!Array.isArray(parsed.surfaces)) throw new Error('inventory.surfaces must be an array');
+	if (!Array.isArray(parsed.uncheckedModules)) {
+		throw new Error('inventory.uncheckedModules must be an array');
+	}
 	return {
 		surfaces: parsed.surfaces.map((entry, index) => surface(entry, `surfaces[${index}]`)),
+		uncheckedModules: parsed.uncheckedModules.map((entry, index) =>
+			uncheckedModule(entry, `uncheckedModules[${index}]`),
+		),
 	};
 }

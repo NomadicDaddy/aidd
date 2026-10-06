@@ -156,6 +156,23 @@ describe('runPreflightDoctor credential warning', () => {
 		expect(result.warning).not.toContain('not-a-real');
 	});
 
+	// A provider aidd has no variable for must not be told to "move it to its variable": the only
+	// environment route is NATIVE_API_KEY, and that overrides every provider's key.
+	test('a custom provider is told NATIVE_API_KEY is its only variable, and what that costs', async () => {
+		const projectDir = await makeProjectDir('config-custom-provider');
+		const result = await runPreflightDoctor(plan(projectDir), {
+			prober,
+			readUserConfig: () =>
+				Promise.resolve({ providers: { local: { apiKey: 'not-a-real-local-key' } } }),
+		});
+
+		if (!result.ok) throw new Error('expected the doctor to pass');
+		expect(result.warning).toContain(
+			"providers.local.apiKey (no variable of its own; NATIVE_API_KEY can supply it, but it overrides every provider's key for native runs)",
+		);
+		expect(result.warning).not.toContain('not-a-real');
+	});
+
 	test('a config file with no credential, or one that cannot be read, adds no warning', async () => {
 		const projectDir = await makeProjectDir('config-clean');
 		const clean = await runPreflightDoctor(plan(projectDir), {

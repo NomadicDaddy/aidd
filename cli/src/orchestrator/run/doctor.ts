@@ -92,10 +92,17 @@ async function configCredentialWarning(
 	}
 	const found = configFileCredentials(config);
 	if (found.length === 0) return undefined;
+	// A provider aidd has no variable for can only come from NATIVE_API_KEY, which overrides the key
+	// of every provider the native client uses. Say so rather than promise a variable that is not
+	// there, and leave that precedence alone.
 	const listed = found
-		.map((entry) => (entry.envVar ? `${entry.path} (set ${entry.envVar} instead)` : entry.path))
+		.map((entry) =>
+			entry.envVar
+				? `${entry.path} (set ${entry.envVar} instead)`
+				: `${entry.path} (no variable of its own; NATIVE_API_KEY can supply it, but it overrides every provider's key for native runs)`,
+		)
 		.join(', ');
-	return `preflight doctor: warning: the user config file holds credentials: ${listed}. Any program an agent starts can read that file whatever the shell policy allows; move each value to its environment variable and remove it from the file.`;
+	return `preflight doctor: warning: the user config file holds credentials: ${listed}. Any program an agent starts can read that file whatever the shell policy allows; move each value you can to its environment variable and remove it from the file.`;
 }
 
 /**

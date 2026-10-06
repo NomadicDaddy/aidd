@@ -39,9 +39,11 @@ configuration file, so an agent asked to inspect your configuration reads the wh
 credential inside travels out with the answer, into the model provider's context, where nothing
 can recall it. A value held in the environment is not in the file an agent reads.
 
-The preflight doctor warns at the start of every run while the file still holds a credential, a
-provider `apiKey` included, and names the variable that replaces each one. The warning never stops
-the run.
+The preflight doctor warns at the start of a run while the file still holds a credential, a
+provider `apiKey` included, and names the variable that replaces each one. A provider with no
+variable of its own can take `NATIVE_API_KEY`, which overrides every provider's key for native
+runs. The warning never stops the run. It is skipped wherever the doctor is: Director runs,
+simulations, `preflightDoctor: false` and `AIDD_SKIP_DOCTOR=1`.
 
 Rules:
 

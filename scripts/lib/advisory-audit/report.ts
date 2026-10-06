@@ -154,16 +154,21 @@ export function renderReport(
 	return lines.join('\n');
 }
 
-/** One line per run, written even when nothing was found, so a missing line is the alarm. */
+/**
+ * One line per run, written even when nothing was found, so a missing line is the alarm. It names
+ * the record it summarizes and the roots that were scanned, so the line can be checked against its
+ * record and a root dropped from the configuration shows in the history.
+ */
 export function historyLine(
 	record: RunRecord,
 	previous: null | RunRecord,
 	holds: Hold[],
 	now: Date,
+	recordFile: string,
 ): string {
 	const { closed, opened, unverified } = diffRuns(record, previous);
 	const unswept = unsweptNames(record);
 	const lockOnly = record.trees.filter((t) => t.lockOnly.length > 0).map((t) => t.key);
 	const stale = holds.filter((h) => holdStatus(h, now).stale).length;
-	return `${record.generatedAt} | trees ${String(record.trees.length)} | unswept: ${unswept.length === 0 ? 'none' : unswept.join(', ')} | lock-only: ${lockOnly.length === 0 ? 'none' : lockOnly.join(', ')} | findings: ${countBySeverity(record.trees)} | new ${String(opened.length)} | closed ${String(closed.length)} | not re-checked ${String(unverified.length)} | stale holds ${String(stale)} | artifacts skipped ${String(record.skipped.length)} | no surface: ${record.noSurface.length === 0 ? 'none' : record.noSurface.join(', ')}`;
+	return `${record.generatedAt} | record ${recordFile} | roots ${record.roots.join(', ')} | trees ${String(record.trees.length)} | unswept: ${unswept.length === 0 ? 'none' : unswept.join(', ')} | lock-only: ${lockOnly.length === 0 ? 'none' : lockOnly.join(', ')} | findings: ${countBySeverity(record.trees)} | new ${String(opened.length)} | closed ${String(closed.length)} | not re-checked ${String(unverified.length)} | stale holds ${String(stale)} | artifacts skipped ${String(record.skipped.length)} | no surface: ${record.noSurface.length === 0 ? 'none' : record.noSurface.join(', ')}`;
 }

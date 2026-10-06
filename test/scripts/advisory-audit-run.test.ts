@@ -138,4 +138,33 @@ describe('advisory audit run', () => {
 		expect(report).toContain('## Closed since last report\n\nnone');
 		expect(report).toContain('## Not re-checked (tree UNSWEPT or absent this run)\n\n- ');
 	});
+
+	// Roger (a430667b): second-resolution stamps let a same-second run overwrite the record its
+	// history line pointed at. The name is reserved exclusively, so two runs keep two records.
+	test('two runs in the same millisecond keep two records, each named by its own history line', async () => {
+		base = await testTempDir('aidd-advisory-run-stamp-');
+		const root = join(base, 'root');
+		const out = join(base, 'out');
+		await mkdir(join(root, 'app'), { recursive: true });
+		await writeFile(join(root, 'app', 'bun.lock'), LOCK);
+		const run = () =>
+			runAdvisoryAudit({
+				ignored: new Set<string>(),
+				now: new Date('2026-10-06T19:00:00.000Z'),
+				out,
+				roots: [root],
+				runner: () => Promise.resolve(output('{}', 0)),
+				timeoutMs: 10,
+			});
+		expect(await run()).toBe(0);
+		expect(await run()).toBe(0);
+		expect((await readdir(join(out, 'runs'))).sort()).toEqual([
+			'20261006T190000.000Z-1.json',
+			'20261006T190000.000Z.json',
+		]);
+		const lines = (await readFile(join(out, 'history.md'), 'utf8')).trim().split('\n');
+		expect(lines).toHaveLength(2);
+		expect(lines[0]).toContain(`| record runs/20261006T190000.000Z.json | roots ${root} |`);
+		expect(lines[1]).toContain('| record runs/20261006T190000.000Z-1.json |');
+	});
 });

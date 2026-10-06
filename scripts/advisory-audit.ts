@@ -42,6 +42,23 @@ async function configuredScope(): Promise<{ ignored: Set<string>; roots: string[
 	return { ignored, roots: [...new Set([...allowed, ...EXTRA_ROOTS])] };
 }
 
+/**
+ * Writes the record as `<stamp>.json`, or `<stamp>-<n>.json` when that name is taken. The name is
+ * reserved by the exclusive create itself (`wx`), not by a look-before-write, so two runs in the
+ * same millisecond, or a stamp that already exists, both keep their own record.
+ */
+async function reserveRecord(runsDir: string, stamp: string, text: string): Promise<string> {
+	for (let n = 0; ; n++) {
+		const name = n === 0 ? `${stamp}.json` : `${stamp}-${String(n)}.json`;
+		try {
+			await writeFile(join(runsDir, name), text, { encoding: 'utf8', flag: 'wx' });
+			return name;
+		} catch (err) {
+			if (!(err instanceof Error && 'code' in err && err.code === 'EEXIST')) throw err;
+		}
+	}
+}
+
 async function previousRecord(runsDir: string, before: string): Promise<null | RunRecord> {
 	let names: string[];
 	try {
@@ -91,10 +108,7 @@ export async function runAdvisoryAudit(options: {
 	tree?: string | undefined;
 }): Promise<number> {
 	const now = options.now ?? new Date();
-	const stamp = now
-		.toISOString()
-		.replace(/[-:]/g, '')
-		.replace(/\.\d+Z$/, 'Z');
+	const stamp = now.toISOString().replace(/[-:]/g, '');
 	const runsDir = join(options.out, 'runs');
 	await mkdir(runsDir, { recursive: true });
 	const previous = await previousRecord(runsDir, stamp);
@@ -164,17 +178,17 @@ export async function runAdvisoryAudit(options: {
 		skipped,
 		trees,
 	};
-	await writeFile(
-		join(runsDir, `${stamp}.json`),
+	const recordName = await reserveRecord(
+		runsDir,
+		stamp,
 		`${JSON.stringify(record, null, '\t')}\n`,
-		'utf8',
 	);
 	await writeFile(
 		join(options.out, 'latest.md'),
 		renderReport(record, previous, holds, now),
 		'utf8',
 	);
-	const line = historyLine(record, previous, holds, now);
+	const line = historyLine(record, previous, holds, now, `runs/${recordName}`);
 	await writeFile(join(options.out, 'history.md'), `${line}\n`, { encoding: 'utf8', flag: 'a' });
 	console.log(line);
 	const unswept = trees.filter((t) => t.status === 'unswept').length + record.missingRoots.length;

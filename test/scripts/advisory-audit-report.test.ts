@@ -145,7 +145,9 @@ describe('advisory audit: report', () => {
 			findingKey('applications/a', 'left-pad', 'GHSA-aaaa-aaaa-aaaa'),
 			findingKey('applications/b', 'right-pad', 'GHSA-bbbb-bbbb-bbbb'),
 		]);
-		expect(historyLine(after, before, [], NOW)).toContain('| closed 1 | not re-checked 2 |');
+		expect(historyLine(after, before, [], NOW, 'runs/x.json')).toContain(
+			'| closed 1 | not re-checked 2 |',
+		);
 	});
 
 	test('LOCK-ONLY comes first in a tree block, UNSWEPT is named in the header, holds show their age', () => {
@@ -189,9 +191,9 @@ describe('advisory audit: report', () => {
 
 	test('the history line is written for a quiet run too, so a missing line is the alarm', () => {
 		const quiet = record([tree('applications/aidd')]);
-		const line = historyLine(quiet, null, [], NOW);
+		const line = historyLine(quiet, null, [], NOW, 'runs/20261006T190000.000Z.json');
 		expect(line).toBe(
-			`${NOW.toISOString()} | trees 1 | unswept: none | lock-only: none | findings: 0 | new 0 | closed 0 | not re-checked 0 | stale holds 0 | artifacts skipped 1 | no surface: D:\\scripts`,
+			`${NOW.toISOString()} | record runs/20261006T190000.000Z.json | roots D:\\applications, D:\\scripts | trees 1 | unswept: none | lock-only: none | findings: 0 | new 0 | closed 0 | not re-checked 0 | stale holds 0 | artifacts skipped 1 | no surface: D:\\scripts`,
 		);
 	});
 });

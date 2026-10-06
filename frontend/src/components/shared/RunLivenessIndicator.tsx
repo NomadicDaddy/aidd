@@ -1,13 +1,13 @@
 import type { RunRecord } from '../../api/types.ts';
 
-import { StatusDot } from '../../components/ui/badge.tsx';
-import { type Tone } from '../../lib/tones.ts';
 import {
 	formatActivityState,
 	formatHeartbeatAge,
 	runLiveness,
 	type RunLiveness,
-} from './runRowUtils.ts';
+} from '../../lib/runRowUtils.ts';
+import { type Tone } from '../../lib/tones.ts';
+import { StatusDot } from '../ui/badge.tsx';
 
 const LIVENESS_TONE: Record<RunLiveness, Tone> = {
 	idle: 'amber',

@@ -3,7 +3,7 @@ import type { ScheduledTask } from 'aidd-shared/contracts/scheduled-tasks';
 import { expect, test } from 'bun:test';
 
 import { NAV_DESTINATIONS } from '../../frontend/src/components/layout/nav-destinations.ts';
-import { sessionStatusTone } from '../../frontend/src/pages/runs/pipelineSessionStatus.ts';
+import { sessionStatusTone } from '../../frontend/src/lib/pipelineSessionStatus.ts';
 import {
 	draftPresetFromParams,
 	initialDraft,

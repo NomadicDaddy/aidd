@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
 	isReadOnlySkillDirectiveViolation,
 	skillDirectiveExecutionIntent,
-} from '../../frontend/src/pages/runs/skillDirectiveIntent.ts';
+} from '../../frontend/src/components/shared/run-detail/skillDirectiveIntent.ts';
 
 const readOnlySkillDirective = {
 	launchCommand: {

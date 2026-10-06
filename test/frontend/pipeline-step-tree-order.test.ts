@@ -88,7 +88,7 @@ function report(
 
 function rowKeys(input: PipelineSessionReport): string[] {
 	const script = [
-		"import { buildStepRows } from './src/pages/pipelineSessions/stepRowModel.ts';",
+		"import { buildStepRows } from './src/lib/pipelineStepRows.ts';",
 		`const report = ${JSON.stringify(input)};`,
 		"console.log(JSON.stringify(buildStepRows(report).map((row) => row.kind === 'executed' ? row.result.id : `pending-${row.sequenceNumber}`)));",
 	].join('\n');

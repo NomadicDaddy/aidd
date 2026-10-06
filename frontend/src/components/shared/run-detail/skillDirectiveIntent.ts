@@ -1,6 +1,6 @@
 import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
 
-import type { RunCommitsResponse, RunRecord } from '../../api/types.ts';
+import type { RunCommitsResponse, RunRecord } from '../../../api/types.ts';
 
 export function skillDirectiveExecutionIntent(
 	run: Pick<RunRecord, 'launchCommand' | 'mode'>,

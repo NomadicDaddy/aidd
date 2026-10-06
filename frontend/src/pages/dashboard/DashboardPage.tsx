@@ -13,7 +13,7 @@ import { useRuns } from '../../hooks/useRuns.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { percent } from '../../lib/formatters.ts';
-import { inFlightBreakdown, inFlightRuns } from '../runs/runsUtils.ts';
+import { inFlightBreakdown, inFlightRuns } from '../../lib/runLiveness.ts';
 import { ActiveCycleBanner } from './ActiveCycleBanner.tsx';
 import { ActiveRunsCard } from './ActiveRunsCard.tsx';
 import { getHealthTone } from './dashboard-shared.ts';

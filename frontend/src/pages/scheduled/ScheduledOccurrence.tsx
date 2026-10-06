@@ -6,7 +6,7 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { useNow } from '../../hooks/useNow.ts';
 import { formatDate, formatDuration, formatTimeOfDay, humanizeEnum } from '../../lib/formatters.ts';
-import { sessionStatusTone } from '../runs/pipelineSessionStatus.ts';
+import { sessionStatusTone } from '../../lib/pipelineSessionStatus.ts';
 import { occurrenceProjectsLabel } from './scheduledLabels.ts';
 import { ScheduledOccurrenceChildren } from './ScheduledOccurrenceChildren.tsx';
 

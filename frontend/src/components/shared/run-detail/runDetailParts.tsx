@@ -3,21 +3,21 @@ import { default as FilePlus } from 'lucide-react/dist/esm/icons/file-plus';
 import { default as GitCommit } from 'lucide-react/dist/esm/icons/git-commit';
 import { type ReactNode, useId, useRef, useState } from 'react';
 
-import type { GitCommitRef, RunLaunchCommand, RunRecord } from '../../api/types.ts';
+import type { GitCommitRef, RunLaunchCommand, RunRecord } from '../../../api/types.ts';
 
-import { CommitChips } from '../../components/shared/CommitChips.tsx';
-import { CommitDiffDialog } from '../../components/shared/CommitDiffDialog.tsx';
-import { RunCommandInfo } from '../../components/shared/RunCommandInfo.tsx';
-import { Button } from '../../components/ui/button.tsx';
-import { useRunCommits } from '../../hooks/useCommits.ts';
-import { cn } from '../../lib/cn.ts';
-import { observeOverflow } from '../../lib/observeOverflow.ts';
-import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
+import { useRunCommits } from '../../../hooks/useCommits.ts';
+import { cn } from '../../../lib/cn.ts';
+import { observeOverflow } from '../../../lib/observeOverflow.ts';
+import { toneBorder, toneSurface, toneText } from '../../../lib/tones.ts';
 import {
 	machineTextBreakClass,
 	microLabelClass,
 	monoEditorMeasureClass,
-} from '../../lib/typography.ts';
+} from '../../../lib/typography.ts';
+import { Button } from '../../ui/button.tsx';
+import { CommitChips } from '../CommitChips.tsx';
+import { CommitDiffDialog } from '../CommitDiffDialog.tsx';
+import { RunCommandInfo } from '../RunCommandInfo.tsx';
 import { FileChangeChip } from './RunFileChangeChip.tsx';
 import { isReadOnlySkillDirectiveViolation } from './skillDirectiveIntent.ts';
 

@@ -1,8 +1,8 @@
 import type { RunRecord } from '../../api/types.ts';
 
 import { useRunLiveOutput } from '../../hooks/useRunLiveOutput.ts';
+import { isTerminalStatus } from '../../lib/runLiveness.ts';
 import { LiveConsole, type LiveConsoleBadge } from './LiveConsole.tsx';
-import { isTerminalStatus } from './runsUtils.ts';
 import { extractStopDetail } from './stopDetail.ts';
 
 // Owns the live-output subscription and all of its derived view state. Keeping this in its own

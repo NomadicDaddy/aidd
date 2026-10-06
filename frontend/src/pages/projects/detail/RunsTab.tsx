@@ -10,7 +10,7 @@ import { LocalAiddHistoryPanel } from '../../../components/shared/LocalAiddHisto
 import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { useRuns } from '../../../hooks/useRuns.ts';
-import { compareRunsByLiveness, inFlightRuns } from '../../runs/runsUtils.ts';
+import { compareRunsByLiveness, inFlightRuns } from '../../../lib/runLiveness.ts';
 import { ActiveRunsPanel } from './ActiveRunsPanel.tsx';
 import { ProjectUsagePanel } from './ProjectUsagePanel.tsx';
 

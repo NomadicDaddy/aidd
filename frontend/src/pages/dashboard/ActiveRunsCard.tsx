@@ -9,14 +9,14 @@ import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
 import { RunCommandInfo } from '../../components/shared/RunCommandInfo.tsx';
+import { RunLivenessIndicator } from '../../components/shared/RunLivenessIndicator.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { useNow } from '../../hooks/useNow.ts';
 import { formatDate } from '../../lib/formatters.ts';
+import { runSourceLabel } from '../../lib/runRowUtils.ts';
 import { toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
-import { RunLivenessIndicator } from '../runs/RunLivenessIndicator.tsx';
-import { runSourceLabel } from '../runs/runRowUtils.ts';
 
 export function ActiveRunsCard({
 	activeRuns,

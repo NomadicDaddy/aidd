@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { join, resolve } from 'node:path';
+import { join, posix, resolve } from 'node:path';
 
 const FRONTEND_SOURCE = resolve(import.meta.dir, '../../frontend/src');
 const CONTROLLED_DISCLOSURE_EXEMPTIONS = new Map([
@@ -16,16 +16,16 @@ const CONTROLLED_DISCLOSURE_EXEMPTIONS = new Map([
 		'launch target opens a dialog and uses its execution-identity summary as the idiom',
 	],
 	[
+		'components/shared/run-detail/runDetailParts.tsx',
+		'long command expansion is an inline underlined Show more or Show less text idiom',
+	],
+	[
 		'components/ui/dropdown-menu.tsx',
 		'menu triggers expose aria-haspopup=menu rather than disclosing inline content',
 	],
 	[
 		'pages/recipes/RecipeLaunchButton.tsx',
 		'launch is an action that opens a form and keeps the Send action icon',
-	],
-	[
-		'pages/runs/runDetailParts.tsx',
-		'long command expansion is an inline underlined Show more or Show less text idiom',
 	],
 ]);
 
@@ -55,7 +55,12 @@ describe('disclosures share one marker contract', () => {
 			const summaries = source.match(/<summary\b[\s\S]*?<\/summary>/g) ?? [];
 
 			expect(summaries.length).toBe(details.length);
-			expect(source).toContain("components/shared/DisclosureMarker.tsx'");
+			// Resolve the import rather than matching its spelling: a file inside components/shared
+			// reaches the marker as './DisclosureMarker.tsx' or '../DisclosureMarker.tsx'.
+			const markerImport = source.match(/from '(\.[^']*DisclosureMarker\.tsx)'/)?.[1] ?? '';
+			expect(
+				`${path}: ${posix.normalize(posix.join(posix.dirname(path), markerImport))}`,
+			).toBe(`${path}: components/shared/DisclosureMarker.tsx`);
 			for (const detailsTag of details) expect(detailsTag).toContain('group');
 			for (const summary of summaries) {
 				expect(`${path}: ${summary}`).toContain('list-none');

@@ -7,11 +7,17 @@ import type { RunRecord } from '../../api/types.ts';
 
 import { DisclosureMarker } from '../../components/shared/DisclosureMarker.tsx';
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
+import {
+	entrySearchText,
+	recentConsoleEntries,
+} from '../../components/shared/live-console/consoleEntries.ts';
+import { LiveConsolePretty } from '../../components/shared/live-console/LiveConsolePretty.tsx';
+import { highlightLine } from '../../components/shared/live-console/liveConsoleText.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { cn } from '../../lib/cn.ts';
-import { entrySearchText, MAX_PRETTY_ENTRIES, parseConsoleEntries } from './consoleEntries.ts';
+import { isTerminalStatus } from '../../lib/runLiveness.ts';
 import { LiveConsoleControls } from './LiveConsoleControls.tsx';
 import { LiveConsoleNotices } from './LiveConsoleNotices.tsx';
 import {
@@ -21,12 +27,9 @@ import {
 	writeViewPreference,
 	writeWrapPreference,
 } from './liveConsolePrefs.ts';
-import { LiveConsolePretty } from './LiveConsolePretty.tsx';
-import { highlightLine } from './liveConsoleText.tsx';
 import { describeWindow } from './liveConsoleWindow.ts';
 import { LiveConsoleWindowNav } from './LiveConsoleWindowNav.tsx';
 import { RunDetailPanel } from './RunDetailPanel.tsx';
-import { isTerminalStatus } from './runsUtils.ts';
 import { useConsoleScroll } from './useConsoleScroll.ts';
 import { useLiveConsoleWindow } from './useLiveConsoleWindow.ts';
 
@@ -130,14 +133,10 @@ export function LiveConsole({
 			? displayedMessage.split('\n').filter((line) => line.toLowerCase().includes(findNeedle))
 			: null;
 
-	const allEntries =
-		effectiveView === 'pretty'
-			? parseConsoleEntries(displayedMessage, selectedRun?.backend)
-			: [];
 	const entries =
-		allEntries.length > MAX_PRETTY_ENTRIES
-			? allEntries.slice(allEntries.length - MAX_PRETTY_ENTRIES)
-			: allEntries;
+		effectiveView === 'pretty'
+			? recentConsoleEntries(displayedMessage, selectedRun?.backend)
+			: [];
 	const visibleEntries = trimmedFind
 		? entries.filter((entry) => entrySearchText(entry).toLowerCase().includes(findNeedle))
 		: entries;

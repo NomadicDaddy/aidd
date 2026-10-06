@@ -2,9 +2,9 @@ import type {
 	PipelineSessionReport,
 	PipelineStepResultRecord,
 	RecipeStepDefinition,
-} from '../../api/types.ts';
+} from '../api/types.ts';
 
-import { buildAttemptLabels } from './stepAttempts.ts';
+import { buildAttemptLabels } from './pipelineStepAttempts.ts';
 
 /**
  * Build a unified ordered list of every step in the session — both executed

@@ -6,11 +6,11 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration } from '../../lib/formatters.ts';
+import { sessionStatusTone, stepStatusLabel } from '../../lib/pipelineSessionStatus.ts';
+import { containerSelectedClass } from '../../lib/runRowUtils.ts';
 import { stepTypeLabel } from '../../lib/stepTypeLabel.ts';
 import { FailureReason } from './FailureReason.tsx';
-import { sessionStatusTone, stepStatusLabel } from './pipelineSessionStatus.ts';
 import { stepIndentPx, usePipelineStepSubRows } from './pipelineStepSubRowModel.ts';
-import { containerSelectedClass } from './runRowUtils.ts';
 
 const cellClass = 'px-3 py-2 align-top text-xs';
 const nameCellClass = 'max-w-0 py-2 pr-3 align-top text-xs';

@@ -6,7 +6,7 @@ import {
 	buildRunFileChangeTooltipModel,
 	fileChangeSourceNote,
 	fileChangeTelemetryNote,
-} from '../../frontend/src/pages/runs/runFileChangeTooltip.ts';
+} from '../../frontend/src/components/shared/run-detail/runFileChangeTooltip.ts';
 
 describe('run file change tooltip model', () => {
 	test('keeps the trigger inline while the shared surface holds block content', async () => {
@@ -15,7 +15,10 @@ describe('run file change tooltip model', () => {
 			'utf8',
 		);
 		const chip = await readFile(
-			resolve(import.meta.dir, '../../frontend/src/pages/runs/RunFileChangeChip.tsx'),
+			resolve(
+				import.meta.dir,
+				'../../frontend/src/components/shared/run-detail/RunFileChangeChip.tsx',
+			),
 			'utf8',
 		);
 

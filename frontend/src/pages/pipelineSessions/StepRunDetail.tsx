@@ -1,7 +1,11 @@
 import type { PipelineStepResultRecord, RunRecord } from '../../api/types.ts';
 
+import {
+	MetadataItem,
+	RunCommandBlock,
+	RunCommitsSection,
+} from '../../components/shared/run-detail/runDetailParts.tsx';
 import { proseMeasureClass } from '../../lib/typography.ts';
-import { MetadataItem, RunCommandBlock, RunCommitsSection } from '../runs/runDetailParts.tsx';
 import { formatRunNarrative } from './runNarrative.ts';
 
 /**
@@ -11,8 +15,8 @@ import { formatRunNarrative } from './runNarrative.ts';
  * launch command and file-change chips; a report page that gives ~700 of its 1200 visible pixels to
  * a raw NDJSON slab and says nothing else about the step omits everything its own console shows,
  * which is strictly worse than the thing it summarises. So these blocks are the same components the
- * console renders — imported from `pages/runs/runDetailParts.tsx` rather than reimplemented, which
- * is what keeps the two surfaces from drifting.
+ * console renders — imported from `components/shared/run-detail/runDetailParts.tsx` rather than
+ * reimplemented, which is what keeps the two surfaces from drifting.
  *
  * The badges, name, timestamps and duration stay on the step card's own header; repeating them here
  * would only restate the row this sits inside. What is added is what the step record does not carry:

@@ -6,29 +6,29 @@ import { Link } from 'react-router';
 import type { PipelineSessionRecord } from '../../api/types.ts';
 
 import { DisclosureMarker } from '../../components/shared/DisclosureMarker.tsx';
+import { ParkedWorkBadge } from '../../components/shared/ParkedWorkBadge.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName, IconButton } from '../../components/ui/button.tsx';
 import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
 import { pipelineProgressLabel } from '../../lib/pipelineProgress.ts';
-import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
-import { FailureReason } from './FailureReason.tsx';
-import { ParkedWorkBadge } from './ParkedWorkBadge.tsx';
-import { PipelineSessionIdentityBadges } from './PipelineSessionIdentityBadges.tsx';
 import {
 	isSessionActive,
 	sessionStatusLabel,
 	sessionStatusTone,
 	sessionStopUnavailableReason,
-} from './pipelineSessionStatus.ts';
+} from '../../lib/pipelineSessionStatus.ts';
 import {
 	containerHoverClass,
 	containerSelectableClass,
 	containerSelectedClass,
 	containerSelectionHandler,
 	leadingSlotClass,
-} from './runRowUtils.ts';
+} from '../../lib/runRowUtils.ts';
+import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
+import { FailureReason } from './FailureReason.tsx';
+import { PipelineSessionIdentityBadges } from './PipelineSessionIdentityBadges.tsx';
 import { isMultiStepSession, isSkillSession } from './unifiedEntries.ts';
 
 interface PipelineSessionRowProps {

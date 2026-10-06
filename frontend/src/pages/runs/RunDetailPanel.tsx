@@ -4,6 +4,13 @@ import { skillExecutionIntentLabel } from 'aidd-shared/skill-execution-intent';
 import type { RunRecord } from '../../api/types.ts';
 
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
+import {
+	detailPreClass,
+	MetadataItem,
+	RunCommandBlock,
+	RunCommitsSection,
+} from '../../components/shared/run-detail/runDetailParts.tsx';
+import { skillDirectiveExecutionIntent } from '../../components/shared/run-detail/skillDirectiveIntent.ts';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { Tooltip } from '../../components/ui/tooltip.tsx';
@@ -11,19 +18,13 @@ import { useProject } from '../../hooks/useProjects.ts';
 import { useStopRequested } from '../../hooks/useStopRequested.ts';
 import { formatAiddRunDriver, formatAiddRunProvenance } from '../../lib/aiddRunProvenance.ts';
 import { formatDuration } from '../../lib/formatters.ts';
+import { classifyRunRecord } from '../../lib/runLiveness.ts';
+import { runSourceLabel } from '../../lib/runRowUtils.ts';
 import { microLabelClass } from '../../lib/typography.ts';
-import {
-	detailPreClass,
-	MetadataItem,
-	RunCommandBlock,
-	RunCommitsSection,
-} from './runDetailParts.tsx';
 import { RunFinalChecks } from './RunFinalChecks.tsx';
 import { resolveRunFinalCheckState } from './runFinalCheckState.ts';
 import { presentRunRecordInitiator } from './runInitiator.ts';
-import { runSourceLabel } from './runRowUtils.ts';
-import { classifyRunRecord, isRunStopping } from './runsUtils.ts';
-import { skillDirectiveExecutionIntent } from './skillDirectiveIntent.ts';
+import { isRunStopping } from './runsUtils.ts';
 
 export function RunDetailPanel({
 	selectedRun,

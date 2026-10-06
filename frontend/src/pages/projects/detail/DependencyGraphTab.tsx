@@ -10,7 +10,7 @@ import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { useLaunchRun, useRuns } from '../../../hooks/useRuns.ts';
 import { useViewportFill } from '../../../hooks/useViewportFill.ts';
 import { cn } from '../../../lib/cn.ts';
-import { hasInFlightRun } from '../../runs/runsUtils.ts';
+import { hasInFlightRun } from '../../../lib/runLiveness.ts';
 import { dependencyFilterRegister } from './dependencyFilterRegister.ts';
 import { DependencyGraphFilters } from './DependencyGraphFilters.tsx';
 import { dependencyGraphViewportFit, GRAPH_MIN_READABLE_SCALE } from './dependencyGraphLayout.ts';

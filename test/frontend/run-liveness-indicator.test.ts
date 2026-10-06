@@ -37,7 +37,7 @@ function renderIndicator(overrides: Record<string, unknown> = {}): string {
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
-		"import { RunLivenessIndicator } from './src/pages/runs/RunLivenessIndicator.tsx';",
+		"import { RunLivenessIndicator } from './src/components/shared/RunLivenessIndicator.tsx';",
 		`const run = ${JSON.stringify(runFixture(overrides))};`,
 		`const el = createElement(RunLivenessIndicator, { now: ${NOW}, run });`,
 		'console.log(renderToStaticMarkup(el));',

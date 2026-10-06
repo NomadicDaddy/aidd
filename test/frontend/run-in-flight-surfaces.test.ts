@@ -4,7 +4,7 @@ import {
 	classifyRunRecord,
 	inFlightBreakdown,
 	inFlightRuns,
-} from '../../frontend/src/pages/runs/runsUtils.ts';
+} from '../../frontend/src/lib/runLiveness.ts';
 
 function makeRun(overrides: Partial<RunRecord> = {}): RunRecord {
 	return {

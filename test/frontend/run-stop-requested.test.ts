@@ -6,7 +6,8 @@ import {
 	markStopRequested,
 	subscribeStopRequests,
 } from '../../frontend/src/lib/stopRequests.ts';
-import { classifyRunRecord, isRunStopping } from '../../frontend/src/pages/runs/runsUtils.ts';
+import { classifyRunRecord } from '../../frontend/src/lib/runLiveness.ts';
+import { isRunStopping } from '../../frontend/src/pages/runs/runsUtils.ts';
 
 function makeRun(overrides: Partial<RunRecord> = {}): RunRecord {
 	return {

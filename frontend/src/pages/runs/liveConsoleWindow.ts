@@ -1,5 +1,5 @@
+import { windowTail } from '../../components/shared/live-console/liveConsoleText.tsx';
 import { utf8ByteLength } from '../../lib/formatters.ts';
-import { windowTail } from './liveConsoleText.tsx';
 
 // The on-disk size and the loaded transcript are sampled at different instants, so a running run
 // writes more between the two reads. Below this, the gap is that race or a handful of lines, not

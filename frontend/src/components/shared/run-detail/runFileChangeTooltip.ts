@@ -1,6 +1,6 @@
 import { fileChangePathLimit } from 'aidd-shared/runs/file-changes';
 
-import type { RunFileChangeSource } from '../../api/types.ts';
+import type { RunFileChangeSource } from '../../../api/types.ts';
 
 export type RunFileChangeKind = 'created' | 'edited';
 

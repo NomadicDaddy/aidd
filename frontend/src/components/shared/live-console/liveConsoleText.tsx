@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { consoleSearchMatchClass } from '../../lib/tones.ts';
+import { consoleSearchMatchClass } from '../../../lib/tones.ts';
 
 // Cap how much transcript is laid out in the <pre> at once. The full loaded transcript remains
 // searchable and copyable; only the visible raw stream is windowed for rendering.

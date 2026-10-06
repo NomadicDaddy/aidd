@@ -11,7 +11,7 @@ import {
 } from '../../frontend/src/lib/pipelineProgress.ts';
 import { realtimeInvalidationKeysForMessage } from '../../frontend/src/hooks/realtimeInvalidationKeys.ts';
 import { toneSolid } from '../../frontend/src/lib/tones.ts';
-import { sessionStatusTone } from '../../frontend/src/pages/runs/pipelineSessionStatus.ts';
+import { sessionStatusTone } from '../../frontend/src/lib/pipelineSessionStatus.ts';
 
 const FRONTEND_SRC = join(import.meta.dir, '..', '..', 'frontend', 'src');
 

@@ -8,7 +8,7 @@ import {
 	installedTone,
 	sourceControlInstalledLabel,
 } from '../../frontend/src/pages/settings/sourceControlTone.ts';
-import { classifyRunRecord } from '../../frontend/src/pages/runs/runsUtils.ts';
+import { classifyRunRecord } from '../../frontend/src/lib/runLiveness.ts';
 
 const FRONTEND_ROOT = resolve(import.meta.dir, '../../frontend');
 const FRONTEND_SRC = join(FRONTEND_ROOT, 'src');

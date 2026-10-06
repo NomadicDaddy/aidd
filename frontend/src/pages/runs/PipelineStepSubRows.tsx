@@ -6,11 +6,11 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { IconButton } from '../../components/ui/button.tsx';
 import { cn } from '../../lib/cn.ts';
 import { formatActiveDuration } from '../../lib/formatters.ts';
+import { sessionStatusTone, stepStatusLabel } from '../../lib/pipelineSessionStatus.ts';
+import { containerSelectedClass } from '../../lib/runRowUtils.ts';
 import { stepTypeLabel } from '../../lib/stepTypeLabel.ts';
 import { FailureReason } from './FailureReason.tsx';
-import { sessionStatusTone, stepStatusLabel } from './pipelineSessionStatus.ts';
 import { stepIndentPx, usePipelineStepSubRows } from './pipelineStepSubRowModel.ts';
-import { containerSelectedClass } from './runRowUtils.ts';
 
 /**
  * The steps of an expanded pipeline session below `xl`, where the feed is cards rather than a table.

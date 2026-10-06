@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 
 import type { PipelineStepResultRecord } from '../../frontend/src/api/types.ts';
 
-import { buildAttemptLabels } from '../../frontend/src/pages/pipelineSessions/stepAttempts.ts';
+import { buildAttemptLabels } from '../../frontend/src/lib/pipelineStepAttempts.ts';
 
 const frontendRoot = resolve(import.meta.dir, '../../frontend/src');
 

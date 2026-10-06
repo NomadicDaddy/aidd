@@ -1,7 +1,7 @@
 import type { PipelineSessionRecord } from '../../api/types.ts';
 
 import { pipelineSkippedSuffix } from '../../lib/pipelineProgress.ts';
-import { sessionStatusLabel } from '../runs/pipelineSessionStatus.ts';
+import { sessionStatusLabel } from '../../lib/pipelineSessionStatus.ts';
 
 export function pipelineSessionStepSummary(session: PipelineSessionRecord): string {
 	const completedSteps = session.completedTopLevelSteps;

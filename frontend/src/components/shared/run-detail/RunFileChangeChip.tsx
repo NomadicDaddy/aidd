@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 
-import type { RunFileChangeSource } from '../../api/types.ts';
+import type { RunFileChangeSource } from '../../../api/types.ts';
 
-import { Tooltip } from '../../components/ui/tooltip.tsx';
+import { Tooltip } from '../../ui/tooltip.tsx';
 import { buildRunFileChangeTooltipModel, type RunFileChangeKind } from './runFileChangeTooltip.ts';
 
 function FileChangeTooltipContent({

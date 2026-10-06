@@ -1,6 +1,6 @@
 import type { PipelineSessionRecord } from '../../api/types.ts';
 
-import { Badge } from '../../components/ui/badge.tsx';
+import { Badge } from '../ui/badge.tsx';
 
 /**
  * Qualifies a session whose steps all succeeded but whose work did not get done.

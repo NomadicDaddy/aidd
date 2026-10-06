@@ -16,7 +16,7 @@ import {
 } from '../../../hooks/useProjects.ts';
 import { useLaunchRun, useRuns } from '../../../hooks/useRuns.ts';
 import { clampPage } from '../../../lib/pagination.ts';
-import { hasInFlightRun } from '../../runs/runsUtils.ts';
+import { hasInFlightRun } from '../../../lib/runLiveness.ts';
 import { priorityFilterOptions } from './featurePriorityFilters.ts';
 import { compareFeatures } from './features-list-sort.ts';
 import {

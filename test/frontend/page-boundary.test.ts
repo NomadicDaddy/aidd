@@ -51,4 +51,17 @@ describe('page domains do not import one another', () => {
 			describeImports(imports.filter((entry) => entry.targetDomain === 'projects')),
 		).toEqual([]);
 	});
+
+	test('no other domain imports pages/runs or pages/pipelineSessions', async () => {
+		const { imports, visited } = await crossDomainImports();
+		expect(visited).toBeGreaterThan(100);
+		expect(
+			describeImports(
+				imports.filter(
+					(entry) =>
+						entry.targetDomain === 'runs' || entry.targetDomain === 'pipelineSessions',
+				),
+			),
+		).toEqual([]);
+	});
 });

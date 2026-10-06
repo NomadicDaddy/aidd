@@ -1,4 +1,4 @@
-import type { PipelineStepResultRecord } from '../../api/types.ts';
+import type { PipelineStepResultRecord } from '../api/types.ts';
 
 /**
  * Attempt labelling for the session report.

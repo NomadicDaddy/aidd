@@ -2,10 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
 import { unfinalizedAgentResultMarker } from '../../shared/src/runs/outcome.ts';
 import type { RunRecord } from '../../frontend/src/api/types.ts';
-import {
-	classifyRunRecord,
-	filtersForLaunchedRun,
-} from '../../frontend/src/pages/runs/runsUtils.ts';
+import { classifyRunRecord } from '../../frontend/src/lib/runLiveness.ts';
+import { filtersForLaunchedRun } from '../../frontend/src/pages/runs/runsUtils.ts';
 
 function makeRun(overrides: Partial<RunRecord> = {}): RunRecord {
 	return {

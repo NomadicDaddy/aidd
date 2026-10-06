@@ -3,6 +3,7 @@ import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
 import { Link } from 'react-router';
 
 import { RunCommandInfo } from '../../../components/shared/RunCommandInfo.tsx';
+import { RunLivenessIndicator } from '../../../components/shared/RunLivenessIndicator.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { buttonClassName } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
@@ -10,9 +11,8 @@ import { useNow } from '../../../hooks/useNow.ts';
 import { useRuns } from '../../../hooks/useRuns.ts';
 import { cn } from '../../../lib/cn.ts';
 import { formatDate } from '../../../lib/formatters.ts';
+import { inFlightBreakdown, inFlightRuns } from '../../../lib/runLiveness.ts';
 import { toneBorder, toneSurface, toneText } from '../../../lib/tones.ts';
-import { RunLivenessIndicator } from '../../runs/RunLivenessIndicator.tsx';
-import { inFlightBreakdown, inFlightRuns } from '../../runs/runsUtils.ts';
 
 // Surfaced above the project tabs so a run launched from anywhere on the project page (maturity
 // next-action, audit dispatch, feature launch) gives an immediate in-page indication that work is

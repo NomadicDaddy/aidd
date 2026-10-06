@@ -6,6 +6,7 @@ import {
 import type { PipelineSessionReport } from '../../api/types.ts';
 
 import { Metric } from '../../components/shared/Metric.tsx';
+import { ParkedWorkBadge } from '../../components/shared/ParkedWorkBadge.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Tooltip } from '../../components/ui/tooltip.tsx';
 import { cn } from '../../lib/cn.ts';
@@ -14,11 +15,10 @@ import {
 	pipelineActiveStepLabel,
 	pipelineStepsCompletedLabel,
 } from '../../lib/pipelineProgress.ts';
+import { sessionStatusLabel, sessionStatusTone } from '../../lib/pipelineSessionStatus.ts';
+import { buildStepRows } from '../../lib/pipelineStepRows.ts';
 import { toneSolid, toneText } from '../../lib/tones.ts';
 import { proseMeasureClass } from '../../lib/typography.ts';
-import { ParkedWorkBadge } from '../runs/ParkedWorkBadge.tsx';
-import { sessionStatusLabel, sessionStatusTone } from '../runs/pipelineSessionStatus.ts';
-import { buildStepRows } from './stepRowModel.ts';
 
 /* This file's own `SummaryTile` was deleted here. It was the house metric treatment stepped
    down a size, restated — which is exactly what `Metric`'s `compact` size now is, so the strip

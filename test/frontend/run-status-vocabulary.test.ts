@@ -7,7 +7,7 @@ import { describe, expect, test } from 'bun:test';
 import { join, resolve } from 'node:path';
 
 import { outcomePattern, outcomeSolid } from '../../frontend/src/lib/series.ts';
-import { sessionStatusTone } from '../../frontend/src/pages/runs/pipelineSessionStatus.ts';
+import { sessionStatusTone } from '../../frontend/src/lib/pipelineSessionStatus.ts';
 
 const FRONTEND_SRC = resolve(import.meta.dir, '../../frontend/src');
 
@@ -71,7 +71,7 @@ describe('canonical run-status vocabulary', () => {
 				read('components/shared/local-aidd-history/outcomeClassify.ts'),
 				read('components/shared/local-aidd-history/outcome.ts'),
 				read('pages/runs/RunFilters.tsx'),
-				read('pages/runs/pipelineSessionStatus.ts'),
+				read('lib/pipelineSessionStatus.ts'),
 				read('pages/telemetry/InvocationsTable.tsx'),
 			]);
 

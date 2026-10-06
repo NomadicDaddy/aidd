@@ -6,6 +6,7 @@ import type { RunRecord } from '../../../api/types.ts';
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
 import { OverflowScroller } from '../../../components/shared/OverflowScroller.tsx';
 import { RunCommandInfo } from '../../../components/shared/RunCommandInfo.tsx';
+import { RunLivenessIndicator } from '../../../components/shared/RunLivenessIndicator.tsx';
 import { SortableColumnHeader } from '../../../components/shared/SortableColumnHeader.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { buttonClassName } from '../../../components/ui/button.tsx';
@@ -13,6 +14,8 @@ import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useNow } from '../../../hooks/useNow.ts';
 import { useViewportFill, viewportFillScrollerClass } from '../../../hooks/useViewportFill.ts';
 import { formatActiveDuration, formatDate, humanizeEnum } from '../../../lib/formatters.ts';
+import { classifyRunRecord, inFlightBreakdown } from '../../../lib/runLiveness.ts';
+import { runSourceLabel } from '../../../lib/runRowUtils.ts';
 import {
 	interactiveTableRowClass,
 	tableColumnClass,
@@ -20,9 +23,6 @@ import {
 } from '../../../lib/tableStyles.ts';
 import { toneText } from '../../../lib/tones.ts';
 import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
-import { RunLivenessIndicator } from '../../runs/RunLivenessIndicator.tsx';
-import { runSourceLabel } from '../../runs/runRowUtils.ts';
-import { classifyRunRecord, inFlightBreakdown } from '../../runs/runsUtils.ts';
 
 function sourceTone(run: RunRecord): 'amber' | 'neutral' | 'teal' {
 	if (run.source === 'cli') return 'teal';

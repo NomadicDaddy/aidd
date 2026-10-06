@@ -25,14 +25,14 @@ describe('a pipeline step card leads with what the step did', () => {
 
 		// Imported from the console's own module. Reimplementing them is what lets the two
 		// surfaces drift, which is the state this feature is undoing.
-		expect(detail).toContain("from '../runs/runDetailParts.tsx'");
+		expect(detail).toContain("from '../../components/shared/run-detail/runDetailParts.tsx'");
 		expect(detail).toContain('RunCommandBlock');
 		expect(detail).toContain('RunCommitsSection');
 		expect(detail).toContain('MetadataItem');
 	});
 
 	test('the shared blocks really do come from runDetailParts', async () => {
-		const parts = await read('frontend/src/pages/runs/runDetailParts.tsx');
+		const parts = await read('frontend/src/components/shared/run-detail/runDetailParts.tsx');
 		const panel = await read('frontend/src/pages/runs/RunDetailPanel.tsx');
 
 		expect(parts).toContain('export function RunCommandBlock(');

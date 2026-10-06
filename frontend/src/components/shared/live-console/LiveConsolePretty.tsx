@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 
 import type { ConsoleEntry, ToolConsoleEntry } from './consoleEntries.ts';
 
-import { DisclosureMarker } from '../../components/shared/DisclosureMarker.tsx';
-import { cn } from '../../lib/cn.ts';
-import { toneBadge, toneBorder, toneSurface, toneText } from '../../lib/tones.ts';
+import { cn } from '../../../lib/cn.ts';
+import { toneBadge, toneBorder, toneSurface, toneText } from '../../../lib/tones.ts';
+import { DisclosureMarker } from '../DisclosureMarker.tsx';
 import { highlightLine } from './liveConsoleText.tsx';
 
 function text(value: string, find: string): ReactNode {

@@ -1,5 +1,5 @@
 import { usePipelineSessionReport } from '../../hooks/usePipelineSessions.ts';
-import { buildStepRows, type StepRow } from '../pipelineSessions/stepRowModel.ts';
+import { buildStepRows, type StepRow } from '../../lib/pipelineStepRows.ts';
 
 /**
  * The step list behind an expanded pipeline row, and the one-line notice that stands in for it.

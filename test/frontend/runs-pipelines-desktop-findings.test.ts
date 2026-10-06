@@ -64,11 +64,11 @@ describe('runs, pipelines, identity lab, and diary desktop findings', () => {
 		const consoleSource = await source('pages', 'pipelineSessions', 'StepRunConsole.tsx');
 		const body = await source('pages', 'pipelineSessions', 'RunConsoleBody.tsx');
 		const log = await source('pages', 'pipelineSessions', 'LogPre.tsx');
-		const detail = await source('pages', 'runs', 'runDetailParts.tsx');
+		const detail = await source('components', 'shared', 'run-detail', 'runDetailParts.tsx');
 
 		// The console owns the run record; the body it renders parses that backend's transcript.
 		expect(consoleSource).toContain('backend={run.data?.backend}');
-		expect(body).toContain('parseConsoleEntries(text, backend)');
+		expect(body).toContain('recentConsoleEntries(text, backend)');
 		expect(body).toContain('<LiveConsolePretty entries={entries} find="" />');
 		expect(body).toContain("useState<'pretty' | 'raw'>('pretty')");
 		expect(body).toContain('Raw run console output');

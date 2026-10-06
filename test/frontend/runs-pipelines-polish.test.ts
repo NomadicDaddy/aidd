@@ -6,8 +6,9 @@ import { describe, expect, test } from 'bun:test';
  * Each test states the finding it closes, so a later change that reopens one fails against the
  * reason rather than against a class string nobody can place.
  */
-const runs = async (file: string): Promise<string> =>
-	await Bun.file(`${import.meta.dir}/../../frontend/src/pages/runs/${file}`).text();
+const source = async (path: string): Promise<string> =>
+	await Bun.file(`${import.meta.dir}/../../frontend/src/${path}`).text();
+const runs = async (file: string): Promise<string> => await source(`pages/runs/${file}`);
 const pipeline = async (file: string): Promise<string> =>
 	await Bun.file(`${import.meta.dir}/../../frontend/src/pages/pipelineSessions/${file}`).text();
 
@@ -77,7 +78,7 @@ describe('runs and pipelines polish', () => {
 			expect(source).not.toMatch(/red-\d/u);
 		}
 		// The class the three surfaces would share is absent, not merely unreferenced.
-		expect(await runs('runRowUtils.ts')).not.toContain('failureReasonClass');
+		expect(await source('lib/runRowUtils.ts')).not.toContain('failureReasonClass');
 		// No single-line cap with the full text nowhere.
 		expect(await runs('PipelineSessionRow.tsx')).not.toContain('max-w-[16rem] truncate');
 	});
@@ -98,7 +99,7 @@ describe('runs and pipelines polish', () => {
 	});
 
 	test('marks a console search hit in a channel that survives colour blindness', async () => {
-		const text = await runs('liveConsoleText.tsx');
+		const text = await source('components/shared/live-console/liveConsoleText.tsx');
 		const tones = await Bun.file(`${import.meta.dir}/../../frontend/src/lib/tones.ts`).text();
 		const controls = await runs('LiveConsoleControls.tsx');
 		const consoleSource = await runs('LiveConsole.tsx');
@@ -155,7 +156,7 @@ describe('runs and pipelines polish', () => {
 		// The literal, not the word: both files explain in a comment what they stopped using.
 		expect(links).not.toMatch(/teal-\d/u);
 		// The chips beside the commits chip stopped colouring themselves too.
-		const detail = await runs('runDetailParts.tsx');
+		const detail = await source('components/shared/run-detail/runDetailParts.tsx');
 
 		expect(detail).not.toMatch(/teal-\d/u);
 		expect(detail).not.toMatch(/emerald-\d/u);

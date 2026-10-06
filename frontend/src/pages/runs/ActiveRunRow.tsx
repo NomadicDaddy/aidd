@@ -7,6 +7,7 @@ import type { RunRecord } from '../../api/types.ts';
 
 import { ExecutionIdentityBadges } from '../../components/shared/ExecutionIdentityBadges.tsx';
 import { RunCommandInfo } from '../../components/shared/RunCommandInfo.tsx';
+import { RunLivenessIndicator } from '../../components/shared/RunLivenessIndicator.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Button, IconButton } from '../../components/ui/button.tsx';
 import { Tooltip } from '../../components/ui/tooltip.tsx';
@@ -14,9 +15,7 @@ import { useStopRequested } from '../../hooks/useStopRequested.ts';
 import { cn } from '../../lib/cn.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { formatActiveDuration, formatDate } from '../../lib/formatters.ts';
-import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
-import { RunInitiatorBadge } from './RunInitiatorBadge.tsx';
-import { RunLivenessIndicator } from './RunLivenessIndicator.tsx';
+import { classifyRunRecord, isTerminalStatus } from '../../lib/runLiveness.ts';
 import {
 	consoleSelectionLabel,
 	containerHoverClass,
@@ -26,13 +25,10 @@ import {
 	leadingSlotClass,
 	runDisplayName,
 	runSourceLabel,
-} from './runRowUtils.ts';
-import {
-	classifyRunRecord,
-	continuationTitle,
-	isRunStopping,
-	isTerminalStatus,
-} from './runsUtils.ts';
+} from '../../lib/runRowUtils.ts';
+import { ConsoleSelectionButton, ProjectDetailLink } from './ExecutionRowLinks.tsx';
+import { RunInitiatorBadge } from './RunInitiatorBadge.tsx';
+import { continuationTitle, isRunStopping } from './runsUtils.ts';
 
 export { ActiveRunMobileCard } from './ActiveRunMobileCard.tsx';
 

@@ -1,7 +1,7 @@
 import { executionStatusPresentation } from 'aidd-shared/runs/outcome';
 
-import type { PipelineSessionStatus, PipelineStepStatus } from '../../api/types.ts';
-import type { Tone } from '../../lib/tones.ts';
+import type { PipelineSessionStatus, PipelineStepStatus } from '../api/types.ts';
+import type { Tone } from './tones.ts';
 
 /**
  * The shared status→tone map for sessions, their steps, and scheduled occurrences.

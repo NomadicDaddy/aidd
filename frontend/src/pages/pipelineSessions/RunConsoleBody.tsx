@@ -2,12 +2,12 @@ import { useState } from 'react';
 
 import type { RunLiveOutput } from '../../hooks/useRunLiveOutput.ts';
 
+import { recentConsoleEntries } from '../../components/shared/live-console/consoleEntries.ts';
+import { LiveConsolePretty } from '../../components/shared/live-console/LiveConsolePretty.tsx';
 import { Button } from '../../components/ui/button.tsx';
 import { formatBytes } from '../../lib/formatters.ts';
 import { describeOutputSlice, formatOutputSlice } from '../../lib/outputSlice.ts';
 import { monoEditorMeasureClass } from '../../lib/typography.ts';
-import { MAX_PRETTY_ENTRIES, parseConsoleEntries } from '../runs/consoleEntries.ts';
-import { LiveConsolePretty } from '../runs/LiveConsolePretty.tsx';
 import { LogPre } from './LogPre.tsx';
 
 /**
@@ -34,11 +34,7 @@ export function RunConsoleBody({
 		: output.isLoading
 			? 'Loading run output…'
 			: 'No run output available.';
-	const parsedEntries = hasContent ? parseConsoleEntries(text, backend) : [];
-	const entries =
-		parsedEntries.length > MAX_PRETTY_ENTRIES
-			? parsedEntries.slice(parsedEntries.length - MAX_PRETTY_ENTRIES)
-			: parsedEntries;
+	const entries = hasContent ? recentConsoleEntries(text, backend) : [];
 
 	return (
 		<div className={`mt-2 min-w-0 ${monoEditorMeasureClass}`}>

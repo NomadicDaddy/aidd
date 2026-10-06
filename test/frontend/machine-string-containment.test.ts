@@ -18,7 +18,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
 import { NotFoundPage } from './src/pages/notFound/NotFoundPage.tsx';
-import { RunCommandBlock } from './src/pages/runs/runDetailParts.tsx';
+import { RunCommandBlock } from './src/components/shared/run-detail/runDetailParts.tsx';
 import { InvocationsTable } from './src/pages/telemetry/InvocationsTable.tsx';
 import { LeaderboardCard } from './src/pages/telemetry/LeaderboardCard.tsx';
 

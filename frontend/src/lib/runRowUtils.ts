@@ -1,6 +1,6 @@
 import type { MouseEvent } from 'react';
 
-import type { RunRecord } from '../../api/types.ts';
+import type { RunRecord } from '../api/types.ts';
 
 export type RunLiveness = 'idle' | 'live' | 'stalled' | 'unknown';
 

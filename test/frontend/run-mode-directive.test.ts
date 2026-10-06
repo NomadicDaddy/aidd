@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { RunRecord } from '../../frontend/src/api/types.ts';
-import { runRuntimeDetail } from '../../frontend/src/pages/runs/runRowUtils.ts';
-import { classifyRunRecord } from '../../frontend/src/pages/runs/runsUtils.ts';
+import { runRuntimeDetail } from '../../frontend/src/lib/runRowUtils.ts';
+import { classifyRunRecord } from '../../frontend/src/lib/runLiveness.ts';
 
 function makeDirectiveRun(overrides: Partial<RunRecord> = {}): RunRecord {
 	return {

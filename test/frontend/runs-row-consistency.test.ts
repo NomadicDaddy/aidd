@@ -2,11 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
-import { sessionStatusLabel } from '../../frontend/src/pages/runs/pipelineSessionStatus.ts';
-import {
-	consoleSelectionLabel,
-	runSourceLabel,
-} from '../../frontend/src/pages/runs/runRowUtils.ts';
+import { sessionStatusLabel } from '../../frontend/src/lib/pipelineSessionStatus.ts';
+import { consoleSelectionLabel, runSourceLabel } from '../../frontend/src/lib/runRowUtils.ts';
 
 const EXECUTION_CONTAINERS = [
 	'ActiveRunRow.tsx',
@@ -16,8 +13,12 @@ const EXECUTION_CONTAINERS = [
 
 const FRONTEND_SRC = join(import.meta.dir, '..', '..', 'frontend', 'src');
 
+async function readSource(...segments: string[]): Promise<string> {
+	return readFile(join(FRONTEND_SRC, ...segments), 'utf8');
+}
+
 async function readRunSource(file: string): Promise<string> {
-	return readFile(join(FRONTEND_SRC, 'pages', 'runs', file), 'utf8');
+	return readSource('pages', 'runs', file);
 }
 
 function selectionContainerOpeningTag(source: string): string {
@@ -102,7 +103,7 @@ describe('Runs row consistency', () => {
 	});
 
 	test('execution containers select on pointer click without becoming keyboard controls', async () => {
-		const utils = await readRunSource('runRowUtils.ts');
+		const utils = await readSource('lib', 'runRowUtils.ts');
 
 		// The guard is what keeps the row a convenience target rather than a rival control:
 		// clicks on a nested link or button belong to that control.

@@ -17,9 +17,9 @@ import { DropdownMenu } from '../../components/ui/dropdown-menu.tsx';
 import { useScheduledExecutions } from '../../hooks/useScheduledTasks.ts';
 import { cn } from '../../lib/cn.ts';
 import { humanizeEnum } from '../../lib/formatters.ts';
+import { sessionStatusTone } from '../../lib/pipelineSessionStatus.ts';
 import { type Tone } from '../../lib/tones.ts';
 import { microLabelClass } from '../../lib/typography.ts';
-import { sessionStatusTone } from '../runs/pipelineSessionStatus.ts';
 import {
 	advancedScheduleDescription,
 	projectScopeLabel,

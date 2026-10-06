@@ -6,11 +6,11 @@ import {
 	type ConsoleEntry,
 	entrySearchText,
 	parseConsoleEntries,
-} from '../../frontend/src/pages/runs/consoleEntries.ts';
+} from '../../frontend/src/components/shared/live-console/consoleEntries.ts';
 import {
 	formatCommandTitle,
 	unescapeShellQuotes,
-} from '../../frontend/src/pages/runs/consoleEntryText.ts';
+} from '../../frontend/src/components/shared/live-console/consoleEntryText.ts';
 import { readViewPreference } from '../../frontend/src/pages/runs/liveConsolePrefs.ts';
 import { extractStopDetail } from '../../frontend/src/pages/runs/stopDetail.ts';
 
@@ -524,8 +524,8 @@ describe('LiveConsolePretty rendering', () => {
 		const script = [
 			"import { createElement } from 'react';",
 			"import { renderToStaticMarkup } from 'react-dom/server';",
-			"import { parseConsoleEntries } from './src/pages/runs/consoleEntries.ts';",
-			"import { LiveConsolePretty } from './src/pages/runs/LiveConsolePretty.tsx';",
+			"import { parseConsoleEntries } from './src/components/shared/live-console/consoleEntries.ts';",
+			"import { LiveConsolePretty } from './src/components/shared/live-console/LiveConsolePretty.tsx';",
 			`const entries = parseConsoleEntries(${JSON.stringify(transcript)}, ${JSON.stringify(backend)});`,
 			"console.log(renderToStaticMarkup(createElement(LiveConsolePretty, { entries, find: '' })));",
 		].join('\n');

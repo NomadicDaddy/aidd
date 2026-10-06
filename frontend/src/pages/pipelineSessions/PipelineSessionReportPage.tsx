@@ -18,11 +18,11 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useNow } from '../../hooks/useNow.ts';
 import { usePipelineSessionReport, usePipelineSessions } from '../../hooks/usePipelineSessions.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
+import { buildStepRows } from '../../lib/pipelineStepRows.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { sectionCaptionClass } from '../../lib/typography.ts';
 import { pipelineSessionStepSummary } from './pipelineSessionSummary.ts';
 import { SessionSummaryCard } from './SessionSummaryCard.tsx';
-import { buildStepRows } from './stepRowModel.ts';
 import { ExecutedStepRow, PendingStepRow } from './StepRows.tsx';
 
 const PAGE_RAIL = pageRailByContentType.reading;

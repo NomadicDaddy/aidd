@@ -38,7 +38,7 @@ export type ConsoleEntry =
 
 // Bound pretty transcript DOMs by entry count rather than transcript bytes. A long assistant tail
 // must not evict the tool calls an operator opened the console to inspect.
-export const MAX_PRETTY_ENTRIES = 2000;
+const MAX_PRETTY_ENTRIES = 2000;
 
 // JSON.parse never yields undefined, so undefined doubles as the "not JSON" sentinel.
 function tryJson(line: string): unknown {
@@ -255,6 +255,17 @@ export function parseConsoleEntries(
 	for (const event of foreign.finalize()) builder.pushEvent(event);
 	for (const event of parser.finalize?.() ?? []) builder.pushEvent(event);
 	return builder.finish();
+}
+
+/** The entries the pretty view renders: the parsed transcript, capped to its most recent tail. */
+export function recentConsoleEntries(
+	message: string,
+	backend: null | string | undefined,
+): ConsoleEntry[] {
+	const entries = parseConsoleEntries(message, backend);
+	return entries.length > MAX_PRETTY_ENTRIES
+		? entries.slice(entries.length - MAX_PRETTY_ENTRIES)
+		: entries;
 }
 
 /** Searchable text for find-in-console filtering in the pretty view. */

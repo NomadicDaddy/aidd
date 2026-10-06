@@ -10,6 +10,7 @@ import {
 } from '../_helpers/contrast.ts';
 
 const pagesRoot = join(process.cwd(), 'frontend', 'src', 'pages');
+const sharedRoot = join(process.cwd(), 'frontend', 'src', 'components', 'shared');
 
 // The tone families that carry operational meaning. `600`/`700`/`800` are the light-theme shades:
 // on the dark canvas they measure well under WCAG AA, which is what makes an unpaired declaration a
@@ -135,12 +136,16 @@ describe('status tones carry dark variants', () => {
 	});
 
 	test('keeps console text on the themed scroller surface', async () => {
-		const highlight = await Bun.file(join(pagesRoot, 'runs', 'liveConsoleText.tsx')).text();
+		const highlight = await Bun.file(
+			join(sharedRoot, 'live-console', 'liveConsoleText.tsx'),
+		).text();
 		const tones = await Bun.file(
 			join(process.cwd(), 'frontend', 'src', 'lib', 'tones.ts'),
 		).text();
 		const console_ = await Bun.file(join(pagesRoot, 'runs', 'LiveConsole.tsx')).text();
-		const pretty = await Bun.file(join(pagesRoot, 'runs', 'LiveConsolePretty.tsx')).text();
+		const pretty = await Bun.file(
+			join(sharedRoot, 'live-console', 'LiveConsolePretty.tsx'),
+		).text();
 
 		// The find highlight fills with amber-300 in both themes, so its foreground is pinned dark
 		// rather than themed — `text-foreground` on amber-300 is near-white under the dark theme.

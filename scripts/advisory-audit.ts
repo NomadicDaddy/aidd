@@ -42,11 +42,9 @@ const EXTRA_ROOTS = ['D:\\infra', 'D:\\scripts'];
 /** How many retained records the baseline reads back through for a tree's last audited state. */
 const BASELINE_DEPTH = 50;
 
-async function configuredScope(): Promise<{ ignored: Set<string>; roots: string[] }> {
+async function configuredRoots(): Promise<string[]> {
 	const config = await readConfig(getUserConfigPath());
-	const allowed = config.web?.allowedRoots ?? [];
-	const ignored = new Set((config.web?.ignoredFolders ?? []).map((name) => name.toLowerCase()));
-	return { ignored, roots: [...new Set([...allowed, ...EXTRA_ROOTS])] };
+	return [...new Set([...(config.web?.allowedRoots ?? []), ...EXTRA_ROOTS])];
 }
 
 /**
@@ -121,7 +119,6 @@ async function readOwners(out: string): Promise<Record<string, string[]>> {
 }
 
 export async function runAdvisoryAudit(options: {
-	ignored: ReadonlySet<string>;
 	/** Injected by tests; the script lists real directories. */
 	list?: DirectoryLister | undefined;
 	/** Injected by tests; the script runs the real `bun audit --json`. */
@@ -142,8 +139,8 @@ export async function runAdvisoryAudit(options: {
 
 	const list = options.list ?? listDirectory;
 	const scanned = options.tree
-		? await enumerateRoots([options.tree], 0, options.ignored, owners, list)
-		: await enumerateRoots(options.roots, 4, options.ignored, owners, list);
+		? await enumerateRoots([options.tree], 0, owners, list)
+		: await enumerateRoots(options.roots, 4, owners, list);
 	const trees: TreeAudit[] = [];
 	const skipped: SkippedLockfile[] = [];
 	const noSurface: string[] = [];
@@ -245,12 +242,10 @@ if (import.meta.main) {
 		exit(2);
 	}
 	try {
-		const scope = await configuredScope();
 		exit(
 			await runAdvisoryAudit({
-				ignored: scope.ignored,
 				out: values.out ?? DEFAULT_OUT,
-				roots: values.tree ? [] : scope.roots,
+				roots: values.tree ? [] : await configuredRoots(),
 				timeoutMs,
 				tree: values.tree,
 			}),

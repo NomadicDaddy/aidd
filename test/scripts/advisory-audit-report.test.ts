@@ -146,7 +146,46 @@ describe('advisory audit: report', () => {
 			findingKey('applications/b', 'right-pad', 'GHSA-bbbb-bbbb-bbbb'),
 		]);
 		expect(historyLine(after, before, [], NOW, 'runs/x.json')).toContain(
-			'| closed 1 | not re-checked 2 |',
+			'| closed 1 | not re-checked 2 | out of scope 0 |',
+		);
+	});
+
+	// The first estate baseline after 8e30d2c5 listed 80 proof-tree findings as "not re-checked"
+	// forever: those trees are skipped by name on purpose, which is a scope decision, not a gap.
+	// bun audit also lists one advisory twice when a package resolves at two versions.
+	test('a previous finding in a tree skipped by name is out of scope, and duplicates collapse', () => {
+		const before = record([
+			tree('applications/proofs/a/source', {
+				findings: [
+					finding('nanoid', 'GHSA-nnnn-nnnn-nnnn'),
+					finding('nanoid', 'GHSA-nnnn-nnnn-nnnn'),
+				],
+			}),
+			tree('applications/gone', { findings: [finding('left-pad', 'GHSA-aaaa-aaaa-aaaa')] }),
+		]);
+		const after = {
+			...record([]),
+			skipped: [
+				{
+					key: 'applications/proofs/a/source',
+					lockPath: 'D:\\applications\\proofs\\a\\source\\bun.lock',
+					reason: 'build output under proofs/',
+				},
+			],
+		};
+		const diff = diffRuns(after, before);
+		expect(diff.outOfScope).toEqual([
+			findingKey('applications/proofs/a/source', 'nanoid', 'GHSA-nnnn-nnnn-nnnn'),
+		]);
+		expect(diff.unverified).toEqual([
+			findingKey('applications/gone', 'left-pad', 'GHSA-aaaa-aaaa-aaaa'),
+		]);
+		expect(diff.closed).toEqual([]);
+		expect(historyLine(after, before, [], NOW, 'runs/x.json')).toContain(
+			'| not re-checked 1 | out of scope 1 |',
+		);
+		expect(renderReport(after, before, [], NOW)).toContain(
+			'## Out of scope (tree skipped by name this run)\n\n- applications/proofs/a/source nanoid',
 		);
 	});
 
@@ -193,7 +232,7 @@ describe('advisory audit: report', () => {
 		const quiet = record([tree('applications/aidd')]);
 		const line = historyLine(quiet, null, [], NOW, 'runs/20261006T190000.000Z.json');
 		expect(line).toBe(
-			`${NOW.toISOString()} | record runs/20261006T190000.000Z.json | roots D:\\applications, D:\\scripts | trees 1 | unswept: none | lock-only: none | findings: 0 | new 0 | closed 0 | not re-checked 0 | stale holds 0 | artifacts skipped 1 | no surface: D:\\scripts`,
+			`${NOW.toISOString()} | record runs/20261006T190000.000Z.json | roots D:\\applications, D:\\scripts | trees 1 | unswept: none | lock-only: none | findings: 0 | new 0 | closed 0 | not re-checked 0 | out of scope 0 | stale holds 0 | artifacts skipped 1 | no surface: D:\\scripts`,
 		);
 	});
 });

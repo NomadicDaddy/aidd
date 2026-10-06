@@ -43,24 +43,25 @@ function segments(path: string): string[] {
 	return path.split(/[\\/]+/).filter((part) => part.length > 0);
 }
 
-function isArtifactSegment(part: string, ignored: ReadonlySet<string>): boolean {
+function isArtifactSegment(part: string): boolean {
 	return (
 		ARTIFACT_SEGMENTS.has(part) ||
 		part.startsWith('.tmp') ||
 		// aidd-build-proofs and aidd-build-proofs-public hold whole vendored source trees.
-		part.startsWith('aidd-build-proofs') ||
-		ignored.has(part.toLowerCase())
+		part.startsWith('aidd-build-proofs')
 	);
 }
 
 /**
  * Classify one lockfile found under `root`. The root itself may be a tree (D:\infra is one).
- * `ignored` is the panel's web.ignoredFolders: what aidd does not discover, the audit skips too.
+ * Only the artifact names above are skipped. The panel's web.ignoredFolders is not consulted: it
+ * is a project-discovery list and names `frontend`, and a nested bun.lock under frontend/ is a
+ * separate resolved dependency set that nothing else audits (burrowday/frontend carried real
+ * findings that the list hid).
  */
 export function classifyLockfile(
 	lockPath: string,
 	root: string,
-	ignored: ReadonlySet<string> = new Set(),
 	owners: OwnerMap = {},
 ): LockfileEntry {
 	const treeDir = dirname(lockPath);
@@ -75,7 +76,7 @@ export function classifyLockfile(
 			reason: `not a bun tree (${basename(lockPath)}); not audited`,
 		};
 	}
-	const artifact = rel.find((part) => isArtifactSegment(part, ignored));
+	const artifact = rel.find((part) => isArtifactSegment(part));
 	if (artifact !== undefined) {
 		return {
 			...base,
@@ -84,9 +85,7 @@ export function classifyLockfile(
 			reason:
 				artifact === 'dist' || artifact === 'build'
 					? 'historical release artifact, not drift: a frozen copy of a superseded dependency set'
-					: ignored.has(artifact.toLowerCase())
-						? `under ${artifact}/, which the panel's ignoredFolders excludes`
-						: `build output under ${artifact}/`,
+					: `build output under ${artifact}/`,
 		};
 	}
 	const clone = CLONES.find(({ pattern }) => pattern.test(treeName));
@@ -161,7 +160,6 @@ export interface ScannedRoot {
 export async function enumerateRoots(
 	roots: string[],
 	maxDepth = 4,
-	ignored: ReadonlySet<string> = new Set(),
 	owners: OwnerMap = {},
 	list: DirectoryLister = listDirectory,
 ): Promise<ScannedRoot[]> {
@@ -170,7 +168,7 @@ export async function enumerateRoots(
 		const { lockfiles, unreadable } = await findLockfiles(root, maxDepth, list);
 		const readable = !unreadable.includes(root);
 		result.push({
-			entries: lockfiles.map((path) => classifyLockfile(path, root, ignored, owners)),
+			entries: lockfiles.map((path) => classifyLockfile(path, root, owners)),
 			readable,
 			root,
 			unreadable: readable ? unreadable : [],

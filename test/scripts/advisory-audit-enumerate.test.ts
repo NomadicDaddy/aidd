@@ -59,7 +59,7 @@ describe('advisory audit enumeration', () => {
 			lockfiles: [aidd],
 			unreadable: [denied],
 		});
-		const [scanned] = await enumerateRoots([root], 4, new Set(), {}, list);
+		const [scanned] = await enumerateRoots([root], 4, {}, list);
 		expect(scanned).toMatchObject({ readable: true, unreadable: [denied] });
 		expect(scanned?.entries.map((e) => e.lockPath)).toEqual([aidd]);
 	});
@@ -80,12 +80,7 @@ describe('advisory audit enumeration', () => {
 			'artifact',
 		);
 
-		const clone = classifyLockfile(
-			join(root, 'summon-cli-workflow', 'bun.lock'),
-			root,
-			new Set(),
-			OWNERS,
-		);
+		const clone = classifyLockfile(join(root, 'summon-cli-workflow', 'bun.lock'), root, OWNERS);
 		expect(clone).toMatchObject({ kind: 'clone', owners: ['morgan'], parentTree: 'summon' });
 		expect(classifyLockfile(join(root, 'summon-stream', 'bun.lock'), root).kind).toBe(
 			'project',
@@ -94,7 +89,7 @@ describe('advisory audit enumeration', () => {
 			'project',
 		);
 
-		const project = classifyLockfile(join(root, 'deeper', 'bun.lock'), root, new Set(), OWNERS);
+		const project = classifyLockfile(join(root, 'deeper', 'bun.lock'), root, OWNERS);
 		expect(project).toMatchObject({
 			kind: 'project',
 			owners: ['carl', 'jimmy'],
@@ -135,24 +130,19 @@ describe('advisory audit enumeration', () => {
 		expect(scanned?.entries[0]?.reason).toContain('package-lock.json');
 	});
 
-	// aidd-build-proofs-public holds whole vendored source trees, and the panel's ignoredFolders
-	// names what aidd itself does not discover; neither is a tree anyone fixes.
-	test('proof trees and the panel ignored folders are skipped with their reason', async () => {
+	// aidd-build-proofs-public holds whole vendored source trees that nobody fixes. A nested
+	// workspace lockfile (burrowday/frontend) is a separate resolved dependency set and is audited:
+	// the panel's ignoredFolders names `frontend` and hid real findings there on the first runs.
+	test('proof trees are skipped by name; a nested workspace lockfile is a project tree', async () => {
 		root = await testTempDir('aidd-advisory-ignored-');
 		const proof = classifyLockfile(
 			join(root, 'aidd-build-proofs-public', 'proofs', 'a', 'source', 'bun.lock'),
 			root,
 		);
 		expect(proof.kind).toBe('artifact');
-		const ignored = classifyLockfile(
-			join(root, 'applications.prevers', 'old-app', 'bun.lock'),
-			root,
-			new Set(['applications.prevers']),
-		);
-		expect(ignored.kind).toBe('artifact');
-		expect(ignored.reason).toContain('ignoredFolders');
-		expect(
-			classifyLockfile(join(root, 'live-app', 'bun.lock'), root, new Set(['other'])).kind,
-		).toBe('project');
+		const nested = classifyLockfile(join(root, 'burrowday', 'frontend', 'bun.lock'), root, {
+			burrowday: ['petra'],
+		});
+		expect(nested).toMatchObject({ kind: 'project', owners: ['petra'], treeName: 'burrowday' });
 	});
 });

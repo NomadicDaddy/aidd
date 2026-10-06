@@ -24,31 +24,41 @@ export interface RunDiff {
 	/** Previous findings whose tree was audited this run and no longer reports them. */
 	closed: string[];
 	opened: string[];
+	/** Previous findings whose tree is skipped by name this run: out of scope, neither closed nor owed. */
+	outOfScope: string[];
 	/** Previous findings whose tree is UNSWEPT or absent this run: unknown, not closed. */
 	unverified: string[];
 }
 
 /**
  * What changed between two runs. A finding counts as closed only when its tree was audited this
- * run and no longer reports it; a tree that is UNSWEPT or missing now cannot close anything.
+ * run and no longer reports it; a tree that is UNSWEPT or missing now cannot close anything, and a
+ * tree the run skips by name (an artifact or a foreign lockfile) is out of scope rather than owed.
+ * bun audit can list one advisory twice for a package resolved at two versions, so each bucket is
+ * a set.
  */
 export function diffRuns(current: RunRecord, previous: null | RunRecord): RunDiff {
 	const now = findingKeys(current.trees);
 	const audited = new Set(current.trees.filter((t) => t.status === 'audited').map((t) => t.key));
-	const closed: string[] = [];
-	const unverified: string[] = [];
+	const skipped = new Set(current.skipped.map((s) => s.key));
+	const closed = new Set<string>();
+	const outOfScope = new Set<string>();
+	const unverified = new Set<string>();
 	for (const tree of previous?.trees ?? []) {
 		for (const f of tree.findings) {
 			const key = findingKey(tree.key, f.package, f.ghsa);
 			if (now.has(key)) continue;
-			(audited.has(tree.key) ? closed : unverified).push(key);
+			if (audited.has(tree.key)) closed.add(key);
+			else if (skipped.has(tree.key)) outOfScope.add(key);
+			else unverified.add(key);
 		}
 	}
 	const before = previous === null ? new Set<string>() : findingKeys(previous.trees);
 	return {
-		closed: closed.sort(),
+		closed: [...closed].sort(),
 		opened: [...now].filter((key) => !before.has(key)).sort(),
-		unverified: unverified.sort(),
+		outOfScope: [...outOfScope].sort(),
+		unverified: [...unverified].sort(),
 	};
 }
 
@@ -119,7 +129,7 @@ export function renderReport(
 	holds: Hold[],
 	now: Date,
 ): string {
-	const { closed, opened, unverified } = diffRuns(record, previous);
+	const { closed, opened, outOfScope, unverified } = diffRuns(record, previous);
 	const unswept = unsweptNames(record);
 	const lockOnlyTrees = record.trees.filter((t) => t.lockOnly.length > 0);
 	const staleHolds = holds.map((h) => holdStatus(h, now)).filter((s) => s.stale);
@@ -141,6 +151,10 @@ export function renderReport(
 		'## Not re-checked (tree UNSWEPT or absent this run)',
 		'',
 		...list(unverified, 'none'),
+		'',
+		'## Out of scope (tree skipped by name this run)',
+		'',
+		...list(outOfScope, 'none'),
 		'',
 		'## Trees',
 		'',
@@ -166,9 +180,9 @@ export function historyLine(
 	now: Date,
 	recordFile: string,
 ): string {
-	const { closed, opened, unverified } = diffRuns(record, previous);
+	const { closed, opened, outOfScope, unverified } = diffRuns(record, previous);
 	const unswept = unsweptNames(record);
 	const lockOnly = record.trees.filter((t) => t.lockOnly.length > 0).map((t) => t.key);
 	const stale = holds.filter((h) => holdStatus(h, now).stale).length;
-	return `${record.generatedAt} | record ${recordFile} | roots ${record.roots.join(', ')} | trees ${String(record.trees.length)} | unswept: ${unswept.length === 0 ? 'none' : unswept.join(', ')} | lock-only: ${lockOnly.length === 0 ? 'none' : lockOnly.join(', ')} | findings: ${countBySeverity(record.trees)} | new ${String(opened.length)} | closed ${String(closed.length)} | not re-checked ${String(unverified.length)} | stale holds ${String(stale)} | artifacts skipped ${String(record.skipped.length)} | no surface: ${record.noSurface.length === 0 ? 'none' : record.noSurface.join(', ')}`;
+	return `${record.generatedAt} | record ${recordFile} | roots ${record.roots.join(', ')} | trees ${String(record.trees.length)} | unswept: ${unswept.length === 0 ? 'none' : unswept.join(', ')} | lock-only: ${lockOnly.length === 0 ? 'none' : lockOnly.join(', ')} | findings: ${countBySeverity(record.trees)} | new ${String(opened.length)} | closed ${String(closed.length)} | not re-checked ${String(unverified.length)} | out of scope ${String(outOfScope.length)} | stale holds ${String(stale)} | artifacts skipped ${String(record.skipped.length)} | no surface: ${record.noSurface.length === 0 ? 'none' : record.noSurface.join(', ')}`;
 }

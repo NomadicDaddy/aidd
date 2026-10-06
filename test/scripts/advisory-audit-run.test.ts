@@ -68,7 +68,7 @@ describe('advisory audit run', () => {
 		);
 		await mkdir(linked, { recursive: true });
 		await writeFile(join(linked, 'package.json'), JSON.stringify({ version: '1.2.1' }));
-		const common = { ignored: new Set<string>(), out, roots: [root], timeoutMs: 10 };
+		const common = { out, roots: [root], timeoutMs: 10 };
 
 		// Run 1: the audit names the package and the store links the old version.
 		expect(
@@ -107,7 +107,7 @@ describe('advisory audit run', () => {
 		const out = join(base, 'out');
 		await mkdir(tree, { recursive: true });
 		await writeFile(join(tree, 'bun.lock'), LOCK);
-		const common = { ignored: new Set<string>(), out, timeoutMs: 10 };
+		const common = { out, timeoutMs: 10 };
 
 		expect(
 			await runAdvisoryAudit({
@@ -150,7 +150,6 @@ describe('advisory audit run', () => {
 		await writeFile(join(root, 'app', 'bun.lock'), LOCK);
 		const run = () =>
 			runAdvisoryAudit({
-				ignored: new Set<string>(),
 				now: new Date('2026-10-06T19:00:00.000Z'),
 				out,
 				roots: [root],
@@ -186,7 +185,6 @@ describe('advisory audit run', () => {
 		);
 		const run = (hour: string, stdout: string, exitCode: number) =>
 			runAdvisoryAudit({
-				ignored: new Set<string>(),
 				now: new Date(`2026-10-06T${hour}:00:00Z`),
 				out,
 				roots: [root],
@@ -212,7 +210,6 @@ describe('advisory audit run', () => {
 		const denied = join(root, 'locked');
 		expect(
 			await runAdvisoryAudit({
-				ignored: new Set<string>(),
 				list: (dir) =>
 					dir === denied ? Promise.reject(new Error('EACCES')) : listDirectory(dir),
 				now: new Date('2026-10-06T19:00:00Z'),

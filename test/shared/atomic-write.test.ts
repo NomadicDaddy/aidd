@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdir, readdir, readFile } from 'node:fs/promises';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import * as fsPromises from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { writeFileAtomic } from '../../shared/src/lib/atomicWrite.ts';
@@ -74,4 +75,25 @@ describe('atomic metadata writes', () => {
 		await expect(writeFileAtomic(target, 'content')).rejects.toThrow();
 		expect(await readdir(root)).toEqual(['occupied']);
 	});
+
+	// Windows can hold a target past every retry. Writing it in place then would reopen the very
+	// truncate-then-write window the temp file closes, so the write fails and the old file stays.
+	test('a target held past every retry keeps its old content and fails the write', async () => {
+		const root = await tempRoot();
+		const target = join(root, 'roadmap.json');
+		await writeFile(target, '{"old":true}\n');
+		const held = Object.assign(new Error('EPERM: operation not permitted, rename'), {
+			code: 'EPERM',
+		});
+		const rename = spyOn(fsPromises, 'rename').mockImplementation(() => Promise.reject(held));
+		try {
+			await expect(writeFileAtomic(target, '{"new":true}\n')).rejects.toThrow('EPERM');
+			expect(rename.mock.calls.length).toBeGreaterThan(1);
+		} finally {
+			rename.mockRestore();
+		}
+
+		expect(await readFile(target, 'utf8')).toBe('{"old":true}\n');
+		expect(await readdir(root)).toEqual(['roadmap.json']);
+	}, 10_000);
 });

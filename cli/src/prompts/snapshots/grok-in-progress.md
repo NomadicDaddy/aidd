@@ -662,7 +662,7 @@ from HARD CONSTRAINTS.
 4. Re-snapshot to verify resulting state
 5. Test edge cases and error states
 6. Check browser console: `agent-browser errors` (must return empty)
-7. Take screenshots at key states: `agent-browser screenshot <project-root>/.aidd/evidence.png` (always an absolute path inside this project — the agent-browser daemon resolves relative paths against its own working directory)
+7. Take screenshots at key states: `agent-browser screenshot <project-root>/.aidd/screenshots/evidence.png` (always an absolute path inside this project — the agent-browser daemon resolves relative paths against its own working directory; `.aidd/screenshots/` is the catalogued, ignored evidence directory)
 8. Verify UI appearance (no white-on-white, broken layouts, etc.)
 
 **STOP-AND-PARK escape hatch (read this before doing anything server-related).** If `agent-browser`

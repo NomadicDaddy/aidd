@@ -890,7 +890,7 @@ stand up your own server to verify**; see the "Concurrently UI-managed instance 
 4. Re-snapshot to verify resulting state
 5. Test edge cases and error states
 6. Check browser console: `agent-browser errors` (must return empty)
-7. Take screenshots at key states: `agent-browser screenshot <project-root>/.aidd/evidence.png` (absolute path — see the path rule in Step 4.1)
+7. Take screenshots at key states: `agent-browser screenshot <project-root>/.aidd/screenshots/evidence.png` (absolute path — see the path rule in Step 4.1; `.aidd/screenshots/` is the catalogued, ignored evidence directory)
 8. Verify UI appearance (no white-on-white, broken layouts, etc.)
 
 **"Unavailable" means a failed probe, not an absent tool entry.** Before taking the escape hatch

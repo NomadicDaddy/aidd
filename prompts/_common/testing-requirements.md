@@ -182,7 +182,7 @@ Better still, prefer a command that needs no JS at all: `agent-browser snapshot 
 5. **Verify success** → `agent-browser snapshot -i -c` to check resulting state
 6. **Check console** → `agent-browser errors` (must return empty for pass)
 7. **Test edge cases** → Repeat with invalid inputs, boundary conditions
-8. **Capture evidence** → `agent-browser screenshot <project-root>/.aidd/evidence.png` (always an absolute path inside this project — the daemon resolves relative paths against its own working directory)
+8. **Capture evidence** → `agent-browser screenshot <project-root>/.aidd/screenshots/evidence.png` (always an absolute path inside this project — the daemon resolves relative paths against its own working directory; `.aidd/screenshots/` is the catalogued, ignored evidence directory)
 
 **Ref-based workflow pattern:**
 

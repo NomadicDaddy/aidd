@@ -32,6 +32,7 @@ ps_modules/
 .aidd/iterations/
 .aidd/runs.jsonl
 .aidd/.stop
+.aidd/tmp/
 
 # secret — holds provider API keys, web.authToken, botToken; never commit
 .aidd/aidd.config.json

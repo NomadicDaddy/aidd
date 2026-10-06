@@ -725,7 +725,7 @@ Perform a focused code review of the current diff for correctness, security, cod
 3. Verify specific behavior from todo item works correctly
 4. Test edge cases and error conditions
 5. Check browser console: `agent-browser errors` (must return empty)
-6. Take screenshots to verify visual appearance: `agent-browser screenshot <project-root>/.aidd/evidence.png` (always an absolute path inside this project — the agent-browser daemon resolves relative paths against its own working directory)
+6. Take screenshots to verify visual appearance: `agent-browser screenshot <project-root>/.aidd/screenshots/evidence.png` (always an absolute path inside this project — the agent-browser daemon resolves relative paths against its own working directory; `.aidd/screenshots/` is the catalogued, ignored evidence directory)
 
 **If agent-browser is not installed**, attempt native browser automation. If neither is available, document what should be manually tested.
 

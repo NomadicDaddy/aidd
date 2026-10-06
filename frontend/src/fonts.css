@@ -1,4 +1,4 @@
-/* Geist Sans / Geist Mono @font-face declarations, variable weight axis, woff2 only.
+/* Geist Sans, Geist Mono and Space Grotesk @font-face rules: variable weight axis, woff2 only.
    Written by hand rather than importing the @fontsource CSS for two reasons: the package
    stylesheets list a .woff fallback after the .woff2 source (dead weight — no browser that
    runs this app lacks woff2 support), and they only ship the whole subset set, where the app
@@ -13,8 +13,25 @@
    Variable' and 'Geist Mono Variable', so the theme tokens in index.css and the xterm fontFamily
    in TerminalTabView.tsx name the family, not the packaging.
 
+   Space Grotesk, the display face, keeps its upstream family name 'Space Grotesk Variable' because
+   the --font-display token names it. Its package stylesheet also emits latin-ext and vietnamese
+   faces, about 25KB of artifact the app never uses and coverage the body face does not have, so
+   it too is declared here as latin alone.
+
    Subsetting is latin, plus the mono `symbols2` subset for box drawing — see the note on that
    face below for why it is worth its 5.8KB and why its declaration order matters. */
+
+@font-face {
+	font-family: 'Space Grotesk Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 300 700;
+	src: url('@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2')
+		format('woff2-variations');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308,
+		U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 @font-face {
 	font-family: 'Geist Sans';

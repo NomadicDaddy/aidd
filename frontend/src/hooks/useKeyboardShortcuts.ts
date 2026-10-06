@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/refs */
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 
 import { navigationShortcuts } from '../lib/keyboardShortcuts.ts';
 
@@ -88,7 +87,11 @@ function focusPrimarySearch(): boolean {
  */
 export function useKeyboardShortcuts(handlers: KeyboardShortcutHandlers): void {
 	const handlersRef = useRef(handlers);
-	handlersRef.current = handlers;
+	// The listener below is installed once and reads the latest handlers through this ref. It is
+	// refreshed after each commit rather than during render, where a ref write is not allowed.
+	useLayoutEffect(() => {
+		handlersRef.current = handlers;
+	});
 
 	useEffect(() => {
 		let awaitingGo = false;

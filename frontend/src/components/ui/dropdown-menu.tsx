@@ -1,5 +1,9 @@
-/* eslint-disable react-hooks/refs */
-import type { ReactElement, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
+import type {
+	ReactElement,
+	KeyboardEvent as ReactKeyboardEvent,
+	ReactNode,
+	RefObject,
+} from 'react';
 
 import { useEffect, useId, useRef, useState } from 'react';
 
@@ -25,7 +29,9 @@ interface DropdownMenuProps {
 		id: string;
 		onClick: () => void;
 		onKeyDown: (event: ReactKeyboardEvent<HTMLElement>) => void;
-		ref: (node: HTMLElement | null) => void;
+		// The ref object itself, attached by the trigger: a callback that wrote triggerRef.current
+		// was handed to a render prop, which the refs rule cannot see is not called during render.
+		ref: RefObject<HTMLButtonElement | null>;
 	}) => ReactElement;
 }
 
@@ -37,7 +43,7 @@ const toneClass = {
 export function DropdownMenu({ align = 'end', className, items, trigger }: DropdownMenuProps) {
 	const triggerId = useId();
 	const menuId = useId();
-	const triggerRef = useRef<HTMLElement | null>(null);
+	const triggerRef = useRef<HTMLButtonElement | null>(null);
 	const menuRef = useRef<HTMLDivElement | null>(null);
 	const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 	const [open, setOpen] = useState(false);
@@ -141,9 +147,7 @@ export function DropdownMenu({ align = 'end', className, items, trigger }: Dropd
 					setOpen((value) => !value);
 				},
 				onKeyDown: onTriggerKeyDown,
-				ref: (node) => {
-					triggerRef.current = node;
-				},
+				ref: triggerRef,
 			})}
 			{open && (
 				<div

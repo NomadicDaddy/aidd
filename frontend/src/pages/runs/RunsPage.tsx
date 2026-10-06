@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/refs */
 import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
 // Aliased: the bare name collides with the DOM `History` interface, and TS resolves the global
 // first inside JSX.
@@ -37,10 +36,11 @@ const RUNS_SPLIT_COLUMNS_CLASS =
 
 export function RunsPage() {
 	useDocumentTitle('Runs');
-	const page = useRunsPage();
+	// The console ref comes out of the page bag here: left inside it, the compiler treats the whole
+	// bag as a ref and reports every page.x read during render as reading a ref.
+	const { liveConsoleRef, ...page } = useRunsPage();
 	const [mobilePanel, setMobilePanel] = useState<RunsPanel>('active');
 	const focusConsoleAfterActivationRef = useRef(false);
-	const liveConsoleRef = page.liveConsoleRef;
 	const runsViewportRef = useViewportFill<HTMLDivElement>({
 		gutterPx: RUNS_VIEWPORT_GUTTER_PX,
 	});

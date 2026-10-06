@@ -96,10 +96,6 @@ export function nullableText(value: string): string | undefined {
 	return trimmed ? trimmed : undefined;
 }
 
-export function initialSelectedRunId(searchParams: URLSearchParams): string | undefined {
-	return searchParams.get('run') ?? undefined;
-}
-
 export function consumeInitialRunScroll(
 	initialRunId: { current: string | undefined },
 	selectedRunId: string | undefined,

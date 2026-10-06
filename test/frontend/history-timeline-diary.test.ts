@@ -9,7 +9,6 @@ import {
 	HISTORY_FILTERS,
 	historyFilterCounts,
 	historyKindLabels,
-	historyKindTones,
 } from '../../frontend/src/pages/projects/detail/historyTimeline.ts';
 
 const FRONTEND_ROOT = resolve(import.meta.dir, '../../frontend');
@@ -237,9 +236,9 @@ describe('History timeline diary events', () => {
 
 	test('keeps the kind badge free of a status claim', () => {
 		// The Diary page's own timeline learned this: coloring a kind badge made a healthy row
-		// render amber beside its own green status. Kind is taxonomy, so diary is neutral.
+		// render amber beside its own green status. Kind is taxonomy, so HistoryTab renders it as
+		// muted text, never a toned badge; project-detail-primary-local-remediation checks that.
 		expect(historyKindLabels.diary).toBe('Diary');
-		expect(historyKindTones.diary).toBe('neutral');
 	});
 
 	test('leaves the timeline unchanged when a project has no diary entries', () => {

@@ -72,16 +72,6 @@ export const historyKindLabels: Record<HistoryEventKind, string> = {
 	run: 'Run',
 };
 
-export const historyKindTones: Record<HistoryEventKind, 'amber' | 'neutral' | 'red' | 'teal'> = {
-	audit: 'red',
-	// Neutral, like the kind badge on the Diary page's own timeline: a narrative entry asserts no
-	// status, and the row's second badge already carries whatever the entry does say.
-	diary: 'neutral',
-	feature: 'teal',
-	remediation: 'amber',
-	run: 'neutral',
-};
-
 function featureEventTitle(feature: ProjectFeature): string {
 	return feature.title ?? featureDirectory(feature);
 }

@@ -121,7 +121,6 @@ describe('project detail primary local remediation', () => {
 
 	test('keeps history kind, time, filters, and dense details co-visible', async () => {
 		const history = await detail('HistoryTab.tsx');
-		const timeline = await detail('historyTimeline.ts');
 
 		expect(history).not.toContain('tableMeasureClass');
 		expect(history).toContain('top-[var(--app-topbar-height,0px)]');
@@ -129,7 +128,8 @@ describe('project detail primary local remediation', () => {
 		expect(history).toContain('disabled: counts[value] === 0');
 		expect(history).toContain('{event.duration}');
 		expect(history).toContain('<CommitChips commits={event.commits}');
-		expect(timeline).toContain('historyKindTones');
+		// The event kind is taxonomy, so it renders as muted text rather than a toned badge.
+		expect(history).toMatch(/text-muted-foreground">\s*\{historyKindLabels\[event\.kind\]\}/u);
 	});
 
 	test('makes repository state explicit without wasting table or ref space', async () => {

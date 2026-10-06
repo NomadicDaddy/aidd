@@ -3,6 +3,7 @@ import { MATURITY_SKIP_FILE } from 'aidd-shared/metadata/maturity';
 import { metadataPath } from 'aidd-shared/metadata/paths';
 import {
 	projectProfilePath,
+	readProjectAssuranceProfile,
 	writeProjectAssuranceProfile,
 } from 'aidd-shared/metadata/project-profile';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -42,6 +43,30 @@ export async function updateProjectProfile(
 		if (err instanceof Error) throw new HttpError(err.message, 400);
 		throw err;
 	}
+}
+
+/**
+ * Materialize `.aidd/project-profile.json` from the inferred profile (the maturity "create a
+ * profile" action), through the same write and listing invalidation as an operator edit.
+ * @param ctx Project resolution and listing invalidation.
+ * @param projectId The discovered project to write the profile for.
+ */
+export async function ensureProjectProfile(ctx: ProfileContext, projectId: string): Promise<void> {
+	const projectDir = await ctx.resolveDiscoveredProject(projectId);
+	const inferred = await readProjectAssuranceProfile(projectDir);
+	await updateProjectProfile(ctx, projectId, {
+		authMode: inferred.authMode,
+		bucket: inferred.bucket,
+		criticality: inferred.criticality,
+		dataSensitivity: inferred.dataSensitivity,
+		deployment: inferred.deployment,
+		derivesFromTemplate: inferred.derivesFromTemplate,
+		externalIntegrations: inferred.externalIntegrations,
+		hasCliBinary: inferred.hasCliBinary,
+		publishesReleaseArchives: inferred.publishesReleaseArchives,
+		shipsContainerImage: inferred.shipsContainerImage,
+		...(inferred.notes ? { notes: inferred.notes } : {}),
+	});
 }
 
 export async function updateMaturitySkip(

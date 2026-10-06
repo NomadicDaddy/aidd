@@ -52,6 +52,7 @@ import { ProjectListingCache } from './project/metadataCache.ts';
 import { ProjectMilestoneService } from './project/milestoneService.ts';
 import { getPortStatusMap, type PortStatusMap } from './project/portStatusService.ts';
 import {
+	ensureProjectProfile as ensureProjectProfileInternal,
 	updateMaturitySkip as updateMaturitySkipInternal,
 	updateProjectProfile as updateProjectProfileInternal,
 } from './project/profile.ts';
@@ -248,6 +249,16 @@ export class ProjectService {
 			{ resolveDiscoveredProject: (id) => this.resolveDiscoveredProject(id) },
 			projectId,
 			skip,
+		);
+	}
+
+	async ensureProjectProfile(projectId: string): Promise<void> {
+		return ensureProjectProfileInternal(
+			{
+				invalidateProjectListing: (projectDir) => this.invalidateProjectListing(projectDir),
+				resolveDiscoveredProject: (id) => this.resolveDiscoveredProject(id),
+			},
+			projectId,
 		);
 	}
 

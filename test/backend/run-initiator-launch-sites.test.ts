@@ -34,11 +34,6 @@ const DECIDES: { expects: string; file: string; why: string }[] = [
 	},
 	{
 		expects: "initiator: 'operator'",
-		file: 'routes/projectMaturity.ts',
-		why: 'an audit or skill invoked from the maturity panel',
-	},
-	{
-		expects: "initiator: 'operator'",
 		file: 'routes/projects.ts',
 		why: 'project creation and implementation launches, both operator-driven',
 	},
@@ -61,6 +56,11 @@ const DECIDES: { expects: string; file: string; why: string }[] = [
 		expects: 'initiator,',
 		file: 'services/director/cycleExecutor.ts',
 		why: 'threaded from the cycle entry point: Run Cycle is operator, the sweep is automatic',
+	},
+	{
+		expects: "initiator: 'operator'",
+		file: 'services/maturity/runNext.ts',
+		why: 'an audit or skill invoked from the maturity panel; the dispatch names it, the route forwards',
 	},
 	{
 		expects: "initiator: RunInitiator = 'operator'",
@@ -97,6 +97,10 @@ const DECIDES: { expects: string; file: string; why: string }[] = [
  * facts rather than literals scattered where nobody looks.
  */
 const DELEGATES: { file: string; why: string }[] = [
+	{
+		file: 'routes/projectMaturity.ts',
+		why: 'hands the dispatch its launchers (audit service, pipeline service) and forwards the input it is given, choosing nothing',
+	},
 	{
 		file: 'services/audit/launchAuditsImpl.ts',
 		why: 'stamps `input.initiator` rather than deriving from `source`, which cannot see a Run now',

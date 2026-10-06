@@ -12,6 +12,7 @@ import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useUpdateMaturitySkip } from '../../../hooks/useProjects.ts';
+import { artifactTone } from '../../../lib/projectPresentation.ts';
 import { microLabelClass, proseMeasureClass } from '../../../lib/typography.ts';
 import {
 	artifactEntryState,
@@ -20,7 +21,7 @@ import {
 } from './artifactGroupFilters.ts';
 import { ArtifactGroups } from './ArtifactGroups.tsx';
 import { artifactInventoryCount, buildArtifactInventory } from './artifactsUtils.ts';
-import { type ArtifactHealth, artifactTone } from './shared.ts';
+import { type ArtifactHealth } from './shared.ts';
 
 // Keep file-viewing code outside the tab's initial chunk; the literal import path remains statically
 // analyzable while the dialog is needed only after a user opens an artifact.

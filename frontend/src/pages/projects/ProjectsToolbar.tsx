@@ -6,8 +6,8 @@ import { FilterSearch, FilterSelect } from '../../components/shared/FilterFields
 import { FilterToolbar } from '../../components/shared/FilterToolbar.tsx';
 import { countActiveFilters } from '../../lib/filterFields.ts';
 import { formGridMeasureClass } from '../../lib/formStyles.ts';
+import { bucketLabels } from '../../lib/projectPresentation.ts';
 import {
-	bucketLabels,
 	bucketOptions,
 	type MaturityFilter,
 	maturityFilterLabels,

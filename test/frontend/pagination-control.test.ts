@@ -12,7 +12,7 @@ function renderPagination(
 	const script = [
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
-		"import { Pagination } from './src/pages/projects/detail/Pagination.tsx';",
+		"import { Pagination } from './src/components/shared/Pagination.tsx';",
 		'const onChange = () => undefined;',
 		'const onLoadNextPage = () => undefined;',
 		`console.log(renderToStaticMarkup(createElement(Pagination, { hasNextPage: ${options.hasNextPage ?? false}, isLoadingNextPage: ${options.isLoadingNextPage ?? false}, onChange, onLoadNextPage, page: ${page}, pageSize: ${pageSize}, total: ${total} })));`,

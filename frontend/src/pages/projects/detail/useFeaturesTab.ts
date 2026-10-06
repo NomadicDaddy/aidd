@@ -15,6 +15,7 @@ import {
 	useUpdateProjectFeatureStatus,
 } from '../../../hooks/useProjects.ts';
 import { useLaunchRun, useRuns } from '../../../hooks/useRuns.ts';
+import { clampPage } from '../../../lib/pagination.ts';
 import { hasInFlightRun } from '../../runs/runsUtils.ts';
 import { priorityFilterOptions } from './featurePriorityFilters.ts';
 import { compareFeatures } from './features-list-sort.ts';
@@ -27,7 +28,6 @@ import {
 	sortedSourceOptions,
 	sourceLabelCategory,
 } from './featuresUtils.ts';
-import { clampPage } from './pagination-utils.ts';
 import { FEATURES_PAGE_SIZE, stringValue } from './shared.ts';
 import { useFeatureCategoryUpdate } from './useFeatureCategoryUpdate.ts';
 import { useFeatureDispositions } from './useFeatureDispositions.ts';

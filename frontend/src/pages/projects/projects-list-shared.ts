@@ -11,16 +11,13 @@ import type {
 	ProjectMetadata,
 	ProjectPhase,
 	ProjectReleaseArtifacts,
-	ProjectSummary,
 	ProjectSyncState,
 	ProjectTemplateOrigin,
 	ProjectUsageTotals,
 } from '../../api/types.ts';
+import type { BadgeTone } from '../../lib/projectPresentation.ts';
 
 import { formatCompactNumber, formatUsd } from '../../lib/formatters.ts';
-
-export type ArtifactHealth = ProjectSummary['artifactHealth'];
-export type BadgeTone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
 
 export const PHASES: ReadonlySet<ProjectPhase> = new Set(['coding', 'initializer', 'onboarding']);
 
@@ -50,16 +47,6 @@ export const maturityFilterLabels: Record<MaturityFilter, string> = {
 	shipped: 'In shipped',
 	specified: 'In specified',
 	structured: 'In structured',
-};
-
-export const bucketLabels: Record<ProjectAssuranceBucket, string> = {
-	critical_regulated: 'Critical',
-	internet_single_org: 'Internet org',
-	multi_user_local: 'Multi-user local',
-	private_team: 'Private team',
-	prototype_archive: 'Archive',
-	public_multi_tenant: 'Multi-tenant',
-	single_user_local: 'Single-user local',
 };
 
 export const dataSensitivityLabels: Record<ProjectDataSensitivity, string> = {
@@ -175,13 +162,9 @@ export const releaseArtifactOptions: ProjectReleaseArtifacts[] = [
 	'binary_archives',
 ];
 
-export const artifactTone: Record<ArtifactHealth, BadgeTone> = {
-	fresh: 'emerald',
-	missing: 'red',
-	stale: 'amber',
-	unknown: 'neutral',
-};
-
+// `artifactTone` and `bucketLabels` live in lib/projectPresentation.ts: the dashboard, audits and
+// diary pages read them too, and a page directory is not a shared layer.
+//
 // `profileBucketTone` was deleted here. It spent four of the six status tones on the assurance
 // bucket, so a correctly-configured regulated project rendered red on three separate surfaces while
 // nothing was wrong. The bucket is a configuration reading; `bucketLabels` already names it.

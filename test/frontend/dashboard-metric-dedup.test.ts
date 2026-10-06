@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { orphanedLastCardIndex } from '../../frontend/src/pages/dashboard/dashboard-shared.ts';
-import { milestoneBadgeTone } from '../../frontend/src/pages/projects/projects-list-visuals.ts';
+import { milestoneBadgeTone } from '../../frontend/src/lib/projectPresentation.ts';
 import { DASHBOARD_CARD_IDS } from '../../frontend/src/stores/dashboardStore.ts';
 
 const frontendSource = join(process.cwd(), 'frontend', 'src');

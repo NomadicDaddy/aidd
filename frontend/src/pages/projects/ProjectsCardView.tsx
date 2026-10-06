@@ -8,8 +8,8 @@ import type {
 } from '../../api/types.ts';
 
 import { AppLaunchControl } from '../../components/shared/AppLaunchControl.tsx';
-import { clampPage } from './detail/pagination-utils.ts';
-import { Pagination } from './detail/Pagination.tsx';
+import { Pagination } from '../../components/shared/Pagination.tsx';
+import { clampPage } from '../../lib/pagination.ts';
 import { ProjectCard } from './ProjectCard.tsx';
 
 const PROJECTS_PAGE_SIZE = 12;

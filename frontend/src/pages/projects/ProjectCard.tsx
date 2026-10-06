@@ -10,14 +10,14 @@ import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { formatRelativeAge, percent } from '../../lib/formatters.ts';
+import { artifactTone, milestoneBadgeTone } from '../../lib/projectPresentation.ts';
 import { toneText } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { microLabelClass } from '../../lib/typography.ts';
 import { GitStatusBadge } from './GitStatusBadge.tsx';
 import { ProjectActiveRunLink } from './ProjectActiveRunLink.tsx';
 import { ProjectCardMetrics } from './ProjectCardMetrics.tsx';
-import { artifactTone } from './projects-list-shared.ts';
-import { featureProgressColor, isOrphaned, milestoneBadgeTone } from './projects-list-visuals.ts';
+import { featureProgressColor, isOrphaned } from './projects-list-visuals.ts';
 import { ProjectStackDisplay } from './ProjectStackDisplay.tsx';
 
 const indicatorLabelClass = `${microLabelClass} text-muted-foreground`;

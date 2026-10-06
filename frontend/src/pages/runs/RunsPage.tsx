@@ -9,13 +9,13 @@ import { LaunchTargetControl } from '../../components/shared/LaunchTargetControl
 import { SkeletonRows } from '../../components/shared/LoadingState.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { PageRail } from '../../components/shared/PageRail.tsx';
+import { Pagination } from '../../components/shared/Pagination.tsx';
 import { Card } from '../../components/ui/card.tsx';
 import { tabButtonId, tabPanelId } from '../../components/ui/tabs.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useViewportFill } from '../../hooks/useViewportFill.ts';
 import { cn } from '../../lib/cn.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
-import { Pagination } from '../projects/detail/Pagination.tsx';
 import { LiveConsolePanel } from './LiveConsolePanel.tsx';
 import { MobileRunLaunchDisclosure } from './MobileRunLaunchDisclosure.tsx';
 import { PipelineConsoleSummary } from './PipelineConsoleSummary.tsx';

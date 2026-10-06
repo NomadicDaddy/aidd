@@ -5,9 +5,8 @@ import type { DashboardProjectSummary } from '../../api/types.ts';
 import { FilePath } from '../../components/shared/FilePath.tsx';
 import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { percent } from '../../lib/formatters.ts';
+import { artifactTone, milestoneBadgeTone } from '../../lib/projectPresentation.ts';
 import { toneSolid, toneText } from '../../lib/tones.ts';
-import { artifactTone } from '../projects/projects-list-shared.ts';
-import { milestoneBadgeTone } from '../projects/projects-list-visuals.ts';
 import { getHealthTone, healthBandLabel } from './dashboard-shared.ts';
 
 function DashboardPortDot({ listening }: { listening: boolean | null }) {

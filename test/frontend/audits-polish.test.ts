@@ -260,7 +260,7 @@ describe('the applicability matrix can be searched', () => {
 		expect(tab).toContain('<FilterSearch');
 		expect(tab).toContain('visibleRows');
 		expect(tab).toContain('No audits match that search.');
-		expect(tab).toContain("bucketLabels } from '../../projects/projects-list-shared.ts'");
+		expect(tab).toContain("bucketLabels } from '../../../lib/projectPresentation.ts'");
 	});
 
 	test('the capped card is the only scroll region on the tab', async () => {

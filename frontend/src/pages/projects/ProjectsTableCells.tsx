@@ -10,9 +10,9 @@ import type {
 
 import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { formatCompactNumber, percent } from '../../lib/formatters.ts';
+import { artifactTone } from '../../lib/projectPresentation.ts';
 import { toneText } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
-import { artifactTone } from './projects-list-shared.ts';
 import { featureProgressColor } from './projects-list-visuals.ts';
 
 function PortDot({ listening }: { listening: boolean | null }) {

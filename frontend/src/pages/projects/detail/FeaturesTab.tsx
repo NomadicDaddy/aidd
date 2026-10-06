@@ -4,6 +4,7 @@ import type { ProjectDetail, ProjectRoadmapSummary } from '../../../api/types.ts
 
 import { CardSortControl } from '../../../components/shared/CardSortControl.tsx';
 import { EmptyState } from '../../../components/shared/EmptyState.tsx';
+import { Pagination } from '../../../components/shared/Pagination.tsx';
 import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
@@ -18,7 +19,6 @@ import { FeatureMobileCard } from './FeatureMobileCard.tsx';
 import { FEATURE_SORT_COLUMNS } from './features-list-sort.ts';
 import { FeaturesDesktopTable } from './FeaturesDesktopTable.tsx';
 import { featureDirectory, unmappedRoadmapCallout } from './featuresUtils.ts';
-import { Pagination } from './Pagination.tsx';
 import { FEATURES_PAGE_SIZE, stringValue } from './shared.ts';
 import { useFeaturesTab } from './useFeaturesTab.ts';
 

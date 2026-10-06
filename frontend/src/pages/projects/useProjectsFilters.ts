@@ -10,9 +10,9 @@ import type {
 } from '../../api/types.ts';
 
 import { filterRegister } from '../../lib/filterFields.ts';
+import { bucketLabels } from '../../lib/projectPresentation.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import {
-	bucketLabels,
 	MATURITY_FILTERS,
 	type MaturityFilter,
 	maturityFilterLabels,

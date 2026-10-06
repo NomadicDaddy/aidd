@@ -85,7 +85,7 @@ describe('project detail information design', () => {
 
 	test('paginates reports with an explicit visible range', async () => {
 		const reports = await detail('ReportsTab.tsx');
-		const pagination = await detail('Pagination.tsx');
+		const pagination = await source('components/shared/Pagination.tsx');
 
 		expect(reports).toContain('const REPORTS_PAGE_SIZE = 12');
 		expect(reports).toContain('visible.slice(');

@@ -5,7 +5,7 @@ import type { usePipelineSessions } from '../../hooks/usePipelineSessions.ts';
 import type { useRuns } from '../../hooks/useRuns.ts';
 import type { UnifiedEntry, UnifiedEntryFilters } from './unifiedEntries.ts';
 
-import { clampPage } from '../projects/detail/pagination-utils.ts';
+import { clampPage } from '../../lib/pagination.ts';
 import {
 	buildUnifiedEntries,
 	entryMatchesFilters,

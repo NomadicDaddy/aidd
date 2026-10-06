@@ -2,8 +2,8 @@ import { isLowExposureLocalProfile, requiresFullHardening } from 'aidd-shared/co
 
 import type { ProjectAssuranceProfile, ProjectAssuranceProfileInput } from '../../../api/types.ts';
 
+import { bucketLabels } from '../../../lib/projectPresentation.ts';
 import {
-	bucketLabels,
 	criticalityLabels,
 	dataSensitivityLabels,
 	deploymentLabels,

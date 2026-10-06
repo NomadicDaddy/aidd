@@ -7,13 +7,6 @@ export const RECENT_ACTIVITY_LIMIT = 5;
 
 export type ArtifactHealth = ProjectDetail['artifactHealth'];
 
-export const artifactTone: Record<ArtifactHealth, 'amber' | 'emerald' | 'neutral' | 'red'> = {
-	fresh: 'emerald',
-	missing: 'red',
-	stale: 'amber',
-	unknown: 'neutral',
-};
-
 export function stringValue(record: Record<string, unknown>, key: string): string {
 	const value = record[key];
 	return typeof value === 'string' ? value : '';
@@ -51,27 +44,4 @@ export function statusTone(status: string): 'amber' | 'emerald' | 'neutral' | 'r
 	if (normalized === 'waiting_approval') return 'amber';
 	if (normalized === 'backlog' || normalized === 'unknown') return 'neutral';
 	return 'red';
-}
-
-export function runStatusTone(status: string): 'amber' | 'emerald' | 'neutral' | 'red' | 'teal' {
-	if (status === 'completed' || status === 'success') return 'emerald';
-	if (status === 'running') return 'teal';
-	if (
-		status === 'aborted' ||
-		status === 'blocked' ||
-		status === 'error' ||
-		status === 'failed' ||
-		status === 'killed'
-	) {
-		return 'red';
-	}
-	if (
-		status === 'completed_with_failures' ||
-		status === 'completed_with_warnings' ||
-		status === 'stopped' ||
-		status === 'stop_requested' ||
-		status === 'warning'
-	)
-		return 'amber';
-	return 'neutral';
 }

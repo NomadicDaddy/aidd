@@ -1,5 +1,5 @@
-import type { ProjectMilestoneSummary, ProjectSummary } from '../../api/types.ts';
-import type { BadgeTone } from './projects-list-shared.ts';
+import type { ProjectSummary } from '../../api/types.ts';
+import type { BadgeTone } from '../../lib/projectPresentation.ts';
 
 import { toneSolid, toneText } from '../../lib/tones.ts';
 
@@ -48,18 +48,6 @@ export function templateVersionColor(
 export function featureProgressColor(pct: number): string {
 	if (pct >= 100) return toneSolid.emerald;
 	return 'bg-muted-foreground/60';
-}
-
-/**
- * Complete milestones are toned; everything else is not.
- *
- * A complete milestone was `emerald` and an in-progress one `teal`. At badge size in dark mode the
- * two adjacent greens read as one undifferentiated colour, so the distinction was carried entirely
- * by the `3/5` each chip already prints. Presence of colour is legible at 11px; hue between
- * neighbours on the wheel is not.
- */
-export function milestoneBadgeTone(ms: ProjectMilestoneSummary): BadgeTone {
-	return ms.total > 0 && ms.completed === ms.total ? 'emerald' : 'neutral';
 }
 
 /** One workflow-state vocabulary for milestone rows, independent of their identity and counts. */

@@ -2,8 +2,8 @@ import type { ProjectDetail, ProjectGitStatusSummary } from '../../../api/types.
 
 import { Badge } from '../../../components/ui/badge.tsx';
 import { fieldLabelClass } from '../../../lib/formStyles.ts';
+import { bucketLabels } from '../../../lib/projectPresentation.ts';
 import { GitStatusBadge } from '../GitStatusBadge.tsx';
-import { bucketLabels } from '../projects-list-shared.ts';
 
 function StatusCell({
 	children,

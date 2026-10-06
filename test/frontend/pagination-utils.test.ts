@@ -4,7 +4,7 @@ import {
 	nextPage,
 	previousPage,
 	totalPageCount,
-} from '../../frontend/src/pages/projects/detail/pagination-utils.ts';
+} from '../../frontend/src/lib/pagination.ts';
 
 describe('pagination-utils', () => {
 	test('totalPageCount returns at least one page even for an empty list', () => {

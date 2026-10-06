@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { effectTone } from '../../frontend/src/pages/audits/auditsUtils.ts';
 import { toneBadge } from '../../frontend/src/lib/tones.ts';
 import { statusTone } from '../../frontend/src/pages/projects/detail/shared.ts';
-import { artifactTone, syncTone } from '../../frontend/src/pages/projects/projects-list-shared.ts';
+import { artifactTone } from '../../frontend/src/lib/projectPresentation.ts';
+import { syncTone } from '../../frontend/src/pages/projects/projects-list-shared.ts';
 
 const pagesRoot = join(process.cwd(), 'frontend', 'src', 'pages');
 

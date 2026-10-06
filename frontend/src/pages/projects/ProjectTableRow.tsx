@@ -8,13 +8,13 @@ import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { cn } from '../../lib/cn.ts';
 import { formatRelativeAge } from '../../lib/formatters.ts';
+import { bucketLabels } from '../../lib/projectPresentation.ts';
 import { pinnedLeftEdgeClass } from '../../lib/tableStyles.ts';
 import { toneText } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { GitStatusBadge } from './GitStatusBadge.tsx';
 import { ProjectActiveRunLink } from './ProjectActiveRunLink.tsx';
 import {
-	bucketLabels,
 	formatAppVersion,
 	formatProjectListReportedCost,
 	formatProjectTokenCount,

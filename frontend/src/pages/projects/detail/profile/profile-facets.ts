@@ -11,10 +11,10 @@ import type {
 	ProjectTemplateOrigin,
 } from '../../../../api/types.ts';
 
+import { bucketLabels } from '../../../../lib/projectPresentation.ts';
 import {
 	authModeLabels,
 	authModeOptions,
-	bucketLabels,
 	bucketOptions,
 	cliBinaryLabels,
 	cliBinaryOptions,

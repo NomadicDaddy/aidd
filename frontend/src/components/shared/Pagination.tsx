@@ -1,9 +1,9 @@
 import { default as ChevronLeft } from 'lucide-react/dist/esm/icons/chevron-left';
 import { default as ChevronRight } from 'lucide-react/dist/esm/icons/chevron-right';
 
-import { IconButton } from '../../../components/ui/button.tsx';
-import { selectClass } from '../../../lib/formStyles.ts';
-import { nextPage, previousPage, totalPageCount } from './pagination-utils.ts';
+import { selectClass } from '../../lib/formStyles.ts';
+import { nextPage, previousPage, totalPageCount } from '../../lib/pagination.ts';
+import { IconButton } from '../ui/button.tsx';
 
 export function Pagination({
 	hasNextPage = false,

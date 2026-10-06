@@ -8,6 +8,7 @@ import type {
 import type { ExecutionIdentity } from '../../../lib/executionIdentity.ts';
 
 import { humanizeEnum } from '../../../lib/formatters.ts';
+import { runStatusTone } from '../../../lib/runStatusTone.ts';
 import {
 	featureDirectory,
 	featureSourceLabel,
@@ -16,7 +17,6 @@ import {
 } from './featuresUtils.ts';
 import { featureAddedAt, featureCompletedAt } from './featureTimestamps.ts';
 import { recentMetadataActivity } from './recentActivityItems.ts';
-import { runStatusTone } from './shared.ts';
 
 export type HistoryEventKind = 'audit' | 'diary' | 'feature' | 'remediation' | 'run';
 

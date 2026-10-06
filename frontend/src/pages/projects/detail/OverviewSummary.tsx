@@ -5,9 +5,9 @@ import type { ProjectDetail } from '../../../api/types.ts';
 import { Metric } from '../../../components/shared/Metric.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { humanizeEnum, percent } from '../../../lib/formatters.ts';
+import { artifactTone } from '../../../lib/projectPresentation.ts';
 import { toneSolid } from '../../../lib/tones.ts';
 import { projectDetailTabSearch } from './overviewLinks.ts';
-import { artifactTone } from './shared.ts';
 
 /* This file's own `SummaryTile` was deleted here. It restated the Dashboard tile shape as a bare
    fragment that only worked inside a hand-placed `<Card>`, which is why its three values drifted to

@@ -4,8 +4,8 @@ import type { PortStatusEntry, ProjectSummary } from '../../api/types.ts';
 
 import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { formatCount, formatRatio, formatRelativeAge } from '../../lib/formatters.ts';
+import { bucketLabels } from '../../lib/projectPresentation.ts';
 import {
-	bucketLabels,
 	formatAppVersion,
 	formatProjectListReportedCost,
 	formatProjectTokenCount,

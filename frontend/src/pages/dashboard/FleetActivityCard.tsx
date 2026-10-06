@@ -15,10 +15,10 @@ import { Badge } from '../../components/ui/badge.tsx';
 import { Button, buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.tsx';
 import { formatDuration } from '../../lib/formatters.ts';
+import { runStatusTone } from '../../lib/runStatusTone.ts';
 import { tableMeasureClass } from '../../lib/tableStyles.ts';
 import { toneText } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
-import { runStatusTone } from '../projects/detail/shared.ts';
 
 /**
  * The same detail line the project page builds from the same entry: the launch source and the

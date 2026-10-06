@@ -6,11 +6,13 @@ import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
 import { LoadingState } from '../../../components/shared/LoadingState.tsx';
 import { MarkdownContent } from '../../../components/shared/MarkdownContent.tsx';
+import { Pagination } from '../../../components/shared/Pagination.tsx';
 import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../components/ui/card.tsx';
 import { useSubmitProjectInterviewAnswer } from '../../../hooks/useProjects.ts';
 import { percent } from '../../../lib/formatters.ts';
+import { clampPage } from '../../../lib/pagination.ts';
 import { toneSolid } from '../../../lib/tones.ts';
 import { proseMeasureClass } from '../../../lib/typography.ts';
 import { InterviewFilters } from './InterviewFilters.tsx';
@@ -22,8 +24,6 @@ import {
 	interviewPriorityTone,
 	normalizedInterviewPriority,
 } from './interviewUtils.ts';
-import { clampPage } from './pagination-utils.ts';
-import { Pagination } from './Pagination.tsx';
 import { useInterviewFilters } from './useInterviewFilters.ts';
 
 const INTERVIEW_PAGE_SIZE = 12;

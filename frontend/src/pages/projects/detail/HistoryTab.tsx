@@ -14,6 +14,7 @@ import { CommitDiffDialog } from '../../../components/shared/CommitDiffDialog.ts
 import { DisclosureMarker } from '../../../components/shared/DisclosureMarker.tsx';
 import { EmptyState } from '../../../components/shared/EmptyState.tsx';
 import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIdentityBadges.tsx';
+import { Pagination } from '../../../components/shared/Pagination.tsx';
 import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { IconButton } from '../../../components/ui/button.tsx';
@@ -39,7 +40,6 @@ import {
 	historyFilterLabels,
 	historyKindLabels,
 } from './historyTimeline.ts';
-import { Pagination } from './Pagination.tsx';
 
 const HISTORY_PAGE_SIZE = 25;
 const WEB_RUN_ID_PATTERN = /^run_\d+_[0-9a-f]{8}$/u;

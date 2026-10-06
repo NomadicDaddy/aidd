@@ -6,12 +6,13 @@ import { ExecutionIdentityBadges } from '../../../components/shared/ExecutionIde
 import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../../components/ui/card.tsx';
+import { runStatusTone } from '../../../lib/runStatusTone.ts';
 import { toneText } from '../../../lib/tones.ts';
 import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { MetadataRow } from './MetadataRow.tsx';
 import { projectDetailTabSearch } from './overviewLinks.ts';
 import { recentMetadataActivity } from './recentActivityItems.ts';
-import { RECENT_ACTIVITY_LIMIT, runStatusTone } from './shared.ts';
+import { RECENT_ACTIVITY_LIMIT } from './shared.ts';
 
 export function RecentActivity({
 	metadata,

@@ -4,6 +4,7 @@ import { persistCycleResult } from './commands/cycles.ts';
 import { reconcileDiaryEntries } from './commands/diary.ts';
 import { startDirectorCycleIfIdle } from './commands/directorCycles.ts';
 import { reconcileInvocationFromRun, reconcileStaleInvocations } from './commands/invocations.ts';
+import { startPipelineSessionIfProjectIdle } from './commands/pipelineSessions.ts';
 import { purgeProjectRuns, updateProjectPathReferences } from './commands/projectPaths.ts';
 import { insertQueuedRun, promoteOldestQueuedRun } from './commands/runCeiling.ts';
 import { markRunStale, reconcileDeadRun, terminalizeRun } from './commands/runHeartbeat.ts';
@@ -54,6 +55,10 @@ export function createInProcessCommands(db: LocalWebDatabase): DbCommands {
 			db.transaction((tx) => setRunPid(tx, args), { behavior: 'immediate' }),
 		startDirectorCycleIfIdle: async (args) =>
 			db.transaction((tx) => startDirectorCycleIfIdle(tx, args), { behavior: 'immediate' }),
+		startPipelineSessionIfProjectIdle: async (args) =>
+			db.transaction((tx) => startPipelineSessionIfProjectIdle(tx, args), {
+				behavior: 'immediate',
+			}),
 		terminalizeRun: async (args) =>
 			db.transaction((tx) => terminalizeRun(tx, args), { behavior: 'immediate' }),
 		updateProjectPathReferences: async (args) =>

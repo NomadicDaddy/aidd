@@ -1,6 +1,7 @@
 import { killProcessTree } from 'aidd-shared/lib/processTree';
 
 import type { WebDatabase } from '../db/client.ts';
+import type { DbCommands } from '../db/commands.ts';
 import type { PipelineSessionRecord, PipelineSessionReport } from '../types.ts';
 import type { WebSocketHub } from '../webSocketHub.ts';
 import type { AppWatchdog } from './appLauncher/watchdog.ts';
@@ -31,6 +32,7 @@ export class PipelineService {
 
 	constructor(input: {
 		appWatchdog?: AppWatchdog;
+		commands: DbCommands;
 		db: WebDatabase;
 		hub: WebSocketHub;
 		projectService: ProjectService;
@@ -70,6 +72,7 @@ export class PipelineService {
 			activeExecutions: this.activeExecutions,
 			...(input.appWatchdog ? { appWatchdog: input.appWatchdog } : {}),
 			broadcast,
+			commands: input.commands,
 			db: input.db,
 			lifecycle: this.lifecycle,
 			projectService: input.projectService,

@@ -12,6 +12,7 @@ import type { PipelineService } from '../pipelineService.ts';
 import type { SkillLaunchService } from '../skillLaunchService.ts';
 
 import { webLogger } from '../../logger.ts';
+import { ProjectBusyError } from '../errors.ts';
 
 export interface ScheduledDispatchResult {
 	children: ScheduledExecutionChild[];
@@ -155,6 +156,7 @@ export class ScheduledTaskDispatcher {
 	): Promise<ScheduledDispatchResult> {
 		const children: ScheduledExecutionChild[] = [];
 		const errors: string[] = [];
+		const busy: string[] = [];
 		for (const { launchDir, recordedPath } of sites) {
 			try {
 				if (target.type === 'recipe') {
@@ -247,9 +249,16 @@ export class ScheduledTaskDispatcher {
 				}
 			} catch (err) {
 				const message = err instanceof Error ? err.message : String(err);
-				errors.push(recordedPath === null ? message : `${recordedPath}: ${message}`);
+				const located = recordedPath === null ? message : `${recordedPath}: ${message}`;
+				// A project already busy with another session or run was left alone on purpose.
+				if (err instanceof ProjectBusyError) busy.push(located);
+				else errors.push(located);
 			}
 		}
-		return { children, errors };
+		// Nothing started and nothing failed: every site was busy, which is a skip, not a failure.
+		if (children.length === 0 && errors.length === 0 && busy.length > 0) {
+			return { children, errors, skipped: busy.join('; ') };
+		}
+		return { children, errors: [...errors, ...busy] };
 	}
 }

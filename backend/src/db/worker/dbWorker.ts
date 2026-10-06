@@ -94,6 +94,10 @@ async function runCommand(name: DbCommandName, args: unknown): Promise<unknown> 
 			return commands.startDirectorCycleIfIdle(
 				args as DbCommandMap['startDirectorCycleIfIdle']['args'],
 			);
+		case 'startPipelineSessionIfProjectIdle':
+			return commands.startPipelineSessionIfProjectIdle(
+				args as DbCommandMap['startPipelineSessionIfProjectIdle']['args'],
+			);
 		case 'terminalizeRun':
 			return commands.terminalizeRun(args as DbCommandMap['terminalizeRun']['args']);
 		case 'updateProjectPathReferences':

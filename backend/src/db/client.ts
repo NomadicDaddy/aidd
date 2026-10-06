@@ -225,6 +225,8 @@ export async function createWorkerWebDatabase(
 		releaseRunReservation: (args) => call('releaseRunReservation', args),
 		setRunPid: (args) => call('setRunPid', args),
 		startDirectorCycleIfIdle: (args) => call('startDirectorCycleIfIdle', args),
+		startPipelineSessionIfProjectIdle: (args) =>
+			call('startPipelineSessionIfProjectIdle', args),
 		terminalizeRun: (args) => call('terminalizeRun', args),
 		updateProjectPathReferences: (args) => call('updateProjectPathReferences', args),
 		writeScheduledTask: (args) => call('writeScheduledTask', args),

@@ -10,7 +10,7 @@ import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import type { RunContinuationValue, WebRunStatus } from '../../types.ts';
 import type * as schema from '../schema.ts';
 
-import { type directorCycles, type runs } from '../schema.ts';
+import { type directorCycles, type pipelineSessions, type runs } from '../schema.ts';
 
 // The local, in-process bun:sqlite drizzle instance. Command scripts run against this — never
 // against the main-thread sqlite-proxy `WebDatabase` — because their interactive read-modify-
@@ -150,6 +150,13 @@ export interface StartDirectorCycleIfIdleArgs {
 export type StartDirectorCycleIfIdleResult =
 	{ kind: 'busy'; runningCycleId: string } | { kind: 'started' };
 
+export interface StartPipelineSessionIfProjectIdleArgs {
+	values: typeof pipelineSessions.$inferInsert;
+}
+
+export type StartPipelineSessionIfProjectIdleResult =
+	{ activeId: string; activeKind: 'run' | 'session'; kind: 'busy' } | { kind: 'started' };
+
 export interface ClaimScheduledTaskArgs {
 	executionId: string;
 	expectedDueAt: null | number;
@@ -243,6 +250,10 @@ export interface DbCommandMap {
 	startDirectorCycleIfIdle: {
 		args: StartDirectorCycleIfIdleArgs;
 		result: StartDirectorCycleIfIdleResult;
+	};
+	startPipelineSessionIfProjectIdle: {
+		args: StartPipelineSessionIfProjectIdleArgs;
+		result: StartPipelineSessionIfProjectIdleResult;
 	};
 	terminalizeRun: { args: TerminalizeRunArgs; result: HeartbeatWriteOutcome };
 	updateProjectPathReferences: { args: UpdateProjectPathArgs; result: void };

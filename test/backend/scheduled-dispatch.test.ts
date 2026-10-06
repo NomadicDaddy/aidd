@@ -5,6 +5,7 @@ import type { DirectiveLaunchService } from '../../backend/src/services/directiv
 import type { PipelineService } from '../../backend/src/services/pipelineService.ts';
 import type { SkillLaunchService } from '../../backend/src/services/skillLaunchService.ts';
 
+import { ProjectBusyError } from '../../backend/src/services/errors.ts';
 import { ScheduledTaskDispatcher } from '../../backend/src/services/scheduled/dispatch.ts';
 
 const FLEET_DIR = 'D:/applications';
@@ -71,6 +72,48 @@ describe('scheduled target dispatch', () => {
 		expect(calls.every((call) => call.executionId === 'execution')).toBe(true);
 		expect(result.children.map((child) => child.projectPath)).toEqual(['D:/one', 'D:/three']);
 		expect(result.errors[0]).toContain('D:/two: run ceiling reached');
+	});
+
+	// A project already busy with another session or run is left alone by design. When that is the
+	// only reason nothing started, the occurrence is a skip, not a failure.
+	test('an occurrence whose only project is busy is skipped, not failed', async () => {
+		const pipeline = {
+			launchRecipe: async () => {
+				throw new ProjectBusyError('demo already has an active pipeline session (ps_a)');
+			},
+		} as unknown as PipelineService;
+		const result = await dispatcher({ pipeline }).dispatch({
+			executionId: 'execution',
+			projectPaths: ['D:/demo'],
+			scope: 'all',
+			target: { applyChanges: true, recipeId: 'recipe', type: 'recipe' },
+			trigger: 'scheduled',
+		});
+
+		expect(result.children).toEqual([]);
+		expect(result.errors).toEqual([]);
+		expect(result.skipped).toBe('D:/demo: demo already has an active pipeline session (ps_a)');
+	});
+
+	test('a busy project beside a started one is reported, and the rest still run', async () => {
+		const pipeline = {
+			launchRecipe: async (input: { projectDir: string }) => {
+				if (input.projectDir === 'D:/busy')
+					throw new ProjectBusyError('busy has an active run');
+				return { id: 'session', status: 'queued' };
+			},
+		} as unknown as PipelineService;
+		const result = await dispatcher({ pipeline }).dispatch({
+			executionId: 'execution',
+			projectPaths: ['D:/busy', 'D:/free'],
+			scope: 'all',
+			target: { applyChanges: true, recipeId: 'recipe', type: 'recipe' },
+			trigger: 'scheduled',
+		});
+
+		expect(result.children.map((child) => child.projectPath)).toEqual(['D:/free']);
+		expect(result.errors).toEqual(['D:/busy: busy has an active run']);
+		expect(result.skipped).toBeUndefined();
 	});
 
 	test('carries skill arguments, intent, overrides, and provenance', async () => {

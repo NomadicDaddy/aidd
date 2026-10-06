@@ -4,6 +4,7 @@ import { isGitRepository } from 'aidd-shared/pipeline/writeAllowlist';
 import { basename } from 'node:path';
 
 import type { WebDatabase } from '../../db/client.ts';
+import type { DbCommands } from '../../db/commands.ts';
 import type { PipelineSessionRecord, RecipeDefinition } from '../../types.ts';
 import type { AppWatchdog } from '../appLauncher/watchdog.ts';
 import type { ProjectService } from '../projectService.ts';
@@ -20,17 +21,17 @@ import type {
 	ResumeResolution,
 } from './types.ts';
 
-import { pipelineSessions } from '../../db/schema.ts';
 import { webLogger } from '../../logger.ts';
 import { canonicalProjectPath } from '../../paths.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
+import { ProjectBusyError } from '../errors.ts';
 import { SKILL_RECIPE_PREFIX } from '../recipeService.ts';
 import { createPipelineSessionId, parseSessionParameters, resolveParameters } from './helpers.ts';
 import { launchTargetFromSessionRow, normalizeLaunchTarget } from './launchTarget.ts';
 import { PipelineSessionExecutor } from './sessionExecutor.ts';
 
 export class LaunchService {
-	private readonly db: WebDatabase;
+	private readonly commands: DbCommands;
 	private readonly projectService: ProjectService;
 	private readonly recipeService: RecipeService;
 	private readonly report: ReportBuilder;
@@ -43,6 +44,7 @@ export class LaunchService {
 		activeExecutions: Map<string, Promise<void>>;
 		appWatchdog?: AppWatchdog;
 		broadcast: BroadcastService;
+		commands: DbCommands;
 		db: WebDatabase;
 		lifecycle: SessionLifecycle;
 		projectService: ProjectService;
@@ -52,7 +54,7 @@ export class LaunchService {
 		stopFlags: Set<string>;
 		telemetryService: TelemetryService;
 	}) {
-		this.db = input.db;
+		this.commands = input.commands;
 		this.projectService = input.projectService;
 		this.recipeService = input.recipeService;
 		this.report = input.report;
@@ -99,25 +101,34 @@ export class LaunchService {
 		const startedAt = Date.now();
 		const recipeSha256 = sha256Json(recipe);
 		const launchTarget = normalizeLaunchTarget(input.launchTarget);
-		await this.db.insert(pipelineSessions).values({
-			currentStepIndex: 0,
-			id: sessionId,
-			initiator: input.initiator,
-			launchBackend: launchTarget?.backend ?? null,
-			launchModel: launchTarget?.model ?? null,
-			launchReasoningEffort: launchTarget?.reasoningEffort ?? null,
-			metadataOnly: metadataOnly ? 1 : 0,
-			parametersJson: JSON.stringify(parameters),
-			projectName: basename(projectDir),
-			projectPath: projectDir,
-			recipeId: recipe.id,
-			recipeName: recipe.name,
-			recipeSha256,
-			scheduledTaskExecutionId: input.scheduledTaskExecutionId ?? null,
-			startedAt,
-			status: 'queued',
-			totalSteps: recipe.steps.length,
+		// One session per project at a time, claimed atomically: a session's steps share the live tree
+		// with anything else working there, and its write guard would charge their changes to it.
+		const claim = await this.commands.startPipelineSessionIfProjectIdle({
+			values: {
+				currentStepIndex: 0,
+				id: sessionId,
+				initiator: input.initiator,
+				launchBackend: launchTarget?.backend ?? null,
+				launchModel: launchTarget?.model ?? null,
+				launchReasoningEffort: launchTarget?.reasoningEffort ?? null,
+				metadataOnly: metadataOnly ? 1 : 0,
+				parametersJson: JSON.stringify(parameters),
+				projectName: basename(projectDir),
+				projectPath: projectDir,
+				recipeId: recipe.id,
+				recipeName: recipe.name,
+				recipeSha256,
+				scheduledTaskExecutionId: input.scheduledTaskExecutionId ?? null,
+				startedAt,
+				status: 'queued',
+				totalSteps: recipe.steps.length,
+			},
 		});
+		if (claim.kind === 'busy') {
+			throw new ProjectBusyError(
+				`${basename(projectDir)} already has an active ${claim.activeKind === 'session' ? 'pipeline session' : 'run'} (${claim.activeId}); wait for it to finish before starting ${recipe.name}.`,
+			);
+		}
 		recordDataMovement({
 			category: 'database',
 			operation: 'pipeline.session.insert',

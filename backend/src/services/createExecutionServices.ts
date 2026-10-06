@@ -50,6 +50,7 @@ export function createExecutionServices(input: {
 	);
 	const pipelineService = new PipelineService({
 		...(input.appWatchdog ? { appWatchdog: input.appWatchdog } : {}),
+		commands: input.database.commands,
 		db: input.database.db,
 		hub: input.hub,
 		projectService: input.projectService,

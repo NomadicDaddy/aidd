@@ -14,6 +14,7 @@ import { AppLauncherService } from '../../backend/src/services/appLauncher/launc
 import { DiaryService } from '../../backend/src/services/diaryService.ts';
 import { DirectorService } from '../../backend/src/services/directorService.ts';
 import { disabledDirectAiRunner } from '../../backend/src/services/directAiService.ts';
+import { ProjectBusyError } from '../../backend/src/services/errors.ts';
 import { SkillService } from '../../backend/src/services/skillService.ts';
 import { MetricsService } from '../../backend/src/services/metricsService.ts';
 import { requestFromAiddCliStep } from '../../backend/src/services/pipeline/helpers.ts';
@@ -110,6 +111,7 @@ function makeHarness(rootDir: string, workspace: string) {
 	);
 	const skillService = new SkillService({ rootDir });
 	const pipelineService = new PipelineService({
+		commands,
 		db,
 		hub,
 		skillService,
@@ -191,6 +193,7 @@ function makeServerHarness(rootDir: string, workspace: string) {
 	);
 	const skillService = new SkillService({ rootDir });
 	const pipelineService = new PipelineService({
+		commands,
 		db,
 		hub,
 		skillService,
@@ -1197,6 +1200,62 @@ ${heartbeatTerminator()}
 			await removeTempTree(rootDir);
 		}
 	});
+
+	// Two sessions in one live tree interleave, and each step's write guard charges the other's
+	// changes to itself. Only the Director's auto-launcher used to check; every launch path does now.
+	test('a second session on a project with one still running is refused', async () => {
+		const workspace = await testTempDir('aidd-pipeline-project-claim-');
+		const rootDir = await makeRoot(heartbeatTerminator());
+		try {
+			const projectDir = await makeProject(workspace);
+			const { pipelineService, recipeService, runService, sqlite } = makeHarness(
+				rootDir,
+				workspace,
+			);
+			try {
+				await recipeService.writeRecipe({
+					id: 'slow_shell',
+					name: 'Slow Shell',
+					parameters: [],
+					steps: [
+						{
+							configJson: { command: 'sleep 2' },
+							id: 'slow_shell_step_1',
+							name: 'Wait',
+							stepType: 'shell',
+						},
+					],
+				});
+				const first = await pipelineService.launchRecipe({
+					initiator: 'operator',
+					projectDir,
+					recipeId: 'slow_shell',
+				});
+
+				await expect(
+					pipelineService.launchRecipe({
+						initiator: 'operator',
+						projectDir,
+						recipeId: 'slow_shell',
+					}),
+				).rejects.toBeInstanceOf(ProjectBusyError);
+
+				const report = await waitForReport(pipelineService, first.id);
+				expect(report.session.status).toBe('completed');
+				const again = await pipelineService.launchRecipe({
+					initiator: 'operator',
+					projectDir,
+					recipeId: 'slow_shell',
+				});
+				await waitForReport(pipelineService, again.id);
+			} finally {
+				await disposeHarness(pipelineService, runService, sqlite);
+			}
+		} finally {
+			await removeTempTree(workspace);
+			await removeTempTree(rootDir);
+		}
+	}, 30_000);
 
 	test('links aidd CLI steps to managed runs', async () => {
 		const workspace = await testTempDir('aidd-pipeline-aidd-step-');

@@ -87,6 +87,7 @@ export async function createTestServer(rootDir: string, workspace: string) {
 	const recipeService = new RecipeService(rootDir);
 	const skillService = new SkillService({ rootDir });
 	const pipelineService = new PipelineService({
+		commands: database.commands,
 		db: database.db,
 		hub: webSocketHub,
 		skillService,

@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
 	applyEnvSecrets,
+	configFileCredentials,
 	resolveMergedConfig,
 	TELEGRAM_BOT_TOKEN_ENV,
 	WEB_AUTH_TOKEN_ENV,
@@ -162,5 +163,36 @@ describe('resolveMergedConfig with an environment-supplied credential', () => {
 			),
 		);
 		expect(resolved.channels?.telegram?.botToken).toBe('env-bot');
+	});
+});
+
+describe('configFileCredentials', () => {
+	test('lists each credential the file holds with the variable that replaces it', () => {
+		const config: PartialAiddConfig = {
+			channels: { telegram: { allowedChatIds: [], botToken: 'bot-value' } },
+			providers: {
+				custom: { apiKey: 'custom-value' },
+				openai: { apiKey: 'openai-value', model: 'gpt' },
+				xai: { model: 'grok' },
+			},
+			web: { authToken: 'web-value' },
+		};
+
+		expect(configFileCredentials(config)).toEqual([
+			{ envVar: undefined, path: 'providers.custom.apiKey' },
+			{ envVar: 'OPENAI_API_KEY', path: 'providers.openai.apiKey' },
+			{ envVar: WEB_AUTH_TOKEN_ENV, path: 'web.authToken' },
+			{ envVar: TELEGRAM_BOT_TOKEN_ENV, path: 'channels.telegram.botToken' },
+		]);
+	});
+
+	test('blank values and a file without credentials report nothing', () => {
+		expect(configFileCredentials({})).toEqual([]);
+		expect(
+			configFileCredentials({
+				providers: { openai: { apiKey: ' ' } },
+				web: { authToken: '' },
+			}),
+		).toEqual([]);
 	});
 });

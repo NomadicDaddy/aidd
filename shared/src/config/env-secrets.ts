@@ -1,5 +1,7 @@
 import type { PartialAiddConfig } from './schema.ts';
 
+import { providerEnvVar } from '../agent/client/providerKeys.ts';
+
 /**
  * Environment-sourced credential overlay for the user-level config.
  *
@@ -69,4 +71,33 @@ export function applyEnvSecrets(
 		};
 	}
 	return next;
+}
+
+export interface ConfigFileCredential {
+	/** The variable that supplies it instead, when one exists. */
+	envVar: string | undefined;
+	/** Dotted path of the credential inside the config file. */
+	path: string;
+}
+
+/**
+ * The credentials a config file itself carries, each with the variable that can replace it.
+ *
+ * Takes the file's own parse, before `applyEnvSecrets`: a value supplied by the environment is
+ * the arrangement this module recommends and must not be reported as sitting in the file.
+ */
+export function configFileCredentials(config: PartialAiddConfig): ConfigFileCredential[] {
+	const found: ConfigFileCredential[] = [];
+	for (const [name, provider] of Object.entries(config.providers ?? {})) {
+		if (readSecret(provider.apiKey)) {
+			found.push({ envVar: providerEnvVar(name), path: `providers.${name}.apiKey` });
+		}
+	}
+	if (readSecret(config.web?.authToken)) {
+		found.push({ envVar: WEB_AUTH_TOKEN_ENV, path: 'web.authToken' });
+	}
+	if (readSecret(config.channels?.telegram?.botToken)) {
+		found.push({ envVar: TELEGRAM_BOT_TOKEN_ENV, path: 'channels.telegram.botToken' });
+	}
+	return found;
 }

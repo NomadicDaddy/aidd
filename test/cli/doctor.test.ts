@@ -131,3 +131,43 @@ describe('runPreflightDoctor', () => {
 		}
 	});
 });
+
+// The shell policy bounds the paths a command names, not what a program it starts reads: an awk
+// one-liner reaching the user config through ENVIRON["HOME"] passes every check. Only a config file
+// with no credential in it is safe, so the doctor names any it finds and the variable to use.
+describe('runPreflightDoctor credential warning', () => {
+	const prober: DoctorProber = () => Promise.resolve({ ok: true });
+
+	test('a credential in the user config file is named with its variable, and the run proceeds', async () => {
+		const projectDir = await makeProjectDir('config-credential');
+		const result = await runPreflightDoctor(plan(projectDir), {
+			prober,
+			readUserConfig: () =>
+				Promise.resolve({
+					providers: { openai: { apiKey: 'sk-test-not-a-real-key' } },
+					web: { authToken: 'not-a-real-token' },
+				}),
+		});
+
+		expect(result.ok).toBe(true);
+		if (!result.ok) throw new Error('expected the doctor to pass');
+		expect(result.warning).toContain('providers.openai.apiKey (set OPENAI_API_KEY instead)');
+		expect(result.warning).toContain('web.authToken (set AIDD_WEB_AUTH_TOKEN instead)');
+		expect(result.warning).not.toContain('not-a-real');
+	});
+
+	test('a config file with no credential, or one that cannot be read, adds no warning', async () => {
+		const projectDir = await makeProjectDir('config-clean');
+		const clean = await runPreflightDoctor(plan(projectDir), {
+			prober,
+			readUserConfig: () => Promise.resolve({ providers: { openai: { apiKey: '  ' } } }),
+		});
+		const unreadable = await runPreflightDoctor(plan(projectDir), {
+			prober,
+			readUserConfig: () => Promise.reject(new Error('Invalid JSON in aidd config')),
+		});
+
+		expect(clean).toEqual({ ok: true });
+		expect(unreadable).toEqual({ ok: true });
+	});
+});

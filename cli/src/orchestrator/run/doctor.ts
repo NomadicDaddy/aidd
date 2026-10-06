@@ -5,6 +5,12 @@ import {
 	augmentEnvPathForGitBash,
 	resolveBashExecutable,
 } from 'aidd-shared/agent/tools/bash-runtime';
+import {
+	configFileCredentials,
+	getUserConfigPath,
+	type PartialAiddConfig,
+	readConfig,
+} from 'aidd-shared/config';
 import { runRepoDir } from 'aidd-shared/plan/types';
 import { buildToolSubprocessEnv } from 'aidd-shared/subprocess-env';
 
@@ -22,7 +28,11 @@ export type DoctorProber = (
 
 export interface PreflightDoctorDeps {
 	prober?: DoctorProber | undefined;
+	/** The user config file's own content, before environment credentials are applied. */
+	readUserConfig?: (() => Promise<PartialAiddConfig>) | undefined;
 }
+
+export type PreflightDoctorResult = { ok: false; summary: string } | { ok: true; warning?: string };
 
 const probeTimeoutMs = 3000;
 
@@ -64,6 +74,31 @@ async function spawnProbe(
 }
 
 /**
+ * A non-fatal note when the user config file itself holds a credential. The native agent's shell
+ * policy bounds the paths a command names, not what a program it starts reads (AGENT_TOOL_SANDBOX,
+ * residual privileges): an awk one-liner reading `ENVIRON["HOME"] "/.aidd/config.json"` passes
+ * every check, and an external backend CLI is not bounded at all. Only a file with no credential
+ * in it is safe, and every credential it can hold has an environment variable instead.
+ */
+async function configCredentialWarning(
+	readUserConfig: () => Promise<PartialAiddConfig>,
+): Promise<string | undefined> {
+	let config: PartialAiddConfig;
+	try {
+		config = await readUserConfig();
+	} catch {
+		// An unreadable config fails the run earlier, in resolveConfig, with its own message.
+		return undefined;
+	}
+	const found = configFileCredentials(config);
+	if (found.length === 0) return undefined;
+	const listed = found
+		.map((entry) => (entry.envVar ? `${entry.path} (set ${entry.envVar} instead)` : entry.path))
+		.join(', ');
+	return `preflight doctor: warning: the user config file holds credentials: ${listed}. Any program an agent starts can read that file whatever the shell policy allows; move each value to its environment variable and remove it from the file.`;
+}
+
+/**
  * Fast environment sanity check before the first iteration: is the backend CLI runnable, and
  * (for the native family) can the resolved bash actually execute the workspace toolchain?
  * Catch a broken environment before the agent spends its run budget fighting toolchain errors.
@@ -73,12 +108,16 @@ async function spawnProbe(
 export async function runPreflightDoctor(
 	plan: RunPlan,
 	deps: PreflightDoctorDeps = {},
-): Promise<{ ok: false; summary: string } | { ok: true }> {
+): Promise<PreflightDoctorResult> {
 	if (plan.outputPolicy.preflightDoctor === false) return { ok: true };
 	if (process.env.AIDD_SKIP_DOCTOR === '1') return { ok: true };
 	if (plan.simulation) return { ok: true };
 	const prober = deps.prober ?? spawnProbe;
 	const cwd = runRepoDir(plan);
+	const warning = await configCredentialWarning(
+		deps.readUserConfig ?? (() => readConfig(getUserConfigPath())),
+	);
+	const passed: PreflightDoctorResult = warning ? { ok: true, warning } : { ok: true };
 
 	const cliBinary = backendCliBinaries[plan.backend];
 	if (cliBinary !== undefined) {
@@ -89,7 +128,7 @@ export async function runPreflightDoctor(
 				summary: `preflight doctor: backend CLI '${cliBinary}' is not runnable (${probe.detail ?? 'unknown failure'}) — install or update it, or pick another backend`,
 			};
 		}
-		return { ok: true };
+		return passed;
 	}
 
 	// Native family: the agent's bash tool must exist and be able to run the workspace
@@ -113,5 +152,5 @@ export async function runPreflightDoctor(
 			summary: `preflight doctor: '${bash.path}' cannot run the workspace toolchain (bun/coreutils probe failed: ${probe.detail ?? 'unknown failure'}) — gates like 'bun run …' would never pass. Fix PATH/bash (set AIDD_BASH to Git Bash on Windows) before re-running.`,
 		};
 	}
-	return { ok: true };
+	return passed;
 }

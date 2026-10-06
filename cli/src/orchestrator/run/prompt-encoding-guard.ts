@@ -33,6 +33,7 @@ export async function handlePromptEncodingGuard(
 			doctor.summary,
 		);
 	}
+	if (doctor.warning) console.warn(doctor.warning);
 	const encodingViolations = await findPromptArtifactEncodingViolations(runRepoDir(plan));
 	if (encodingViolations.length === 0) return undefined;
 	const summary = formatEncodingViolationSummary(encodingViolations);

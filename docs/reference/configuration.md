@@ -39,6 +39,10 @@ configuration file, so an agent asked to inspect your configuration reads the wh
 credential inside travels out with the answer, into the model provider's context, where nothing
 can recall it. A value held in the environment is not in the file an agent reads.
 
+The preflight doctor warns at the start of every run while the file still holds a credential, a
+provider `apiKey` included, and names the variable that replaces each one. The warning never stops
+the run.
+
 Rules:
 
 - The environment wins over the file, so a rotated credential takes effect without editing config

@@ -10,6 +10,7 @@ export {
 } from './config/defaults.ts';
 export {
 	applyEnvSecrets,
+	configFileCredentials,
 	TELEGRAM_BOT_TOKEN_ENV,
 	WEB_AUTH_TOKEN_ENV,
 } from './config/env-secrets.ts';

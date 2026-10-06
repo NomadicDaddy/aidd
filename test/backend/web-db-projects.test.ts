@@ -2268,6 +2268,7 @@ describe('purgeProjectRuns command', () => {
 			await db.insert(schema.runs).values({
 				backend: 'native',
 				id: `run-${suffix}`,
+				logPath: resolve(`/data/run-logs/run-${suffix}.log`),
 				projectName: suffix,
 				projectPath,
 				startedAt: now,
@@ -2286,8 +2287,12 @@ describe('purgeProjectRuns command', () => {
 			});
 		}
 
+		// The removed rows' transcript paths come back so the caller can delete the files.
 		const purged = await commands.purgeProjectRuns({ projectPath: target });
-		expect(purged).toBe(1);
+		expect(purged).toEqual({
+			logPaths: [resolve('/data/run-logs/run-target.log')],
+			removed: 1,
+		});
 
 		const remainingRuns = sqlite
 			.query<{ id: string }, []>('SELECT id FROM runs ORDER BY id')
@@ -2335,7 +2340,7 @@ describe('purgeProjectRuns command', () => {
 		const purged = await commands.purgeProjectRuns({
 			projectPath: resolve('/projects/never-existed'),
 		});
-		expect(purged).toBe(0);
+		expect(purged).toEqual({ logPaths: [], removed: 0 });
 		const remaining = sqlite.query<{ id: string }, []>('SELECT id FROM runs').all();
 		expect(remaining).toHaveLength(1);
 

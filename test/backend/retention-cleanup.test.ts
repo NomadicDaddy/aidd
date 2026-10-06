@@ -7,12 +7,13 @@ import {
 import { Database } from 'bun:sqlite';
 import { afterEach, describe, expect, test } from 'bun:test';
 import { existsSync } from 'node:fs';
-import { mkdir, truncate, writeFile } from 'node:fs/promises';
+import { mkdir, truncate, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { wrapWebDatabase } from '../../backend/src/db/client.ts';
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
 import { sweepRetention } from '../../backend/src/services/retention/cleanup.ts';
+import { purgeProjectRuns } from '../../backend/src/services/run/purgeProjectRuns.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
@@ -170,6 +171,82 @@ describe('local execution retention', () => {
 		expect(result.history).toEqual({ invocations: 1, pipelineSessions: 1, runs: 1 });
 		expect(sqlite.query('SELECT id FROM runs').all()).toEqual([{ id: 'active-run' }]);
 		expect(sqlite.query('PRAGMA foreign_key_check').all()).toEqual([]);
+		sqlite.close();
+	});
+
+	// audit-deployment-1790858369: the sweep built its candidates from runs rows only, so a file
+	// with no row (a CLI run with no external context, a spernakit-init log, a launch payload, a
+	// purged project's transcripts) was outside both the age limit and the byte cap.
+	test('an unreferenced transcript ages out, counts toward the cap, and survives while fresh', async () => {
+		const { dataDir, db, sqlite } = await fixture();
+		const now = Date.UTC(2026, 8, 10);
+		const orphanOld = join(dataDir, 'run-logs', 'run_1_orphan.log');
+		const orphanFresh = join(dataDir, 'run-logs', 'run_2_live.log');
+		const orphanRecent = join(dataDir, 'run-logs', 'spernakit-init-3.log');
+		const referenced = join(dataDir, 'run-logs', 'referenced.log');
+		await Promise.all([
+			writeFile(orphanOld, 'old orphan'),
+			writeFile(orphanFresh, 'live cli run'),
+			writeFile(orphanRecent, ''),
+			writeFile(referenced, ''),
+		]);
+		const stamp = async (path: string, at: number) => utimes(path, at / 1000, at / 1000);
+		await stamp(orphanOld, now - TRANSCRIPT_MAX_AGE_MS - 1);
+		await stamp(orphanFresh, now - 60 * 60 * 1000);
+		await stamp(orphanRecent, now - 3 * 24 * 60 * 60 * 1000);
+		insertRun(sqlite, {
+			completedAt: now - 1_000,
+			id: 'referenced',
+			logPath: referenced,
+			startedAt: now - 2_000,
+			status: 'completed',
+		});
+
+		const first = await sweepRetention(db, dataDir, now);
+		expect(first.transcripts.removed).toBe(1);
+		expect(existsSync(orphanOld)).toBe(false);
+		expect(existsSync(orphanFresh)).toBe(true);
+		expect(existsSync(orphanRecent)).toBe(true);
+
+		// Over the cap, the unreferenced three-day-old file is evicted before the newer referenced
+		// transcript; the hour-old one is inside the grace period and is never a candidate.
+		const each = Math.floor(TRANSCRIPT_MAX_BYTES * 0.6);
+		await Promise.all([truncate(orphanRecent, each), truncate(referenced, each)]);
+		// truncate touched the mtime; restore the age the case is about.
+		await stamp(orphanRecent, now - 3 * 24 * 60 * 60 * 1000);
+		const second = await sweepRetention(db, dataDir, now);
+		expect(second.transcripts.removed).toBe(1);
+		expect(existsSync(orphanRecent)).toBe(false);
+		expect(existsSync(referenced)).toBe(true);
+		expect(second.transcripts.bytes).toBeLessThanOrEqual(TRANSCRIPT_MAX_BYTES);
+		sqlite.close();
+	});
+
+	test('a project purge removes its rows and their transcripts, and nothing outside run-logs', async () => {
+		const { dataDir, sqlite } = await fixture();
+		const { commands } = wrapWebDatabase(sqlite);
+		const inside = join(dataDir, 'run-logs', 'purged.log');
+		const outside = join(dataDir, 'elsewhere.log');
+		await Promise.all([writeFile(inside, 'transcript'), writeFile(outside, 'not ours')]);
+		insertRun(sqlite, {
+			completedAt: 1,
+			id: 'purged',
+			logPath: inside,
+			startedAt: 1,
+			status: 'completed',
+		});
+		insertRun(sqlite, {
+			completedAt: 1,
+			id: 'escaped',
+			logPath: outside,
+			startedAt: 1,
+			status: 'completed',
+		});
+
+		expect(await purgeProjectRuns({ commands, dataDir }, 'D:/applications/test')).toBe(2);
+		expect(sqlite.query('SELECT id FROM runs').all()).toEqual([]);
+		expect(existsSync(inside)).toBe(false);
+		expect(existsSync(outside)).toBe(true);
 		sqlite.close();
 	});
 });

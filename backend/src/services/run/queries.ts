@@ -22,12 +22,12 @@ export {
 	listRunsForProjectPage,
 	listRunsPage,
 	type ListRunsPageOptions,
-	purgeProjectRuns,
 	updateProjectPathReferences,
 } from './historyQueries.ts';
 export {
 	listActiveRunSummaries,
 	type ProjectActiveRunSummary,
 } from './projectActiveRunSummaries.ts';
+export { purgeProjectRuns } from './purgeProjectRuns.ts';
 export type { QueriesContext } from './queryContracts.ts';
 export { annotatedWebRunRecord, toWebRunRecord } from './runRecordMapper.ts';

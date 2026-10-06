@@ -132,10 +132,12 @@ export async function launchRun(
 	// stop file (see launchStopGuard.ts for the shared-stop-file rationale). This guard precedes
 	// every launch-owned artifact so a refusal leaves no transcript behind.
 	await guardPendingProjectStop(ctx.db, projectDir);
-	// Run-log retention: files written under <web.dataDir>/run-logs/<runId>.log are
-	// retained indefinitely; there is no automatic cleanup. The CLI heartbeat writes
-	// scrubbed chunks (see scrubSecrets) to this same path via the AIDD_EXT_LOG_PATH
-	// env handoff, so high-confidence credential shapes are masked at write time.
+	// Run-log retention: files under <web.dataDir>/run-logs are swept by
+	// services/retention/cleanup.ts (terminal transcripts expire after TRANSCRIPT_MAX_AGE_MS,
+	// the directory is held under TRANSCRIPT_MAX_BYTES oldest-first, and a project purge
+	// removes its rows' transcripts). The CLI heartbeat writes scrubbed chunks (see
+	// scrubSecrets) to this same path via the AIDD_EXT_LOG_PATH env handoff, so
+	// high-confidence credential shapes are masked at write time.
 	const logPath = join(ctx.config.web.dataDir, 'run-logs', `${runId}.log`);
 	// Queue first, execute on admission. Every managed launch inserts as queued; admitQueuedRuns
 	// then promotes rows to running inside one worker transaction that counts running rows, so

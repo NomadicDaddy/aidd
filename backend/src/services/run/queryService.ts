@@ -106,7 +106,10 @@ export class RunQueryService {
 	}
 
 	async purgeProjectRuns(projectPath: string): Promise<number> {
-		return purgeProjectRunsInternal(this.queriesContext(), projectPath);
+		return purgeProjectRunsInternal(
+			{ commands: this.commands, dataDir: this.config.web.dataDir },
+			projectPath,
+		);
 	}
 
 	protected queriesContext(): QueriesContext {

@@ -4,8 +4,8 @@ import {
 	TRANSCRIPT_MAX_BYTES,
 } from 'aidd-shared/retention';
 import { and, eq, inArray, isNotNull, lt } from 'drizzle-orm';
-import { rm, stat } from 'node:fs/promises';
-import { isAbsolute, relative, resolve } from 'node:path';
+import { readdir, rm, stat } from 'node:fs/promises';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 
 import type { WebDatabase } from '../../db/client.ts';
 
@@ -19,6 +19,25 @@ interface TranscriptCandidate {
 	logPath: null | string;
 	startedAt: number;
 	status: string;
+}
+
+/**
+ * A file under run-logs that no `runs.logPath` references: a CLI run launched with no external
+ * context, a spernakit-init log, a Windows launch payload, or the transcript of a row a project
+ * purge removed. The sweep bounds these by mtime since there is no row to date them by.
+ */
+interface UnreferencedTranscript {
+	mtime: number;
+	path: string;
+	size: number;
+}
+
+/** An unreferenced file written this recently may belong to a live CLI run; never evict it. */
+const UNREFERENCED_GRACE_MS = 24 * 60 * 60 * 1_000;
+
+function pathKey(path: string): string {
+	const resolved = resolve(path);
+	return process.platform === 'win32' ? resolved.toLowerCase() : resolved;
 }
 
 export interface RetentionSweepResult {
@@ -53,6 +72,48 @@ async function removeTranscript(db: WebDatabase, row: TranscriptCandidate): Prom
 	return true;
 }
 
+async function removeUnreferenced(file: UnreferencedTranscript): Promise<boolean> {
+	try {
+		await rm(file.path, { force: true });
+		return true;
+	} catch (err) {
+		webLogger.warn({ err, path: file.path }, 'Failed to remove unreferenced run transcript');
+		return false;
+	}
+}
+
+// Every regular file under run-logs that no row references, with the size and mtime to bound it.
+async function unreferencedTranscripts(
+	transcriptRoot: string,
+	referenced: ReadonlySet<string>,
+): Promise<UnreferencedTranscript[]> {
+	let names: string[];
+	try {
+		names = await readdir(transcriptRoot);
+	} catch (err) {
+		if (typeof err === 'object' && err !== null && 'code' in err && err.code === 'ENOENT')
+			return [];
+		throw err;
+	}
+	const files: UnreferencedTranscript[] = [];
+	for (const name of names) {
+		const path = join(transcriptRoot, name);
+		if (referenced.has(pathKey(path))) continue;
+		let info;
+		try {
+			info = await stat(path);
+		} catch {
+			continue;
+		}
+		if (info.isFile()) files.push({ mtime: info.mtimeMs, path, size: info.size });
+	}
+	return files;
+}
+
+// Sweep run transcripts: every file under run-logs counts toward the byte cap, whether a row
+// references it or not. Expiry and eviction run oldest-first over terminal rows (by completion)
+// and unreferenced files (by mtime) together; an unreferenced file modified within the last day
+// is never touched, since a CLI run with no row writes its transcript there while it runs.
 async function sweepTranscripts(
 	db: WebDatabase,
 	dataDir: string,
@@ -73,6 +134,7 @@ async function sweepTranscripts(
 		(row) => row.logPath && isInside(transcriptRoot, resolve(row.logPath)),
 	);
 	const sizes = new Map<string, number>();
+	const referenced = new Set<string>();
 	let bytes = 0;
 	for (const row of candidates) {
 		const size = await fileSize(row.logPath as string);
@@ -81,20 +143,33 @@ async function sweepTranscripts(
 			continue;
 		}
 		sizes.set(row.id, size);
+		referenced.add(pathKey(row.logPath as string));
 		bytes += size;
 	}
-	const terminal = candidates
-		.filter((row) => TERMINAL_STATUSES.has(row.status as never) && sizes.has(row.id))
-		.sort(
-			(left, right) =>
-				(left.completedAt ?? left.startedAt) - (right.completedAt ?? right.startedAt),
-		);
+	const unreferenced = await unreferencedTranscripts(transcriptRoot, referenced);
+	for (const file of unreferenced) bytes += file.size;
+
+	type Evictable =
+		| { at: number; file: UnreferencedTranscript; kind: 'file' }
+		| { at: number; kind: 'row'; row: TranscriptCandidate };
+	const evictable: Evictable[] = [
+		...candidates
+			.filter((row) => TERMINAL_STATUSES.has(row.status as never) && sizes.has(row.id))
+			.map((row) => ({ at: row.completedAt ?? row.startedAt, kind: 'row' as const, row })),
+		...unreferenced
+			.filter((file) => file.mtime < now - UNREFERENCED_GRACE_MS)
+			.map((file) => ({ at: file.mtime, file, kind: 'file' as const })),
+	].sort((left, right) => left.at - right.at);
 	let removed = 0;
-	for (const row of terminal) {
-		const expired = (row.completedAt ?? row.startedAt) < now - TRANSCRIPT_MAX_AGE_MS;
+	for (const entry of evictable) {
+		const expired = entry.at < now - TRANSCRIPT_MAX_AGE_MS;
 		if (!expired && bytes <= TRANSCRIPT_MAX_BYTES) continue;
-		if (await removeTranscript(db, row)) {
-			bytes -= sizes.get(row.id) ?? 0;
+		const ok =
+			entry.kind === 'row'
+				? await removeTranscript(db, entry.row)
+				: await removeUnreferenced(entry.file);
+		if (ok) {
+			bytes -= entry.kind === 'row' ? (sizes.get(entry.row.id) ?? 0) : entry.file.size;
 			removed += 1;
 		}
 	}

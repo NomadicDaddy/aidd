@@ -270,23 +270,3 @@ export async function updateProjectPathReferences(
 		target: 'runs,pipeline_sessions',
 	});
 }
-
-// Purge every path-keyed run/pipeline/invocation row for a project_path. Called at the project
-// create/delete lifecycle boundary so a folder recreated fresh at a reused path (or a deleted
-// project) never leaves prior rows behind for the project Runs tab to surface. Returns the number
-// of run rows removed; the data-movement trace is recorded only when something was actually purged.
-export async function purgeProjectRuns(ctx: QueriesContext, projectPath: string): Promise<number> {
-	const purgedRuns = await withSqliteRetry(() => ctx.commands.purgeProjectRuns({ projectPath }), {
-		label: 'project.runs.purge',
-	});
-	if (purgedRuns > 0) {
-		recordDataMovement({
-			category: 'database',
-			operation: 'project.runs.purge',
-			status: 'success',
-			summary: { projectPath, purgedRuns },
-			target: 'runs,pipeline_sessions,invocation_events',
-		});
-	}
-	return purgedRuns;
-}

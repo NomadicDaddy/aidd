@@ -2,7 +2,12 @@ import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 
 import { eq, sql, type SQL } from 'drizzle-orm';
 
-import type { LocalTransaction, PurgeProjectRunsArgs, UpdateProjectPathArgs } from './types.ts';
+import type {
+	LocalTransaction,
+	PurgeProjectRunsArgs,
+	PurgeProjectRunsResult,
+	UpdateProjectPathArgs,
+} from './types.ts';
 
 import { invocationEvents, pipelineSessions, runs, scheduledTaskProjects } from '../schema.ts';
 
@@ -48,10 +53,15 @@ export function projectPathMatches(column: AnySQLiteColumn, projectPath: string)
 // step results (fk onDelete cascade). invocation_events are deleted first so their set-null FKs to
 // runs/pipeline_sessions never churn rows that are about to be deleted anyway. Returns the number
 // of run rows deleted so the caller can skip trace noise when nothing was stale.
-export function purgeProjectRuns(tx: LocalTransaction, args: PurgeProjectRunsArgs): number {
+export function purgeProjectRuns(
+	tx: LocalTransaction,
+	args: PurgeProjectRunsArgs,
+): PurgeProjectRunsResult {
 	const { projectPath } = args;
+	// The transcript paths go back to the caller: once the rows are gone nothing else can find
+	// the files, and the retention sweep only dates what a row references.
 	const matchedRuns = tx
-		.select({ id: runs.id })
+		.select({ id: runs.id, logPath: runs.logPath })
 		.from(runs)
 		.where(projectPathMatches(runs.projectPath, projectPath))
 		.all();
@@ -62,5 +72,8 @@ export function purgeProjectRuns(tx: LocalTransaction, args: PurgeProjectRunsArg
 	tx.delete(pipelineSessions)
 		.where(projectPathMatches(pipelineSessions.projectPath, projectPath))
 		.run();
-	return matchedRuns.length;
+	return {
+		logPaths: matchedRuns.flatMap((row) => (row.logPath === null ? [] : [row.logPath])),
+		removed: matchedRuns.length,
+	};
 }

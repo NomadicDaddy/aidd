@@ -94,6 +94,12 @@ export interface PurgeProjectRunsArgs {
 	projectPath: string;
 }
 
+export interface PurgeProjectRunsResult {
+	/** Transcript paths of the removed rows, for the caller to delete after the commit. */
+	logPaths: string[];
+	removed: number;
+}
+
 export interface InsertQueuedRunArgs {
 	values: typeof runs.$inferInsert;
 }
@@ -240,7 +246,7 @@ export interface DbCommandMap {
 		args: PromoteOldestQueuedRunArgs;
 		result: PromoteOldestQueuedRunResult;
 	};
-	purgeProjectRuns: { args: PurgeProjectRunsArgs; result: number };
+	purgeProjectRuns: { args: PurgeProjectRunsArgs; result: PurgeProjectRunsResult };
 	reconcileDeadRun: { args: ReconcileDeadRunArgs; result: HeartbeatWriteOutcome };
 	reconcileDiaryEntries: { args: ReconcileDiaryEntriesArgs; result: ReconcileDiaryEntriesResult };
 	reconcileInvocationFromRun: { args: ReconcileInvocationFromRunArgs; result: number };

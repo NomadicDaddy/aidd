@@ -16,6 +16,29 @@ import { type ChatCompletionResponse, readChatCompletionStream } from './stream.
 
 const MAX_ERROR_BODY_CHARS = 1000;
 
+/**
+ * A provider HTTP 429. The message keeps the `HTTP 429` wording the shared rate-limit classifier
+ * keys on; `resetAt` is the Retry-After header (delay-seconds or an HTTP-date) as an ISO timestamp
+ * when it parses, so the orchestrator can sleep until the reset rather than a fallback interval.
+ */
+export class ProviderRateLimitError extends Error {
+	readonly resetAt: string | undefined;
+
+	constructor(message: string, resetAt: string | undefined) {
+		super(message);
+		this.name = 'ProviderRateLimitError';
+		this.resetAt = resetAt;
+	}
+}
+
+export function retryAfterIso(header: null | string, now = Date.now()): string | undefined {
+	if (header === null) return undefined;
+	const value = header.trim();
+	if (/^\d+$/.test(value)) return new Date(now + Number(value) * 1000).toISOString();
+	const date = Date.parse(value);
+	return Number.isNaN(date) ? undefined : new Date(date).toISOString();
+}
+
 export class OpenAICompatibleAgentClient implements AgentClient {
 	private readonly config: OpenAICompatibleClientConfig;
 	private readonly fetchImpl: FetchLike;
@@ -72,6 +95,14 @@ export class OpenAICompatibleAgentClient implements AgentClient {
 					scrubbedBody.length > MAX_ERROR_BODY_CHARS
 						? `${scrubbedBody.slice(0, MAX_ERROR_BODY_CHARS)}…[truncated]`
 						: scrubbedBody;
+				// A throttle is the one failure the run should wait out rather than fail on, so it
+				// is thrown as its own class with the reset time the header named.
+				if (response.status === 429) {
+					throw new ProviderRateLimitError(
+						`${this.config.provider} request failed: HTTP 429${body ? ` ${body}` : ''}`,
+						retryAfterIso(response.headers.get('retry-after')),
+					);
+				}
 				// Local servers (Ollama/LM Studio) reject oversized prompts with a bare 400;
 				// aidd's audit/remediation prompts run 12–65k tokens, far past common 4–8k
 				// defaults, so name the real fix instead of surfacing an opaque HTTP error.

@@ -2,11 +2,19 @@ import { describe, expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { runAgentLoop } from 'aidd-shared/agent/loop';
-import type { AgentClient, AgentLoopRequest } from 'aidd-shared/agent/client';
+import {
+	type AgentClient,
+	type AgentLoopRequest,
+	OpenAICompatibleAgentClient,
+} from 'aidd-shared/agent/client';
 import type { AgentEvent, PromptInput } from 'aidd-shared/backends/types';
+import { disableAiCallLog } from 'aidd-shared/lib/aiCallLog';
+import { exitCodeFromEvents, orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
+disableAiCallLog();
+
 const input: PromptInput = {
 	text: 'Implement the selected feature.',
 	cwd: 'D:/applications/demo',
@@ -309,5 +317,74 @@ describe('native agent loop', () => {
 			},
 			{ type: 'done', exitCode: 8, filesModified: [] },
 		]);
+	});
+
+	// audit-ai-1790856991: a thrown 429 classified as a generic provider error (exit 72), so the
+	// orchestrator's reset-aware rate-limit sleep never ran for a native run.
+	test('a provider HTTP 429 is a rate_limit error carrying Retry-After, and exits rateLimited', async () => {
+		const client = new OpenAICompatibleAgentClient({
+			apiKey: 'synthetic',
+			baseUrl: 'https://provider.example/v1',
+			fetch: async () =>
+				new Response(
+					'{"error":{"message":"Too many requests, content flagged for review"}}',
+					{
+						headers: { 'content-type': 'application/json', 'retry-after': '120' },
+						status: 429,
+					},
+				),
+			model: 'm',
+			provider: 'zhipu',
+			stream: false,
+		});
+		const before = Date.now();
+
+		const events = await collect(runAgentLoop(input, { client }));
+
+		const rateLimit = events.find((event) => event.type === 'rate_limit');
+		expect(rateLimit).toMatchObject({ type: 'rate_limit' });
+		const resetAt = rateLimit?.type === 'rate_limit' ? rateLimit.resetAt : undefined;
+		expect(typeof resetAt).toBe('string');
+		const resetMs = new Date(resetAt ?? '').getTime() - before;
+		expect(resetMs).toBeGreaterThanOrEqual(119_000);
+		expect(resetMs).toBeLessThanOrEqual(125_000);
+		expect(events.find((event) => event.type === 'error')).toMatchObject({
+			meta: expect.stringContaining('HTTP 429'),
+			reason: 'rate_limit',
+		});
+		expect(exitCodeFromEvents(events)).toBe(orchestratorExitCodes.rateLimited);
+		expect(events.at(-1)).toEqual({ type: 'done', exitCode: 8, filesModified: [] });
+	});
+
+	test('a Retry-After HTTP-date is carried as an ISO reset; a 500 stays a provider error', async () => {
+		const date = new Date(Date.now() + 90_000);
+		const responses = [
+			new Response('{"error":"rate limit exceeded"}', {
+				headers: { 'retry-after': date.toUTCString() },
+				status: 429,
+			}),
+			new Response('upstream broke', { status: 500 }),
+		];
+		const client = new OpenAICompatibleAgentClient({
+			apiKey: 'synthetic',
+			baseUrl: 'https://provider.example/v1',
+			fetch: async () => responses.shift() ?? new Response('', { status: 500 }),
+			model: 'm',
+			provider: 'zhipu',
+			stream: false,
+		});
+
+		const throttled = await collect(runAgentLoop(input, { client }));
+		const rateLimit = throttled.find((event) => event.type === 'rate_limit');
+		expect(rateLimit?.type === 'rate_limit' ? rateLimit.resetAt : undefined).toBe(
+			new Date(Math.floor(date.getTime() / 1000) * 1000).toISOString(),
+		);
+
+		const failed = await collect(runAgentLoop(input, { client }));
+		expect(failed.some((event) => event.type === 'rate_limit')).toBe(false);
+		expect(failed.find((event) => event.type === 'error')).toMatchObject({
+			reason: 'provider',
+		});
+		expect(exitCodeFromEvents(failed)).toBe(orchestratorExitCodes.providerError);
 	});
 });

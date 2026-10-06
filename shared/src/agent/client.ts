@@ -3,7 +3,7 @@ export {
 	loadNativeFileConfig,
 	resolveDefaultNativeClientConfig,
 } from './client/config.ts';
-export { OpenAICompatibleAgentClient } from './client/openai.ts';
+export { OpenAICompatibleAgentClient, ProviderRateLimitError } from './client/openai.ts';
 export {
 	hasProviderEnvCredential,
 	providerEnvApiKey,

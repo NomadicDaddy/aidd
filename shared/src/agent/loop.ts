@@ -1,11 +1,12 @@
 import type { AgentEvent, PromptInput } from '../backends/types.ts';
 
-import { isProviderFlaggedText } from '../backends/parsers/flagged-text.ts';
+import { providerErrorReason } from '../backends/parsers/flagged-text.ts';
 import {
 	type AgentClient,
 	type AgentLoopRequest,
 	type AgentLoopResponse,
 	type AgentMessage,
+	ProviderRateLimitError,
 	SimulationAgentClient,
 } from './client.ts';
 import {
@@ -208,13 +209,25 @@ export async function* runAgentLoop(
 			return;
 		}
 
-		// Provider content-policy refusals classify apart from infrastructure failures; the
-		// final exit code derives from this reason via exitCodeFromEvents, so the internal
-		// zrun done code below stays the generic provider value.
+		// The shared classifier the delegated-CLI parsers use: a throttle first (so a run sleeps
+		// through it as a claude-code or codex run would), then a content-policy refusal, then
+		// the generic provider bucket. The final exit code derives from this reason via
+		// exitCodeFromEvents, so the internal zrun done code below stays the generic value.
 		const message = error instanceof Error ? error.message : String(error);
+		const reason = providerErrorReason(message);
+		if (reason === 'rate_limit') {
+			// What the orchestrator's reset-aware sleep reads: the structured reset when the
+			// provider named one, the message otherwise.
+			const resetAt = error instanceof ProviderRateLimitError ? error.resetAt : undefined;
+			yield {
+				raw: message,
+				type: 'rate_limit',
+				...(resetAt !== undefined ? { resetAt } : {}),
+			};
+		}
 		yield {
 			meta: error instanceof Error ? error.message : error,
-			reason: isProviderFlaggedText(message) ? 'provider_flagged' : 'provider',
+			reason,
 			type: 'error',
 		};
 		yield { exitCode: zrunExitCodes.providerError, filesModified: [], type: 'done' };

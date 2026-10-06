@@ -160,6 +160,28 @@ export function evaluateTextOnlyResponse(
 	return { action: 'complete' };
 }
 
+/**
+ * The provider reported `finish_reason: length`: the turn was cut off at the output or context
+ * limit, so its text is a fragment whatever it says. Spend the same bounded continuation budget as
+ * an incomplete-looking answer, asking for the rest rather than a restart; once the budget is gone
+ * the run stops instead of handing a truncated result on as complete.
+ */
+export function evaluateTruncatedResponse(state: AgentHeuristicState): AgentHeuristicResult {
+	if (state.continuationNudges >= maxContinuationNudges) {
+		return { action: 'abort', reason: 'truncated_output' };
+	}
+	return {
+		action: 'nudge',
+		prompt:
+			'Your previous reply was cut off by the provider at its output limit (finish_reason: ' +
+			'length), so what you sent is a fragment. Continue from exactly where it stopped, without ' +
+			'repeating what was already written. If you were emitting the AIDD_RESULT marker, re-emit ' +
+			'the complete marker as one valid JSON object.',
+		reason: 'truncated_output',
+		state: { ...state, continuationNudges: state.continuationNudges + 1 },
+	};
+}
+
 function looksIncomplete(content: string): boolean {
 	const lower = content.toLowerCase();
 	return [

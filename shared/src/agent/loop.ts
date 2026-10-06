@@ -11,6 +11,7 @@ import {
 import {
 	afterToolCalls,
 	evaluateTextOnlyResponse,
+	evaluateTruncatedResponse,
 	initialHeuristicState,
 } from './heuristics/index.ts';
 import { LiveDeltaPump } from './live-deltas.ts';
@@ -105,9 +106,29 @@ export async function* runAgentLoop(
 
 			if (!response.toolCalls?.length) {
 				messages.push({ content: response.text || null, role: 'assistant' });
-				const heuristic = evaluateTextOnlyResponse(response.text, heuristicState, {
-					mode: heuristicMode,
-				});
+				// The provider withheld the rest of the answer: that is a refusal, not a result,
+				// and classifies with the thrown content-flag refusals below.
+				if (response.finishReason === 'content_filter') {
+					yield {
+						meta: 'provider ended the turn with finish_reason content_filter',
+						reason: 'provider_flagged',
+						type: 'error',
+					};
+					yield {
+						exitCode: zrunExitCodes.providerError,
+						filesModified: [...filesModified, ...(response.filesModified ?? [])],
+						type: 'done',
+					};
+					return;
+				}
+				// A turn cut off at the token limit is a fragment even when it reads as finished
+				// (an AIDD_RESULT marker cut mid-JSON would otherwise be reported as missing).
+				const heuristic =
+					response.finishReason === 'length'
+						? evaluateTruncatedResponse(heuristicState)
+						: evaluateTextOnlyResponse(response.text, heuristicState, {
+								mode: heuristicMode,
+							});
 				if (heuristic.action === 'nudge') {
 					heuristicState = heuristic.state;
 					yield {

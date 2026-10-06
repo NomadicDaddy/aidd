@@ -41,6 +41,11 @@ export interface AiCallLogEntry {
 	errorCode?: string;
 	/** Error constructor name (e.g. `TimeoutError`, `DOMException`), if the call failed. */
 	errorName?: string;
+	/**
+	 * The provider's stop reason (`stop`, `tool_calls`, `length`, `content_filter`), if reported.
+	 * A `length` on a successful call is the trace of an answer cut off at the token limit.
+	 */
+	finishReason?: string;
 	/** Host portion of the request URL (e.g. `api.z.ai`), for triaging by endpoint. */
 	host?: string;
 	/** Number of input/prompt tokens, if reported. */

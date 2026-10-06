@@ -93,6 +93,12 @@ export interface AgentLoopResponse {
 	cachedTokens?: number;
 	events?: AgentEvent[];
 	filesModified?: string[];
+	/**
+	 * The provider's stop reason for the turn, kept verbatim: `stop` and `tool_calls` are clean
+	 * ends, `length` means the output was cut off at the token or context limit, and
+	 * `content_filter` means the provider withheld the rest. A cut-off answer is not a complete one.
+	 */
+	finishReason?: string;
 	inputTokens?: number;
 	outputTokens?: number;
 	/** Subset of outputTokens spent on reasoning (already priced at the output rate). */

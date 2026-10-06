@@ -4,6 +4,7 @@ import type { DirectAiSurface, ResolvedConfig } from '../config/types.ts';
 import { type AiCallSurface } from '../lib/aiCallLog.ts';
 import { assertSafeAgentBaseUrl } from '../security/ssrfGuard.ts';
 import {
+	type AgentLoopResponse,
 	OpenAICompatibleAgentClient,
 	type OpenAICompatibleClientConfig,
 	providerDefaults,
@@ -28,6 +29,34 @@ export class DirectAiTimeoutError extends Error {
 	constructor(message: string) {
 		super(message);
 		this.name = 'DirectAiTimeoutError';
+	}
+}
+
+/**
+ * Error thrown when the provider ended a Direct AI turn with `length` or `content_filter`: the
+ * text that came back is a fragment or a refusal, and no surface should present it as the answer.
+ */
+export class DirectAiIncompleteError extends Error {
+	readonly finishReason: string;
+
+	constructor(provider: string, finishReason: string) {
+		super(
+			finishReason === 'length'
+				? `${provider} cut the response off at its output limit (finish_reason: length); the model's max output or context length is too small for this prompt.`
+				: `${provider} withheld the response (finish_reason: ${finishReason}).`,
+		);
+		this.name = 'DirectAiIncompleteError';
+		this.finishReason = finishReason;
+	}
+}
+
+/** Refuse a single-turn completion the provider did not finish; a clean stop passes through. */
+export function assertDirectAiComplete(
+	response: Pick<AgentLoopResponse, 'finishReason'>,
+	provider: string,
+): void {
+	if (response.finishReason === 'length' || response.finishReason === 'content_filter') {
+		throw new DirectAiIncompleteError(provider, response.finishReason);
 	}
 }
 
@@ -229,6 +258,7 @@ export async function completeDirectAiText(
 			},
 			controller.signal,
 		);
+		assertDirectAiComplete(response, resolution.config.provider);
 		return response.text.trim();
 	} catch (err) {
 		if (controller.signal.aborted) {

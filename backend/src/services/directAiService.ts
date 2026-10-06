@@ -6,7 +6,9 @@ import {
 	type OpenAICompatibleClientConfig,
 } from 'aidd-shared/agent/client';
 import {
+	assertDirectAiComplete,
 	DirectAiConfigError,
+	DirectAiIncompleteError,
 	type DirectAiResolution,
 	isDirectAiSurfaceEnabled,
 	resolveDirectAiCall,
@@ -137,6 +139,9 @@ export class DirectAiService implements DirectAiRunner {
 				},
 				controller.signal,
 			);
+			// A `length` or `content_filter` turn is a fragment or a refusal; a run summary or a
+			// chat reply built from it would present a cut-off answer as the answer.
+			assertDirectAiComplete(response, resolved.config.provider);
 			return response.text.trim();
 		} catch (err) {
 			if (controller.signal.aborted) {
@@ -144,6 +149,9 @@ export class DirectAiService implements DirectAiRunner {
 					`Direct AI ${request.surface} request timed out after ${resolved.timeoutSeconds} seconds`,
 					504,
 				);
+			}
+			if (err instanceof DirectAiIncompleteError) {
+				throw new HttpError(`Direct AI ${request.surface}: ${err.message}`, 502);
 			}
 			throw err;
 		} finally {

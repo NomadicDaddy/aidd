@@ -8,6 +8,8 @@ import { scrubSecrets } from '../../lib/secretScrubber.ts';
  */
 export interface ChatCompletionResponse {
 	choices?: {
+		/** The provider's stop reason: `stop`, `tool_calls`, `length` or `content_filter`. */
+		finish_reason?: string;
 		message?: {
 			content?: unknown;
 			tool_calls?: {
@@ -89,8 +91,11 @@ export async function readChatCompletionStream(
 	let accumulatedChars = 0;
 	let usage: ChatCompletionResponse['usage'];
 	// A proper terminal signal was seen: `[DONE]` (done) or a choice finish_reason (finished).
+	// The reason itself is kept: `length` and `content_filter` end the stream just as cleanly as
+	// `stop`, and the caller must be able to tell a cut-off answer from a complete one.
 	let done = false;
 	let finished = false;
+	let finishReason: string | undefined;
 	try {
 		while (!done) {
 			const chunk = await readWithIdleTimeout(reader, idleMs, provider);
@@ -128,6 +133,7 @@ export async function readChatCompletionStream(
 				const choice = parsed.choices?.[0];
 				if (typeof choice?.finish_reason === 'string' && choice.finish_reason.length > 0) {
 					finished = true;
+					finishReason = choice.finish_reason;
 				}
 				const delta = choice?.delta;
 				if (typeof delta?.content === 'string') {
@@ -186,7 +192,12 @@ export async function readChatCompletionStream(
 				...(toolCall.id !== undefined ? { id: toolCall.id } : {}),
 			}));
 	}
-	return { choices: [{ message }], ...(usage ? { usage } : {}) };
+	return {
+		choices: [
+			{ message, ...(finishReason !== undefined ? { finish_reason: finishReason } : {}) },
+		],
+		...(usage ? { usage } : {}),
+	};
 }
 
 interface ByteStreamReader {

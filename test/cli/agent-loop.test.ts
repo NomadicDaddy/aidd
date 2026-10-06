@@ -238,4 +238,76 @@ describe('native agent loop', () => {
 		});
 		expect(events.at(-1)).toEqual({ type: 'done', exitCode: 0, filesModified: [] });
 	});
+
+	// audit-ai-1790856991: a text-only turn cut off at the token limit completed the run with a
+	// fragment (an AIDD_RESULT cut mid-JSON surfaced later as missing_aidd_result).
+	test('a text-only turn with finish_reason length is continued, not completed', async () => {
+		const requests: AgentLoopRequest[] = [];
+		const client: AgentClient = {
+			async complete(request) {
+				requests.push(snapshotRequest(request));
+				if (requests.length === 1) {
+					return { finishReason: 'length', text: 'AIDD_RESULT: {"status":"comp' };
+				}
+				return {
+					finishReason: 'stop',
+					text: 'AIDD_RESULT: {"status":"completed","passes":true}',
+				};
+			},
+		};
+
+		const events = await collect(runAgentLoop(input, { client }));
+
+		expect(requests).toHaveLength(2);
+		expect(requests[1]?.messages?.at(-1)).toMatchObject({
+			role: 'user',
+			content: expect.stringContaining('finish_reason: length'),
+		});
+		expect(events).toContainEqual({
+			type: 'raw_log',
+			stream: 'stdout',
+			chunk: '[native] truncated_output\n',
+		});
+		expect(events.at(-1)).toEqual({ type: 'done', exitCode: 0, filesModified: [] });
+	});
+
+	test('a turn that keeps ending with finish_reason length stops once the continuation budget is spent', async () => {
+		let turns = 0;
+		const client: AgentClient = {
+			async complete() {
+				turns++;
+				return { finishReason: 'length', text: `fragment ${turns}` };
+			},
+		};
+
+		const events = await collect(runAgentLoop(input, { client }));
+
+		expect(turns).toBe(4);
+		expect(events.at(-2)).toEqual({
+			type: 'error',
+			reason: 'provider',
+			meta: 'truncated_output',
+		});
+		expect(events.at(-1)).toEqual({ type: 'done', exitCode: 8, filesModified: [] });
+	});
+
+	test('a text-only turn with finish_reason content_filter is a provider_flagged error', async () => {
+		const client: AgentClient = {
+			async complete() {
+				return { finishReason: 'content_filter', text: 'I cannot' };
+			},
+		};
+
+		const events = await collect(runAgentLoop(input, { client }));
+
+		expect(events).toEqual([
+			{ type: 'assistant_text', chunk: 'I cannot' },
+			{
+				type: 'error',
+				reason: 'provider_flagged',
+				meta: 'provider ended the turn with finish_reason content_filter',
+			},
+			{ type: 'done', exitCode: 8, filesModified: [] },
+		]);
+	});
 });

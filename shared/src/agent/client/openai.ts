@@ -38,6 +38,7 @@ export class OpenAICompatibleAgentClient implements AgentClient {
 		let errorDiag: ErrorDiagnostics = {};
 		let inputTokens: number | undefined;
 		let outputTokens: number | undefined;
+		let finishReason: string | undefined;
 		const body = buildChatCompletionBody(this.config, request, streaming);
 		const requestJson = JSON.stringify(body);
 		const requestBytes = Buffer.byteLength(requestJson, 'utf8');
@@ -100,7 +101,8 @@ export class OpenAICompatibleAgentClient implements AgentClient {
 						...(onDelta !== undefined ? { onDelta } : {}),
 					})
 				: (JSON.parse(await readBoundedProviderBody(response)) as ChatCompletionResponse);
-			const message = responseBody.choices?.[0]?.message;
+			const choice = responseBody.choices?.[0];
+			const message = choice?.message;
 			const content = message?.content;
 			if (typeof content !== 'string' && !message?.tool_calls?.length) {
 				throw new Error(
@@ -109,6 +111,12 @@ export class OpenAICompatibleAgentClient implements AgentClient {
 			}
 
 			const result: AgentLoopResponse = { text: typeof content === 'string' ? content : '' };
+			// Both transports carry the stop reason through unchanged; a `length` or
+			// `content_filter` turn is the caller's to refuse, not a transport error.
+			if (typeof choice?.finish_reason === 'string' && choice.finish_reason.length > 0) {
+				result.finishReason = choice.finish_reason;
+				finishReason = choice.finish_reason;
+			}
 			if (message?.tool_calls?.length) {
 				result.toolCalls = message.tool_calls.map((toolCall, index) => ({
 					arguments: toolCall.function?.arguments ?? '{}',
@@ -151,6 +159,7 @@ export class OpenAICompatibleAgentClient implements AgentClient {
 				...(request.turn !== undefined ? { turn: request.turn } : {}),
 				...(inputTokens !== undefined ? { inputTokens } : {}),
 				...(outputTokens !== undefined ? { outputTokens } : {}),
+				...(finishReason !== undefined ? { finishReason } : {}),
 				...(errorMessage ? { error: errorMessage } : {}),
 				...(errorDiag.name ? { errorName: errorDiag.name } : {}),
 				...(errorDiag.code ? { errorCode: errorDiag.code } : {}),

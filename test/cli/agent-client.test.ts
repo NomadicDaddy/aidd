@@ -722,3 +722,58 @@ describe('readChatCompletionStream — lifecycle and integrity', () => {
 		);
 	});
 });
+
+describe('finish_reason is kept on the normalized response', () => {
+	// audit-ai-1790856991: a `length` or `content_filter` stop was indistinguishable from `stop`
+	// on both transports, so a cut-off answer was handed on as a complete one.
+	test('a streamed turn ending with finish_reason length reports finishReason length', async () => {
+		const client = new OpenAICompatibleAgentClient({
+			provider: 'zhipu',
+			apiKey: 'secret',
+			baseUrl: 'https://provider.example/v1',
+			model: 'glm-5.3',
+			fetch: async () =>
+				sseResponse([
+					'data: {"choices":[{"delta":{"content":"AIDD_RESULT: {\\"status\\":\\"comp"},"finish_reason":null}]}\n\n',
+					'data: {"choices":[{"delta":{},"finish_reason":"length"}]}\n\n',
+					'data: [DONE]\n\n',
+				]),
+		});
+
+		const response = await client.complete(
+			{ prompt: 'hi', cwd: 'D:/applications/demo' },
+			new AbortController().signal,
+		);
+
+		expect(response.text).toBe('AIDD_RESULT: {"status":"comp');
+		expect(response.finishReason).toBe('length');
+	});
+
+	test('a non-streamed turn carries finish_reason through, and a clean stop reads as stop', async () => {
+		const bodies = [
+			{
+				choices: [
+					{ message: { content: 'partial answ' }, finish_reason: 'content_filter' },
+				],
+			},
+			{ choices: [{ message: { content: 'done' }, finish_reason: 'stop' }] },
+			{ choices: [{ message: { content: 'no reason given' } }] },
+		];
+		const client = new OpenAICompatibleAgentClient({
+			provider: 'test',
+			baseUrl: 'https://provider.example/v1',
+			model: 'm',
+			stream: false,
+			fetch: async () => jsonResponse(bodies.shift()),
+		});
+		const request = { prompt: 'hi', cwd: 'D:/applications/demo' };
+		const signal = new AbortController().signal;
+
+		expect(await client.complete(request, signal)).toMatchObject({
+			finishReason: 'content_filter',
+			text: 'partial answ',
+		});
+		expect(await client.complete(request, signal)).toMatchObject({ finishReason: 'stop' });
+		expect(await client.complete(request, signal)).not.toHaveProperty('finishReason');
+	});
+});

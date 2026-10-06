@@ -1,11 +1,11 @@
 import { default as PenLine } from 'lucide-react/dist/esm/icons/pen-line';
 
+import { DiaryFeed } from '../../../components/shared/diary/DiaryFeed.tsx';
+import { dayKeyFromMs, hasEntryForDay } from '../../../components/shared/diary/diaryItems.ts';
 import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { useDiaryEntries, useWriteDiaryEntry } from '../../../hooks/useDiary.ts';
 import { useNow } from '../../../hooks/useNow.ts';
-import { DiaryFeed } from '../../diary/DiaryFeed.tsx';
-import { dayKeyFromMs, hasEntryForDay } from '../../diary/diaryItems.ts';
 
 export function DiaryTab({ projectPath }: { projectName: string; projectPath: string }) {
 	const writeEntry = useWriteDiaryEntry(projectPath);

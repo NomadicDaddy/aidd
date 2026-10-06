@@ -183,7 +183,7 @@ test('The built-in target reads as a fixed field rather than a missing control',
 
 test('Occurrence history reads the scope the occurrence was claimed under', async () => {
 	const [labels, occurrence] = await Promise.all([
-		source('frontend/src/pages/scheduled/scheduledLabels.ts'),
+		source('frontend/src/lib/scheduleLabels.ts'),
 		source('frontend/src/pages/scheduled/ScheduledOccurrence.tsx'),
 	]);
 	expect(occurrence).toContain('occurrenceProjectsLabel(execution)');
@@ -338,7 +338,7 @@ test('Scheduled machine strings use the mono face and shared timestamp formatter
 	const [children, fields, labels, occurrence] = await Promise.all([
 		source('frontend/src/pages/scheduled/ScheduledOccurrenceChildren.tsx'),
 		source('frontend/src/pages/scheduled/ScheduleFields.tsx'),
-		source('frontend/src/pages/scheduled/scheduledLabels.ts'),
+		source('frontend/src/lib/scheduleLabels.ts'),
 		source('frontend/src/pages/scheduled/ScheduledOccurrence.tsx'),
 	]);
 	expect(occurrence).toContain('`Started ${formatDate(execution.startedAt)}`');

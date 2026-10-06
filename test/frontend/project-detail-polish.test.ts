@@ -521,7 +521,10 @@ describe('diary tab', () => {
 		expect(tab).toContain('filterHeader={<TabIntro title="Diary" />}');
 		expect(tab).not.toContain('contentRailClass');
 
-		const feed = await readFile(resolve(FRONTEND_SRC, 'pages/diary/DiaryFeed.tsx'), 'utf8');
+		const feed = await readFile(
+			resolve(FRONTEND_SRC, 'components/shared/diary/DiaryFeed.tsx'),
+			'utf8',
+		);
 		// The route provides the page rail once, so cards, sticky rules, hover bands, filters, and
 		// content inherit one edge.
 		expect(feed).not.toContain('max-w-5xl');

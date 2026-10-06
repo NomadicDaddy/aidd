@@ -67,8 +67,8 @@ describe('shared affordances remain visible and aligned', () => {
 
 	test('day disclosures share the pager axis and name the day they expand', async () => {
 		const [feed, timeline] = await Promise.all([
-			read('pages/diary/DiaryFeed.tsx'),
-			read('pages/diary/DiaryTimelineList.tsx'),
+			read('components/shared/diary/DiaryFeed.tsx'),
+			read('components/shared/diary/DiaryTimelineList.tsx'),
 		]);
 
 		expect(feed).toContain('scopeLabel={group.label}');

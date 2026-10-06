@@ -17,7 +17,7 @@ function renderTimeline(items: DiaryTimelineItem[]): string {
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
 		"import { MemoryRouter } from 'react-router';",
-		"import { DiaryTimelineList } from './src/pages/diary/DiaryTimelineList.tsx';",
+		"import { DiaryTimelineList } from './src/components/shared/diary/DiaryTimelineList.tsx';",
 		`const items = ${JSON.stringify(items)};`,
 		'const list = createElement(DiaryTimelineList, { items, showProject: true });',
 		'console.log(JSON.stringify(renderToStaticMarkup(createElement(MemoryRouter, null, list))));',
@@ -146,7 +146,7 @@ describe('diary polish', () => {
 
 	test('puts the day heading and the row titles on different type steps', async () => {
 		const feed = await readFile(
-			resolve(FRONTEND_ROOT, 'src/pages/diary/DiaryFeed.tsx'),
+			resolve(FRONTEND_ROOT, 'src/components/shared/diary/DiaryFeed.tsx'),
 			'utf8',
 		);
 
@@ -158,11 +158,11 @@ describe('diary polish', () => {
 
 	test('pages the feed with the same scope the counter reports', async () => {
 		const feed = await readFile(
-			resolve(FRONTEND_ROOT, 'src/pages/diary/DiaryFeed.tsx'),
+			resolve(FRONTEND_ROOT, 'src/components/shared/diary/DiaryFeed.tsx'),
 			'utf8',
 		);
 		const bar = await readFile(
-			resolve(FRONTEND_ROOT, 'src/pages/diary/DiaryFilterBar.tsx'),
+			resolve(FRONTEND_ROOT, 'src/components/shared/diary/DiaryFilterBar.tsx'),
 			'utf8',
 		);
 

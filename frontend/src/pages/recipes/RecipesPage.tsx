@@ -20,9 +20,9 @@ import { catalogFilterSearchParams, readCatalogQuery } from '../../lib/catalogFi
 import { pageRailByContentType } from '../../lib/contentRails.ts';
 import { reportFailure } from '../../lib/failureToast.ts';
 import { filterRegister } from '../../lib/filterFields.ts';
+import { autoParameters } from '../../lib/recipeParameters.ts';
 import { usePrefsStore } from '../../stores/prefsStore.ts';
 import { recipeLaunchBlocker, resolveRecipeLaunchProject } from './recipe-launch.ts';
-import { autoParameters } from './recipe-parameters.ts';
 import { RecipeCard, RecipeTable } from './RecipeGrid.tsx';
 import { RecipeQuickLaunchPanel } from './RecipeQuickLaunchPanel.tsx';
 import { RecipesFilterToolbar } from './RecipesFilterToolbar.tsx';

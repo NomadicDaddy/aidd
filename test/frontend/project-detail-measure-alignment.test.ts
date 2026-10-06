@@ -20,10 +20,10 @@ describe('Project Detail measure alignment', () => {
 	});
 
 	test('lifts diary and artifact row measures to their containing compositions', async () => {
-		const feed = await read('pages', 'diary', 'DiaryFeed.tsx');
-		const entry = await read('pages', 'diary', 'DiaryEntryCard.tsx');
-		const filter = await read('pages', 'diary', 'DiaryFilterBar.tsx');
-		const timeline = await read('pages', 'diary', 'DiaryTimelineList.tsx');
+		const feed = await read('components', 'shared', 'diary', 'DiaryFeed.tsx');
+		const entry = await read('components', 'shared', 'diary', 'DiaryEntryCard.tsx');
+		const filter = await read('components', 'shared', 'diary', 'DiaryFilterBar.tsx');
+		const timeline = await read('components', 'shared', 'diary', 'DiaryTimelineList.tsx');
 		const artifacts = await read('pages', 'projects', 'detail', 'ArtifactsTab.tsx');
 		const artifactRow = await read('pages', 'projects', 'detail', 'ArtifactInventoryRow.tsx');
 

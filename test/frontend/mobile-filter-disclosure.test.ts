@@ -12,7 +12,7 @@ const FILTER_TOOLBAR_CONSUMERS = [
 	'pages/audits/tabs/ApplicabilityTab.tsx',
 	'pages/audits/tabs/CatalogToolbar.tsx',
 	'pages/audits/tabs/OverridesTab.tsx',
-	'pages/diary/DiaryFilterBar.tsx',
+	'components/shared/diary/DiaryFilterBar.tsx',
 	'pages/projects/detail/AuditsTab.tsx',
 	'pages/projects/detail/DependencyGraphFilters.tsx',
 	'pages/projects/detail/FeatureFilters.tsx',

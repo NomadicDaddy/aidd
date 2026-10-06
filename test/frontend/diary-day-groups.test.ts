@@ -6,14 +6,14 @@ import {
 	filterDiaryEntries,
 	filterTimelineItems,
 	windowStart,
-} from '../../frontend/src/pages/diary/diaryFilters.ts';
+} from '../../frontend/src/components/shared/diary/diaryFilters.ts';
 import {
 	dayKeyFromMs,
 	dayLabelForKey,
 	groupDiaryByDay,
 	hasEntryForDay,
 	timelineItemTone,
-} from '../../frontend/src/pages/diary/diaryItems.ts';
+} from '../../frontend/src/components/shared/diary/diaryItems.ts';
 
 function entry(date: string, projectName: string): DiaryEntry {
 	return {

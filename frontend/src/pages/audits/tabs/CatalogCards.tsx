@@ -6,6 +6,7 @@ import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
+import { describeChangePotential } from '../../../lib/auditPresentation.ts';
 import { toneText } from '../../../lib/tones.ts';
 import { touchTargetBoxClass, touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { microLabelClass } from '../../../lib/typography.ts';
@@ -13,7 +14,6 @@ import {
 	auditCatalogCardId,
 	auditFileName,
 	bucketsColumnLabel,
-	describeChangePotential,
 	reportsColumnLabel,
 } from '../auditsUtils.ts';
 import { OutcomeCostCell, OutcomeRateCell, ReportCounts } from './catalogCells.tsx';

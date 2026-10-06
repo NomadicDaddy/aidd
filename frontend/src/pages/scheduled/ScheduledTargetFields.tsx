@@ -13,8 +13,8 @@ import { useSkills } from '../../hooks/useSkills.ts';
 import { cn } from '../../lib/cn.ts';
 import { fieldLabelClass, selectClass, textareaClass } from '../../lib/formStyles.ts';
 import { machineTextProps } from '../../lib/machineText.ts';
+import { autoParameters } from '../../lib/recipeParameters.ts';
 import { compactFieldMeasureClass } from '../../lib/typography.ts';
-import { autoParameters } from '../recipes/recipe-parameters.ts';
 import { useScheduledDraft } from './scheduledDraftContext.ts';
 import { findTargetRecipe } from './scheduledTargetRecipe.ts';
 

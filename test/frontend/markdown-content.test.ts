@@ -294,7 +294,7 @@ describe('parseMarkdownBlocks', () => {
 
 	test('embeds the shared renderer beneath each consumer heading', () => {
 		const docsPage = frontend('src/pages/docs/DocsPage.tsx');
-		const diaryCard = frontend('src/pages/diary/DiaryEntryCard.tsx');
+		const diaryCard = frontend('src/components/shared/diary/DiaryEntryCard.tsx');
 
 		expect(docsPage).toContain('<MarkdownContent');
 		expect(docsPage).toContain('markdown={body}');
@@ -994,7 +994,7 @@ describe('MarkdownContent variants', () => {
 		);
 		const sources = [
 			frontend('src/components/shared/MarkdownContent.tsx'),
-			frontend('src/pages/diary/DiaryEntryCard.tsx'),
+			frontend('src/components/shared/diary/DiaryEntryCard.tsx'),
 			docsRenderer,
 			frontend('src/pages/skills/SkillDefinitionCard.tsx'),
 		];

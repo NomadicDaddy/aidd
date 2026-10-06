@@ -4,7 +4,7 @@ import type {
 	ScheduledTaskSchedule,
 } from 'aidd-shared/contracts/scheduled-tasks';
 
-import { formatZonedDate } from '../../lib/formatters.ts';
+import { formatZonedDate } from './formatters.ts';
 
 const HOURLY_STEP_EXPRESSION = /^(\d{1,2}) \*\/(\d{1,2}) \* \* \*$/;
 

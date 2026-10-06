@@ -2,8 +2,8 @@ import type { RecipeDefinition } from '../../api/types.ts';
 
 import { FieldRow } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
+import { autoParameters } from '../../lib/recipeParameters.ts';
 import { isRequiredRecipeParameter } from './recipe-launch.ts';
-import { autoParameters } from './recipe-parameters.ts';
 
 export function RecipeLaunchFields({
 	parameters,

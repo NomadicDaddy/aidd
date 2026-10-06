@@ -1,10 +1,4 @@
-import type {
-	AuditAssuranceBucket,
-	AuditChangePotential,
-	AuditChangePotentialBand,
-	AuditEffect,
-	AuditOverrideEffect,
-} from '../../api/types.ts';
+import type { AuditAssuranceBucket } from '../../api/types.ts';
 
 export type HealthFilter = 'all' | 'fresh' | 'missing' | 'not-applicable' | 'stale';
 export type AuditsTab = 'applicability' | 'catalog' | 'overrides';
@@ -30,50 +24,11 @@ export const bucketColumns: AuditAssuranceBucket[] = [
 	'critical_regulated',
 ];
 
-// Applicability is a configuration matrix, not a health readout: every cell here is somebody's
-// deliberate policy and none of them is a fault. `excluded` in particular is the ordinary answer for
-// the Archive bucket, and painting it red made a correctly-configured column look like a wall of
-// failures. All four effects are neutral and the cell text carries the distinction; the matrix
-// reserves emphasis for the one thing that is genuinely wrong, which is nothing on this screen.
-export const effectTone: Record<AuditEffect, 'neutral'> = {
-	default: 'neutral',
-	disabled: 'neutral',
-	excluded: 'neutral',
-	required: 'neutral',
-};
-
-export const overrideEffects: { label: string; value: 'default' | AuditOverrideEffect }[] = [
-	{ label: 'Default', value: 'default' },
-	{ label: 'Required', value: 'required' },
-	{ label: 'Disabled', value: 'disabled' },
-	{ label: 'Excluded', value: 'excluded' },
-];
-
 // Column headers carry the units so the rows do not have to. A catalog row that restates
 // "applicable", "buckets" and "fresh / stale / missing" adds up to 168 repeated words in a table
 // whose data is five numbers per row, and the repetition is what stops the numbers forming columns.
 export const reportsColumnLabel = 'Reports (fresh / stale / missing)';
 export const bucketsColumnLabel = `Buckets (of ${bucketColumns.length})`;
-
-/** Health-tone mapping retained for project-local audit summaries, where the band is a signal. */
-export const bandTone: Record<AuditChangePotentialBand, 'amber' | 'emerald' | 'neutral'> = {
-	High: 'emerald',
-	Low: 'neutral',
-	Medium: 'amber',
-};
-
-export function describeChangePotential(potential: AuditChangePotential): string {
-	const ev = potential.evidence;
-	const lines = [
-		`Score ${potential.score} (${potential.band})`,
-		`Confidence ${potential.confidence}`,
-		`Priority ${ev.priority ?? 'unset'}${ev.actionable ? ' • actionable' : ''}`,
-		`Active findings ${ev.activeAuditFeatures} • Completed runs ${ev.completedRunsWithFindings}`,
-		`Apps w/ completed evidence ${ev.appsWithCompletedFeatureEvidence}` +
-			` • Apps w/ reports ${ev.appsWithAuditReports}`,
-	];
-	return lines.join(' • ');
-}
 
 // Every audit definition lives in the same directory, so repeating the prefix on all ~40 rows
 // spends the catalog's narrowest column on the one part of the path that never varies. The row shows

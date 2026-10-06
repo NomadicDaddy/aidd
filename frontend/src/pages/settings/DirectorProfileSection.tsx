@@ -11,9 +11,8 @@ import { FieldRow, FormGrid } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { useLaunchDefaults } from '../../hooks/useLaunchDefaults.ts';
 import { backendOptions } from '../../lib/backends.ts';
-import { selectClass } from '../../lib/formStyles.ts';
-import { EffectiveModelHint } from '../settings/EffectiveModelHint.tsx';
-import { textareaClass } from './directorUtils.ts';
+import { selectClass, textareaClass } from '../../lib/formStyles.ts';
+import { EffectiveModelHint } from './EffectiveModelHint.tsx';
 
 const reasoningOptions: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
 

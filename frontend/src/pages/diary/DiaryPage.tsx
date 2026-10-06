@@ -1,11 +1,11 @@
 import { Link } from 'react-router';
 
+import { DiaryFeed } from '../../components/shared/diary/DiaryFeed.tsx';
 import { PageHeader } from '../../components/shared/PageHeader.tsx';
 import { PageRail } from '../../components/shared/PageRail.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
-import { DiaryFeed } from './DiaryFeed.tsx';
 
 const PAGE_RAIL = pageRailByContentType.data;
 

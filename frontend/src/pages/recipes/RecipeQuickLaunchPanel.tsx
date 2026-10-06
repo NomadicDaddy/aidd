@@ -8,8 +8,8 @@ import { Button } from '../../components/ui/button.tsx';
 import { CardHeader } from '../../components/ui/card.tsx';
 import { Dialog, DialogPanel } from '../../components/ui/dialog.tsx';
 import { cn } from '../../lib/cn.ts';
+import { autoParameters } from '../../lib/recipeParameters.ts';
 import { type RecipeLaunchProject, resolveRecipeLaunchProject } from './recipe-launch.ts';
-import { autoParameters } from './recipe-parameters.ts';
 import { RecipeLaunchForm } from './RecipeLaunchForm.tsx';
 
 export function RecipeQuickLaunchPanel({

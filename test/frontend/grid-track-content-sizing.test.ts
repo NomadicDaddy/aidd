@@ -23,7 +23,7 @@ function source(relative: string): string {
  */
 const REVIEWED_GATED_GRIDS: Record<string, string> = {
 	'pages/about/AboutPage.tsx': 'the machine-value definition track uses minmax(0,1fr)',
-	'pages/director/DirectorProfileSection.tsx': 'form controls carry min-w-0',
+	'pages/settings/DirectorProfileSection.tsx': 'form controls carry min-w-0',
 	'pages/projects/CandidateIntakePreview.tsx': 'the hash-bearing dd carries min-w-0',
 	'pages/projects/detail/ArtifactInventoryRow.tsx': 'items carry min-w-0 and truncate',
 	'pages/projects/detail/AuditCompactRow.tsx':

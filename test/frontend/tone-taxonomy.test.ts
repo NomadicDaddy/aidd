@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import { effectTone } from '../../frontend/src/pages/audits/auditsUtils.ts';
+import { effectTone } from '../../frontend/src/lib/auditPresentation.ts';
 import { toneBadge } from '../../frontend/src/lib/tones.ts';
 import { statusTone } from '../../frontend/src/pages/projects/detail/shared.ts';
 import { artifactTone } from '../../frontend/src/lib/projectPresentation.ts';
@@ -55,7 +55,7 @@ const taxonomyBadges: { file: string[]; snippets: string[] }[] = [
 		snippets: ['<Badge tone="neutral">{row.posture.label}</Badge>'],
 	},
 	{
-		file: ['director', 'DirectorProfileSection.tsx'],
+		file: ['settings', 'DirectorProfileSection.tsx'],
 		snippets: ['<Badge tone="neutral">Own record'],
 	},
 ];

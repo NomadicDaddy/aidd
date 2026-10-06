@@ -11,8 +11,8 @@ import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useProjectNames } from '../../hooks/useProjects.ts';
 import { useRecipes } from '../../hooks/useRecipes.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
+import { autoParameters } from '../../lib/recipeParameters.ts';
 import { recipeLaunchBlocker, resolveRecipeLaunchProject } from './recipe-launch.ts';
-import { autoParameters } from './recipe-parameters.ts';
 import { RecipeLaunchForm } from './RecipeLaunchForm.tsx';
 
 export function RecipeLaunchPanel({

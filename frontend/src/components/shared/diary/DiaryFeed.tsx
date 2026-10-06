@@ -4,13 +4,13 @@ import { useState } from 'react';
 
 import type { DiaryKindFilter, DiaryWindowFilter } from './diaryFilters.ts';
 
-import { EmptyState } from '../../components/shared/EmptyState.tsx';
-import { LoadingState } from '../../components/shared/LoadingState.tsx';
-import { Button } from '../../components/ui/button.tsx';
-import { useDiaryEntries, useDiaryTimeline } from '../../hooks/useDiary.ts';
-import { cn } from '../../lib/cn.ts';
-import { formatRelativeAge } from '../../lib/formatters.ts';
-import { sectionCaptionClass } from '../../lib/typography.ts';
+import { useDiaryEntries, useDiaryTimeline } from '../../../hooks/useDiary.ts';
+import { cn } from '../../../lib/cn.ts';
+import { formatRelativeAge } from '../../../lib/formatters.ts';
+import { sectionCaptionClass } from '../../../lib/typography.ts';
+import { Button } from '../../ui/button.tsx';
+import { EmptyState } from '../EmptyState.tsx';
+import { LoadingState } from '../LoadingState.tsx';
 import { DiaryEntryCard } from './DiaryEntryCard.tsx';
 import { DiaryFilterBar } from './DiaryFilterBar.tsx';
 import { diaryFilterRegister, filterDiaryEntries, filterTimelineItems } from './diaryFilters.ts';

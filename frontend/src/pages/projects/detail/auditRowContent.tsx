@@ -13,10 +13,10 @@ import { DisclosureMarker } from '../../../components/shared/DisclosureMarker.ts
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Tooltip } from '../../../components/ui/tooltip.tsx';
+import { bandTone, describeChangePotential } from '../../../lib/auditPresentation.ts';
 import { controlFocusClass } from '../../../lib/formStyles.ts';
 import { dangerRowActionClass, toneText } from '../../../lib/tones.ts';
 import { microLabelClass, proseMeasureClass } from '../../../lib/typography.ts';
-import { bandTone, describeChangePotential } from '../../audits/auditsUtils.ts';
 import { describeFreshAge, describeReportFreshness } from './auditsTabUtils.ts';
 
 const tooltipTriggerClass = `inline-flex max-w-full min-w-0 rounded-md border border-transparent text-left ${controlFocusClass} focus-visible:outline-none max-sm:min-h-11 max-sm:min-w-11`;

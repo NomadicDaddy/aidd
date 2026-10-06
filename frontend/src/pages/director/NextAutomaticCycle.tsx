@@ -3,7 +3,7 @@ import type { ScheduledTask } from 'aidd-shared/contracts/scheduled-tasks';
 import { Link } from 'react-router';
 
 import { useScheduledTasks } from '../../hooks/useScheduledTasks.ts';
-import { nextRunLabel } from '../scheduled/scheduledLabels.ts';
+import { nextRunLabel } from '../../lib/scheduleLabels.ts';
 import { directorCycleCadence } from './directorCycleCadence.ts';
 
 /**

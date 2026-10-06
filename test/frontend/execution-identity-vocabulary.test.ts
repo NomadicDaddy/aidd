@@ -74,7 +74,7 @@ describe('execution identity vocabulary', () => {
 			read('pages', 'settings', 'BackendDefaultsTable.tsx'),
 			read('pages', 'settings', 'BackendDefaultsDisclosureRow.tsx'),
 			read('pages', 'settings', 'BackendDefaultFields.tsx'),
-			read('pages', 'director', 'DirectorProfileSection.tsx'),
+			read('pages', 'settings', 'DirectorProfileSection.tsx'),
 			read('components', 'shared', 'local-aidd-history', 'LocalRunsTable.tsx'),
 		]);
 

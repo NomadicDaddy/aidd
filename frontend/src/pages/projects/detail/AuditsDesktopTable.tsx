@@ -9,9 +9,9 @@ import { SortableColumnHeader } from '../../../components/shared/SortableColumnH
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
 import { useViewportFill, viewportFillScrollerClass } from '../../../hooks/useViewportFill.ts';
+import { overrideEffects } from '../../../lib/auditPresentation.ts';
 import { quietSelectClass } from '../../../lib/formStyles.ts';
 import { interactiveTableRowClass, tableHeadClass } from '../../../lib/tableStyles.ts';
-import { overrideEffects } from '../../audits/auditsUtils.ts';
 import {
 	AuditActionButton,
 	AuditChangePotential,

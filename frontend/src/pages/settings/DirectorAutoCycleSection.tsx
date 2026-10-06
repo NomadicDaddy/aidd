@@ -9,9 +9,9 @@ import { FieldRow, FormGrid } from '../../components/ui/field.tsx';
 import { Input } from '../../components/ui/input.tsx';
 import { useScheduledTasks } from '../../hooks/useScheduledTasks.ts';
 import { selectClass } from '../../lib/formStyles.ts';
+import { nextRunLabel, scheduleSummary } from '../../lib/scheduleLabels.ts';
 import { toneText } from '../../lib/tones.ts';
 import { proseMeasureClass } from '../../lib/typography.ts';
-import { nextRunLabel, scheduleSummary } from '../scheduled/scheduledLabels.ts';
 import { DirectorAutoLaunchFields } from './DirectorAutoLaunchFields.tsx';
 
 /**

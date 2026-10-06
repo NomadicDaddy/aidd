@@ -340,7 +340,7 @@ const EXEMPT: Exemption[] = [
 
 	// (c) The real hit area is a larger ancestor or descendant the tag itself does not spell.
 	{
-		file: 'pages/diary/DiaryTimelineList.tsx',
+		file: 'components/shared/diary/DiaryTimelineList.tsx',
 		marker: 'after:absolute after:inset-0',
 		reason: 'A stretched link: `after:inset-0` makes the whole positioned row the target.',
 	},

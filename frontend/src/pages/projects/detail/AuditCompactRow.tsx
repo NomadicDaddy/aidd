@@ -4,10 +4,10 @@ import type { ProjectAuditEntry, ProjectFeature } from '../../../api/types.ts';
 
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
+import { overrideEffects } from '../../../lib/auditPresentation.ts';
 import { selectClass } from '../../../lib/formStyles.ts';
 import { touchTargetBoxClass } from '../../../lib/touchTarget.ts';
 import { microLabelClass } from '../../../lib/typography.ts';
-import { overrideEffects } from '../../audits/auditsUtils.ts';
 import {
 	AuditActionButton,
 	AuditChangePotential,

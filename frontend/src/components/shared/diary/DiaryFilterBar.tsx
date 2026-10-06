@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 
-import type { SegmentedControlOption } from '../../components/ui/segmented-control.tsx';
+import type { SegmentedControlOption } from '../../ui/segmented-control.tsx';
 import type { DiaryKindFilter, DiaryWindowFilter } from './diaryFilters.ts';
 
-import { FilterToolbar } from '../../components/shared/FilterToolbar.tsx';
-import { SegmentedControl } from '../../components/ui/segmented-control.tsx';
-import { countActiveFilters } from '../../lib/filterFields.ts';
+import { countActiveFilters } from '../../../lib/filterFields.ts';
+import { SegmentedControl } from '../../ui/segmented-control.tsx';
+import { FilterToolbar } from '../FilterToolbar.tsx';
 import { DIARY_KINDS, diaryKindLabels, diaryWindowLabels } from './diaryFilters.ts';
 
 // Both lists read their text from `diaryFilters`, which is where the empty state's filter readout

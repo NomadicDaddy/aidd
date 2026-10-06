@@ -52,6 +52,12 @@ describe('page domains do not import one another', () => {
 		).toEqual([]);
 	});
 
+	test('no page domain imports another page domain', async () => {
+		const { imports, visited } = await crossDomainImports();
+		expect(visited).toBeGreaterThan(100);
+		expect(describeImports(imports)).toEqual([]);
+	});
+
 	test('no other domain imports pages/runs or pages/pipelineSessions', async () => {
 		const { imports, visited } = await crossDomainImports();
 		expect(visited).toBeGreaterThan(100);

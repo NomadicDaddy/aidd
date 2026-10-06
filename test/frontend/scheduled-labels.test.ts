@@ -14,7 +14,7 @@ import {
 	occurrenceProjectsLabel,
 	projectScopeLabel,
 	scheduleSummary,
-} from '../../frontend/src/pages/scheduled/scheduledLabels.ts';
+} from '../../frontend/src/lib/scheduleLabels.ts';
 import {
 	buildSchedule,
 	scheduleFormState,

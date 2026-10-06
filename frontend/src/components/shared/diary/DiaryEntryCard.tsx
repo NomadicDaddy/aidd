@@ -1,15 +1,15 @@
 import { useId, useState } from 'react';
 import { Link } from 'react-router';
 
-import type { DiaryEntry } from '../../api/types.ts';
+import type { DiaryEntry } from '../../../api/types.ts';
 
-import { DisclosureMarker } from '../../components/shared/DisclosureMarker.tsx';
-import { MarkdownContent } from '../../components/shared/MarkdownContent.tsx';
-import { Badge } from '../../components/ui/badge.tsx';
-import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
-import { touchTargetTextClass } from '../../lib/touchTarget.ts';
-import { proseMeasureClass } from '../../lib/typography.ts';
+import { touchTargetTextClass } from '../../../lib/touchTarget.ts';
+import { proseMeasureClass } from '../../../lib/typography.ts';
+import { Badge } from '../../ui/badge.tsx';
+import { Button } from '../../ui/button.tsx';
+import { Card } from '../../ui/card.tsx';
+import { DisclosureMarker } from '../DisclosureMarker.tsx';
+import { MarkdownContent } from '../MarkdownContent.tsx';
 
 export function DiaryEntryCard({
 	entry,

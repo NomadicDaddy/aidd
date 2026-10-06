@@ -4,7 +4,7 @@ import { default as ScrollText } from 'lucide-react/dist/esm/icons/scroll-text';
 import { default as Tag } from 'lucide-react/dist/esm/icons/tag';
 import { default as Wrench } from 'lucide-react/dist/esm/icons/wrench';
 
-import type { DiaryTimelineKind } from '../../api/types.ts';
+import type { DiaryTimelineKind } from '../../../api/types.ts';
 
 export function DiaryKindIcon({ kind }: { kind: DiaryTimelineKind }) {
 	const className = 'h-3 w-3';

@@ -273,8 +273,8 @@ describe('diary surfaces', () => {
 
 	test('the filter toolbar keeps its two control groups inside one scan', async () => {
 		// The filter Card owns the measure so its chrome and both control groups end together.
-		const bar = await src('pages/diary/DiaryFilterBar.tsx');
-		const feed = await src('pages/diary/DiaryFeed.tsx');
+		const bar = await src('components/shared/diary/DiaryFilterBar.tsx');
+		const feed = await src('components/shared/diary/DiaryFeed.tsx');
 		expect(feed).toContain('<div className="page-reveal max-w-[80rem] space-y-5">');
 		expect(bar).toContain('<FilterToolbar');
 		expect(bar).toContain('noun="loaded activities"');

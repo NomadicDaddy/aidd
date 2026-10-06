@@ -31,7 +31,7 @@ async function settingsSources(): Promise<string> {
 	}
 	sources.push(
 		await Bun.file(
-			resolve(frontendRoot, 'src/pages/director/DirectorProfileSection.tsx'),
+			resolve(frontendRoot, 'src/pages/settings/DirectorProfileSection.tsx'),
 		).text(),
 	);
 	return sources.join('\n');

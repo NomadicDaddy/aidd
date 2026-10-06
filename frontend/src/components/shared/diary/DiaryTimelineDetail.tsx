@@ -1,9 +1,9 @@
 import { useId, useState } from 'react';
 
-import { DisclosureMarker } from '../../components/shared/DisclosureMarker.tsx';
-import { MarkdownContent } from '../../components/shared/MarkdownContent.tsx';
-import { Button } from '../../components/ui/button.tsx';
-import { cn } from '../../lib/cn.ts';
+import { cn } from '../../../lib/cn.ts';
+import { Button } from '../../ui/button.tsx';
+import { DisclosureMarker } from '../DisclosureMarker.tsx';
+import { MarkdownContent } from '../MarkdownContent.tsx';
 import { useClampedContent } from './useClampedContent.ts';
 
 const AI_SUMMARY_MAX_CHARS = 400;

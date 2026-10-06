@@ -21,7 +21,7 @@ import { createElement as h } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter } from 'react-router';
 import { LaunchTargetControl } from './src/components/shared/LaunchTargetControl.tsx';
-import { DirectorProfileSection } from './src/pages/director/DirectorProfileSection.tsx';
+import { DirectorProfileSection } from './src/pages/settings/DirectorProfileSection.tsx';
 import { GeneralDefaultsSection } from './src/pages/settings/GeneralDefaultsSection.tsx';
 import { createBlankSettings } from './src/pages/settings/settingsUtils.ts';
 

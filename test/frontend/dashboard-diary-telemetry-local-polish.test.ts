@@ -125,10 +125,10 @@ describe('dashboard local design findings', () => {
 describe('diary local design findings', () => {
 	test('aligns card actions and timeline columns while preserving readable prose', async () => {
 		const [entry, timeline, columns, detail] = await Promise.all([
-			source('pages/diary/DiaryEntryCard.tsx'),
-			source('pages/diary/DiaryTimelineList.tsx'),
-			source('pages/diary/diaryTimelineColumns.ts'),
-			source('pages/diary/DiaryTimelineDetail.tsx'),
+			source('components/shared/diary/DiaryEntryCard.tsx'),
+			source('components/shared/diary/DiaryTimelineList.tsx'),
+			source('components/shared/diary/diaryTimelineColumns.ts'),
+			source('components/shared/diary/DiaryTimelineDetail.tsx'),
 		]);
 
 		expect(entry).toContain('<div className="flex flex-wrap items-center gap-2">');

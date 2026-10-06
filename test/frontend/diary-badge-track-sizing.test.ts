@@ -7,7 +7,7 @@ import type { DiaryTimelineItem } from '../../frontend/src/api/types.ts';
 import {
 	diaryTimelineColumns,
 	diaryTimelineGridColumns,
-} from '../../frontend/src/pages/diary/diaryTimelineColumns.ts';
+} from '../../frontend/src/components/shared/diary/diaryTimelineColumns.ts';
 
 const FRONTEND_ROOT = resolve(import.meta.dir, '../../frontend');
 const source = (path: string) => readFile(resolve(FRONTEND_ROOT, 'src', path), 'utf8');
@@ -17,7 +17,7 @@ function renderTimelineGroups(groups: DiaryTimelineItem[][]): string {
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
 		"import { MemoryRouter } from 'react-router';",
-		"import { DiaryTimelineGrid, DiaryTimelineList } from './src/pages/diary/DiaryTimelineList.tsx';",
+		"import { DiaryTimelineGrid, DiaryTimelineList } from './src/components/shared/diary/DiaryTimelineList.tsx';",
 		`const groups = ${JSON.stringify(groups)};`,
 		'const lists = groups.map((items, index) => createElement(DiaryTimelineList, { items, key: index, showProject: true }));',
 		"const grid = createElement(DiaryTimelineGrid, { kindFilter: 'all', showProject: true }, lists);",
@@ -105,7 +105,7 @@ describe('diary badge tracks', () => {
 	});
 
 	test('widening the fixed tracks is not available as a fix', async () => {
-		const timeline = await source('pages/diary/DiaryTimelineList.tsx');
+		const timeline = await source('components/shared/diary/DiaryTimelineList.tsx');
 
 		// Every branch that renders a badge column sizes that column to its content. A fixed
 		// `4rem`/`6rem` track only moves the threshold to the next longer label, and the label
@@ -113,7 +113,7 @@ describe('diary badge tracks', () => {
 		expect(timeline).not.toContain('grid-cols-[4rem_');
 		expect(timeline).not.toContain('_6rem_');
 		expect(timeline).not.toContain('grid-cols-[6rem_');
-		const columnModel = await source('pages/diary/diaryTimelineColumns.ts');
+		const columnModel = await source('components/shared/diary/diaryTimelineColumns.ts');
 		const badgeTracks = columnModel.match(/minmax\((?:4|6)rem,max-content\)/gu) ?? [];
 		expect(badgeTracks).toHaveLength(2);
 	});

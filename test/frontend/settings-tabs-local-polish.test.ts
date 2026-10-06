@@ -2,7 +2,6 @@ import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
 
 const settingsRoot = resolve(import.meta.dir, '../../frontend/src/pages/settings');
-const directorRoot = resolve(import.meta.dir, '../../frontend/src/pages/director');
 
 async function source(root: string, file: string): Promise<string> {
 	return Bun.file(resolve(root, file)).text();
@@ -72,7 +71,7 @@ describe('settings tab local design contracts', () => {
 	});
 
 	test('gives AI and Director cards explicit hierarchy and bounded controls', async () => {
-		const profile = await source(directorRoot, 'DirectorProfileSection.tsx');
+		const profile = await source(settingsRoot, 'DirectorProfileSection.tsx');
 		const directAi = await source(settingsRoot, 'DirectAiSection.tsx');
 		const providers = await source(settingsRoot, 'ProviderConfigSection.tsx');
 		const general = await source(settingsRoot, 'GeneralDefaultsSection.tsx');

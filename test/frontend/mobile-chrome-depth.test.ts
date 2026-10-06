@@ -172,7 +172,7 @@ describe('phone filter toolbar depth', () => {
 		const toolbar = stripComments(await read('components/shared/FilterToolbar.tsx'));
 		const readout = stripComments(await read('components/shared/FilterToolbarReadout.tsx'));
 		const overrides = stripComments(await read('pages/audits/tabs/OverridesTab.tsx'));
-		const diary = stripComments(await read('pages/diary/DiaryFilterBar.tsx'));
+		const diary = stripComments(await read('components/shared/diary/DiaryFilterBar.tsx'));
 
 		expect(toolbar).toContain("mobileLayout?: 'inline' | 'stacked'");
 		expect(overrides).toContain('mobileLayout="inline"');

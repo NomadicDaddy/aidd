@@ -6,11 +6,11 @@ import { OverflowScroller } from '../../../components/shared/OverflowScroller.ts
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { useViewportFill } from '../../../hooks/useViewportFill.ts';
+import { overrideEffects } from '../../../lib/auditPresentation.ts';
 import { selectClass } from '../../../lib/formStyles.ts';
 import { tableHeadClass } from '../../../lib/tableStyles.ts';
 import { toneBorder } from '../../../lib/tones.ts';
 import { microLabelClass } from '../../../lib/typography.ts';
-import { overrideEffects } from '../auditsUtils.ts';
 
 type EffectValue = 'default' | AuditOverrideEffect;
 

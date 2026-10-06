@@ -41,7 +41,7 @@ describe('what sticks inside main clears the shell bar above it', () => {
 	});
 
 	test('the diary day heading sticks below the bar rather than under it', async () => {
-		const feed = stripComments(await read('pages', 'diary', 'DiaryFeed.tsx'));
+		const feed = stripComments(await read('components', 'shared', 'diary', 'DiaryFeed.tsx'));
 
 		// It was `top-0 z-10` against a `top-0 z-20` bar: the heading landed entirely inside the
 		// bar's footprint at 390x844 and was painted over, which is the opposite of what a sticky
@@ -89,7 +89,9 @@ describe('generated prose cannot force the page sideways', () => {
 	});
 
 	test('the diary card breaks the fields it renders itself', async () => {
-		const card = stripComments(await read('pages', 'diary', 'DiaryEntryCard.tsx'));
+		const card = stripComments(
+			await read('components', 'shared', 'diary', 'DiaryEntryCard.tsx'),
+		);
 
 		// Title and summary are generated text outside MarkdownContent, so they need their own rule.
 		expect(card).toContain('font-semibold break-words text-foreground');

@@ -5,9 +5,9 @@ import { OverflowScroller } from '../../../../components/shared/OverflowScroller
 import { Badge, StatusDot } from '../../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../../components/ui/card.tsx';
 import { useViewportFill } from '../../../../hooks/useViewportFill.ts';
+import { effectTone } from '../../../../lib/auditPresentation.ts';
 import { cn } from '../../../../lib/cn.ts';
 import { toneText } from '../../../../lib/tones.ts';
-import { effectTone } from '../../../audits/auditsUtils.ts';
 import { getProfilePosture } from '../../profile/profile-helpers.ts';
 import { useProfilePreviewState } from './profilePreviewContext.ts';
 

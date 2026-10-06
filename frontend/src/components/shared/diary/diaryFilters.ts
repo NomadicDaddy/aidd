@@ -1,7 +1,7 @@
-import type { DiaryEntry, DiaryTimelineItem, DiaryTimelineKind } from '../../api/types.ts';
-import type { FilterRegister } from '../../lib/filterFields.ts';
+import type { DiaryEntry, DiaryTimelineItem, DiaryTimelineKind } from '../../../api/types.ts';
+import type { FilterRegister } from '../../../lib/filterFields.ts';
 
-import { filterRegister } from '../../lib/filterFields.ts';
+import { filterRegister } from '../../../lib/filterFields.ts';
 
 export type DiaryKindFilter = 'all' | 'entry' | DiaryTimelineKind;
 export type DiaryWindowFilter = '30d' | '7d' | 'all';

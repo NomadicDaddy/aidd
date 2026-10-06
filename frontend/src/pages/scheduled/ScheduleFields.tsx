@@ -7,11 +7,11 @@ import { Input } from '../../components/ui/input.tsx';
 import { formatZonedDate } from '../../lib/formatters.ts';
 import { fieldErrorClass, fieldLabelClass, selectClass } from '../../lib/formStyles.ts';
 import { machineTextProps } from '../../lib/machineText.ts';
+import { advancedScheduleDescription, nextRunLabel } from '../../lib/scheduleLabels.ts';
 import { toneText } from '../../lib/tones.ts';
 import { compactFieldMeasureClass, microLabelClass } from '../../lib/typography.ts';
 import { useScheduledDraft } from './scheduledDraftContext.ts';
 import { scheduledFormTwoColumnMeasureClass } from './scheduledFormMeasure.ts';
-import { advancedScheduleDescription, nextRunLabel } from './scheduledLabels.ts';
 
 interface ScheduleFieldsProps {
 	// The one thing wrong with the schedule, rendered on the field it concerns.

@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import type { DirectorProfile, DirectorProfileInput } from '../../api/types.ts';
 
 import { useDirector } from '../../hooks/useDirector.ts';
-import { profileInput } from '../director/directorUtils.ts';
 
 export interface DirectorProfileForm {
 	/** Whether what is on screen would send anything different from what the server holds. */
@@ -14,6 +13,18 @@ export interface DirectorProfileForm {
 	pending: boolean;
 	save: () => void;
 	setForm: (updater: (current: DirectorProfileInput) => DirectorProfileInput) => void;
+}
+
+// What Save sends: trimmed text, an empty model as null, and the default role when none is typed.
+function profileInput(form: DirectorProfileInput): DirectorProfileInput {
+	const input: DirectorProfileInput = {
+		instructions: form.instructions?.trim() ?? '',
+		model: form.model?.trim() || null,
+		role: form.role?.trim() || 'Fleet Director',
+	};
+	if (form.backend) input.backend = form.backend;
+	if (form.reasoningEffort) input.reasoningEffort = form.reasoningEffort;
+	return input;
 }
 
 function savedForm(profile: DirectorProfile | undefined): DirectorProfileInput {

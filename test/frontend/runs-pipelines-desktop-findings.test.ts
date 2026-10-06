@@ -98,9 +98,9 @@ describe('runs, pipelines, identity lab, and diary desktop findings', () => {
 	});
 
 	test('gives the fleet Diary a project column and removes phantom entry dates', async () => {
-		const timeline = await source('pages', 'diary', 'DiaryTimelineList.tsx');
-		const columns = await source('pages', 'diary', 'diaryTimelineColumns.ts');
-		const entry = await source('pages', 'diary', 'DiaryEntryCard.tsx');
+		const timeline = await source('components', 'shared', 'diary', 'DiaryTimelineList.tsx');
+		const columns = await source('components', 'shared', 'diary', 'diaryTimelineColumns.ts');
+		const entry = await source('components', 'shared', 'diary', 'DiaryEntryCard.tsx');
 
 		expect(timeline).toContain('grid-cols-(--diary-grid-columns)');
 		expect(columns).toContain('project: showProject');

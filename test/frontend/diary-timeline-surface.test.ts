@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 import type { DiaryTimelineItem } from '../../frontend/src/api/types.ts';
 
-import { groupDiaryByDay } from '../../frontend/src/pages/diary/diaryItems.ts';
+import { groupDiaryByDay } from '../../frontend/src/components/shared/diary/diaryItems.ts';
 
 const FRONTEND_ROOT = resolve(import.meta.dir, '../../frontend');
 
@@ -13,7 +13,7 @@ function renderTimeline(items: DiaryTimelineItem[]): string {
 		"import { createElement } from 'react';",
 		"import { renderToStaticMarkup } from 'react-dom/server';",
 		"import { MemoryRouter } from 'react-router';",
-		"import { DiaryTimelineGrid, DiaryTimelineList } from './src/pages/diary/DiaryTimelineList.tsx';",
+		"import { DiaryTimelineGrid, DiaryTimelineList } from './src/components/shared/diary/DiaryTimelineList.tsx';",
 		"import { PageRail } from './src/components/shared/PageRail.tsx';",
 		`const items = ${JSON.stringify(items)};`,
 		'const timeline = createElement(DiaryTimelineList, { items, showProject: true });',
@@ -175,7 +175,7 @@ describe('diary timeline rows', () => {
 describe('diary feed chrome', () => {
 	test('anchors each day with a sticky section heading that outranks its rows', async () => {
 		const feed = await readFile(
-			resolve(FRONTEND_ROOT, 'src/pages/diary/DiaryFeed.tsx'),
+			resolve(FRONTEND_ROOT, 'src/components/shared/diary/DiaryFeed.tsx'),
 			'utf8',
 		);
 
@@ -192,7 +192,7 @@ describe('diary feed chrome', () => {
 
 	test('fills the shell and pages it with one control', async () => {
 		const feed = await readFile(
-			resolve(FRONTEND_ROOT, 'src/pages/diary/DiaryFeed.tsx'),
+			resolve(FRONTEND_ROOT, 'src/components/shared/diary/DiaryFeed.tsx'),
 			'utf8',
 		);
 		const page = await readFile(
@@ -223,7 +223,7 @@ describe('diary feed chrome', () => {
 
 	test('offers kind and time-window scope with a count of what is shown', async () => {
 		const bar = await readFile(
-			resolve(FRONTEND_ROOT, 'src/pages/diary/DiaryFilterBar.tsx'),
+			resolve(FRONTEND_ROOT, 'src/components/shared/diary/DiaryFilterBar.tsx'),
 			'utf8',
 		);
 
@@ -240,7 +240,9 @@ describe('diary feed chrome', () => {
 				'DiaryFeed.tsx',
 				'DiaryFilterBar.tsx',
 				'DiaryTimelineList.tsx',
-			].map((file) => readFile(resolve(FRONTEND_ROOT, 'src/pages/diary', file), 'utf8')),
+			].map((file) =>
+				readFile(resolve(FRONTEND_ROOT, 'src/components/shared/diary', file), 'utf8'),
+			),
 		);
 
 		for (const source of sources) {

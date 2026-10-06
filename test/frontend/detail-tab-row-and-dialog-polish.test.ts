@@ -8,7 +8,7 @@ function detail(file: string): Promise<string> {
 }
 
 function diary(file: string): Promise<string> {
-	return Bun.file(join(SRC, 'pages/diary', file)).text();
+	return Bun.file(join(SRC, 'components/shared/diary', file)).text();
 }
 
 describe('Project Detail row and dialog polish', () => {

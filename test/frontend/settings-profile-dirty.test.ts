@@ -38,7 +38,7 @@ describe('the Director Profile card has the surface dirty vocabulary', () => {
 	});
 
 	test('Save Profile stays secondary to the page-level save', async () => {
-		const section = await read('pages/director/DirectorProfileSection.tsx');
+		const section = await read('pages/settings/DirectorProfileSection.tsx');
 		const toolbar = await read('pages/settings/SettingsToolbar.tsx');
 
 		expect(section).toContain('disabled={pending || !dirty}');

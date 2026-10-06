@@ -9,6 +9,7 @@ import { SortableColumnHeader } from '../../../components/shared/SortableColumnH
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card } from '../../../components/ui/card.tsx';
 import { Checkbox } from '../../../components/ui/checkbox.tsx';
+import { describeChangePotential } from '../../../lib/auditPresentation.ts';
 import {
 	contentSizedColumnClass,
 	contentSizedTableClass,
@@ -19,7 +20,6 @@ import {
 	auditCatalogCardId,
 	auditFileName,
 	bucketsColumnLabel,
-	describeChangePotential,
 	reportsColumnLabel,
 } from '../auditsUtils.ts';
 import { CatalogCards } from './CatalogCards.tsx';

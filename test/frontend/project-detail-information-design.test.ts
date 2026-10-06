@@ -65,7 +65,7 @@ describe('project detail information design', () => {
 
 	test('keeps project diary days compact until their activity is requested', async () => {
 		const tab = await detail('DiaryTab.tsx');
-		const timeline = await source('pages/diary/DiaryTimelineList.tsx');
+		const timeline = await source('components/shared/diary/DiaryTimelineList.tsx');
 
 		expect(tab).toContain('activityDisclosureLimit={8}');
 		expect(timeline).toContain('items.slice(0, visibleLimit)');

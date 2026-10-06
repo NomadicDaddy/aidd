@@ -77,7 +77,6 @@ const exemptions: { file: string; why: string }[] = [
 	// same id does on every other surface. It uses CardHeader now, so it is scanned like the rest.
 	{ file: 'settings/ExecutionIdentityBadgeLabPage.tsx', why: 'per-example label in a grid' },
 	{ file: 'skills/SkillImportDialog.tsx', why: 'dialog title, wired to aria-labelledby' },
-	{ file: 'diary/DiaryFeed.tsx', why: 'sticky day divider in a chronological feed' },
 	{ file: 'dashboard/DirectorQueueCard.tsx', why: 'per-suggestion row title inside a list' },
 	{
 		file: 'dashboard/SuggestionSummary.tsx',

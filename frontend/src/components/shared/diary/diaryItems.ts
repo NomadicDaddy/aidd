@@ -1,7 +1,7 @@
-import type { DiaryEntry, DiaryTimelineItem, DiaryTimelineKind } from '../../api/types.ts';
-import type { Tone } from '../../lib/tones.ts';
+import type { DiaryEntry, DiaryTimelineItem, DiaryTimelineKind } from '../../../api/types.ts';
+import type { Tone } from '../../../lib/tones.ts';
 
-import { runStatusTone } from '../../lib/runStatusTone.ts';
+import { runStatusTone } from '../../../lib/runStatusTone.ts';
 
 export interface DiaryDayGroup {
 	entries: DiaryEntry[];

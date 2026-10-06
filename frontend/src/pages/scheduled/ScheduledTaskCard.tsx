@@ -18,13 +18,13 @@ import { useScheduledExecutions } from '../../hooks/useScheduledTasks.ts';
 import { cn } from '../../lib/cn.ts';
 import { humanizeEnum } from '../../lib/formatters.ts';
 import { sessionStatusTone } from '../../lib/pipelineSessionStatus.ts';
-import { type Tone } from '../../lib/tones.ts';
-import { microLabelClass } from '../../lib/typography.ts';
 import {
 	advancedScheduleDescription,
 	projectScopeLabel,
 	scheduleSummary,
-} from './scheduledLabels.ts';
+} from '../../lib/scheduleLabels.ts';
+import { type Tone } from '../../lib/tones.ts';
+import { microLabelClass } from '../../lib/typography.ts';
 import { ScheduledOccurrence } from './ScheduledOccurrence.tsx';
 import { canResumeScheduledTask } from './scheduledTaskActions.ts';
 

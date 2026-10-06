@@ -1,6 +1,6 @@
-import type { DiaryTimelineItem } from '../../api/types.ts';
+import type { DiaryTimelineItem } from '../../../api/types.ts';
 
-import { formatDate, formatDuration } from '../../lib/formatters.ts';
+import { formatDate, formatDuration } from '../../../lib/formatters.ts';
 import { timelineKindLabel } from './diaryItems.ts';
 
 /**

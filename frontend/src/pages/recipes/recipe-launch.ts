@@ -4,7 +4,7 @@ import type {
 	RecipeParameterDefinition,
 } from '../../api/types.ts';
 
-import { autoParameters } from './recipe-parameters.ts';
+import { autoParameters } from '../../lib/recipeParameters.ts';
 
 /**
  * The one prerequisite every Launch button on the catalog shares.

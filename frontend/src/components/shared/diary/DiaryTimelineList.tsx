@@ -3,16 +3,16 @@ import type { CSSProperties, ReactNode } from 'react';
 import { useId, useState } from 'react';
 import { Link } from 'react-router';
 
-import type { DiaryTimelineItem } from '../../api/types.ts';
+import type { DiaryTimelineItem } from '../../../api/types.ts';
 import type { DiaryKindFilter } from './diaryFilters.ts';
 
-import { DisclosureMarker } from '../../components/shared/DisclosureMarker.tsx';
-import { classifyDiaryTimelineRun } from '../../components/shared/local-aidd-history/outcome.ts';
-import { Badge } from '../../components/ui/badge.tsx';
-import { Button } from '../../components/ui/button.tsx';
-import { Card } from '../../components/ui/card.tsx';
-import { cn } from '../../lib/cn.ts';
-import { formatDate, formatTimeOfDay, humanizeEnum } from '../../lib/formatters.ts';
+import { cn } from '../../../lib/cn.ts';
+import { formatDate, formatTimeOfDay, humanizeEnum } from '../../../lib/formatters.ts';
+import { Badge } from '../../ui/badge.tsx';
+import { Button } from '../../ui/button.tsx';
+import { Card } from '../../ui/card.tsx';
+import { DisclosureMarker } from '../DisclosureMarker.tsx';
+import { classifyDiaryTimelineRun } from '../local-aidd-history/outcome.ts';
 import { timelineItemTone, timelineKindLabel } from './diaryItems.ts';
 import { DiaryKindIcon } from './DiaryKindIcon.tsx';
 import {

@@ -1,6 +1,6 @@
 import type { ScheduledTaskSchedule } from 'aidd-shared/contracts/scheduled-tasks';
 
-import { advancedScheduleDescription, scheduleSummary } from '../scheduled/scheduledLabels.ts';
+import { advancedScheduleDescription, scheduleSummary } from '../../lib/scheduleLabels.ts';
 
 export function directorCycleCadence(schedule: ScheduledTaskSchedule): {
 	label: string;

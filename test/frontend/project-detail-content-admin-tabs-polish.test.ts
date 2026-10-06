@@ -150,9 +150,9 @@ describe('Project Detail content and admin tabs polish', () => {
 	});
 
 	test('keeps diary headings above isolated rows and makes entries filterable', async () => {
-		const bar = await frontend('pages', 'diary', 'DiaryFilterBar.tsx');
-		const filters = await frontend('pages', 'diary', 'diaryFilters.ts');
-		const list = await frontend('pages', 'diary', 'DiaryTimelineList.tsx');
+		const bar = await frontend('components', 'shared', 'diary', 'DiaryFilterBar.tsx');
+		const filters = await frontend('components', 'shared', 'diary', 'diaryFilters.ts');
+		const list = await frontend('components', 'shared', 'diary', 'DiaryTimelineList.tsx');
 
 		// The kind labels live beside the predicates in `diaryFilters`, so the segmented control
 		// and the empty state's readout below it cannot spell one of them differently.

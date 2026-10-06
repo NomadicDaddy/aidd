@@ -22,6 +22,26 @@ import { stepParameters } from './stepParameters.ts';
 
 const METADATA_ALLOWLIST = ['.aidd'];
 
+// A pipeline step runs in the live project tree, which is shared, so a violation is reported and
+// fails the step; nothing is reverted (see WriteGuardCheckout). Null means the boundary held.
+async function writeBoundaryError(
+	projectDir: string,
+	baseline: WriteGuardSnapshot,
+): Promise<null | string> {
+	const violations = await diffWriteViolations(projectDir, METADATA_ALLOWLIST, baseline);
+	// An unreadable worktree is not a clean one.
+	if (violations === null)
+		return 'Metadata-only session could not be checked against the .aidd/ write boundary (git status failed); the worktree is unverified';
+	if (violations.length === 0) return null;
+	const revertFailed = await revertWriteViolations(projectDir, baseline, violations, 'shared');
+	const verb = violations.some((v) => v.destructivelyDiscarded)
+		? 'destructively modified'
+		: 'wrote';
+	return `Metadata-only session ${verb} outside .aidd/: ${violations
+		.map((v) => v.path)
+		.join(', ')} - ${describeWriteGuardRevert(violations, revertFailed, 'shared')}`;
+}
+
 export interface StepRunnerDeps {
 	autoFix: AutoFixRunner;
 	dispatcher: StepDispatcher;
@@ -106,6 +126,21 @@ export async function executeStep(
 	let superseded:
 		| { dispatch: StepDispatchResult; row: PipelineStepResultRecord; startedAt: number }
 		| undefined;
+	// A stop keeps the step's stopped status, but the boundary is still checked: a dispatch that
+	// discarded uncommitted work and was then stopped must not end with no record of the loss.
+	const stopStep = async (): Promise<StepExecutionResult> => {
+		const boundaryError = guardBaseline
+			? await writeBoundaryError(context.projectDir, guardBaseline)
+			: null;
+		await lifecycle.completeStep({
+			completedAt: Date.now(),
+			errorMessage: boundaryError ?? undefined,
+			resultId: attemptRow.id,
+			startedAt: attemptStartedAt,
+			status: 'stopped',
+		});
+		return { ok: false, stopped: true };
+	};
 	for (let attempt = 1; attempt <= attempts; attempt += 1) {
 		if (attempt > 1) {
 			attemptRow = await lifecycle.createStepResult({
@@ -135,15 +170,7 @@ export async function executeStep(
 			}
 			await lifecycle.markStepRunning(attemptRow.id, attemptStartedAt);
 		}
-		if (stopFlags.has(context.sessionId)) {
-			await lifecycle.completeStep({
-				completedAt: Date.now(),
-				resultId: attemptRow.id,
-				startedAt: attemptStartedAt,
-				status: 'stopped',
-			});
-			return { ok: false, stopped: true };
-		}
+		if (stopFlags.has(context.sessionId)) return stopStep();
 		try {
 			lastDispatch = await dispatcher.dispatch(
 				step,
@@ -155,15 +182,7 @@ export async function executeStep(
 		} catch (err) {
 			lastDispatch = { errorMessage: stringifyError(err), ok: false };
 		}
-		if (stopFlags.has(context.sessionId)) {
-			await lifecycle.completeStep({
-				completedAt: Date.now(),
-				resultId: attemptRow.id,
-				startedAt: attemptStartedAt,
-				status: 'stopped',
-			});
-			return { ok: false, stopped: true };
-		}
+		if (stopFlags.has(context.sessionId)) return stopStep();
 		if (lastDispatch.ok || attempt >= attempts) break;
 		if (step.onFailure === 'auto-fix') {
 			// This attempt stays in flight for the whole remediation, which can be a managed run
@@ -186,31 +205,7 @@ export async function executeStep(
 	if (guardBaseline) {
 		// The boundary is checked whether or not the dispatch succeeded: a step that wrote
 		// outside .aidd/ and then failed leaves the same foreign files as one that succeeded.
-		// A pipeline step runs in the live project tree, which is shared, so a violation is
-		// reported and fails the step; nothing is reverted (see WriteGuardCheckout).
-		const violations = await diffWriteViolations(
-			context.projectDir,
-			METADATA_ALLOWLIST,
-			guardBaseline,
-		);
-		let boundaryError: null | string = null;
-		if (violations === null) {
-			// An unreadable worktree is not a clean one.
-			boundaryError =
-				'Metadata-only session could not be checked against the .aidd/ write boundary (git status failed); the worktree is unverified';
-		} else if (violations.length > 0) {
-			const revertFailed = await revertWriteViolations(
-				context.projectDir,
-				guardBaseline,
-				violations,
-				'shared',
-			);
-			const hasDestructive = violations.some((v) => v.destructivelyDiscarded);
-			const violationVerb = hasDestructive ? 'destructively modified' : 'wrote';
-			boundaryError = `Metadata-only session ${violationVerb} outside .aidd/: ${violations
-				.map((v) => v.path)
-				.join(', ')} - ${describeWriteGuardRevert(violations, revertFailed, 'shared')}`;
-		}
+		const boundaryError = await writeBoundaryError(context.projectDir, guardBaseline);
 		if (boundaryError !== null) {
 			const dispatchError = lastDispatch.ok ? undefined : lastDispatch.errorMessage;
 			lastDispatch = {

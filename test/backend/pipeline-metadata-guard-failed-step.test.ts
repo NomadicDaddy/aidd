@@ -135,3 +135,123 @@ describe('metadata-only guard on a step that fails', () => {
 		}
 	});
 });
+
+// A stop that arrived while the dispatch was running returned before the boundary check, so a step
+// that had discarded the operator's uncommitted edit ended as a plain "stopped" row with no record
+// of the loss.
+describe('metadata-only guard on a step that is stopped', () => {
+	test('still checks the write boundary and records the discard on the stopped row', async () => {
+		const projectDir = await testTempDir('aidd-guard-stopped-step-');
+		const sqlite = new Database(':memory:');
+		try {
+			await git(projectDir, 'init');
+			await git(projectDir, 'config', 'user.email', 'test@example.com');
+			await git(projectDir, 'config', 'user.name', 'Test');
+			await Bun.write(join(projectDir, 'README.md'), 'base\n');
+			await git(projectDir, 'add', '.');
+			await git(projectDir, 'commit', '-m', 'base');
+			// The operator's uncommitted edit, present when the step starts.
+			await Bun.write(join(projectDir, 'README.md'), 'operator edit\n');
+
+			migrateWebDatabase(sqlite);
+			sqlite.run(
+				'INSERT INTO pipeline_sessions (id, parameters_json, project_name, project_path, recipe_id, recipe_name, started_at, status, total_steps, current_step_index) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+				[SESSION_ID, '{}', 'example', projectDir, 'recipe', 'Recipe', 500, 'running', 1, 0],
+			);
+			const { db } = wrapWebDatabase(sqlite);
+			const stopFlags = new Set<string>();
+			const outcome = await executeStep(
+				{
+					autoFix: {} as AutoFixRunner,
+					dispatcher: {
+						dispatch: async () => {
+							await git(projectDir, 'checkout', '--', 'README.md');
+							stopFlags.add(SESSION_ID);
+							return { errorMessage: 'stopped by operator', ok: false };
+						},
+					} as unknown as StepDispatcher,
+					hooks: {} as HookRunner,
+					lifecycle: lifecycle(db),
+					stopFlags,
+				},
+				{ configJson: {}, id: 'recipe-step-1', name: 'Review', stepType: 'shell' },
+				{
+					depth: 0,
+					displayOrder: 0,
+					initiator: 'operator',
+					lineage: [],
+					metadataOnly: true,
+					parameters: {},
+					projectDir,
+					sessionId: SESSION_ID,
+				},
+				1,
+			);
+
+			expect(outcome).toEqual({ ok: false, stopped: true });
+			const rows = await db.select().from(pipelineStepResults);
+			expect(rows).toHaveLength(1);
+			expect(rows[0]?.status).toBe('stopped');
+			expect(rows[0]?.errorMessage).toContain('destructively modified');
+			expect(rows[0]?.errorMessage).toContain('README.md');
+		} finally {
+			sqlite.close();
+			await removeTempTree(projectDir);
+		}
+	});
+
+	test('a stopped step that kept inside .aidd/ records no boundary error', async () => {
+		const projectDir = await testTempDir('aidd-guard-stopped-clean-');
+		const sqlite = new Database(':memory:');
+		try {
+			await git(projectDir, 'init');
+			await git(projectDir, 'config', 'user.email', 'test@example.com');
+			await git(projectDir, 'config', 'user.name', 'Test');
+			await Bun.write(join(projectDir, 'README.md'), 'base\n');
+			await git(projectDir, 'add', '.');
+			await git(projectDir, 'commit', '-m', 'base');
+
+			migrateWebDatabase(sqlite);
+			sqlite.run(
+				'INSERT INTO pipeline_sessions (id, parameters_json, project_name, project_path, recipe_id, recipe_name, started_at, status, total_steps, current_step_index) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+				[SESSION_ID, '{}', 'example', projectDir, 'recipe', 'Recipe', 500, 'running', 1, 0],
+			);
+			const { db } = wrapWebDatabase(sqlite);
+			const stopFlags = new Set<string>();
+			await executeStep(
+				{
+					autoFix: {} as AutoFixRunner,
+					dispatcher: {
+						dispatch: async () => {
+							await Bun.write(join(projectDir, '.aidd', 'note.md'), 'metadata\n');
+							stopFlags.add(SESSION_ID);
+							return { ok: true };
+						},
+					} as unknown as StepDispatcher,
+					hooks: {} as HookRunner,
+					lifecycle: lifecycle(db),
+					stopFlags,
+				},
+				{ configJson: {}, id: 'recipe-step-1', name: 'Review', stepType: 'shell' },
+				{
+					depth: 0,
+					displayOrder: 0,
+					initiator: 'operator',
+					lineage: [],
+					metadataOnly: true,
+					parameters: {},
+					projectDir,
+					sessionId: SESSION_ID,
+				},
+				1,
+			);
+
+			const rows = await db.select().from(pipelineStepResults);
+			expect(rows[0]?.status).toBe('stopped');
+			expect(rows[0]?.errorMessage).toBeNull();
+		} finally {
+			sqlite.close();
+			await removeTempTree(projectDir);
+		}
+	});
+});

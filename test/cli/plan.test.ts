@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { parseArgs } from 'aidd-shared/args/index';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { resolveRunRuntimeMetadata } from 'aidd-shared/plan/runtime-metadata';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 
 const config: ResolvedConfig = {
 	cli: 'native',
@@ -19,6 +19,7 @@ const config: ResolvedConfig = {
 	quitOnAbort: 0,
 	rateLimitBufferSeconds: 60,
 	rateLimitBackoffSeconds: 300,
+	web: defaultWebConfig,
 };
 
 describe('resolveRunPlan', () => {

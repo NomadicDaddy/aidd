@@ -291,7 +291,7 @@ export class AuditService {
 	private resolveScoringRoots(): string[] {
 		const roots = new Set<string>();
 		if (this.config.applicationsRoot) roots.add(resolve(this.config.applicationsRoot));
-		for (const root of this.config.web?.allowedRoots ?? []) {
+		for (const root of this.config.web.allowedRoots) {
 			roots.add(resolve(root));
 		}
 		return [...roots];

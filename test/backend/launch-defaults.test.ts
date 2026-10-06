@@ -1,4 +1,4 @@
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 
 import { describe, expect, test } from 'bun:test';
 import { resolveEffectiveLaunchTarget } from 'aidd-shared/plan/launch-target';
@@ -39,6 +39,7 @@ const baseConfig: ResolvedConfig = {
 		overseerModel: 'overseer-model',
 		secondaryCli: 'codex',
 	},
+	web: defaultWebConfig,
 };
 
 async function makeProjectWithConfig(

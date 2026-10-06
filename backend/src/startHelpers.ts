@@ -1,6 +1,5 @@
 import {
 	defaultDirectorIntervalHours,
-	defaultIgnoredFolders,
 	type ResolvedConfig,
 	WEB_AUTH_TOKEN_ENV,
 } from 'aidd-shared/config';
@@ -57,39 +56,6 @@ export function startSchedulesAfterProjectWarmup(
 		.finally(() => {
 			scheduledTaskService.start();
 		});
-}
-
-// Resolve the effective web config: use config.web when present, otherwise fall back to a
-// single-writer localhost default rooted at the given backend rootDir. Keeping this bootstrap
-// helper separate leaves start.ts focused and under the 300-line cap.
-export function resolveEffectiveWebConfig(
-	config: ResolvedConfig,
-	rootDir: string,
-): NonNullable<ResolvedConfig['web']> {
-	return (
-		config.web ??
-		({
-			allowedOrigins: [],
-			allowedRoots: [config.applicationsRoot ?? resolve(rootDir, '..')],
-			allowRemote: false,
-			autoChainLimit: 3,
-			autoChainRuns: false,
-			dataDir: resolve(rootDir, 'data'),
-			hostname: '127.0.0.1',
-			ignoredFolders: [...defaultIgnoredFolders],
-			maxConcurrentRuns: 2,
-			maxConcurrentRunsPerProject: 2,
-			port: 3210,
-			showSpernakitProject: false,
-			spernakitFleetManifest: null,
-			spernakitInitScript: null,
-			spernakitTemplateRef: null,
-			spernakitTemplateRepo: 'NomadicDaddy/spernakit',
-			templates: [],
-			traceDataMovement: false,
-			useWorktrees: false,
-		} satisfies NonNullable<ResolvedConfig['web']>)
-	);
 }
 
 /**

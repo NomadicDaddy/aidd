@@ -2,6 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { defaultWebConfig } from '../../shared/src/config.ts';
 import { copySkillContracts } from '../../cli/src/metadata/scaffoldSkillContracts.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { compilePrompt } from '../../cli/src/prompts/compile.ts';
@@ -26,6 +27,7 @@ const config = {
 	rateLimitBufferSeconds: 60,
 	reasoningEffort: 'low' as const,
 	timeoutSeconds: 3600,
+	web: defaultWebConfig,
 };
 
 afterAll(async () => {

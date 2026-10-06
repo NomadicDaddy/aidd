@@ -18,7 +18,7 @@ export interface PreparedSkillRun {
 // compileSkillDirective reports rather than papering over.
 function skillRootPaths(config: ResolvedConfig, rootDir: string): SkillRootPaths {
 	// spernakitRoot = parent of the configured init script, the sole spernakit marker.
-	const spernakit = config.web?.spernakitInitScript;
+	const spernakit = config.web.spernakitInitScript;
 	return {
 		aidd: rootDir,
 		...(config.applicationsRoot ? { applications: config.applicationsRoot } : {}),
@@ -38,7 +38,7 @@ export async function prepareSkillRun(
 	rootDir: string,
 ): Promise<PreparedSkillRun | undefined> {
 	if (!args.skillId) return undefined;
-	const skill = await readSkillDefinition(rootDir, args.skillId, config.web?.dataDir);
+	const skill = await readSkillDefinition(rootDir, args.skillId, config.web.dataDir);
 	const directive = compileSkillDirective(
 		skill,
 		args.skillArgs ?? '',

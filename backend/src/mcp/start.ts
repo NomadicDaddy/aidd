@@ -28,10 +28,10 @@ export async function startMcpServer(
 	config: ResolvedConfig,
 	options: StartMcpServerOptions,
 ): Promise<number> {
-	const port = config.web?.port ?? 3210;
+	const port = config.web.port;
 	const client = createApiClient({
 		port,
-		...(config.web?.authToken ? { authToken: config.web.authToken } : {}),
+		...(config.web.authToken ? { authToken: config.web.authToken } : {}),
 	});
 	const server = createAiddMcpServer(client, await readVersion(options.rootDir));
 	const transport = new StdioServerTransport();

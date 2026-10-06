@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { compilePrompt } from '../../cli/src/prompts/compile.ts';
 
@@ -25,6 +25,7 @@ const config: ResolvedConfig = {
 	quitOnAbort: 0,
 	rateLimitBufferSeconds: 60,
 	rateLimitBackoffSeconds: 300,
+	web: defaultWebConfig,
 };
 
 async function file(path: string): Promise<string> {

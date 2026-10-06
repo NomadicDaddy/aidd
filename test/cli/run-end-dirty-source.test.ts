@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { classifyWebRun } from 'aidd-shared/runs/outcome';
@@ -34,6 +34,7 @@ const config: ResolvedConfig = {
 	quitOnAbort: 0,
 	rateLimitBufferSeconds: 60,
 	rateLimitBackoffSeconds: 300,
+	web: defaultWebConfig,
 };
 
 class FakeBackend implements CLIBackend {

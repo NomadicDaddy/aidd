@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, test } from 'bun:test';
 import { parseArgs } from 'aidd-shared/args/index';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import { createModeHandler } from '../../cli/src/modes/factory.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import {
@@ -40,6 +40,7 @@ const config: ResolvedConfig = {
 	quitOnAbort: 0,
 	rateLimitBufferSeconds: 60,
 	rateLimitBackoffSeconds: 300,
+	web: defaultWebConfig,
 };
 
 const tmpRoot = join(import.meta.dir, '..', '..', '.tmp-preflight-completed-tests');

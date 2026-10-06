@@ -40,7 +40,7 @@ import { serveStaticFile } from './staticAssets.ts';
 
 export function createWebServer(context: WebContext) {
 	const distDir = join(context.rootDir, 'frontend', 'dist');
-	const traceDefault = () => context.config.web?.traceDataMovement ?? false;
+	const traceDefault = () => context.config.web.traceDataMovement;
 	// Single-operator listener: CORS and rate-limit plugins are intentionally omitted. Binding to
 	// loopback is not a boundary on its own: a page in the operator's browser can reach 127.0.0.1
 	// by DNS rebinding (same-origin, foreign Host) or by a cross-origin simple request (foreign

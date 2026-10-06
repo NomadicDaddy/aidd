@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import type { SelectedWork } from 'aidd-shared/modes/types';
 
 import { parseArgs } from 'aidd-shared/args/index';
@@ -41,6 +41,7 @@ const config: ResolvedConfig = {
 	quitOnAbort: 0,
 	rateLimitBufferSeconds: 60,
 	rateLimitBackoffSeconds: 300,
+	web: defaultWebConfig,
 };
 
 // A backend whose child process (the intermediate) leaks a listening grandchild and exits: the

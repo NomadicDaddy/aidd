@@ -84,7 +84,7 @@ export class SettingsService {
 		this.config = {
 			...resolved,
 			web: {
-				...resolved.web!,
+				...resolved.web,
 				allowedOrigins: this.config.web.allowedOrigins,
 				allowRemote: this.config.web.allowRemote,
 				dataDir: this.config.web.dataDir,
@@ -92,7 +92,7 @@ export class SettingsService {
 				port: this.config.web.port,
 			},
 		};
-		this.config.web.spernakitInitScript = resolved.web?.spernakitInitScript ?? null;
+		this.config.web.spernakitInitScript = resolved.web.spernakitInitScript;
 		return {
 			config: await this.toDto(withEnvSecrets),
 			resolvedConfig: this.config,

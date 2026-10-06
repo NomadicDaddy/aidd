@@ -31,7 +31,6 @@ import {
 	installProcessSafetyNet,
 	probePublicInterface,
 	removeWebPidFile,
-	resolveEffectiveWebConfig,
 	startRestartSupervisor,
 	startSchedulesAfterProjectWarmup,
 	warnRemoteAccess,
@@ -65,35 +64,33 @@ export async function startWebServer(
 ): Promise<number> {
 	setAiCallLogDir(resolve(options.rootDir, 'logs'));
 	const stopBackendLogRotation = startBackendLogRotation(resolve(options.rootDir, 'logs'));
-	const webConfig = resolveEffectiveWebConfig(config, options.rootDir);
-	const effectiveConfig = { ...config, web: webConfig };
 	// A remote-bound panel must have a token before anything listens, and before the database is
 	// opened so it fails cheaply. See `assertWebAuthTokenPresent` for why the check lives there.
-	assertWebAuthTokenPresent(webConfig);
+	assertWebAuthTokenPresent(config.web);
 	installProcessSafetyNet();
 	// Enforce the single-writer invariant: the worker acquires the writer lock and runs migrations
 	// during init, so a second backend pointed at the same data directory is rejected before it can
 	// establish a write-capable handle. Throws here if another live backend already owns it.
-	const database = await createWorkerWebDatabase(effectiveConfig.web, options.rootDir);
+	const database = await createWorkerWebDatabase(config.web, options.rootDir);
 	const webSocketHub = new WebSocketHub();
-	const projectService = new ProjectService(effectiveConfig.web);
+	const projectService = new ProjectService(config.web);
 	const initFailureService = new ProjectInitFailureService(database.db);
 	projectService.setInitFailureService(initFailureService);
-	const settingsService = new SettingsService(effectiveConfig, getUserConfigPath());
-	const directAiService = new DirectAiService(effectiveConfig);
+	const settingsService = new SettingsService(config, getUserConfigPath());
+	const directAiService = new DirectAiService(config);
 	const telemetryService = new TelemetryService({
 		commands: database.commands,
 		db: database.db,
 	});
 	const metricsService = new MetricsService({
-		dataDir: effectiveConfig.web.dataDir,
+		dataDir: config.web.dataDir,
 		db: database.db,
 		getActiveConnections: () => webSocketHub.peerCount,
 	});
-	const retention = createRetentionScheduler(database.db, effectiveConfig.web.dataDir);
+	const retention = createRetentionScheduler(database.db, config.web.dataDir);
 	await retention.run();
 	const runService = new RunService(
-		effectiveConfig,
+		config,
 		database.db,
 		database.commands,
 		webSocketHub,
@@ -117,7 +114,7 @@ export async function startWebServer(
 		skillService,
 	} = createExecutionServices({
 		appWatchdog,
-		config: effectiveConfig,
+		config,
 		database,
 		hub: webSocketHub,
 		projectService,
@@ -154,7 +151,7 @@ export async function startWebServer(
 	await telemetryService.reconcileStaleInvocations();
 	await metricsService.initialize();
 	const directorService = new DirectorService(
-		effectiveConfig,
+		config,
 		database.db,
 		database.commands,
 		webSocketHub,
@@ -167,7 +164,7 @@ export async function startWebServer(
 	// Must stay ahead of anything that can start a cycle: a resumed cycle's `running` row is what
 	// the idle gate reads, so a scheduled occurrence claimed before this would see an idle fleet.
 	await directorService.reconcileStaleCycles();
-	await wireDirectorScheduling(effectiveConfig, scheduledTaskService, directorService);
+	await wireDirectorScheduling(config, scheduledTaskService, directorService);
 	const telegramBridgeService = new TelegramBridgeService();
 	const terminalSessionManager = new TerminalSessionManager({
 		listShells: detectShells,
@@ -218,7 +215,7 @@ export async function startWebServer(
 	const app = createWebServer({
 		appLauncherService,
 		auditService,
-		config: effectiveConfig,
+		config,
 		database,
 		diaryService,
 		directAiService,
@@ -229,7 +226,7 @@ export async function startWebServer(
 		projectService,
 		recipeService,
 		requestRestart: (reason) => {
-			if (!startRestartSupervisor(options.rootDir, effectiveConfig.web.port)) return false;
+			if (!startRestartSupervisor(options.rootDir, config.web.port)) return false;
 			setTimeout(() => void shutdown(`${reason}-restart`), SHUTDOWN_RESPONSE_FLUSH_MS);
 			return true;
 		},
@@ -249,12 +246,12 @@ export async function startWebServer(
 		webSocketHub,
 	});
 	// Startup self-test: with allowRemote false, verify no public listener already owns the port.
-	if (!webConfig.allowRemote) {
-		const publicHost = await probePublicInterface(webConfig.hostname, webConfig.port, 500);
+	if (!config.web.allowRemote) {
+		const publicHost = await probePublicInterface(config.web.hostname, config.web.port, 500);
 		if (publicHost) {
 			await database.close();
 			throw new Error(
-				`Startup aborted: port ${webConfig.port} is already reachable on public interface ` +
+				`Startup aborted: port ${config.web.port} is already reachable on public interface ` +
 					`${publicHost}. A public listener already exists. Stop the conflicting service ` +
 					'or set web.allowRemote: true to acknowledge remote access.',
 			);
@@ -264,18 +261,18 @@ export async function startWebServer(
 	// source-only change with a server restart would silently serve the old bundle. Warn loudly
 	// (silent where frontend/src is absent, since the dist is then prebuilt and intended).
 	await warnIfFrontendStale(options.rootDir);
-	app.listen({ hostname: effectiveConfig.web.hostname, port: effectiveConfig.web.port });
+	app.listen({ hostname: config.web.hostname, port: config.web.port });
 	await writeWebPidFile(options.rootDir);
 	webLogger.info(
 		{
-			dataDir: effectiveConfig.web.dataDir,
-			hostname: effectiveConfig.web.hostname,
-			port: effectiveConfig.web.port,
-			url: `http://${effectiveConfig.web.hostname}:${effectiveConfig.web.port}`,
+			dataDir: config.web.dataDir,
+			hostname: config.web.hostname,
+			port: config.web.port,
+			url: `http://${config.web.hostname}:${config.web.port}`,
 		},
 		'aidd web control panel started',
 	);
-	await telegramBridgeService.updateConfig(effectiveConfig);
+	await telegramBridgeService.updateConfig(config);
 	// Pre-warm the in-memory project listing cache so the first dashboard load
 	// (which fans out to /projects and /director/fleet) hits warm entries
 	// instead of paying the full ~N-project filesystem scan. Fire-and-forget: the
@@ -283,8 +280,8 @@ export async function startWebServer(
 	// in-flight per-project compute via the listing cache's pending map. Must run
 	// after setMaturityContext/setAdvisor, which replace the cache instance.
 	startSchedulesAfterProjectWarmup(projectService, scheduledTaskService);
-	if (effectiveConfig.web.allowRemote) {
-		warnRemoteAccess(effectiveConfig.web.hostname, effectiveConfig.web.port);
+	if (config.web.allowRemote) {
+		warnRemoteAccess(config.web.hostname, config.web.port);
 	}
 	process.once('SIGINT', () => void shutdown('SIGINT'));
 	process.once('SIGTERM', () => void shutdown('SIGTERM'));

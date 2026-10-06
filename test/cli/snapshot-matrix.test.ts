@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import { backendNames } from 'aidd-shared/plan/types';
 
 import { filePhases, resolveRunPlan } from '../../cli/src/plan/resolve.ts';
@@ -26,6 +26,7 @@ const config: ResolvedConfig = {
 	quitOnAbort: 0,
 	rateLimitBufferSeconds: 60,
 	rateLimitBackoffSeconds: 300,
+	web: defaultWebConfig,
 };
 
 const nativeBackends = ['native', 'ollama', 'lmstudio', 'openai'] as const;

@@ -1,19 +1,18 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import type { ResolvedConfig } from 'aidd-shared/config';
-import { WEB_AUTH_TOKEN_ENV } from 'aidd-shared/config';
+import { defaultWebConfig, WEB_AUTH_TOKEN_ENV } from 'aidd-shared/config';
 import { webLogger } from '../../backend/src/logger.ts';
 import {
 	assertWebAuthTokenPresent,
 	createRestartSupervisorSpawnOptions,
-	resolveEffectiveWebConfig,
 	warnRemoteAccess,
 } from '../../backend/src/startHelpers.ts';
 
-function webConfig(
-	overrides: Partial<NonNullable<ResolvedConfig['web']>> = {},
-): NonNullable<ResolvedConfig['web']> {
+function webConfig(overrides: Partial<ResolvedConfig['web']> = {}): ResolvedConfig['web'] {
 	return {
-		...resolveEffectiveWebConfig({} as ResolvedConfig, 'D:/applications/aidd'),
+		...defaultWebConfig,
+		allowedRoots: ['D:/applications'],
+		dataDir: 'D:/applications/aidd/data',
 		...overrides,
 	};
 }

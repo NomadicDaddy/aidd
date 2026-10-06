@@ -7,6 +7,8 @@ export {
 	defaultDirectorIntervalHours,
 	defaultDirectorMaxPerBucket,
 	defaultDirectorSuggestionGranularity,
+	defaults,
+	defaultWebConfig,
 } from './config/defaults.ts';
 export {
 	applyEnvSecrets,

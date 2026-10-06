@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdir, readdir, readFile, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import {
 	activeRunsDir,
 	readCliActiveRunRecords,
@@ -48,6 +48,7 @@ const config: ResolvedConfig = {
 	reasoningEffort: 'low',
 	timeoutSeconds: 3600,
 	preflightDoctor: false,
+	web: defaultWebConfig,
 };
 
 class FakeBackend implements CLIBackend {

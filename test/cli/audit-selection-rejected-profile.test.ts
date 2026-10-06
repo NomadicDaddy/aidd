@@ -2,7 +2,7 @@ import { afterEach, describe, expect, spyOn, test } from 'bun:test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import type { ModeContext } from 'aidd-shared/modes/types';
 
 import { parseArgs } from 'aidd-shared/args/index';
@@ -30,6 +30,7 @@ const config: ResolvedConfig = {
 	rateLimitBufferSeconds: 60,
 	reasoningEffort: 'low',
 	timeoutSeconds: 3600,
+	web: defaultWebConfig,
 };
 
 afterEach(async () => {

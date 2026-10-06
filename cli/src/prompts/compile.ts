@@ -1,5 +1,6 @@
 import type { PromptPlan } from 'aidd-shared/plan/types';
 
+import { defaultWebConfig } from 'aidd-shared/config';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -185,6 +186,7 @@ async function runSnapshotTest(check: boolean): Promise<number> {
 		rateLimitBufferSeconds: 60,
 		reasoningEffort: 'low' as const,
 		timeoutSeconds: 3600,
+		web: defaultWebConfig,
 	};
 	const snapshotDir = join(rootDir, 'cli', 'src', 'prompts', 'snapshots');
 	await mkdir(snapshotDir, { recursive: true });

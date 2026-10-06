@@ -1,5 +1,5 @@
 import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/types';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 
 import { parseArgs } from 'aidd-shared/args/index';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
@@ -33,6 +33,7 @@ export const config: ResolvedConfig = {
 	rateLimitBufferSeconds: 60,
 	reasoningEffort: 'low',
 	timeoutSeconds: 3600,
+	web: defaultWebConfig,
 };
 
 export class FakeBackend implements CLIBackend {

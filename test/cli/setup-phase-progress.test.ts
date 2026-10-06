@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { parseArgs } from 'aidd-shared/args/index';
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -28,6 +28,7 @@ const config: ResolvedConfig = {
 	rateLimitBufferSeconds: 60,
 	reasoningEffort: 'low',
 	timeoutSeconds: 3600,
+	web: defaultWebConfig,
 };
 
 const roots: string[] = [];

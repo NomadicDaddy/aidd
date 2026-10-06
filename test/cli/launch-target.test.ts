@@ -1,4 +1,4 @@
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 
 import { describe, expect, test } from 'bun:test';
 import { resolveEffectiveLaunchTarget } from 'aidd-shared/plan/launch-target';
@@ -22,6 +22,7 @@ const baseConfig: ResolvedConfig = {
 	quitOnAbort: 0,
 	rateLimitBufferSeconds: 60,
 	rateLimitBackoffSeconds: 300,
+	web: defaultWebConfig,
 };
 
 describe('resolveEffectiveLaunchTarget', () => {

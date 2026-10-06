@@ -143,13 +143,13 @@ export async function run(argv: string[]): Promise<number> {
 			// spernakitRoot = parent of the configured init script (the sole spernakit marker);
 			// it resolves a skill's spernakit-references.
 			await scaffoldProjectAssets(plan, rootDir, {
-				...(config.web?.dataDir ? { dataDir: config.web.dataDir } : {}),
+				...(config.web.dataDir ? { dataDir: config.web.dataDir } : {}),
 				...(config.sharedDirs !== undefined ? { sharedDirs: config.sharedDirs } : {}),
 				...(config.sharedFiles !== undefined ? { sharedFiles: config.sharedFiles } : {}),
 				...(preparedSkill?.contracts !== undefined
 					? { skillContracts: preparedSkill.contracts }
 					: {}),
-				...(config.web?.spernakitInitScript
+				...(config.web.spernakitInitScript
 					? { spernakitRoot: dirname(config.web.spernakitInitScript) }
 					: {}),
 			});
@@ -164,7 +164,7 @@ export async function run(argv: string[]): Promise<number> {
 		const externalSource = external.source;
 		const externalLogPath = external.logPath;
 		let cliLogPath: string | undefined;
-		const webDataDir = config.web?.dataDir;
+		const webDataDir = config.web.dataDir;
 		if (externalLogPath) {
 			cliLogPath = externalLogPath;
 			await mkdir(dirname(cliLogPath), { recursive: true });
@@ -273,6 +273,6 @@ export async function run(argv: string[]): Promise<number> {
 function resolveScoringRoots(config: ResolvedConfig): string[] {
 	const roots = new Set<string>();
 	if (config.applicationsRoot) roots.add(config.applicationsRoot);
-	for (const root of config.web?.allowedRoots ?? []) roots.add(root);
+	for (const root of config.web.allowedRoots) roots.add(root);
 	return [...roots];
 }

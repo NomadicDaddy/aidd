@@ -5,7 +5,7 @@ import { AuditService } from '../../backend/src/services/auditService.ts';
 import { launchAuditsImpl } from '../../backend/src/services/audit/launchAuditsImpl.ts';
 import type { ProjectService } from '../../backend/src/services/projectService.ts';
 import type { RunService } from '../../backend/src/services/runService.ts';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 
 import { testTempDir } from '../_helpers/temp.ts';
@@ -30,6 +30,7 @@ function makeConfig(
 		reasoningEffort: 'low',
 		timeoutSeconds: 3600,
 		preflightDoctor: false,
+		web: defaultWebConfig,
 		...overrides,
 	};
 }

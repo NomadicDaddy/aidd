@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import type { AuditProfileMapping } from 'aidd-shared/contracts';
 import {
 	auditProfileOverridesPath,
@@ -54,6 +54,7 @@ function makeAuditService(rootDir: string): AuditService {
 		rateLimitBufferSeconds: 60,
 		reasoningEffort: 'low',
 		timeoutSeconds: 3600,
+		web: defaultWebConfig,
 	};
 	return new AuditService(
 		config,

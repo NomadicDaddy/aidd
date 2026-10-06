@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { ArgsError, parseArgs } from 'aidd-shared/args/index';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
-import type { ResolvedConfig } from 'aidd-shared/config';
+import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import { backendNames } from 'aidd-shared/plan/types';
 
 const baseConfig: ResolvedConfig = {
@@ -19,6 +19,7 @@ const baseConfig: ResolvedConfig = {
 	quitOnAbort: 0,
 	rateLimitBufferSeconds: 60,
 	rateLimitBackoffSeconds: 300,
+	web: defaultWebConfig,
 };
 
 function planFor(argv: string[], config: ResolvedConfig = baseConfig) {

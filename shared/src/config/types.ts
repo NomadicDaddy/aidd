@@ -136,7 +136,8 @@ export interface ResolvedConfig {
 	sharedReasoningEffort?: PersistedReasoningEffortValue;
 	timeoutSeconds: number;
 	triumvirate?: ResolvedTriumvirateConfig;
-	web?: ResolvedWebConfig;
+	/** Always present on a resolved config: resolveMergedConfig fills it from defaultWebConfig. */
+	web: ResolvedWebConfig;
 }
 
 export interface ResolvedTelegramBridgeConfig {

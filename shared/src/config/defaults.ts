@@ -2,48 +2,8 @@ import type { ResolvedConfig, ResolvedWebConfig } from './types.ts';
 
 import { defaultIgnoredFolders } from './schema.ts';
 
-export const defaults: ResolvedConfig = {
-	auditsEnabled: true,
-	cli: 'native',
-	dirtyTreeThreshold: 50,
-	idleNudgeTimeoutSeconds: 600,
-	idleTimeoutSeconds: 900,
-	// Two consecutive silent provider-timeout retries, then give up — a non-streaming or stalled
-	// provider must not spin up fresh agents indefinitely when maxIterations is unlimited. Set to 0
-	// to disable the cap (falls back to the iteration limit).
-	maxConsecutiveTimeoutRetries: 2,
-	maxIterations: null,
-	noClean: false,
-	noWorkBackoffMs: 30_000,
-	preflightDoctor: true,
-	quitOnAbort: 0,
-	rateLimitBackoffSeconds: 300,
-	rateLimitBufferSeconds: 60,
-	reasoningEffort: 'low',
-	timeoutSeconds: 10800,
-	web: {
-		allowedOrigins: [],
-		allowedRoots: [],
-		allowRemote: false,
-		autoChainLimit: 3,
-		autoChainRuns: false,
-		dataDir: '',
-		hostname: '127.0.0.1',
-		ignoredFolders: [...defaultIgnoredFolders],
-		maxConcurrentRuns: 2,
-		maxConcurrentRunsPerProject: 2,
-		port: 3210,
-		showSpernakitProject: false,
-		spernakitFleetManifest: null,
-		spernakitInitScript: null,
-		spernakitTemplateRef: null,
-		spernakitTemplateRepo: 'NomadicDaddy/spernakit',
-		templates: [],
-		traceDataMovement: false,
-		useWorktrees: false,
-	},
-};
-
+// The one web default block. `defaults.web` and `resolveWebConfig` both read this object, so a
+// changed default cannot diverge between the two.
 export const defaultWebConfig: ResolvedWebConfig = {
 	allowedOrigins: [],
 	allowedRoots: [],
@@ -64,6 +24,28 @@ export const defaultWebConfig: ResolvedWebConfig = {
 	templates: [],
 	traceDataMovement: false,
 	useWorktrees: false,
+};
+
+export const defaults: ResolvedConfig = {
+	auditsEnabled: true,
+	cli: 'native',
+	dirtyTreeThreshold: 50,
+	idleNudgeTimeoutSeconds: 600,
+	idleTimeoutSeconds: 900,
+	// Two consecutive silent provider-timeout retries, then give up — a non-streaming or stalled
+	// provider must not spin up fresh agents indefinitely when maxIterations is unlimited. Set to 0
+	// to disable the cap (falls back to the iteration limit).
+	maxConsecutiveTimeoutRetries: 2,
+	maxIterations: null,
+	noClean: false,
+	noWorkBackoffMs: 30_000,
+	preflightDoctor: true,
+	quitOnAbort: 0,
+	rateLimitBackoffSeconds: 300,
+	rateLimitBufferSeconds: 60,
+	reasoningEffort: 'low',
+	timeoutSeconds: 10800,
+	web: defaultWebConfig,
 };
 
 // 45s was too tight for the directorCycle surface, which sends the full

@@ -87,6 +87,12 @@ Resolution precedence for each setting is **environment â†’ `providers.<name>` â
 `XAI_API_KEY`, `NATIVE_BASE_URL`, `NATIVE_MODEL`). A missing required key fails fast with a message naming the variable to set. API
 keys are used only in the request auth header, never logged.
 
+**Windows needs Git for Windows.** The native-family backends run the agent's shell tool through
+Git Bash, so on Windows the preflight doctor ends the run with
+`preflight doctor: no usable bash found on Windows` when neither `AIDD_BASH` nor a Git for Windows
+install is present. Install Git for Windows, or point `AIDD_BASH` at a `bash.exe`; the resolution
+order is in [configuration](configuration.md).
+
 ### OpenAI (direct API)
 
 `openai` is a backend name that runs on the native machinery pointed at `https://api.openai.com/v1`.

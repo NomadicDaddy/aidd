@@ -9,8 +9,12 @@ locations, remote binding, updates, uninstall — see [deployment.md](./referenc
 
 - **Bun 1.4.2 or newer**: aidd is Bun-first; there is no npm/Node build step. aidd ships as
   source, so Bun is a hard requirement rather than a build-time one.
-- **Git**: used for run diffs, the run ledger, and worktrees. aidd degrades gracefully without
-  it, but install it for full functionality.
+- **Git**: used for run diffs, the run ledger, and worktrees. On Windows, **Git for Windows is
+  required** for the native-family backends (`native`, `ollama`, `lmstudio`, `openai`): the
+  agent's shell tool runs through its bundled bash, and the preflight doctor refuses to start a
+  run without it (`AIDD_BASH` can point at another `bash.exe`; see
+  [configuration](reference/configuration.md)). Git is optional only on Linux/macOS and for the
+  external-CLI backends, where aidd degrades gracefully without it.
 - **Platform support**: Windows 11 + PowerShell 7 is the primary development platform and the
   only one with browser-smoke coverage. Linux runs the full quality gate (`smoke:qc` and the
   test suite) on every push in CI, so it is exercised continuously. macOS has no automated

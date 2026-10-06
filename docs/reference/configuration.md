@@ -45,6 +45,15 @@ variable of its own can take `NATIVE_API_KEY`, which overrides every provider's 
 runs. The warning never stops the run. It is skipped wherever the doctor is: Director runs,
 simulations, `preflightDoctor: false` and `AIDD_SKIP_DOCTOR=1`.
 
+`AIDD_BASH` names the `bash.exe` the native-family backends (`native`, `ollama`, `lmstudio`,
+`openai`) run their shell tool through on Windows. Resolution is deterministic, implemented in
+`shared/src/agent/tools/bash-runtime.ts`: the `AIDD_BASH` override when set, then Git Bash derived
+from the `git` on `PATH`, then the default Git for Windows install locations
+(`C:\Program Files\Git\bin\bash.exe`, `C:\Program Files (x86)\Git\bin\bash.exe`). The WSL shim in
+`System32` is never accepted, because its Linux environment cannot run the project's Windows
+toolchain. When none resolves, the preflight doctor ends the run with "no usable bash found on
+Windows"; install Git for Windows or point `AIDD_BASH` at a bash.exe.
+
 Rules:
 
 - The environment wins over the file, so a rotated credential takes effect without editing config

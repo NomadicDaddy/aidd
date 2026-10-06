@@ -50,8 +50,12 @@ statement.
 ## Prerequisites
 
 - **Bun 1.4.2** or newer.
-- **Git**: aidd uses it for run diffs, the run ledger, and worktrees. aidd degrades gracefully
-  if it is absent, but install it for full functionality.
+- **Git**: aidd uses it for run diffs, the run ledger, and worktrees. On Windows, **Git for
+  Windows is required** for the native-family backends (`native`, `ollama`, `lmstudio`,
+  `openai`): the agent's shell tool runs through its bundled bash, and the preflight doctor
+  refuses to start a run without it (`AIDD_BASH` can point at another `bash.exe`; see
+  [configuration](docs/reference/configuration.md)). Git is optional only on Linux/macOS and
+  for the external-CLI backends, where aidd degrades gracefully without it.
 - **Windows 11 + PowerShell 7** is the primary platform and the only one with browser-smoke
   coverage. **Linux** runs the full quality gate and test suite in CI on every push. **macOS** has
   no automated coverage; it is expected to work but is verified only by hand.

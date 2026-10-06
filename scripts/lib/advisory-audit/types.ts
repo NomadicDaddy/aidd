@@ -58,10 +58,10 @@ export interface RunRecord {
 	/** The command each tree was audited with, kept so the record says what produced it. */
 	command: string;
 	generatedAt: string;
-	/** Configured roots that could not be read at all: UNSWEPT, never "no npm surface". */
-	missingRoots: string[];
 	noSurface: string[];
 	roots: string[];
 	skipped: SkippedLockfile[];
 	trees: TreeAudit[];
+	/** Directories, a root or a subtree, that could not be listed: UNSWEPT, never "no npm surface". */
+	unreadable: string[];
 }

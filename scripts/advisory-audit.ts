@@ -27,13 +27,20 @@ import { parseArgs } from 'node:util';
 import type { RunRecord, SkippedLockfile, TreeAudit } from './lib/advisory-audit/types.ts';
 
 import { type AuditRunner, auditTree, runBunAudit } from './lib/advisory-audit/audit.ts';
-import { enumerateRoots, treeKey } from './lib/advisory-audit/enumerate.ts';
+import {
+	type DirectoryLister,
+	enumerateRoots,
+	listDirectory,
+	treeKey,
+} from './lib/advisory-audit/enumerate.ts';
 import { readHolds } from './lib/advisory-audit/holds.ts';
 import { historyLine, renderReport } from './lib/advisory-audit/report.ts';
 
 const DEFAULT_OUT = 'D:\\applications\\.advisory-audit';
 /** The advisory duty's roots beyond the panel's allowed roots (D:\infra and D:\scripts are not aidd-managed). */
 const EXTRA_ROOTS = ['D:\\infra', 'D:\\scripts'];
+/** How many retained records the baseline reads back through for a tree's last audited state. */
+const BASELINE_DEPTH = 50;
 
 async function configuredScope(): Promise<{ ignored: Set<string>; roots: string[] }> {
 	const config = await readConfig(getUserConfigPath());
@@ -59,17 +66,33 @@ async function reserveRecord(runsDir: string, stamp: string, text: string): Prom
 	}
 }
 
-async function previousRecord(runsDir: string, before: string): Promise<null | RunRecord> {
+/**
+ * The last audited state of every tree, read back through the retained records newest first. A
+ * tree's entry comes from the most recent record in which it was audited, so a run that was
+ * UNSWEPT or interrupted in between neither erases the packages it must re-check nor makes a
+ * finding that persisted read as new again. The walk stops after BASELINE_DEPTH records.
+ */
+async function baselineRecord(runsDir: string, before: string): Promise<null | RunRecord> {
 	let names: string[];
 	try {
 		names = await readdir(runsDir);
 	} catch {
 		return null;
 	}
-	const candidates = names.filter((n) => n.endsWith('.json') && n < before).sort();
-	const latest = candidates.at(-1);
-	if (latest === undefined) return null;
-	return JSON.parse(await readFile(join(runsDir, latest), 'utf8')) as RunRecord;
+	const candidates = names
+		.filter((n) => n.endsWith('.json') && n < before)
+		.sort()
+		.reverse()
+		.slice(0, BASELINE_DEPTH);
+	let newest: null | RunRecord = null;
+	const trees = new Map<string, TreeAudit>();
+	for (const name of candidates) {
+		const record = JSON.parse(await readFile(join(runsDir, name), 'utf8')) as RunRecord;
+		newest ??= record;
+		for (const tree of record.trees)
+			if (tree.status === 'audited' && !trees.has(tree.key)) trees.set(tree.key, tree);
+	}
+	return newest === null ? null : { ...newest, trees: [...trees.values()] };
 }
 
 /**
@@ -99,6 +122,8 @@ async function readOwners(out: string): Promise<Record<string, string[]>> {
 
 export async function runAdvisoryAudit(options: {
 	ignored: ReadonlySet<string>;
+	/** Injected by tests; the script lists real directories. */
+	list?: DirectoryLister | undefined;
 	/** Injected by tests; the script runs the real `bun audit --json`. */
 	now?: Date | undefined;
 	out: string;
@@ -111,26 +136,32 @@ export async function runAdvisoryAudit(options: {
 	const stamp = now.toISOString().replace(/[-:]/g, '');
 	const runsDir = join(options.out, 'runs');
 	await mkdir(runsDir, { recursive: true });
-	const previous = await previousRecord(runsDir, stamp);
+	const previous = await baselineRecord(runsDir, stamp);
 	const holds = readHolds(join(options.out, 'acknowledged-holds.json'));
 	const owners = await readOwners(options.out);
 
+	const list = options.list ?? listDirectory;
 	const scanned = options.tree
-		? await enumerateRoots([options.tree], 0, options.ignored, owners)
-		: await enumerateRoots(options.roots, 4, options.ignored, owners);
+		? await enumerateRoots([options.tree], 0, options.ignored, owners, list)
+		: await enumerateRoots(options.roots, 4, options.ignored, owners, list);
 	const trees: TreeAudit[] = [];
 	const skipped: SkippedLockfile[] = [];
 	const noSurface: string[] = [];
-	const missingRoots: string[] = [];
+	const unreadable: string[] = [];
 	const runner = options.runner ?? runBunAudit;
-	for (const { entries, readable, root } of scanned) {
-		// A root that cannot be read is UNSWEPT; only a readable root with no lockfile has no surface.
+	for (const { entries, readable, root, unreadable: subtrees } of scanned) {
+		// A directory that cannot be listed is UNSWEPT, whether it is the root or a subtree; only a
+		// root listed in full with no lockfile has no surface.
 		if (!readable) {
-			missingRoots.push(root);
+			unreadable.push(root);
 			console.error(`[advisory-audit] ${root}: UNSWEPT (root cannot be read)`);
 			continue;
 		}
-		if (entries.length === 0) noSurface.push(root);
+		for (const dir of subtrees) {
+			unreadable.push(dir);
+			console.error(`[advisory-audit] ${dir}: UNSWEPT (directory cannot be read)`);
+		}
+		if (entries.length === 0 && subtrees.length === 0) noSurface.push(root);
 		for (const entry of entries) {
 			if (entry.kind === 'artifact' || entry.kind === 'foreign') {
 				skipped.push({
@@ -172,11 +203,11 @@ export async function runAdvisoryAudit(options: {
 	const record: RunRecord = {
 		command: 'bun audit --json',
 		generatedAt: now.toISOString(),
-		missingRoots,
 		noSurface,
 		roots: scanned.map((s) => s.root),
 		skipped,
 		trees,
+		unreadable,
 	};
 	const recordName = await reserveRecord(
 		runsDir,
@@ -191,10 +222,10 @@ export async function runAdvisoryAudit(options: {
 	const line = historyLine(record, previous, holds, now, `runs/${recordName}`);
 	await writeFile(join(options.out, 'history.md'), `${line}\n`, { encoding: 'utf8', flag: 'a' });
 	console.log(line);
-	const unswept = trees.filter((t) => t.status === 'unswept').length + record.missingRoots.length;
+	const unswept = trees.filter((t) => t.status === 'unswept').length + record.unreadable.length;
 	if (unswept > 0)
 		console.error(
-			`[advisory-audit] ${String(unswept)} tree(s) or root(s) UNSWEPT; the run is incomplete.`,
+			`[advisory-audit] ${String(unswept)} tree(s) or director(ies) UNSWEPT; the run is incomplete.`,
 		);
 	return unswept > 0 ? 1 : 0;
 }

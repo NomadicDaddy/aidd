@@ -40,7 +40,6 @@ const tree = (key: string, overrides: Partial<TreeAudit> = {}): TreeAudit => ({
 const record = (trees: TreeAudit[]): RunRecord => ({
 	command: 'bun audit --json',
 	generatedAt: NOW.toISOString(),
-	missingRoots: [],
 	noSurface: ['D:\\scripts'],
 	roots: ['D:\\applications', 'D:\\scripts'],
 	skipped: [
@@ -51,6 +50,7 @@ const record = (trees: TreeAudit[]): RunRecord => ({
 		},
 	],
 	trees,
+	unreadable: [],
 });
 
 const hold = (overrides: Partial<Hold> = {}): Hold => ({

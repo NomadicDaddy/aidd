@@ -4,8 +4,10 @@ import { join } from 'node:path';
 
 import {
 	classifyLockfile,
+	type DirectoryLister,
 	enumerateRoots,
 	findLockfiles,
+	listDirectory,
 	treeKey,
 } from '../../scripts/lib/advisory-audit/enumerate.ts';
 import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
@@ -39,7 +41,27 @@ describe('advisory audit enumeration', () => {
 		await lock('aidd', '.git', 'modules', 'x');
 		await lock('a', 'b', 'c', 'd', 'e');
 
-		expect(await findLockfiles(root)).toEqual(expected.sort());
+		expect(await findLockfiles(root)).toEqual({ lockfiles: expected.sort(), unreadable: [] });
+	});
+
+	// Roger (c49e9d33 review): a subtree the walk could not list was silently left out, so a partial
+	// discovery read as complete. There is no ACL fixture, so the failure is injected.
+	test('a subtree that cannot be listed is returned unreadable, and the rest is still found', async () => {
+		root = await testTempDir('aidd-advisory-unreadable-');
+		const aidd = await lock('aidd');
+		await lock('locked', 'app');
+		const denied = join(root, 'locked');
+		const list: DirectoryLister = (dir) => {
+			if (dir === denied) return Promise.reject(new Error('EACCES'));
+			return listDirectory(dir);
+		};
+		expect(await findLockfiles(root, 4, list)).toEqual({
+			lockfiles: [aidd],
+			unreadable: [denied],
+		});
+		const [scanned] = await enumerateRoots([root], 4, new Set(), {}, list);
+		expect(scanned).toMatchObject({ readable: true, unreadable: [denied] });
+		expect(scanned?.entries.map((e) => e.lockPath)).toEqual([aidd]);
 	});
 
 	test('classifies build outputs, clones and projects, and keeps the root itself a tree', async () => {

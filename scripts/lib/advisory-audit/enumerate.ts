@@ -101,18 +101,35 @@ export function classifyLockfile(
 	return { ...base, kind: 'project' };
 }
 
+export interface DirectoryEntry {
+	isDirectory: () => boolean;
+	isFile: () => boolean;
+	name: string;
+}
+/** Lists one directory; tests inject a lister that fails for a chosen subtree. */
+export type DirectoryLister = (dir: string) => Promise<DirectoryEntry[]>;
+
+export const listDirectory: DirectoryLister = (dir) => readdir(dir, { withFileTypes: true });
+
 /**
  * Every bun.lock under `root` to `maxDepth` directory levels, never descending into node_modules
  * or .git. Depth 4 reaches a workspace's own lockfile (deeper/frontend) and deeper's release
- * directories, which is what the report must be able to name as skipped.
+ * directories, which is what the report must be able to name as skipped. A directory that cannot
+ * be listed is returned in `unreadable` rather than silently left out: what is below it is unknown.
  */
-export async function findLockfiles(root: string, maxDepth = 4): Promise<string[]> {
+export async function findLockfiles(
+	root: string,
+	maxDepth = 4,
+	list: DirectoryLister = listDirectory,
+): Promise<{ lockfiles: string[]; unreadable: string[] }> {
 	const found: string[] = [];
+	const unreadable: string[] = [];
 	async function walk(dir: string, depth: number): Promise<void> {
-		let entries: { isDirectory: () => boolean; isFile: () => boolean; name: string }[];
+		let entries: DirectoryEntry[];
 		try {
-			entries = await readdir(dir, { withFileTypes: true });
+			entries = await list(dir);
 		} catch {
+			unreadable.push(dir);
 			return;
 		}
 		for (const entry of entries) {
@@ -128,7 +145,7 @@ export async function findLockfiles(root: string, maxDepth = 4): Promise<string[
 		}
 	}
 	await walk(root, 0);
-	return found.sort();
+	return { lockfiles: found.sort(), unreadable: unreadable.sort() };
 }
 
 export interface ScannedRoot {
@@ -136,6 +153,8 @@ export interface ScannedRoot {
 	/** False when the root could not be read at all: that is UNSWEPT, never "no npm surface". */
 	readable: boolean;
 	root: string;
+	/** Subtrees of a readable root that could not be listed; each is UNSWEPT. */
+	unreadable: string[];
 }
 
 /** A readable root with no lockfile at all has no npm surface; the report says so instead of "clean". */
@@ -144,20 +163,17 @@ export async function enumerateRoots(
 	maxDepth = 4,
 	ignored: ReadonlySet<string> = new Set(),
 	owners: OwnerMap = {},
+	list: DirectoryLister = listDirectory,
 ): Promise<ScannedRoot[]> {
 	const result: ScannedRoot[] = [];
 	for (const root of roots) {
-		let readable = true;
-		try {
-			await readdir(root);
-		} catch {
-			readable = false;
-		}
-		const lockfiles = readable ? await findLockfiles(root, maxDepth) : [];
+		const { lockfiles, unreadable } = await findLockfiles(root, maxDepth, list);
+		const readable = !unreadable.includes(root);
 		result.push({
 			entries: lockfiles.map((path) => classifyLockfile(path, root, ignored, owners)),
 			readable,
 			root,
+			unreadable: readable ? unreadable : [],
 		});
 	}
 	return result;

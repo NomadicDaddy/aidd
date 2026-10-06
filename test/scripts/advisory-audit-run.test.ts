@@ -6,6 +6,7 @@ import type { CommandOutput } from '../../scripts/lib/advisory-audit/audit.ts';
 import type { RunRecord } from '../../scripts/lib/advisory-audit/types.ts';
 
 import { runAdvisoryAudit } from '../../scripts/advisory-audit.ts';
+import { listDirectory } from '../../scripts/lib/advisory-audit/enumerate.ts';
 import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 
@@ -128,12 +129,12 @@ describe('advisory audit run', () => {
 			}),
 		).toBe(1);
 		const record = await latestRecord(out);
-		expect(record.missingRoots).toEqual([missing]);
+		expect(record.unreadable).toEqual([missing]);
 		expect(record.noSurface).toEqual([]);
 		expect(record.trees[0]?.status).toBe('unswept');
 		expect(record.trees[0]?.error).toContain('exited 2');
 		const report = await readFile(join(out, 'latest.md'), 'utf8');
-		expect(report).toContain(`UNSWEPT: ${missing} (root unreadable), `);
+		expect(report).toContain(`UNSWEPT: ${missing} (unreadable), `);
 		// The previous finding's tree is UNSWEPT now, so the finding is not re-checked, not closed.
 		expect(report).toContain('## Closed since last report\n\nnone');
 		expect(report).toContain('## Not re-checked (tree UNSWEPT or absent this run)\n\n- ');
@@ -166,5 +167,65 @@ describe('advisory audit run', () => {
 		expect(lines).toHaveLength(2);
 		expect(lines[0]).toContain(`| record runs/20261006T190000.000Z.json | roots ${root} |`);
 		expect(lines[1]).toContain('| record runs/20261006T190000.000Z-1.json |');
+	});
+
+	// Roger (c49e9d33 review): the baseline was the immediately previous record, so an UNSWEPT run
+	// between two audits erased the LOCK-ONLY re-check and made a persisting finding read as new.
+	test('an interrupted run between two audits neither loses the LOCK-ONLY re-check nor re-opens a finding', async () => {
+		base = await testTempDir('aidd-advisory-run-baseline-');
+		const root = join(base, 'root');
+		const tree = join(root, 'app');
+		const out = join(base, 'out');
+		await mkdir(tree, { recursive: true });
+		await writeFile(join(tree, 'bun.lock'), LOCK);
+		const linked = join(tree, 'node_modules', '.bun', 'postcss@8.5.28', 'node_modules');
+		await mkdir(join(linked, 'source-map-js'), { recursive: true });
+		await writeFile(
+			join(linked, 'source-map-js', 'package.json'),
+			JSON.stringify({ version: '1.2.1' }),
+		);
+		const run = (hour: string, stdout: string, exitCode: number) =>
+			runAdvisoryAudit({
+				ignored: new Set<string>(),
+				now: new Date(`2026-10-06T${hour}:00:00Z`),
+				out,
+				roots: [root],
+				runner: () => Promise.resolve(output(stdout, exitCode)),
+				timeoutMs: 10,
+			});
+		expect(await run('19', FINDING, 1)).toBe(0);
+		expect(await run('20', '{}', 2)).toBe(1);
+		expect(await run('21', '{}', 0)).toBe(0);
+		const third = await latestRecord(out);
+		expect(third.trees[0]?.lockOnly.map((l) => l.package)).toEqual(['source-map-js']);
+		const lines = (await readFile(join(out, 'history.md'), 'utf8')).trim().split('\n');
+		expect(lines[1]).toContain('| new 0 | closed 0 | not re-checked 1 |');
+		expect(lines[2]).toContain('| new 0 | closed 1 | not re-checked 0 |');
+	});
+
+	test('a subtree that cannot be listed is UNSWEPT and exits 1, not no npm surface', async () => {
+		base = await testTempDir('aidd-advisory-run-subtree-');
+		const root = join(base, 'root');
+		const out = join(base, 'out');
+		await mkdir(join(root, 'locked', 'app'), { recursive: true });
+		await writeFile(join(root, 'locked', 'app', 'bun.lock'), LOCK);
+		const denied = join(root, 'locked');
+		expect(
+			await runAdvisoryAudit({
+				ignored: new Set<string>(),
+				list: (dir) =>
+					dir === denied ? Promise.reject(new Error('EACCES')) : listDirectory(dir),
+				now: new Date('2026-10-06T19:00:00Z'),
+				out,
+				roots: [root],
+				runner: () => Promise.resolve(output('{}', 0)),
+				timeoutMs: 10,
+			}),
+		).toBe(1);
+		const record = await latestRecord(out);
+		expect(record).toMatchObject({ noSurface: [], trees: [], unreadable: [denied] });
+		expect(await readFile(join(out, 'latest.md'), 'utf8')).toContain(
+			`UNSWEPT: ${denied} (unreadable).`,
+		);
 	});
 });

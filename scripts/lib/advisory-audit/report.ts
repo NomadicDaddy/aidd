@@ -65,7 +65,7 @@ function countBySeverity(trees: TreeAudit[]): string {
 
 function unsweptNames(record: RunRecord): string[] {
 	return [
-		...record.missingRoots.map((root) => `${root} (root unreadable)`),
+		...record.unreadable.map((dir) => `${dir} (unreadable)`),
 		...record.trees.filter((t) => t.status === 'unswept').map((t) => t.key),
 	];
 }

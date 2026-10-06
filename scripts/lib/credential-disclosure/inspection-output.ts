@@ -74,6 +74,26 @@ function aclOutput(lines: string[]): boolean {
 	);
 }
 
+/** The search's own arguments: the text up to the first unquoted separator ends its statement. */
+function ownStatement(text: string): string {
+	let quote: string | undefined;
+	for (let index = 0; index < text.length; index++) {
+		const character = text[index]!;
+		if (quote) {
+			if (character === quote) quote = undefined;
+			else if (character === '\\' && quote === '"') index++;
+		} else if (character === '"' || character === "'") quote = character;
+		else if (character === '\\') index++;
+		else if (';|&\n}'.includes(character)) return text.slice(0, index);
+	}
+	return text;
+}
+
+/** A line the command prints from its own quoted literal is the command's text, not a file's. */
+function echoedLiteral(line: string, command: string): boolean {
+	return command.includes(`'${line}'`) || command.includes(`"${line}"`);
+}
+
 /**
  * A compound command's nonempty stdout does not prove that its credential operand returned data.
  * Keep the exception evidence-based: numbered search results must all name noncredential files,
@@ -94,7 +114,9 @@ export function isNonDisclosingInspection(command: string, output: unknown): boo
 	if (/\bGet-Acl\b/i.test(command)) return aclOutput(lines);
 	const search = /(?:^|[\s"'])rg\s+-n\b/.exec(command);
 	if (!search) return false;
-	const searchArguments = command.slice(search.index + search[0].length);
+	// Only the search's own statement carries its switches; a later `Get-ChildItem -Force` is not
+	// rg's `-o`.
+	const searchArguments = ownStatement(command.slice(search.index + search[0].length));
 	// These switches remove or rewrite the filename provenance used below.
 	if (
 		/(?:^|\s)(?:--(?:no-filename|replace|only-matching|json)|-[A-Za-z]*[hor][A-Za-z]*)(?:\s|=|$)/.test(
@@ -103,6 +125,7 @@ export function isNonDisclosingInspection(command: string, output: unknown): boo
 	)
 		return false;
 	return lines.every((line) => {
+		if (echoedLiteral(line, command)) return true;
 		const path = /^(.+?):\d+:/.exec(line)?.[1];
 		return path !== undefined && credentialLabel(path) === undefined;
 	});

@@ -53,6 +53,35 @@ describe('credential inspection result provenance', () => {
 		}
 	});
 
+	// Two shapes from a 2026-10-06 audit run that returned only search hits and the command's own
+	// messages. A later statement's `-Force` was read as rg's `-o`, and a printed literal as content.
+	test("a later statement's switches and the command's own printed literals are not file content", () => {
+		const listing = String.raw`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "rg -n \"fetch\\(|baseUrl\" src --glob '!**/*.md'; if(Test-Path .env){'PRESENT .env'}; Get-ChildItem -Force -File | Where-Object {$_.Name -match '^\.env'} | Select-Object Name"`;
+		expect(scan(listing, startup + sourceMatches)).toEqual([]);
+		const probe = String.raw`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command '$envs = Get-ChildItem -Force -File | Where-Object {$_.Name -match "^\.env"}; if($envs){$envs.Name}else{"No .env files present at project root"}; $hits = rg -n -i "AKIA[0-9A-Z]{16}" src 2>$null; if($hits){$hits}else{"No credential-shaped matches"}'`;
+		expect(
+			scan(
+				probe,
+				`${startup}No .env files present at project root\nNo credential-shaped matches`,
+			),
+		).toEqual([]);
+
+		// The same statements still fail closed when a returned line is neither.
+		expect(
+			scan(
+				listing,
+				`${startup}${sourceMatches}\nAPI_KEY=fixture-value-that-is-not-a-real-secret`,
+			),
+		).toHaveLength(1);
+		expect(
+			scan(
+				'rg -n API_KEY .env; Get-ChildItem -Force',
+				'.env:3:API_KEY=fixture-value-that-is-not-a-real-secret',
+			),
+		).toHaveLength(1);
+		expect(scan('rg -n API_KEY .env -o; echo done', sourceMatches)).toHaveLength(1);
+	});
+
 	test('ACL owner and permission lines return metadata rather than file contents', () => {
 		for (const output of [
 			`Owner=HOST\\user\n${permission}`,

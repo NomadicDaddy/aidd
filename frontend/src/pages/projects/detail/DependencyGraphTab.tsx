@@ -13,7 +13,6 @@ import { useViewportFill } from '../../../hooks/useViewportFill.ts';
 import { cn } from '../../../lib/cn.ts';
 import { hasInFlightRun } from '../../runs/runsUtils.ts';
 import { dependencyFilterRegister } from './dependencyFilterRegister.ts';
-import { GRAPH_ZOOM_DEFAULT } from './dependencyGraphComponents.tsx';
 import { DependencyGraphFilters } from './DependencyGraphFilters.tsx';
 import { dependencyGraphViewportFit, GRAPH_MIN_READABLE_SCALE } from './dependencyGraphLayout.ts';
 import { DependencyGraphCanvas, GraphDiagnosticsCard } from './dependencyGraphPanels.tsx';
@@ -22,6 +21,7 @@ import {
 	type DependencyGraphNodeOrder,
 	featureByDirectory,
 	fitFeatureDependencyGraph,
+	GRAPH_ZOOM_DEFAULT,
 } from './dependencyGraphUtils.ts';
 import { DependencyGraphZoomControls } from './DependencyGraphZoomControls.tsx';
 import { FeatureDetailsDialog } from './FeatureDetailsDialog.tsx';

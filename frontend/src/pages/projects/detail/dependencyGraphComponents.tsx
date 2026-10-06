@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import type { ReactNode } from 'react';
 
 import { default as RotateCcw } from 'lucide-react/dist/esm/icons/rotate-ccw';
@@ -17,34 +16,15 @@ import {
 	type FeatureDependencyNode,
 	GRAPH_NODE_HEIGHT,
 	GRAPH_NODE_WIDTH,
+	GRAPH_ZOOM_DEFAULT,
+	GRAPH_ZOOM_MAX,
+	GRAPH_ZOOM_MIN,
+	sourceLabels,
 } from './dependencyGraphUtils.ts';
 import { statusTone } from './shared.ts';
 
-export const GRAPH_ZOOM_DEFAULT = 1;
-export const GRAPH_ZOOM_MAX = 1.6;
-export const GRAPH_ZOOM_MIN = 0.5;
-export const GRAPH_ZOOM_STEP = 0.1;
-
-export const sourceLabels: Record<FeatureDependencyNode['source'], string> = {
-	audit: 'Audit',
-	feature: 'Feature',
-	remediation: 'Remediation',
-};
-
-export function nextGraphZoom(current: number, delta: number): number {
-	return Number(Math.min(GRAPH_ZOOM_MAX, Math.max(GRAPH_ZOOM_MIN, current + delta)).toFixed(2));
-}
-
 function zoomLabel(zoom: number): string {
 	return `${Math.round(zoom * 100)}%`;
-}
-
-export function sourceBadgeTone(
-	source: FeatureDependencyNode['source'],
-): 'amber' | 'neutral' | 'red' {
-	if (source === 'audit') return 'amber';
-	if (source === 'remediation') return 'red';
-	return 'neutral';
 }
 
 export function GraphSourceLegend({ action }: { action?: ReactNode }) {
@@ -82,17 +62,6 @@ export function GraphSourceLegend({ action }: { action?: ReactNode }) {
 			{action ? <div className="shrink-0">{action}</div> : null}
 		</div>
 	);
-}
-
-export function edgePath(source: FeatureDependencyNode, target: FeatureDependencyNode): string {
-	const sourceX = source.x + GRAPH_NODE_WIDTH;
-	const sourceY = source.y + GRAPH_NODE_HEIGHT / 2;
-	const targetX = target.x;
-	const targetY = target.y + GRAPH_NODE_HEIGHT / 2;
-	const bend = Math.max(56, Math.abs(targetX - sourceX) / 2);
-	return `M ${sourceX} ${sourceY} C ${sourceX + bend} ${sourceY}, ${
-		targetX - bend
-	} ${targetY}, ${targetX} ${targetY}`;
 }
 
 export function GraphNodeButton({

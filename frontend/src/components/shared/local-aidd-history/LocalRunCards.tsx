@@ -9,7 +9,8 @@ import { DisclosureMarker } from '../DisclosureMarker.tsx';
 import { ExecutionIdentityBadges } from '../ExecutionIdentityBadges.tsx';
 import { LocalIterationsTable } from './LocalIterationsTable.tsx';
 import { LocalRunResultBadges } from './LocalRunResultBadges.tsx';
-import { runRowKey, runRuntimeDetail, TriModeBadge } from './runMetadata.tsx';
+import { runRowKey, runRuntimeDetail } from './runMetadata.ts';
+import { TriModeBadge } from './TriModeBadge.tsx';
 
 export interface VisibleRun {
 	index: number;

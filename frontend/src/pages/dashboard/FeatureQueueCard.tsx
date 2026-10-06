@@ -1,9 +1,6 @@
-/* eslint-disable react-refresh/only-export-components */
 import { default as ArrowRight } from 'lucide-react/dist/esm/icons/arrow-right';
 import { default as ListTodo } from 'lucide-react/dist/esm/icons/list-todo';
 import { Link } from 'react-router';
-
-import type { FleetSummary } from '../../api/types.ts';
 
 import { EmptyState } from '../../components/shared/EmptyState.tsx';
 import { SkeletonLines } from '../../components/shared/LoadingState.tsx';
@@ -13,45 +10,7 @@ import { Card, CardHeader, cardHeaderLinkClass } from '../../components/ui/card.
 import { tableMeasureClass } from '../../lib/tableStyles.ts';
 import { toneText } from '../../lib/tones.ts';
 import { priorityLabel, priorityTone } from './dashboard-shared.ts';
-
-const MAX_QUEUE_ITEMS = 6;
-
-export interface FeatureQueueItem {
-	featureId: string;
-	priority: null | number;
-	projectId: string | undefined;
-	projectName: string;
-	title: string;
-}
-
-/**
- * Flattens each fleet project's open feature backlog (`backlog.feature.top`) into a single
- * fleet-wide queue ordered by numeric priority (lowest number first), then by project name.
- * `projectIdByName` resolves a fleet `slug` (the project basename) to its route id so each row
- * can deep-link to that project's features tab.
- */
-export function buildFeatureQueue(
-	fleet: FleetSummary | undefined,
-	projectIdByName: Map<string, string>,
-): FeatureQueueItem[] {
-	return (fleet?.projects ?? [])
-		.flatMap((project) =>
-			project.backlog.feature.top.map((item) => ({
-				featureId: item.id,
-				priority: item.priority,
-				projectId: projectIdByName.get(project.slug),
-				projectName: project.slug,
-				title: item.title,
-			})),
-		)
-		.sort((left, right) => {
-			const leftPriority = left.priority ?? Number.MAX_SAFE_INTEGER;
-			const rightPriority = right.priority ?? Number.MAX_SAFE_INTEGER;
-			if (leftPriority !== rightPriority) return leftPriority - rightPriority;
-			return left.projectName.localeCompare(right.projectName);
-		})
-		.slice(0, MAX_QUEUE_ITEMS);
-}
+import { type FeatureQueueItem, MAX_QUEUE_ITEMS } from './featureQueue.ts';
 
 function FeatureQueueRow({ item }: { item: FeatureQueueItem }) {
 	const body = (

@@ -9,7 +9,7 @@ import { Tooltip } from '../../ui/tooltip.tsx';
 import { ExecutionIdentityBadges } from '../ExecutionIdentityBadges.tsx';
 import { OverflowScroller } from '../OverflowScroller.tsx';
 import { classifyIteration } from './outcome.ts';
-import { TriModeBadge } from './runMetadata.tsx';
+import { TriModeBadge } from './TriModeBadge.tsx';
 
 function iterationDurationLabel(iteration: ProjectLocalIteration, now: number): string {
 	if (iteration.status === 'running') {

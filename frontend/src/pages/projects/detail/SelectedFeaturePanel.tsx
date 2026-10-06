@@ -14,7 +14,8 @@ import { cn } from '../../../lib/cn.ts';
 import { humanizeEnum } from '../../../lib/formatters.ts';
 import { toneBorder, toneSurface, toneText } from '../../../lib/tones.ts';
 import { microLabelClass, sectionCaptionClass } from '../../../lib/typography.ts';
-import { DependencyList, sourceBadgeTone, sourceLabels } from './dependencyGraphComponents.tsx';
+import { DependencyList } from './dependencyGraphComponents.tsx';
+import { sourceBadgeTone, sourceLabels } from './dependencyGraphUtils.ts';
 import {
 	featureLaunchBlockedTitle,
 	featureLaunchGate,

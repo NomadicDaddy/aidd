@@ -8,7 +8,7 @@ import { Badge } from '../ui/badge.tsx';
 import { Card, CardHeader } from '../ui/card.tsx';
 import { LocalIterationsTable } from './local-aidd-history/LocalIterationsTable.tsx';
 import { LocalRunsTable } from './local-aidd-history/LocalRunsTable.tsx';
-import { groupIterationsByRun } from './local-aidd-history/runMetadata.tsx';
+import { groupIterationsByRun } from './local-aidd-history/runMetadata.ts';
 
 /**
  * A group of rows inside the panel — Runs, In progress, Unassigned iterations.

@@ -1,7 +1,10 @@
 import { cn } from '../../../lib/cn.ts';
 import { toneText } from '../../../lib/tones.ts';
-import { edgePath } from './dependencyGraphComponents.tsx';
-import { type FeatureDependencyEdge, type FeatureDependencyNode } from './dependencyGraphUtils.ts';
+import {
+	edgePath,
+	type FeatureDependencyEdge,
+	type FeatureDependencyNode,
+} from './dependencyGraphUtils.ts';
 
 /**
  * The edge layer of the dependency graph: every connection, and the arrowheads that terminate them.

@@ -19,7 +19,7 @@ import { LocalRunCards, RunExecutionTarget } from './LocalRunCards.tsx';
 import { LocalRunResultBadges } from './LocalRunResultBadges.tsx';
 import { type LocalRunSortKey, LocalRunsTableHeader } from './LocalRunsTableHeader.tsx';
 import { categorizeRun, OUTCOME_CATEGORIES, type OutcomeCategory } from './outcome.ts';
-import { runRowKey } from './runMetadata.tsx';
+import { runRowKey } from './runMetadata.ts';
 
 export function LocalRunsTable({
 	iterationsByRunKey,

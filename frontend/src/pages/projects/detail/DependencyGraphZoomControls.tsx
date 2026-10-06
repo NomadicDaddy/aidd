@@ -1,11 +1,11 @@
+import { GraphZoomControls } from './dependencyGraphComponents.tsx';
+import { GRAPH_MIN_READABLE_SCALE } from './dependencyGraphLayout.ts';
 import {
 	GRAPH_ZOOM_MAX,
 	GRAPH_ZOOM_MIN,
 	GRAPH_ZOOM_STEP,
-	GraphZoomControls,
 	nextGraphZoom,
-} from './dependencyGraphComponents.tsx';
-import { GRAPH_MIN_READABLE_SCALE } from './dependencyGraphLayout.ts';
+} from './dependencyGraphUtils.ts';
 
 export function DependencyGraphZoomControls({
 	effectiveZoom,

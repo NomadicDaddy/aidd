@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -186,7 +185,9 @@ export function ProjectsPage() {
 				<ErrorState
 					error={projects.error}
 					message="Unknown error fetching project list."
-					onRetry={handleRefresh}
+					onRetry={() => {
+						void handleRefresh();
+					}}
 					title="Could not load projects."
 				/>
 			) : null}
@@ -238,7 +239,9 @@ export function ProjectsPage() {
 					<ProjectsResults
 						emptyFilters={emptyFilters}
 						gitStatus={gitStatus.data?.projects}
-						onRefresh={handleRefresh}
+						onRefresh={() => {
+							void handleRefresh();
+						}}
 						onToggleSort={toggleSort}
 						projectView={projectView}
 						sortDir={sortDir}

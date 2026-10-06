@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import { default as X } from 'lucide-react/dist/esm/icons/x';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -83,7 +82,7 @@ export function RecipeLaunchPanel({
 					toast.success('Pipeline session started');
 					// Land in the unified Runs feed with the new session selected and expanded;
 					// the per-session report stays a click away from there.
-					navigate(`/runs?pipeline=${encodeURIComponent(session.id)}`);
+					void navigate(`/runs?pipeline=${encodeURIComponent(session.id)}`);
 				},
 			},
 		);

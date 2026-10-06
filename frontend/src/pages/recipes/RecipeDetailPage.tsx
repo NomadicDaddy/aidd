@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
@@ -120,7 +119,7 @@ export function RecipeDetailPage() {
 			onSuccess: () => {
 				setShowDeleteConfirm(false);
 				toast.success('Recipe deleted');
-				navigate('/recipes');
+				void navigate('/recipes');
 			},
 		});
 	}

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-misused-promises */
 import { useQueryClient } from '@tanstack/react-query';
 import { default as FolderKanban } from 'lucide-react/dist/esm/icons/folder-kanban';
 import { default as Moon } from 'lucide-react/dist/esm/icons/moon';
@@ -210,11 +209,11 @@ export function CommandPalette({ onOpenChange, onOpenDirective, open }: CommandP
 										className="min-h-11 gap-3 px-2.5"
 										key={project.id}
 										onSelect={() =>
-											runAction(() =>
-												navigate(
+											runAction(() => {
+												void navigate(
 													`/projects/${encodeURIComponent(project.routeId)}`,
-												),
-											)
+												);
+											})
 										}
 										value={`project ${project.name}`}>
 										<FolderKanban
@@ -245,7 +244,11 @@ export function CommandPalette({ onOpenChange, onOpenDirective, open }: CommandP
 									<CommandItem
 										className="min-h-11 gap-3 px-2.5"
 										key={item.to}
-										onSelect={() => runAction(() => navigate(item.to))}
+										onSelect={() =>
+											runAction(() => {
+												void navigate(item.to);
+											})
+										}
 										value={`${item.label} ${group.label}`}>
 										<item.icon
 											aria-hidden="true"

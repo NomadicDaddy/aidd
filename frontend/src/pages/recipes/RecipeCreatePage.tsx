@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import { isSystemRecipeId } from 'aidd-shared/system-recipes';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
@@ -48,7 +47,7 @@ export function RecipeCreatePage() {
 	const created = recipes.saveRecipe.isSuccess ? recipes.saveRecipe.data : undefined;
 	useEffect(() => {
 		if (!created) return;
-		navigate(`/recipes/${created.id}`, { replace: true });
+		void navigate(`/recipes/${created.id}`, { replace: true });
 	}, [created, navigate]);
 
 	function handleId(value: string): void {

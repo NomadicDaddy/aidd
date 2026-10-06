@@ -42,7 +42,7 @@ describe('atomic metadata writes', () => {
 		let reads = 0;
 		const torn: string[] = [];
 		// The reader yields between reads, as the panel and the gates do. One that never let go of the
-		// file would hold off every rename on Windows and send the writer to its in-place fallback.
+		// file would hold off every rename on Windows until the writer gave up and failed the write.
 		const reader = (async () => {
 			while (writing) {
 				const raw = await readFile(path, 'utf8');

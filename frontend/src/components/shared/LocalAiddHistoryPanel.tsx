@@ -2,13 +2,13 @@ import type { ReactNode } from 'react';
 
 import type { ProjectLocalIteration, ProjectLocalRun } from '../../api/types.ts';
 
+import { useNow } from '../../hooks/useNow.ts';
 import { tableColumnClass } from '../../lib/tableStyles.ts';
 import { Badge } from '../ui/badge.tsx';
 import { Card, CardHeader } from '../ui/card.tsx';
 import { LocalIterationsTable } from './local-aidd-history/LocalIterationsTable.tsx';
 import { LocalRunsTable } from './local-aidd-history/LocalRunsTable.tsx';
 import { groupIterationsByRun } from './local-aidd-history/runMetadata.tsx';
-import { useNowWhile } from './local-aidd-history/useNowWhile.ts';
 
 /**
  * A group of rows inside the panel — Runs, In progress, Unassigned iterations.
@@ -49,7 +49,7 @@ export function LocalAiddHistoryPanel({
 	const runList = runs ?? [];
 	const hasRunRows = runList.length > 0;
 	const hasIterationRows = iterations.length > 0;
-	const now = useNowWhile(iterations.some((iteration) => iteration.status === 'running'));
+	const now = useNow(iterations.some((iteration) => iteration.status === 'running'));
 	const { byRunKey, orphans, running } = hasRuns
 		? groupIterationsByRun(runList, iterations)
 		: {

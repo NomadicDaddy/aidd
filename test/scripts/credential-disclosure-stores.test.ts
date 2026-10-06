@@ -54,6 +54,12 @@ describe('credential stores an external backend can reach', () => {
 			'src/secrets/index.ts',
 			'scripts/codex/auth.ts',
 			'k8s/kube/config.example.yaml',
+			// Checked-in examples and schemas beside a store's name (Roger's review of b8f5bf2a).
+			'~/.kube/config.example.yaml',
+			'~/.docker/config.json.example',
+			'~/.codex/auth.json.schema',
+			'~/.config/gh/hosts.yml.example',
+			'~/.pgpass.example',
 		]) {
 			expect(credentialLabel(path)).toBeUndefined();
 		}

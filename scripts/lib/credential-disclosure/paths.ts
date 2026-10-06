@@ -1,3 +1,8 @@
+/** A store's full file name: what follows must end the word, so `.example` and `.schema` do not. */
+function store(path: string): RegExp {
+	return new RegExp(path + String.raw`(?=$|[\s"'\`)>|;&])`, 'i');
+}
+
 /** Credential stores, excluding project configuration and committed dotenv templates. */
 export const CREDENTIAL_PATHS: { label: string; pattern: RegExp }[] = [
 	{ label: 'aidd user config', pattern: /\.aidd[/\\]+config\.json/i },
@@ -6,19 +11,23 @@ export const CREDENTIAL_PATHS: { label: string; pattern: RegExp }[] = [
 	{ label: 'netrc', pattern: /[/\\]\.netrc\b/i },
 	{ label: 'npmrc', pattern: /[/\\]\.npmrc\b/i },
 	// Stores an external CLI backend can read from the home directory. Each is anchored on its dot
-	// directory or exact file name, so a project's own docker/config.json or docs/secrets.md is not one.
-	{ label: 'git credential store', pattern: /[/\\]\.git-credentials\b/i },
-	{ label: 'github cli token', pattern: /[/\\]gh[/\\]+hosts\.ya?ml\b/i },
-	{ label: 'codex auth', pattern: /\.codex[/\\]+auth\.json/i },
-	{ label: 'claude code credentials', pattern: /\.claude[/\\]+\.credentials\.json/i },
-	{ label: 'opencode auth', pattern: /[/\\]opencode[/\\]+auth\.json/i },
-	{ label: 'docker client config', pattern: /\.docker[/\\]+config\.json/i },
-	{ label: 'pgpass', pattern: /[/\\]\.pgpass\b/i },
-	{ label: 'kube config', pattern: /\.kube[/\\]+config\b/i },
-	{ label: 'azure token cache', pattern: /\.azure[/\\]+accessTokens\.json/i },
+	// directory and ends at the exact file name, so a project's own docker/config.json, a checked-in
+	// .docker/config.json.example or a .kube/config.example.yaml is not one.
+	{ label: 'git credential store', pattern: store(String.raw`[/\\]\.git-credentials`) },
+	{ label: 'github cli token', pattern: store(String.raw`[/\\]gh[/\\]+hosts\.ya?ml`) },
+	{ label: 'codex auth', pattern: store(String.raw`\.codex[/\\]+auth\.json`) },
+	{
+		label: 'claude code credentials',
+		pattern: store(String.raw`\.claude[/\\]+\.credentials\.json`),
+	},
+	{ label: 'opencode auth', pattern: store(String.raw`[/\\]opencode[/\\]+auth\.json`) },
+	{ label: 'docker client config', pattern: store(String.raw`\.docker[/\\]+config\.json`) },
+	{ label: 'pgpass', pattern: store(String.raw`[/\\]\.pgpass`) },
+	{ label: 'kube config', pattern: store(String.raw`\.kube[/\\]+config`) },
+	{ label: 'azure token cache', pattern: store(String.raw`\.azure[/\\]+accessTokens\.json`) },
 	{
 		label: 'gcloud application default credentials',
-		pattern: /gcloud[/\\]+application_default_credentials\.json/i,
+		pattern: store(String.raw`gcloud[/\\]+application_default_credentials\.json`),
 	},
 	// The approved directory for regenerable secret material: D:\secrets, /d/secrets, /mnt/d/secrets.
 	{

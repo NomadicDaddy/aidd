@@ -50,11 +50,12 @@ export function LaunchForm({
 	return (
 		<Card className={cn('@container', className)}>
 			<div className="space-y-3">
-				{/* This form renders both as a full-width page card and inside a project detail
-				    panel about 336px wide. `lg:` saw only the window, so at 1024 it split the
-				    336px panel into two 162px columns and put a project select and a mode select
-				    in them. 32rem is the interior at which two columns are each wide enough to
-				    hold their own control. */}
+				{/* The Skills page renders this form in its detail column, full width below 80rem
+				    and in a launch track of 18rem to 36rem beside the SKILL.md above it. The
+				    form's width therefore follows that column, not the window, so the split is a
+				    container query: a viewport `lg:` breakpoint would put a project select and a
+				    mode select in two columns too narrow to hold them. 32rem is the interior at
+				    which each column is wide enough for its own control. */}
 				<div className="grid gap-3 @min-[32rem]:grid-cols-2">
 					{/* Required, not invalid. This select was painted `aria-invalid` on first
 					    paint of a form nobody had touched — the operator had done nothing wrong,

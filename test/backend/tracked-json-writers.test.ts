@@ -215,7 +215,8 @@ test('requires direct pretty JSON file writers to be classified as runtime-only'
 	for (const root of roots) {
 		for (const path of await sourceFiles(root)) {
 			const source = await readFile(path, 'utf8');
-			const writesFile = /\b(?:writeFile|Bun\.write)\s*\(/.test(source);
+			// writeFileAtomic is the temp-and-rename writer; a file using it still writes the JSON.
+			const writesFile = /\b(?:writeFile|writeFileAtomic|Bun\.write)\s*\(/.test(source);
 			const prettyStringify = /JSON\.stringify\([\s\S]*?,\s*null,\s*(?:2|'\\t')\s*\)/.test(
 				source,
 			);

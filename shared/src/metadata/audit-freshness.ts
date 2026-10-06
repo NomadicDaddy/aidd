@@ -1,6 +1,7 @@
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
+import { writeFileAtomic } from '../lib/atomicWrite.ts';
 import {
 	type AuditFreshnessContext,
 	cachedGitNumstatOutput,
@@ -120,7 +121,7 @@ export async function writeAuditReportWithMetadata(
 	const metadata = await buildAuditReportMetadata(projectDir, timestamp, findings);
 	const body = prependAuditReportMetadata(content, metadata);
 	await mkdir(auditReportsDir(projectDir), { recursive: true });
-	await writeFile(path, body.endsWith('\n') ? body : `${body}\n`);
+	await writeFileAtomic(path, body.endsWith('\n') ? body : `${body}\n`);
 	return path;
 }
 

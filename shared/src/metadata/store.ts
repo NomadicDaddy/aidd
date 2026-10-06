@@ -1,4 +1,4 @@
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { AuditReportFindingReference } from './audit-freshness.ts';
@@ -8,6 +8,7 @@ import type {
 	FindingLedgerRead,
 } from './findings-ledger.ts';
 
+import { writeFileAtomic } from '../lib/atomicWrite.ts';
 import {
 	type Feature,
 	FEATURE_STATUSES,
@@ -210,7 +211,7 @@ export class FileAiddStore implements AiddStore {
 
 	async writeRoadmap(roadmap: Roadmap): Promise<void> {
 		await mkdir(this.metadataDir, { recursive: true });
-		await writeFile(join(this.metadataDir, 'roadmap.json'), serializeRoadmap(roadmap));
+		await writeFileAtomic(join(this.metadataDir, 'roadmap.json'), serializeRoadmap(roadmap));
 	}
 
 	async writeIteration(record: IterationRecord): Promise<number> {

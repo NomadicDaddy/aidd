@@ -1,7 +1,8 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { ZodError } from 'zod/v4';
 
+import { writeFileAtomic } from '../../lib/atomicWrite.ts';
 import { type Feature, featureSchema } from '../features.ts';
 import { serializeFeatureFile } from './serialize.ts';
 
@@ -25,7 +26,7 @@ export async function persistFeatureFile(metadataDir: string, feature: Feature):
 	// Read before write so the record keeps the formatting it already had — see serializeFeatureFile.
 	const existing = await readFile(filePath, 'utf8').catch(() => '');
 	await mkdir(join(metadataDir, 'features', id), { recursive: true });
-	await writeFile(filePath, serializeFeatureFile(feature, existing));
+	await writeFileAtomic(filePath, serializeFeatureFile(feature, existing));
 }
 
 /** The prior record when one exists and parses; missing or malformed metadata reads as none. */

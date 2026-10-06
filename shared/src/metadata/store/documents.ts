@@ -1,8 +1,9 @@
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { AuditReportFindingReference } from '../audit-freshness.ts';
 
+import { writeFileAtomic } from '../../lib/atomicWrite.ts';
 import { writeAuditReportWithMetadata } from '../audit-freshness.ts';
 
 export async function generateChangelog(metadataDir: string): Promise<string> {
@@ -16,7 +17,7 @@ export async function generateChangelog(metadataDir: string): Promise<string> {
 export async function writeChangelog(metadataDir: string, content?: string): Promise<string> {
 	const changelog = content ?? (await generateChangelog(metadataDir));
 	await mkdir(metadataDir, { recursive: true });
-	await writeFile(join(metadataDir, 'CHANGELOG.md'), changelog);
+	await writeFileAtomic(join(metadataDir, 'CHANGELOG.md'), changelog);
 	return changelog;
 }
 

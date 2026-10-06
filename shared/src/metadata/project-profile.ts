@@ -1,4 +1,4 @@
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 
 import {
@@ -13,6 +13,7 @@ import {
 	type ProjectTemplateOrigin,
 	requiresFullHardening,
 } from '../index.ts';
+import { writeFileAtomic } from '../lib/atomicWrite.ts';
 import { loadAuditProfileMapping, loadAuditProfileOverrides } from './audit-profile-mapping.ts';
 import { printJson } from './json-format.ts';
 import { metadataPath } from './paths.ts';
@@ -66,7 +67,7 @@ export async function writeProjectAssuranceProfile(
 ): Promise<ProjectAssuranceProfile> {
 	const profile = normalizeProjectAssuranceProfileInput(input, new Date().toISOString());
 	await mkdir(metadataPath(projectDir), { recursive: true });
-	await writeFile(projectProfilePath(projectDir), printJson(profile));
+	await writeFileAtomic(projectProfilePath(projectDir), printJson(profile));
 	return profile;
 }
 

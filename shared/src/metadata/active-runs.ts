@@ -1,5 +1,6 @@
-import { mkdir, readdir, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, stat } from 'node:fs/promises';
 
+import { writeFileAtomic } from '../lib/atomicWrite.ts';
 import { runProcessLiveness } from './active-runs/liveness.ts';
 import { ACTIVE_RUNS_DIR, activeRunFilePath, activeRunsDir } from './active-runs/locate.ts';
 import {
@@ -50,20 +51,11 @@ function isMissingPathError(error: unknown): boolean {
 export async function writeCliActiveRunRecord(record: CliActiveRunRecord): Promise<void> {
 	const dir = activeRunsDir(record.projectPath);
 	await mkdir(dir, { recursive: true });
-	const target = activeRunFilePath(record.projectPath, record.id);
-	// pid + timestamp + random keeps the temp name unique across concurrent processes (CLI heartbeat
-	// vs. web supervisor) writing the same target, so two writers never share a temp path.
-	const unique = crypto.randomUUID().replaceAll('-', '').slice(0, 8);
-	const tmp = `${target}.${process.pid}.${Date.now()}.${unique}.tmp`;
-	try {
-		await writeFile(tmp, `${JSON.stringify(record, null, 2)}\n`);
-		await rename(tmp, target);
-	} catch (error) {
-		// A failed write/rename (e.g. Windows EPERM/EEXIST on a concurrent rename) must not leave the
-		// temp file orphaned in active-runs/, where it would linger forever (readers only sweep .json).
-		await rm(tmp, { force: true });
-		throw error;
-	}
+	// The CLI heartbeat and the web supervisor both write this record; each write lands whole.
+	await writeFileAtomic(
+		activeRunFilePath(record.projectPath, record.id),
+		`${JSON.stringify(record, null, 2)}\n`,
+	);
 }
 
 // Best-effort removal of orphaned atomic-write temp files. Normal writes self-clean via the

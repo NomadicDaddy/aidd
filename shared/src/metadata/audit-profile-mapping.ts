@@ -1,4 +1,4 @@
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import {
@@ -7,6 +7,7 @@ import {
 	normalizeAuditProfileMapping,
 	normalizeAuditProfileOverrides,
 } from '../index.ts';
+import { writeFileAtomic } from '../lib/atomicWrite.ts';
 import { printJson } from './json-format.ts';
 import { metadataPath } from './paths.ts';
 
@@ -53,7 +54,7 @@ export async function writeAuditProfileMapping(
 	const normalized = normalizeAuditProfileMapping(mapping);
 	const filePath = auditProfileMappingPath(catalogDir);
 	await mkdir(dirname(filePath), { recursive: true });
-	await writeFile(filePath, printJson(normalized));
+	await writeFileAtomic(filePath, printJson(normalized));
 	mappingCache.delete(filePath);
 	return normalized;
 }
@@ -110,6 +111,6 @@ export async function writeAuditProfileOverrides(
 	});
 	const filePath = auditProfileOverridesPath(projectDir);
 	await mkdir(dirname(filePath), { recursive: true });
-	await writeFile(filePath, printJson(normalized));
+	await writeFileAtomic(filePath, printJson(normalized));
 	return normalized;
 }

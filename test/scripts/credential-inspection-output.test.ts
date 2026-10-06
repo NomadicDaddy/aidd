@@ -82,6 +82,26 @@ describe('credential inspection result provenance', () => {
 		expect(scan('rg -n API_KEY .env -o; echo done', sourceMatches)).toHaveLength(1);
 	});
 
+	// Both found by review of the change above: a literal is excused only where it is printed, and
+	// every search in the command is judged, not only the first.
+	test('an unprinted literal or a later provenance-dropping search still fails closed', () => {
+		const returned = '.env:1:FIXTURE=synthetic-review-value-only';
+		expect(scan(`rg -n FIXTURE .env; $unused = '${returned}'`, returned)).toHaveLength(1);
+		expect(scan(`rg -n FIXTURE .env; echo '${returned}'`, returned)).toHaveLength(1);
+		expect(
+			scan(
+				"rg -n absent src; rg -n --no-filename --replace 'src/mock.ts:1:$0' FIXTURE .env",
+				'src/mock.ts:1:1:FIXTURE=synthetic-review-value-only',
+			),
+		).toHaveLength(1);
+		expect(scan("rg -n FIXTURE src; echo 'scan done'", `${sourceMatches}\nscan done`)).toEqual(
+			[],
+		);
+		// A PowerShell script quoted for bash, as the audit log recorded it.
+		const bashQuoted = `pwsh.exe -Command '$e = Get-ChildItem -Force | Where-Object {"'$_.Name -match '"'"'^'"\\.env'}; if("'$e){$e.Name}else{'"'No .env files present'}; rg -n -i KEY src'`;
+		expect(scan(bashQuoted, `${startup}No .env files present`)).toEqual([]);
+	});
+
 	test('ACL owner and permission lines return metadata rather than file contents', () => {
 		for (const output of [
 			`Owner=HOST\\user\n${permission}`,

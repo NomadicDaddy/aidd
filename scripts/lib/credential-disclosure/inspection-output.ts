@@ -89,9 +89,31 @@ function ownStatement(text: string): string {
 	return text;
 }
 
-/** A line the command prints from its own quoted literal is the command's text, not a file's. */
+/** Each rg in the command with only its own statement, so a later search is judged too. */
+function searchStatements(command: string): string[] {
+	const statements: string[] = [];
+	for (const match of command.matchAll(/(?:^|[\s"'{(;|&])rg(?:\.exe)?\s/g))
+		statements.push(ownStatement(command.slice(match.index + match[0].length)));
+	return statements;
+}
+
+/**
+ * A line the command prints from its own quoted literal is the command's text, not a file's. The
+ * literal must stand where its value is printed: a statement of its own (PowerShell writes a bare
+ * string) or the argument of echo, printf or Write-Output/Write-Host. A quoted assignment is never
+ * printed, and a line shaped like a search hit in a credential file is never excused this way.
+ */
 function echoedLiteral(line: string, command: string): boolean {
-	return command.includes(`'${line}'`) || command.includes(`"${line}"`);
+	const hitPath = /^(.+?):\d+:/.exec(line)?.[1];
+	if (hitPath !== undefined && credentialLabel(hitPath) !== undefined) return false;
+	const text = line.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	// A PowerShell script quoted for bash spells `{'text'}` as `{'"'text'}`; the `'"` is bash
+	// re-opening its quote, so it may stand between the print position and the literal.
+	const printed = new RegExp(
+		`(?:^|[{;(]|\\b(?:echo|printf|Write-Output|Write-Host)\\s)\\s*(?:'"|"')?(['"])${text}\\1\\s*(?:[});\\n]|$)`,
+		'i',
+	);
+	return printed.test(command);
 }
 
 /**
@@ -112,17 +134,13 @@ export function isNonDisclosingInspection(command: string, output: unknown): boo
 	)
 		return false;
 	if (/\bGet-Acl\b/i.test(command)) return aclOutput(lines);
-	const search = /(?:^|[\s"'])rg\s+-n\b/.exec(command);
-	if (!search) return false;
-	// Only the search's own statement carries its switches; a later `Get-ChildItem -Force` is not
-	// rg's `-o`.
-	const searchArguments = ownStatement(command.slice(search.index + search[0].length));
-	// These switches remove or rewrite the filename provenance used below.
-	if (
-		/(?:^|\s)(?:--(?:no-filename|replace|only-matching|json)|-[A-Za-z]*[hor][A-Za-z]*)(?:\s|=|$)/.test(
-			searchArguments,
-		)
-	)
+	if (!/(?:^|[\s"'])rg\s+-n\b/.test(command)) return false;
+	// These switches remove or rewrite the filename provenance used below. Each search carries only
+	// its own statement's switches, so a later `Get-ChildItem -Force` is not rg's `-o`, and every
+	// search in the command is judged, not only the first.
+	const dropsProvenance =
+		/(?:^|\s)(?:--(?:no-filename|replace|only-matching|json)|-[A-Za-z]*[hor][A-Za-z]*)(?:\s|=|$)/;
+	if (searchStatements(command).some((statement) => dropsProvenance.test(statement)))
 		return false;
 	return lines.every((line) => {
 		if (echoedLiteral(line, command)) return true;

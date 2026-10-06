@@ -21,7 +21,7 @@ the repository material distributed outside the npm graph.
 
 | Package                                                                              | Version | License    |
 | ------------------------------------------------------------------------------------ | ------- | ---------- |
-| [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk) | 1.30.1  | MIT        |
+| [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk) | 1.32.1  | MIT        |
 | [@xterm/addon-serialize](https://www.npmjs.com/package/@xterm/addon-serialize)       | 0.14.0  | MIT        |
 | [@xterm/headless](https://www.npmjs.com/package/@xterm/headless)                     | 6.0.0   | MIT        |
 | [bun-pty](https://www.npmjs.com/package/bun-pty)                                     | 0.4.10  | MIT        |

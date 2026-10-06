@@ -596,7 +596,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### @modelcontextprotocol/sdk@1.30.1
+### @modelcontextprotocol/sdk@1.32.1
 
 License: MIT
 

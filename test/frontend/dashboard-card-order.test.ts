@@ -81,8 +81,8 @@ describe('normalizeCardOrder', () => {
 		]);
 	});
 
-	test('normalizes an uncustomised stored order while preserving genuine custom orders', () => {
-		const uncustomisedOrder = [
+	test('keeps a stored seven-card order and adds the newer cards at their default positions', () => {
+		const storedOrder = [
 			'active-runs',
 			'feature-summary',
 			'feature-queue',
@@ -91,9 +91,21 @@ describe('normalizeCardOrder', () => {
 			'director-queue',
 			'waiting-approval',
 		] as const;
-		expect(normalizeCardOrder(uncustomisedOrder)).toEqual([...DASHBOARD_CARD_IDS]);
+		// No stored order is read as "never customised" any more: the operator's order stands, and the
+		// cards it predates are inserted at their default index.
+		expect(normalizeCardOrder(storedOrder)).toEqual([
+			'active-runs',
+			'feature-summary',
+			'feature-queue',
+			'feature-status',
+			'project-health',
+			'director-queue',
+			'fleet-maturity',
+			'recent-activity',
+			'waiting-approval',
+		]);
 
-		const reversed = [...uncustomisedOrder].reverse();
+		const reversed = [...storedOrder].reverse();
 		const normalized = normalizeCardOrder(reversed);
 
 		// A genuine custom order stays operator-owned. Cards added in a later version join it --

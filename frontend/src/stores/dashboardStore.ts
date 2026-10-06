@@ -16,16 +16,6 @@ export const DASHBOARD_CARD_IDS = [
 	'project-health',
 ] as const;
 
-const LEGACY_DASHBOARD_CARD_IDS: readonly DashboardCardId[] = [
-	'active-runs',
-	'feature-summary',
-	'feature-queue',
-	'feature-status',
-	'project-health',
-	'director-queue',
-	'waiting-approval',
-];
-
 export type DashboardCardId = (typeof DASHBOARD_CARD_IDS)[number];
 
 export type DashboardCardWidth = 'full' | 'half';
@@ -67,19 +57,13 @@ export function normalizeCardSizes(stored: unknown): DashboardCardSizes {
 /**
  * Self-healing order normalization: drops ids that no longer exist, dedupes,
  * and inserts ids missing from storage (e.g. cards added in a later version)
- * at their default position. A stored order that matches `LEGACY_DASHBOARD_CARD_IDS` exactly is
- * read as never customised and follows the default, while any genuine custom permutation remains
- * operator-owned.
+ * at their default position. A stored order is the operator's, whatever it is.
  */
 export function normalizeCardOrder(stored: readonly string[]): DashboardCardId[] {
 	const known = stored.filter((id): id is DashboardCardId =>
 		(DASHBOARD_CARD_IDS as readonly string[]).includes(id),
 	);
 	const result = [...new Set(known)];
-	const isLegacyDefault =
-		result.length === LEGACY_DASHBOARD_CARD_IDS.length &&
-		result.every((id, index) => id === LEGACY_DASHBOARD_CARD_IDS[index]);
-	if (isLegacyDefault) return [...DASHBOARD_CARD_IDS];
 	for (const [index, id] of DASHBOARD_CARD_IDS.entries()) {
 		if (!result.includes(id)) result.splice(Math.min(index, result.length), 0, id);
 	}

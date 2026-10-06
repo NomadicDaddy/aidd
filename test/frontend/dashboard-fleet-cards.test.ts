@@ -10,7 +10,7 @@ interface RenderedCards {
 	activityLoading: string;
 	activityRows: string;
 	cardIds: string[];
-	legacyOrder: string[];
+	storedSevenCardOrder: string[];
 	maturityEmpty: string;
 	maturityError: string;
 	maturityLoading: string;
@@ -127,7 +127,7 @@ console.log(
 			total: 111,
 		}),
 		cardIds: [...DASHBOARD_CARD_IDS],
-		legacyOrder: normalizeCardOrder([
+		storedSevenCardOrder: normalizeCardOrder([
 			'active-runs',
 			'feature-summary',
 			'feature-queue',
@@ -236,10 +236,18 @@ describe('the dashboard keeps the cards it already had', () => {
 		}
 	});
 
-	test('a layout persisted before these cards existed still gains them', () => {
-		expect(cards.legacyOrder).toHaveLength(9);
-		expect(cards.legacyOrder).toContain('fleet-maturity');
-		expect(cards.legacyOrder).toContain('recent-activity');
+	test('a seven-card layout stored before these cards existed keeps its order and gains them', () => {
+		expect(cards.storedSevenCardOrder).toEqual([
+			'active-runs',
+			'feature-summary',
+			'feature-queue',
+			'feature-status',
+			'project-health',
+			'director-queue',
+			'fleet-maturity',
+			'recent-activity',
+			'waiting-approval',
+		]);
 	});
 
 	test('DashboardPage renders every id the store orders', async () => {

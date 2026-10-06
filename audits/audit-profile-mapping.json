@@ -1,10 +1,26 @@
 {
 	"$schema": "https://json-schema.org/draft/2020-12/schema",
 	"requiresPackages": {
+		"AI": [
+			"@ai-sdk/anthropic",
+			"@ai-sdk/google",
+			"@ai-sdk/openai",
+			"@anthropic-ai/sdk",
+			"@google/genai",
+			"@google/generative-ai",
+			"@langchain/core",
+			"@mistralai/mistralai",
+			"ai",
+			"groq-sdk",
+			"langchain",
+			"ollama",
+			"openai"
+		],
 		"COMPOSITION_PATTERNS": ["react"],
 		"CONVEX": ["convex"],
 		"MOBILE": ["expo", "react-native"],
-		"REACT_BEST_PRACTICES": ["react"]
+		"REACT_BEST_PRACTICES": ["react"],
+		"SSOC": ["react"]
 	},
 	"rules": [
 		{
@@ -12,14 +28,18 @@
 			"description": "Prototype/archive projects exclude all audits by default.",
 			"effect": "excluded",
 			"id": "archive-prototype-sweep",
-			"match": { "bucket": ["prototype_archive"] }
+			"match": {
+				"bucket": ["prototype_archive"]
+			}
 		},
 		{
 			"audits": ["ASSERTIONS", "DOCUMENTATION", "HYGIENE"],
 			"description": "Prototype/archive projects still run the hygiene-class audits.",
 			"effect": "required",
 			"id": "archive-prototype-keep",
-			"match": { "bucket": ["prototype_archive"] }
+			"match": {
+				"bucket": ["prototype_archive"]
+			}
 		},
 		{
 			"audits": ["UI_PARITY"],
@@ -56,14 +76,11 @@
 				"PROXY_AUTH_BOUNDARY",
 				"OUTBOUND_SSRF",
 				"SECRET_HANDLING_RETENTION",
-				"AGENT_TOOL_SANDBOX",
-				"GIT_DESTRUCTIVE_SAFETY",
-				"ORCHESTRATOR_CONCURRENCY",
 				"SECURITY"
 			],
-			"description": "Agent-orchestration local tools (aidd) MUST run the agent/proxy/secret audits — their real attack surface.",
+			"description": "Local tools that write to external systems or hold security integrations must run the proxy/secret/security audits.",
 			"effect": "required",
-			"id": "agent-orchestration-local-require",
+			"id": "local-write-capable-require-security",
 			"match": {
 				"bucket": ["single_user_local"],
 				"externalIntegrations": ["write_capable", "financial_or_security"]
@@ -71,20 +88,12 @@
 		},
 		{
 			"audits": ["PROXY_AUTH_BOUNDARY", "OUTBOUND_SSRF", "SECRET_HANDLING_RETENTION"],
-			"description": "All web-backend targets run the fleet-wide proxy/SSRF/secret audits.",
+			"description": "Every live (non-archive) target runs the fleet-wide proxy/SSRF/secret audits; archives keep the archive sweep.",
 			"effect": "required",
-			"id": "web-backend-require-proxy-secret",
-			"match": {
-				"deployment": ["local", "lan", "private_server", "public_server", "cloud"]
-			}
-		},
-		{
-			"audits": ["AGENT_TOOL_SANDBOX", "GIT_DESTRUCTIVE_SAFETY", "ORCHESTRATOR_CONCURRENCY"],
-			"description": "Targets without an agent tool/pipeline skip the aidd-unique agent audits.",
-			"effect": "disabled",
-			"id": "non-agent-skip-agent-audits",
+			"id": "live-require-proxy-secret",
 			"match": {
 				"bucket": [
+					"single_user_local",
 					"multi_user_local",
 					"private_team",
 					"internet_single_org",
@@ -94,11 +103,71 @@
 			}
 		},
 		{
+			"audits": ["AGENT_TOOL_SANDBOX", "GIT_DESTRUCTIVE_SAFETY", "ORCHESTRATOR_CONCURRENCY"],
+			"description": "The agent audits examine tools that run coding agents, shells or git against repositories. No profile facet records that, so each such project opts in with a project override (aidd, aidd-beta-harness, summon).",
+			"effect": "disabled",
+			"id": "agent-audits-opt-in",
+			"match": {}
+		},
+		{
 			"audits": ["SPERNAKIT"],
 			"description": "The Spernakit audit measures drift from the template, so only apps derived from it run it.",
 			"effect": "disabled",
 			"id": "non-derived-skip-spernakit",
-			"match": { "derivesFromTemplate": ["none"] }
+			"match": {
+				"derivesFromTemplate": ["none"]
+			}
+		},
+		{
+			"audits": ["LICENSING"],
+			"description": "A project that distributes a built artifact carries its dependencies' license obligations, so it runs LICENSING whatever its exposure.",
+			"effect": "required",
+			"id": "distributes-require-licensing-publishesReleaseArchives",
+			"match": {
+				"bucket": [
+					"single_user_local",
+					"multi_user_local",
+					"private_team",
+					"internet_single_org",
+					"public_multi_tenant",
+					"critical_regulated"
+				],
+				"publishesReleaseArchives": ["binary_archives"]
+			}
+		},
+		{
+			"audits": ["LICENSING"],
+			"description": "A project that distributes a built artifact carries its dependencies' license obligations, so it runs LICENSING whatever its exposure.",
+			"effect": "required",
+			"id": "distributes-require-licensing-shipsContainerImage",
+			"match": {
+				"bucket": [
+					"single_user_local",
+					"multi_user_local",
+					"private_team",
+					"internet_single_org",
+					"public_multi_tenant",
+					"critical_regulated"
+				],
+				"shipsContainerImage": ["published"]
+			}
+		},
+		{
+			"audits": ["LICENSING"],
+			"description": "A project that distributes a built artifact carries its dependencies' license obligations, so it runs LICENSING whatever its exposure.",
+			"effect": "required",
+			"id": "distributes-require-licensing-hasCliBinary",
+			"match": {
+				"bucket": [
+					"single_user_local",
+					"multi_user_local",
+					"private_team",
+					"internet_single_org",
+					"public_multi_tenant",
+					"critical_regulated"
+				],
+				"hasCliBinary": ["packaged_binary"]
+			}
 		}
 	],
 	"version": 1

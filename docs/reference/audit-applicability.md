@@ -228,17 +228,30 @@ The seeded global mapping (`audits/audit-profile-mapping.json`) carries these ba
   `SCHEMA_CONSTRAINTS`) when the profile is `single_user_local` AND `deployment=local` AND
   `dataSensitivity ∈ {none,low}` AND `externalIntegrations ∈ {none,read_only}` AND
   `criticality ∈ {toy,utility}`.
-- `agent-orchestration-local-require` requires `PROXY_AUTH_BOUNDARY`, `OUTBOUND_SSRF`,
-  `SECRET_HANDLING_RETENTION`, `AGENT_TOOL_SANDBOX`, `GIT_DESTRUCTIVE_SAFETY`,
-  `ORCHESTRATOR_CONCURRENCY`, and `SECURITY` for `single_user_local` profiles whose
-  `externalIntegrations ∈ {write_capable,financial_or_security}` - the aidd-shaped case, where
-  local deployment hides a real agent attack surface.
-- `web-backend-require-proxy-secret` requires `PROXY_AUTH_BOUNDARY`, `OUTBOUND_SSRF`, and
-  `SECRET_HANDLING_RETENTION` for every `deployment ∈ {local,lan,private_server,public_server,cloud}`.
-- `non-agent-skip-agent-audits` disables `AGENT_TOOL_SANDBOX`, `GIT_DESTRUCTIVE_SAFETY`, and
-  `ORCHESTRATOR_CONCURRENCY` for the five buckets above `single_user_local`
-  (`multi_user_local`, `private_team`, `internet_single_org`, `public_multi_tenant`,
-  `critical_regulated`), which have no agent tool or pipeline to sandbox.
+- `local-write-capable-require-security` requires `PROXY_AUTH_BOUNDARY`, `OUTBOUND_SSRF`,
+  `SECRET_HANDLING_RETENTION`, and `SECURITY` for `single_user_local` profiles whose
+  `externalIntegrations ∈ {write_capable,financial_or_security}`: local deployment does not shrink
+  the surface of a tool that writes to other systems.
+- `live-require-proxy-secret` requires `PROXY_AUTH_BOUNDARY`, `OUTBOUND_SSRF`, and
+  `SECRET_HANDLING_RETENTION` for every bucket except `prototype_archive`. An archive is left out
+  on purpose: a `required` rule that names an audit beats the archive sweep's wildcard, so matching
+  archives here would undo the sweep for these three.
+- `agent-audits-opt-in` disables `AGENT_TOOL_SANDBOX`, `GIT_DESTRUCTIVE_SAFETY`, and
+  `ORCHESTRATOR_CONCURRENCY` for every profile. They examine tools that run coding agents, shells or
+  git against repositories, which no profile facet records, so each such project marks them
+  `required` in its overrides (aidd, aidd-beta-harness and summon do). Bucket and integrations were
+  a poor proxy: they gave these audits to local CLIs and games and denied them to a multi-user agent
+  tool.
+- `distributes-require-licensing-*` (three rules) require `LICENSING` for a live project that
+  publishes binary release archives, publishes a container image, or ships a packaged CLI binary,
+  whatever its exposure: distributing a build carries its dependencies' license obligations.
+
+`requiresPackages` gates an audit on the project's declared dependencies after the rules: an audit
+listed there applies only where some manifest depends on one of its packages, unless a rule or
+override made it `required`. `COMPOSITION_PATTERNS`, `REACT_BEST_PRACTICES` and `SSOC` need `react`;
+`MOBILE` needs `expo` or `react-native`; `CONVEX` needs `convex`; `AI` needs an LLM SDK (`openai`,
+`@anthropic-ai/sdk`, `ai`, `ollama` and the like). A project that calls a provider over plain HTTP
+has no such package, so it marks `AI` `required` in its overrides (aidd and TalkWithMe do).
 
 Per-project overrides start absent everywhere and accumulate as operators opt in.
 

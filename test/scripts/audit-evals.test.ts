@@ -50,6 +50,20 @@ async function passingScratch(): Promise<{ scratch: AuditEvalScratch; scratchDir
 	return staged;
 }
 
+// As on a machine where the evals were run: the ledger beside the attestation, and the fixture back
+// to the pristine state the runs hashed.
+async function ledgerScratch(): Promise<string> {
+	const staged = await stage();
+	const score = plantAll(staged.scratch);
+	staged.scratch.resetFindings();
+	const floors = loadAuditEvalFloors(staged.scratch.floorsPath);
+	await staged.scratch.writeAttestation(
+		Array.from({ length: floors.minRuns }, () => score),
+		{ withLedger: true },
+	);
+	return staged.scratchDir;
+}
+
 describe('audit eval gate', () => {
 	test('HYGIENE drives Madge through TypeScript and current QC surfaces', () => {
 		const madgeAnalysisCommands = hygieneAudit
@@ -81,6 +95,32 @@ describe('audit eval gate', () => {
 		expect(result.unmeasuredAudits).toBe(1);
 		expect(result.hashedFiles).toBe(2);
 		expect(result.examined).toBeGreaterThan(result.hashedFiles);
+		// No local run ledger, as in CI: the scores pass unverified, and the result says so.
+		expect(result.resultsVerified).toBe(false);
+	});
+
+	// The floors check only asks whether attested scores are high enough, so a hand-edited score
+	// passed while it stayed above them. Where the run ledger exists, the scores are recomputed.
+	test('attested scores that differ from the local run ledger are a finding', async () => {
+		const scratchDir = await ledgerScratch();
+		const attestationPath = path.join(scratchDir, 'evals', 'audits', 'attestation.json');
+		const attestation = JSON.parse(readFileSync(attestationPath, 'utf8')) as {
+			audits: { recall: number }[];
+		};
+		attestation.audits[0]!.recall = 0.99;
+		writeFileSync(attestationPath, `${JSON.stringify(attestation, null, '\t')}\n`);
+
+		const result = await inspectAuditEvals(scratchDir);
+		expect(result.resultsVerified).toBe(true);
+		expect(result.findings.map((item) => item.message)).toContain(
+			'SECURITY attested scores differ from evals/audits/results/runs.jsonl',
+		);
+	});
+
+	test('an attestation the local run ledger reproduces is verified and passes', async () => {
+		const result = await inspectAuditEvals(await ledgerScratch());
+		expect(result.findings).toEqual([]);
+		expect(result.resultsVerified).toBe(true);
 	});
 
 	test('fixture metadata that discloses the answer key is a finding', async () => {

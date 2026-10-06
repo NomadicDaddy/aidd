@@ -30,6 +30,8 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'evals/audits/fixtures/**/*',
 		'evals/audits/floors.json',
 		'evals/audits/manifest.json',
+		// Gitignored; where it exists the check recomputes the attested scores from it.
+		'evals/audits/results/runs.jsonl',
 		'package.json',
 		'scripts/check-audit-evals.ts',
 		'scripts/lib/audit-eval/**/*.ts',

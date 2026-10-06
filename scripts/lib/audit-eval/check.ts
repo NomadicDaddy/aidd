@@ -9,6 +9,7 @@ import { fixturePathForTask, listFiles } from '../benchmark/execution.ts';
 import { loadManifest } from '../benchmark/manifest.ts';
 import { readAttestation } from './attestation-read.ts';
 import { sha256File } from './attestation.ts';
+import { checkAttestedResults } from './check-results.ts';
 import { auditEvalFinding, checkAttestedScores, checkAuditFileHashes } from './check-scores.ts';
 import { loadAuditEvalFloors } from './floors.ts';
 
@@ -20,6 +21,8 @@ export interface AuditEvalCheckResult {
 	hashedFiles: number;
 	/** Runnable audits with a planted-defect catalog and an attested score. */
 	measuredAudits: number;
+	/** Whether the attested scores were recomputed from a local run ledger (absent in CI). */
+	resultsVerified: boolean;
 	status: 'fail' | 'pass';
 	/** Runnable audits that are only hash-gated, with no catalog of their own yet. */
 	unmeasuredAudits: number;
@@ -140,6 +143,14 @@ export async function inspectAuditEvals(root: string): Promise<AuditEvalCheckRes
 	}
 	const hashedFiles = checkAuditFileHashes(root, runnableNames, attestation, findings);
 	examined += hashedFiles;
+	const resultsVerified = await checkAttestedResults({
+		attestation,
+		findings,
+		floorsPath,
+		manifest,
+		manifestPath,
+		root,
+	});
 	if (examined === 0) {
 		findings.push(auditEvalFinding('evals/audits/manifest.json', 'nothing was examined'));
 	}
@@ -149,6 +160,7 @@ export async function inspectAuditEvals(root: string): Promise<AuditEvalCheckRes
 		gate: 'check:audit-evals',
 		hashedFiles,
 		measuredAudits,
+		resultsVerified,
 		status: findings.length === 0 ? 'pass' : 'fail',
 		unmeasuredAudits: runnableNames.filter((auditId) => !isMeasured(manifest, auditId)).length,
 	};

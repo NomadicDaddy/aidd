@@ -4,7 +4,7 @@ import path from 'node:path';
 import type { AuditEvalCatalog, AuditEvalRunScore } from '../benchmark/types.ts';
 import type { AuditEvalRunRecord } from './attestation.ts';
 
-import { hashFixture } from '../benchmark/execution.ts';
+import { hashTaskFixture } from '../benchmark/execution.ts';
 import { loadManifest } from '../benchmark/manifest.ts';
 import { buildAuditEvalAttestation } from './attestation.ts';
 import { loadAuditEvalFloors } from './floors.ts';
@@ -22,8 +22,15 @@ export interface AuditEvalScratch {
 	resetFindings(): void;
 	/** Scores the findings currently planted in the fixture. */
 	score(): AuditEvalRunScore;
-	/** Writes an attestation averaged from the given scores, one run record each. */
-	writeAttestation(scores: AuditEvalRunScore[]): Promise<void>;
+	/**
+	 * Writes an attestation averaged from the given scores, one run record each. `withLedger` also
+	 * writes the results ledger it came from, as on a machine where the evals were run; the check
+	 * then recomputes from it, so the fixture must be back to pristine (resetFindings) first.
+	 */
+	writeAttestation(
+		scores: AuditEvalRunScore[],
+		options?: { withLedger?: boolean },
+	): Promise<void>;
 	/** Plants one SECURITY finding in the fixture's feature directory. */
 	writeFinding(id: string, description: string, files?: string[]): void;
 	/** Writes a JSON or text file relative to the scratch root. */
@@ -56,8 +63,9 @@ export function stageAuditEvalScratch(root: string, scratch: string): AuditEvalS
 	const task = manifest.tasks.find((entry) => entry.auditEval !== undefined);
 	const catalog = task?.auditEval;
 	if (!task || !catalog) throw new Error('Fixture manifest did not load an audit-eval catalog');
-	// Hashed before any finding is planted: a benchmark run hashes the pristine source fixture.
-	const fixtureHash = hashFixture(fixtureRoot);
+	// Hashed before any finding is planted, the way a benchmark run hashes the pristine source fixture
+	// with its catalog, so a recorded run reads as current, not stale.
+	const fixtureHash = hashTaskFixture(manifestPath, task);
 	const stackLabel = manifest.stacks[0]?.label ?? 'audit-evals';
 
 	const writeScratchFile = (relativePath: string, value: unknown): void => {
@@ -81,7 +89,7 @@ export function stageAuditEvalScratch(root: string, scratch: string): AuditEvalS
 			if (!result.auditEval) throw new Error('Audit eval scorer did not emit score detail');
 			return result.auditEval;
 		},
-		writeAttestation: async (scores) => {
+		writeAttestation: async (scores, options) => {
 			const runs: AuditEvalRunRecord[] = scores.map((auditEval) => ({
 				auditEval,
 				fixtureHash,
@@ -94,6 +102,12 @@ export function stageAuditEvalScratch(root: string, scratch: string): AuditEvalS
 				runs,
 			});
 			writeScratchFile('evals/audits/attestation.json', attestation);
+			if (options?.withLedger) {
+				writeScratchFile(
+					'evals/audits/results/runs.jsonl',
+					runs.map((run) => `${JSON.stringify(run)}\n`).join(''),
+				);
+			}
 		},
 		writeFinding: (id, description, files = ['backend/src/server.ts']) => {
 			writeScratchFile(`evals/audits/fixtures/security/.aidd/features/${id}/feature.json`, {

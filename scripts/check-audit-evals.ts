@@ -29,8 +29,11 @@ export async function runAuditEvalCheck(root: string, json = false): Promise<num
 				`[FAIL] check:audit-evals -- ${result.findings.length} finding(s); ${result.measuredAudits} of ${result.measuredAudits + result.unmeasuredAudits} audits measured, ${result.hashedFiles} audit files hash-checked, ${result.examined} items examined.`,
 			);
 		} else {
+			const results = result.resultsVerified
+				? 'scores recomputed from the local run ledger'
+				: 'scores not recomputed (no local evals/audits/results/runs.jsonl)';
 			console.log(
-				`[OK] check:audit-evals -- ${result.measuredAudits} of ${result.measuredAudits + result.unmeasuredAudits} audits measured, ${result.hashedFiles} audit files hash-checked, ${result.examined} items examined; attestation is current and above its floors.`,
+				`[OK] check:audit-evals -- ${result.measuredAudits} of ${result.measuredAudits + result.unmeasuredAudits} audits measured, ${result.hashedFiles} audit files hash-checked, ${result.examined} items examined; attestation is current and above its floors; ${results}.`,
 			);
 		}
 		return result.status === 'pass' ? 0 : 1;

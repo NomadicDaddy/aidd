@@ -1,4 +1,11 @@
-import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+	appendFileSync,
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	writeFileSync,
+} from 'node:fs';
 import path from 'node:path';
 
 import type {
@@ -23,6 +30,11 @@ export function loadRuns(runsPath: string): BenchmarkRun[] {
 		.split(/\r?\n/)
 		.filter((line) => line.trim().length > 0)
 		.map((line): BenchmarkRun => JSON.parse(line) as BenchmarkRun);
+}
+
+/** Keep the ledger a regrade is about to rewrite: results/ is gitignored, so nothing else can. */
+export function backupRunsBeforeRegrade(runsPath: string): void {
+	if (existsSync(runsPath)) copyFileSync(runsPath, `${runsPath}.pre-regrade`);
 }
 
 export function writeRuns(runsPath: string, runs: BenchmarkRun[]): void {
@@ -132,18 +144,36 @@ function regradeRun(
 	}
 	const task = manifest.tasks.find((candidate) => candidate.id === run.taskId);
 	const workspaceDir = run.artifactPaths.workspace;
-	if (!task || !workspaceDir || !existsSync(workspaceDir)) {
-		// Workspace gone: correctness cannot be re-evaluated, but cost can still be
-		// refreshed from the saved token usage.
+	const artifacts =
+		task && workspaceDir && existsSync(workspaceDir)
+			? detectArtifacts(workspaceDir)
+			: undefined;
+	// Workspace gone, or its iteration logs gone: the run cannot be re-measured, and grading it
+	// anyway replaced recorded token usage, iterations and cost with zeros. Only cost is refreshed,
+	// from the saved token usage.
+	if (
+		!task ||
+		!workspaceDir ||
+		!artifacts ||
+		(artifacts.rawLogs.length === 0 && artifacts.structuredLogs.length === 0)
+	) {
 		const resolvedCost = resolveCost(run.costUsd, run.tokenUsage, pricing);
 		if (resolvedCost === run.costUsd) return { changed: false, run };
 		return { changed: true, run: { ...run, costUsd: resolvedCost } };
 	}
-	const artifacts = detectArtifacts(workspaceDir);
-	const metrics = parseBenchmarkMetrics({
+	const parsed = parseBenchmarkMetrics({
 		rawLogs: artifacts.rawLogs,
 		structuredLogs: artifacts.structuredLogs,
 	});
+	// Logs that never recorded the exit leave it 'unknown', which grading reads as success; the run
+	// record kept the real exit code.
+	const metrics =
+		parsed.exitStatus === 'unknown' && run.exitCode !== undefined
+			? {
+					...parsed,
+					exitStatus: run.exitCode === 0 ? ('success' as const) : ('failure' as const),
+				}
+			: parsed;
 	const evaluation = evaluateTask({ artifacts, metrics, task, workspaceDir });
 	const resolvedCost = resolveCost(metrics.costUsd, metrics.tokenUsage, pricing);
 	const changed =

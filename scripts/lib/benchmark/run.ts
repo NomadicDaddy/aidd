@@ -35,6 +35,7 @@ import { parseBenchmarkMetrics } from './metrics.ts';
 import { pricingForStack, resolveCost } from './pricing.ts';
 import {
 	appendRun,
+	backupRunsBeforeRegrade,
 	loadRuns,
 	loadSession,
 	preflightFromSession,
@@ -200,6 +201,7 @@ export function main(): void {
 		const runsPath = path.join(args.resultsDir, 'runs.jsonl');
 		const priorSession = loadSession(args.resultsDir);
 		const regrade = regradeRuns(manifest, loadRuns(runsPath));
+		backupRunsBeforeRegrade(runsPath);
 		writeRuns(runsPath, regrade.runs);
 		writeOutputs(
 			args.resultsDir,

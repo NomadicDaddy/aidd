@@ -59,6 +59,7 @@
 	},
 	"scripts": {
 		"aidd-tools": "bun scripts/aidd-tools.ts",
+		"advisory:audit": "bun scripts/advisory-audit.ts",
 		"audit:dependencies": "bun audit",
 		"benchmark": "bun scripts/run-benchmark.ts --manifest ./benchmarks/manifest.json",
 		"benchmark:dry-run": "bun scripts/run-benchmark.ts --manifest ./benchmarks/manifest.json --dry-run",

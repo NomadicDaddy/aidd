@@ -15,7 +15,10 @@ import {
 	type ProjectAuditEvidence,
 	scoreAudit,
 } from 'aidd-shared/metadata/audit-scoring';
-import { filterApplicableAuditNames } from 'aidd-shared/metadata/project-profile';
+import {
+	explicitProjectProfileError,
+	filterApplicableAuditNames,
+} from 'aidd-shared/metadata/project-profile';
 import { discoverAuditNames, simulationMarker } from 'aidd-shared/modes/audit-shared';
 
 export function explicitAuditNames(plan: RunPlan): string[] {
@@ -47,6 +50,7 @@ export async function auditNames(plan: RunPlan, context: ModeContext): Promise<s
 		const catalogDir = context.rootDir ?? process.cwd();
 		const discovered = await discoverAuditNames(catalogDir);
 		if (discovered.length > 0) {
+			await warnOnRejectedProfile(context.projectDir);
 			const applicable = await filterApplicableAuditNames(
 				catalogDir,
 				context.projectDir,
@@ -56,6 +60,19 @@ export async function auditNames(plan: RunPlan, context: ModeContext): Promise<s
 		}
 	}
 	return [currentAuditName(plan)];
+}
+
+// Selection runs once per iteration, so each project is reported once per process.
+const reportedRejectedProfiles = new Set<string>();
+
+async function warnOnRejectedProfile(projectDir: string): Promise<void> {
+	if (reportedRejectedProfiles.has(projectDir)) return;
+	const error = await explicitProjectProfileError(projectDir);
+	if (error === null) return;
+	reportedRejectedProfiles.add(projectDir);
+	console.warn(
+		`[audit] .aidd/project-profile.json is invalid and was ignored; audits are chosen from the inferred profile instead. Fix the file to restore its facets: ${error}`,
+	);
 }
 
 // Ranks `--audit-all` discovery output descending by change-potential score. Explicit

@@ -85,20 +85,40 @@ export async function filterApplicableAuditNames(
 	);
 }
 
+type ExplicitProfileRead =
+	| { error: string; kind: 'invalid' }
+	| { kind: 'absent' }
+	| { kind: 'valid'; profile: ProjectAssuranceProfile };
+
+async function readExplicitProfileFile(projectDir: string): Promise<ExplicitProfileRead> {
+	let text: string;
+	try {
+		text = await readFile(projectProfilePath(projectDir), 'utf8');
+	} catch {
+		return { kind: 'absent' };
+	}
+	try {
+		return { kind: 'valid', profile: normalizeProjectAssuranceProfileFile(JSON.parse(text)) };
+	} catch (err) {
+		return { error: err instanceof Error ? err.message : String(err), kind: 'invalid' };
+	}
+}
+
 export async function readExplicitProjectAssuranceProfile(
 	projectDir: string,
 ): Promise<null | ProjectAssuranceProfile> {
-	let raw: unknown;
-	try {
-		raw = JSON.parse(await readFile(projectProfilePath(projectDir), 'utf8')) as unknown;
-	} catch {
-		return null;
-	}
-	try {
-		return normalizeProjectAssuranceProfileFile(raw);
-	} catch {
-		return null;
-	}
+	const read = await readExplicitProfileFile(projectDir);
+	return read.kind === 'valid' ? read.profile : null;
+}
+
+/**
+ * Why the project's explicit profile file was rejected, or null when it is valid or absent. A
+ * rejected file is replaced by the inferred profile without a word, so a caller that chooses audits
+ * from the profile reports this instead of letting the operator's declared facets vanish.
+ */
+export async function explicitProjectProfileError(projectDir: string): Promise<null | string> {
+	const read = await readExplicitProfileFile(projectDir);
+	return read.kind === 'invalid' ? read.error : null;
 }
 
 export async function inferProjectAssuranceProfile(

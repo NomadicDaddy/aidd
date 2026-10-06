@@ -75,9 +75,10 @@ type ProjectAssuranceProfileSchema = {
 /**
  * The facets a profile must carry. Both schemas mark every one of them required, which is what makes
  * a profile missing a facet fail `normalizeProjectAssuranceProfileFile` rather than
- * quietly normalize to a value nobody chose — but the failure is silent one level up, since
- * `readExplicitProjectAssuranceProfile` answers a rejected file with inference. Adding a name here
- * therefore means populating every `.aidd/project-profile.json` in the same change.
+ * quietly normalize to a value nobody chose. `readExplicitProjectAssuranceProfile` still answers a
+ * rejected file with inference, and only `--audit-all` selection reports it (through
+ * `explicitProjectProfileError`), so adding a name here means populating every
+ * `.aidd/project-profile.json` in the same change.
  */
 const projectProfileCoreFields = [
 	'authMode',

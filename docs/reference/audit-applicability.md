@@ -241,7 +241,9 @@ The seeded global mapping (`audits/audit-profile-mapping.json`) carries these ba
   git against repositories, which no profile facet records, so each such project marks them
   `required` in its overrides (aidd, aidd-beta-harness and summon do). Bucket and integrations were
   a poor proxy: they gave these audits to local CLIs and games and denied them to a multi-user agent
-  tool.
+  tool. The opt-in is only as durable as the overrides file: a repository that ignores `.aidd/`
+  (aidd itself does) keeps it per checkout, so a fresh clone runs no agent audits until its
+  operator opts in again. Nothing infers agent use automatically.
 - `distributes-require-licensing-*` (three rules) require `LICENSING` for a live project that
   publishes binary release archives, publishes a container image, or ships a packaged CLI binary,
   whatever its exposure: distributing a build carries its dependencies' license obligations.

@@ -88,6 +88,20 @@ describe('smoke cache invalidation surfaces', () => {
 		expect(await canSkipStep(root, 'prompt:snapshot:check')).toBe(false);
 	});
 
+	// check:gate-conventions resolves each gate's `Enforces:` ID against the assertion catalog, so
+	// an ID removed from the catalog must rerun it rather than replay a pass over a dangling ID.
+	test('misses the gate-conventions cache when the assertion catalog changes', async () => {
+		const root = await createCacheProject();
+		await mkdir(join(root, '.aidd'), { recursive: true });
+		await writeFile(join(root, '.aidd', 'assertions.md'), '- QUAL-004 one\n- QUAL-005 two\n');
+		await recordStepSuccess(root, 'check:gate-conventions', 123);
+		expect(await canSkipStep(root, 'check:gate-conventions')).toBe(true);
+
+		await writeFile(join(root, '.aidd', 'assertions.md'), '- QUAL-004 one\n');
+
+		expect(await canSkipStep(root, 'check:gate-conventions')).toBe(false);
+	});
+
 	test("tracks this repository's audit definitions as prompt snapshot dependencies", async () => {
 		const dependencies = await collectDependencies(process.cwd(), 'prompt:snapshot:check');
 

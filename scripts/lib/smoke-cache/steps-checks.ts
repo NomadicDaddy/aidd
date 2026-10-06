@@ -125,6 +125,9 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		// deliberately the whole directory rather than the current gate list: a task added to
 		// package.json changes the population, and a glob list naming today's gates would let the
 		// cache skip the run that would have seen the new one.
+		// The assertion catalog decides whether a gate's `Enforces:` ID resolves; removing an ID
+		// must rerun the gate rather than leave it cached green over a dangling citation.
+		'.aidd/assertions.md',
 		'package.json',
 		'scripts/*.ts',
 		'scripts/gate-conventions-allowlist.json',

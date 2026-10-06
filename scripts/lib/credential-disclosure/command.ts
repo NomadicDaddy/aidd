@@ -3,6 +3,7 @@ import { searchReturnedOnlyFlags } from './flag-search.ts';
 import { loopVariableIsRead, stripInertHeredocs } from './inert-text.ts';
 import { isNonDisclosingInspection } from './inspection-output.ts';
 import { credentialLabel } from './paths.ts';
+import { liftSubstitutions } from './substitution.ts';
 
 /** Keep shell separators outside quoted arguments; a search expression is one argument. */
 function pipelines(command: string): string[][] {
@@ -125,14 +126,24 @@ function numericPortPreview(tokens: string[], output: unknown): boolean {
 	);
 }
 
+/**
+ * `substituted` marks the text of a `$(...)`: its output becomes words of the command around it,
+ * so nothing it prints is only text.
+ */
 export function commandCredentialLabel(
 	rawCommand: string,
 	returnedOutput?: unknown,
+	substituted = false,
 ): string | undefined {
 	if (isNonDisclosingInspection(rawCommand, returnedOutput)) return undefined;
 	// A path inside a heredoc that is written to a file as data was never opened. `2>&1` names no
 	// file, and its `&` would otherwise split the command it belongs to away from its own pipe.
-	const command = stripInertHeredocs(rawCommand).replace(/\s*2>&1/g, '');
+	const lifted = liftSubstitutions(stripInertHeredocs(rawCommand).replace(/\s*2>&1/g, ''));
+	for (const inner of lifted.inner) {
+		const label = commandCredentialLabel(inner, returnedOutput, true);
+		if (label) return label;
+	}
+	const command = lifted.outer;
 	const allPipelines = pipelines(command);
 	const allSegments = allPipelines.flat();
 	for (const pipeline of allPipelines) {
@@ -150,9 +161,7 @@ export function commandCredentialLabel(
 			// A `for` word list names files only if the body opens them. A list that is echoed
 			// or requested over HTTP is text.
 			if (executable === 'for' && !loopVariableIsRead(tokens[0] ?? '', allSegments)) continue;
-			const expandsCommand =
-				segment.includes('`') ||
-				(segment.includes('$(') && tokens.some((token) => token.includes('$')));
+			const expandsCommand = substituted || segment.includes('`');
 			const program = executable.split(/[/\\]/).at(-1) ?? executable;
 			if (
 				[
@@ -173,6 +182,7 @@ export function commandCredentialLabel(
 					const label = commandCredentialLabel(
 						tokens.slice(scriptIndex + 1).join(' '),
 						returnedOutput,
+						substituted,
 					);
 					if (label) return label;
 					continue;

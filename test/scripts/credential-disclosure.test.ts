@@ -161,6 +161,29 @@ describe('credential disclosure protocol evidence', () => {
 			expect(scan(command(cmd, content))).toHaveLength(1);
 	});
 
+	// A pipe inside `$(...)` split the substitution away from its own search, so a regex-escaped
+	// pattern such as `process\.env` was judged as a path of `echo`, and its backslash as a Windows
+	// separator. A substitution is a command of its own, and its output is words of the outer one.
+	test('a search inside a command substitution names a pattern, not a file', () => {
+		for (const cmd of [
+			String.raw`echo fe=$(git grep -c "process\.env" -- frontend/src | wc -l); git grep -n "process\.env\|import\.meta\.env" -- frontend/src | head -5`,
+			String.raw`echo n=$(git grep -c "Bun\.env" -- src | wc -l)`,
+			String.raw`echo "found $(rg -l '\.env' src | wc -l) files"`,
+			String.raw`rg "\.env" src`,
+			"echo '$(cat .env)'",
+		])
+			expect(scan(command(cmd, content))).toEqual([]);
+		for (const cmd of [
+			'echo $(cat .env | head -1)',
+			'cat $(echo .env)',
+			'wc -c $(git ls-files .env)',
+			'echo "$(grep -n KEY .env)"',
+			'echo $(cat .env',
+			String.raw`cat C:\app\.env`,
+		])
+			expect(scan(command(cmd, content))).toHaveLength(1);
+	});
+
 	test('reads structured native events from a pretty-printed iteration artifact', () => {
 		const events = [
 			{

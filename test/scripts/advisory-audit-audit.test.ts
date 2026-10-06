@@ -215,4 +215,50 @@ describe('advisory audit: parsing and the store check', () => {
 		expect(audit.lockOnly).toHaveLength(1);
 		expect(audit.lockOnly[0]?.package).toBe('source-map-js');
 	});
+
+	// Carl (mail 1d8fceff): a tree went UNSWEPT on a registry ConnectionClosed that cleared
+	// minutes later, and the record could not tell a flaky call from a broken tree.
+	test('a transport-shaped failure is retried once; a repeat is UNSWEPT naming the retry', async () => {
+		tree = await testTempDir('aidd-advisory-retry-');
+		await writeFile(join(tree, 'bun.lock'), LOCK);
+		const closed: CommandOutput = {
+			exitCode: 1,
+			stderr: 'error: POST https://registry.npmjs.org/-/npm/v1/security/advisories/bulk - ConnectionClosed\n',
+			stdout: '',
+			timedOut: false,
+		};
+		const attempts = (...outputs: CommandOutput[]) => {
+			let calls = 0;
+			const runner = () =>
+				Promise.resolve(outputs[Math.min(calls++, outputs.length - 1)] ?? closed);
+			return { calls: () => calls, runner };
+		};
+		const common = {
+			key: 't',
+			owners: [],
+			previousPackages: [],
+			retryPauseMs: 0,
+			timeoutMs: 10,
+			treeDir: tree,
+		};
+
+		const recovers = attempts(closed, output('{}'));
+		expect(await auditTree({ ...common, runner: recovers.runner })).toMatchObject({
+			findings: [],
+			status: 'audited',
+		});
+		expect(recovers.calls()).toBe(2);
+
+		const persists = attempts(closed, closed);
+		const unswept = await auditTree({ ...common, runner: persists.runner });
+		expect(unswept.status).toBe('unswept');
+		expect(unswept.error).toContain('ConnectionClosed');
+		expect(unswept.error).toContain('(transport failure; retried once)');
+		expect(persists.calls()).toBe(2);
+
+		// An exit 2 with no transport wording is structural: UNSWEPT at once, no retry.
+		const structural = attempts({ ...output('{}', 2), stderr: 'error: lockfile is corrupt\n' });
+		expect((await auditTree({ ...common, runner: structural.runner })).status).toBe('unswept');
+		expect(structural.calls()).toBe(1);
+	});
 });

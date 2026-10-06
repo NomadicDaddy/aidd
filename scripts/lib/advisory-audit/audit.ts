@@ -196,10 +196,32 @@ function readLock(treeDir: string): string {
 	}
 }
 
+/** Pause before the one retry of a transport-shaped failure; tests pass 0. */
+export const DEFAULT_RETRY_PAUSE_MS = 2000;
+
+const TRANSPORT_FAILURE =
+	/ConnectionClosed|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|fetch failed|socket|network/i;
+
+/**
+ * A failed audit whose stderr names the registry connection rather than the tree: the kind that
+ * clears on its own (one tree on 2026-10-06: `POST .../advisories/bulk - ConnectionClosed`).
+ * Worth one retry; a second failure is reported as UNSWEPT with the retry named.
+ */
+function isTransportFailure(output: CommandOutput): boolean {
+	return !output.timedOut && TRANSPORT_FAILURE.test(output.stderr);
+}
+
+function auditFailed(output: CommandOutput, findings: AuditFinding[] | null): boolean {
+	// bun audit exits 0 clean and 1 with findings. Any other code is a failed audit even when
+	// stdout parses (an empty `{}` beside exit 2 is not a clean tree), so it is UNSWEPT.
+	return output.timedOut || findings === null || (output.exitCode !== 0 && output.exitCode !== 1);
+}
+
 export async function auditTree(input: {
 	key: string;
 	owners: string[];
 	previousPackages: string[];
+	retryPauseMs?: number | undefined;
 	runner: AuditRunner;
 	timeoutMs: number;
 	treeDir: string;
@@ -213,14 +235,19 @@ export async function auditTree(input: {
 		owners: input.owners,
 		treeDir: input.treeDir,
 	};
-	const output = await input.runner(input.treeDir, input.timeoutMs);
-	const findings = parseAuditJson(output.stdout);
-	// bun audit exits 0 clean and 1 with findings. Any other code is a failed audit even when
-	// stdout parses (an empty `{}` beside exit 2 is not a clean tree), so it is UNSWEPT.
-	const failed = output.exitCode !== 0 && output.exitCode !== 1;
-	if (output.timedOut || findings === null || failed) {
+	let output = await input.runner(input.treeDir, input.timeoutMs);
+	let findings = parseAuditJson(output.stdout);
+	let retried = false;
+	if (auditFailed(output, findings) && isTransportFailure(output)) {
+		await Bun.sleep(input.retryPauseMs ?? DEFAULT_RETRY_PAUSE_MS);
+		output = await input.runner(input.treeDir, input.timeoutMs);
+		findings = parseAuditJson(output.stdout);
+		retried = true;
+	}
+	// `findings === null` is inside auditFailed; restated so the type narrows past this block.
+	if (auditFailed(output, findings) || findings === null) {
 		const firstStderr = output.stderr.trim().split('\n')[0] ?? '';
-		const error = output.timedOut
+		const reason = output.timedOut
 			? `bun audit timed out after ${String(input.timeoutMs)}ms`
 			: findings === null
 				? `bun audit exited ${String(output.exitCode)} with no parseable JSON: ${firstStderr}`
@@ -228,7 +255,7 @@ export async function auditTree(input: {
 		return {
 			...base,
 			durationMs: Date.now() - started,
-			error,
+			error: retried ? `${reason} (transport failure; retried once)` : reason,
 			exitCode: output.exitCode,
 			findings: [],
 			status: 'unswept',

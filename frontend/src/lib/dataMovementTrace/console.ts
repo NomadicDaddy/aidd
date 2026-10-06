@@ -10,12 +10,13 @@ export function writeTraceRecord(event: TraceRecord): void {
 		...event,
 	};
 	const label = formatTraceLabel(record);
-	// eslint-disable-next-line no-console
+	// The browser console is this trace's sink; grouping collapses each record under its label.
+	// eslint-disable-next-line no-console -- feature-detects console grouping for the trace sink.
 	if (typeof console.groupCollapsed === 'function' && typeof console.groupEnd === 'function') {
-		// eslint-disable-next-line no-console
+		// eslint-disable-next-line no-console -- opens the trace record's collapsed group.
 		console.groupCollapsed(label);
 		console.info(record);
-		// eslint-disable-next-line no-console
+		// eslint-disable-next-line no-console -- closes the trace record's group.
 		console.groupEnd();
 	} else {
 		console.info(label, record);

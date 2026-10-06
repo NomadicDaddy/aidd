@@ -73,8 +73,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
 	const shortcutsMounted = useDeferredMount(shortcutsOpen);
 
 	useKeyboardShortcuts({
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		onNavigate: (to) => navigate(to),
+		onNavigate: (to) => {
+			void navigate(to);
+		},
 		onOpenDirective: () => setDirectiveLaunchOpen(true),
 		onOpenDirectorChat: () => setDirectorChatOpen(true),
 		onRefresh: () => {

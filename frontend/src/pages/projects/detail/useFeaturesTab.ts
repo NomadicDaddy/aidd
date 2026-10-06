@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import type {
@@ -110,12 +109,15 @@ export function useFeaturesTab({
 		.toSorted((left, right) => compareFeatures(left, right, sortKey, sortDir, roadmap));
 	const filteredTotal = filteredFeatures.length;
 	const prioritiesAreUniform = featurePrioritiesAreUniform(filteredFeatures);
-	useEffect(() => {
+	// Another project starts at the first page, and a shrinking result set pulls the page back into
+	// range. Both adjust during render.
+	const [pagedProjectId, setPagedProjectId] = useState(projectId);
+	if (pagedProjectId !== projectId) {
+		setPagedProjectId(projectId);
 		setPage(0);
-	}, [projectId]);
-	useEffect(() => {
-		setPage((current) => clampPage(current, filteredTotal, FEATURES_PAGE_SIZE));
-	}, [filteredTotal]);
+	}
+	const clampedPage = clampPage(page, filteredTotal, FEATURES_PAGE_SIZE);
+	if (clampedPage !== page) setPage(clampedPage);
 	const pageStart = page * FEATURES_PAGE_SIZE;
 	const slice = filteredFeatures.slice(pageStart, pageStart + FEATURES_PAGE_SIZE);
 	const isMutating =

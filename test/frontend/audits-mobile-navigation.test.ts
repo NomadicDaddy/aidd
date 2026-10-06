@@ -63,9 +63,9 @@ describe('mobile navigation preserves definition editing state', () => {
 			'definition.data?.name === selectedAudit ? definition.data : undefined',
 		);
 		expect(tab).toContain('activeDefinition?.content !== undefined');
-		expect(tab).toContain('selectionInitializedRef.current = true');
+		expect(tab).toContain('setSelectionInitialized(true);');
 		expect(tab).toContain(
-			'if (selectionInitializedRef.current || selectedAudit !== null) return',
+			'if (!selectionInitialized && selectedAudit === null && firstVisibleAudit)',
 		);
 		expect(navigation).toContain('if (name !== selectedAudit && dirty)');
 		expect(navigation).toContain('setPendingAudit(name)');

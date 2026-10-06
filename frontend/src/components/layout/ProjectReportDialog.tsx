@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { default as Bug } from 'lucide-react/dist/esm/icons/bug';
 import { default as MessageSquarePlus } from 'lucide-react/dist/esm/icons/message-square-plus';
-import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { type FormEvent, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { ProjectReportKind } from '../../api/types.ts';
@@ -53,17 +52,15 @@ export function ProjectReportDialog({
 	const projectError =
 		projectTouched && !selectedProjectId ? 'Select a project before submitting' : null;
 
-	useEffect(() => {
-		if (!open) return;
-		const availableProjects = projects.data?.projects ?? [];
-		setSelectedProjectId((current) => {
-			if (availableProjects.some((project) => project.id === current)) return current;
-			return defaultProjectId &&
-				availableProjects.some((project) => project.id === defaultProjectId)
+	// An open dialog keeps a project that still exists, otherwise targets the page's project or the
+	// best available one. Adjusted during render so the first painted frame already has it.
+	if (open && !projectOptions.some((project) => project.id === selectedProjectId)) {
+		const fallbackProjectId =
+			defaultProjectId && projectOptions.some((project) => project.id === defaultProjectId)
 				? defaultProjectId
-				: chooseReportProjectId(availableProjects);
-		});
-	}, [defaultProjectId, open, projects.data?.projects]);
+				: chooseReportProjectId(projectOptions);
+		if (fallbackProjectId !== selectedProjectId) setSelectedProjectId(fallbackProjectId);
+	}
 
 	const reset = () => {
 		setDescription('');

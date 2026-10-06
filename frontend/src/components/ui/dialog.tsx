@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/refs, react-hooks/set-state-in-effect */
 import {
 	type ComponentProps,
 	createContext,
@@ -101,24 +100,23 @@ export function Dialog({
 	const ownsScrim = inheritedDepth === 0 && stackLayer.ownsScrim;
 	const overlayRef = useRef<HTMLDivElement | null>(null);
 	const triggerRef = useRef<HTMLElement | null>(null);
-	const onCloseRef = useRef(onClose);
-	onCloseRef.current = onClose;
+
+	// Opening mounts at once and closing starts the exit state at once, both during render; the
+	// effect below only schedules the entrance frame and the unmount after the exit transition.
+	if (open && !present) setPresent(true);
+	if (!open && motionState === 'open') setMotionState('closed');
 
 	useEffect(() => {
 		if (open) {
-			setPresent(true);
 			const frame = window.requestAnimationFrame(() => setMotionState('open'));
 			return () => window.cancelAnimationFrame(frame);
 		}
 
-		setMotionState('closed');
 		if (!present) return;
-		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-			setPresent(false);
-			return;
-		}
-
-		const timeout = window.setTimeout(() => setPresent(false), DIALOG_MOTION_MS);
+		const exitMs = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+			? 0
+			: DIALOG_MOTION_MS;
+		const timeout = window.setTimeout(() => setPresent(false), exitMs);
 		return () => window.clearTimeout(timeout);
 	}, [open, present]);
 
@@ -174,7 +172,7 @@ export function Dialog({
 		if (event.key === 'Escape') {
 			event.preventDefault();
 			event.stopPropagation();
-			onCloseRef.current();
+			onClose();
 			return;
 		}
 		if (event.key !== 'Tab') return;

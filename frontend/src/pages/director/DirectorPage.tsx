@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { default as Activity } from 'lucide-react/dist/esm/icons/activity';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { DirectorComposer } from '../../components/shared/DirectorComposer.tsx';
@@ -78,11 +77,10 @@ export function DirectorPage() {
 
 	const sessionGone = activeSessionMissing(activeSessionId, director.chatSessions);
 
-	useEffect(() => {
-		// Cleared rather than re-pointed, so the line below chooses from the refreshed list.
-		if (sessionGone) setActiveSessionId(undefined);
-		else if (!activeSessionId && firstSessionId) setActiveSessionId(firstSessionId);
-	}, [activeSessionId, firstSessionId, sessionGone]);
+	// Adjusted during render. A vanished session is cleared rather than re-pointed, so the next
+	// render chooses from the refreshed list.
+	if (sessionGone) setActiveSessionId(undefined);
+	else if (!activeSessionId && firstSessionId) setActiveSessionId(firstSessionId);
 
 	function startSession(): void {
 		director.createChatSession.mutate('Director Chat', {

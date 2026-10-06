@@ -43,7 +43,7 @@ describe('global dialog local remediation', () => {
 		expect(report).toContain('error={descriptionError}');
 		expect(report).toContain('Restored from your last unsent report.');
 		expect(report).toContain(
-			'if (availableProjects.some((project) => project.id === current))',
+			'if (open && !projectOptions.some((project) => project.id === selectedProjectId))',
 		);
 		expect(report).toMatch(/onSuccess:[\s\S]+?reset\(\);[\s\S]+?onClose\(\);/u);
 		expect(token).toContain('Access token');

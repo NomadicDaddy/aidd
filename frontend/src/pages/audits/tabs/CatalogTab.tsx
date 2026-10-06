@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ErrorState } from '../../../components/shared/ErrorState.tsx';
@@ -46,8 +45,12 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	const [sort, setSort] = useState<CatalogSort>(defaultCatalogSort);
 	const [launchTargetsOpen, setLaunchTargetsOpen] = useState(false);
 	const [content, setContent] = useState('');
-	const selectionInitializedRef = useRef(false);
+	const [selectionInitialized, setSelectionInitialized] = useState(false);
 	const definition = useAuditDefinition(selectedAudit);
+	const [contentSource, setContentSource] = useState({
+		audit: selectedAudit,
+		data: definition.data,
+	});
 
 	const filteredDefinitions = filterAndSortCatalog(manager.data?.definitions ?? [], {
 		enabledFilter: catalogFilters.enabledFilter,
@@ -72,44 +75,32 @@ export function CatalogTab({ onJumpToMatrix }: { onJumpToMatrix: () => void }) {
 	const { allSelected: allVisibleAuditsSelected, someSelected: someVisibleAuditsSelected } =
 		deriveVisibleSelection(visibleEnabledNames, selectedAuditNames);
 
-	useEffect(() => {
-		if (selectionInitializedRef.current || selectedAudit !== null) return;
-		const first = filteredDefinitions[0]?.name;
-		if (!first) return;
-		selectionInitializedRef.current = true;
-		setSelectedAudit(first);
-	}, [filteredDefinitions, selectedAudit]);
+	// Selection and editor content follow the catalog during render, not in effects after commit.
+	// The first visible audit is selected once; a filter that hides the selection moves it to a sole
+	// remaining match or clears it.
+	const firstVisibleAudit = filteredDefinitions[0]?.name;
+	if (!selectionInitialized && selectedAudit === null && firstVisibleAudit) {
+		setSelectionInitialized(true);
+		setSelectedAudit(firstVisibleAudit);
+	}
+	const selectionHidden =
+		selectedAudit !== null && !filteredDefinitions.some((item) => item.name === selectedAudit);
+	if (selectionHidden) {
+		setSelectedAudit(filteredDefinitions.length === 1 ? (firstVisibleAudit ?? null) : null);
+	}
 
-	useEffect(() => {
-		if (selectedAudit === null) return;
-		const filteredNames = new Set(filteredDefinitions.map((item) => item.name));
-		if (filteredNames.has(selectedAudit)) return;
-		if (filteredDefinitions.length === 1) {
-			const sole = filteredDefinitions[0];
-			if (sole) setSelectedAudit(sole.name);
-		} else {
-			setSelectedAudit(null);
-		}
-	}, [filteredDefinitions, selectedAudit]);
+	// Editor content is re-seeded whenever the selection or the loaded definition changes.
+	if (contentSource.audit !== selectedAudit || contentSource.data !== definition.data) {
+		setContentSource({ audit: selectedAudit, data: definition.data });
+		const loaded =
+			definition.data?.name === selectedAudit ? definition.data?.content : undefined;
+		if (selectedAudit === null || loaded !== undefined) setContent(loaded ?? '');
+	}
 
-	useEffect(() => {
-		if (definition.data?.name !== selectedAudit || definition.data.content === undefined)
-			return;
-		setContent(definition.data.content);
-	}, [definition.data?.content, definition.data?.name, selectedAudit]);
-
-	useEffect(() => {
-		const currentEnabledNames = new Set(
-			(manager.data?.definitions ?? [])
-				.filter((item) => item.enabled)
-				.map((item) => item.name),
-		);
-		setSelectedAuditNames((current) => current.filter((name) => currentEnabledNames.has(name)));
-	}, [manager.data?.definitions]);
-
-	useEffect(() => {
-		if (selectedAudit === null) setContent('');
-	}, [selectedAudit]);
+	// Audits that stop being enabled leave the batch selection.
+	if (selectedAuditNames.some((name) => !enabledDefinitionNames.has(name))) {
+		setSelectedAuditNames(selectedRunnableAuditNames);
+	}
 
 	const auditsEnabled = manager.data?.auditsEnabled ?? settings.data?.auditsEnabled ?? true;
 	const selectedProjectCount = selectedProjectIds.length;

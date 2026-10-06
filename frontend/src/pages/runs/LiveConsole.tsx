@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { default as ArrowDownToLine } from 'lucide-react/dist/esm/icons/arrow-down-to-line';
 import { default as Terminal } from 'lucide-react/dist/esm/icons/terminal';
 import { useEffect, useState } from 'react';
@@ -86,10 +85,15 @@ export function LiveConsole({
 		consoleOpen,
 		[displayedMessage, findQuery.trim(), wrap, displayedHasOutput ? view : 'raw'],
 	);
-	useEffect(() => {
+	// Another run, or the selected run reaching a terminal state, resets the disclosure and the
+	// find query during render.
+	const consoleKey = `${selectedRun?.id ?? ''}:${collapsedByDefault ? 'collapsed' : 'open'}`;
+	const [shownConsoleKey, setShownConsoleKey] = useState(consoleKey);
+	if (shownConsoleKey !== consoleKey) {
+		setShownConsoleKey(consoleKey);
 		setConsoleOpen(!collapsedByDefault);
 		setFindQuery('');
-	}, [selectedRun?.id, collapsedByDefault]);
+	}
 	useEffect(() => {
 		writeWrapPreference(wrap);
 	}, [wrap]);

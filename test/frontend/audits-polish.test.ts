@@ -32,8 +32,8 @@ describe('the catalog table starts on the first screen', () => {
 	test('the initial editor follows the visible sorted catalog order', async () => {
 		const tab = await read(TABS, 'CatalogTab.tsx');
 
-		expect(tab).toContain('const first = filteredDefinitions[0]?.name;');
-		expect(tab).toContain('}, [filteredDefinitions, selectedAudit]);');
+		expect(tab).toContain('const firstVisibleAudit = filteredDefinitions[0]?.name;');
+		expect(tab).toContain('setSelectedAudit(firstVisibleAudit);');
 	});
 
 	test('the launch-target picker is a disclosure, not a 33-project grid', async () => {

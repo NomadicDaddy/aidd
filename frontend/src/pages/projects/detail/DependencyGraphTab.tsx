@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -100,8 +99,10 @@ export function DependencyGraphTab({
 		visibleGraph.nodes.map((node) => [node.directory, node]),
 	);
 	const graphNodeByDirectory = new Map(graph.nodes.map((node) => [node.directory, node]));
-	const selectedDirectoryVisible =
-		selectedDirectory === null || visibleDirectories.has(selectedDirectory);
+	// A filter that hides the selected node drops the selection, adjusted during render.
+	if (selectedDirectory !== null && !visibleDirectories.has(selectedDirectory)) {
+		setSelectedDirectory(null);
+	}
 	const selectedNode = selectedDirectory
 		? (graphNodeByDirectory.get(selectedDirectory) ?? null)
 		: null;
@@ -114,11 +115,6 @@ export function DependencyGraphTab({
 		...(selectedNode?.resolvedDependencies ?? []),
 		...(selectedNode?.dependents ?? []),
 	]);
-	useEffect(() => {
-		if (selectedDirectory && !selectedDirectoryVisible) {
-			setSelectedDirectory(null);
-		}
-	}, [selectedDirectory, selectedDirectoryVisible]);
 	useEffect(() => {
 		const panel = selectedPanelRef.current;
 		const canvas = graphViewport.ref.current;

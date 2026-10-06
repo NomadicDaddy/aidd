@@ -13,6 +13,17 @@ export function countChangedEffects(
 	return count;
 }
 
+/** The form draft reduced to what is saved: only effects that override the inherited default. */
+export function explicitEffects(
+	draft: Record<string, 'default' | AuditOverrideEffect>,
+): Record<string, AuditOverrideEffect> {
+	const explicit: Record<string, AuditOverrideEffect> = {};
+	for (const [name, effect] of Object.entries(draft)) {
+		if (effect !== 'default') explicit[name] = effect;
+	}
+	return explicit;
+}
+
 /**
  * The saved effects as a complete form draft: every definition present, unset ones reading
  * `default`. Seeding and discarding are the same operation from different triggers, so they share

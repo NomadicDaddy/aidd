@@ -1,8 +1,7 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { default as AlertTriangle } from 'lucide-react/dist/esm/icons/alert-triangle';
 import { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-2';
 import { default as PackagePlus } from 'lucide-react/dist/esm/icons/package-plus';
-import { useEffect, useId, useState } from 'react';
+import { useId, useState } from 'react';
 import { toast } from 'sonner';
 
 import type { ProjectImportAction, ProjectImportCandidateResult } from '../../api/types.ts';
@@ -50,10 +49,13 @@ export function ProjectIngestLane() {
 		signalFilter !== 'all' && { label: 'Signal', value: signalFilter },
 	]);
 
-	useEffect(() => {
+	// A fresh scan clears the selection and the last import's results, during render.
+	const [scannedData, setScannedData] = useState(candidates.data);
+	if (scannedData !== candidates.data) {
+		setScannedData(candidates.data);
 		setSelectedIds(new Set());
 		setResults([]);
-	}, [candidates.data]);
+	}
 
 	const allCandidates = candidates.data?.candidates ?? [];
 	const roots = candidateRoots(allCandidates);

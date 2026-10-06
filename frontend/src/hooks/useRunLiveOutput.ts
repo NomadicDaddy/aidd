@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/refs, react-hooks/set-state-in-effect */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 import type { RunOutputState, RunStatus } from '../api/types.ts';
 
@@ -50,6 +49,14 @@ export function useRunLiveOutput(
 	const query = useRunOutput(id);
 	const [text, setText] = useState('');
 	const [isStreaming, setIsStreaming] = useState(false);
+	// The run the visible text belongs to. Selecting another run clears the view during render; the
+	// buffers behind it are refs and are reset by the effect on `id` below.
+	const [outputId, setOutputId] = useState(id);
+	if (outputId !== id) {
+		setOutputId(id);
+		setText('');
+		setIsStreaming(false);
+	}
 	const idRef = useRef(id);
 	const statusRef = useRef(status);
 	const textRef = useRef('');
@@ -64,8 +71,11 @@ export function useRunLiveOutput(
 	// are trimmed or skipped instead of appended verbatim (which would double the transcript).
 	const snapshotWatermarkRef = useRef(0);
 	const refetchRef = useRef(query.refetch);
-	refetchRef.current = query.refetch;
-	statusRef.current = status;
+	// Refreshed after each commit, ahead of the effects below that read them; never during render.
+	useLayoutEffect(() => {
+		refetchRef.current = query.refetch;
+		statusRef.current = status;
+	});
 
 	// Coalesce rapid run_output chunks into one flush per frame window. A fast backend can
 	// emit dozens of chunks per second; a setText per chunk re-renders the (ever-growing)
@@ -73,14 +83,20 @@ export function useRunLiveOutput(
 	// (so nothing is lost or reordered), and the buffer is flushed to React state at most once per
 	// window. The scheduler races requestAnimationFrame against a setTimeout fallback so a hidden
 	// tab (where rAF is paused) still repaints — an rAF-only coalescer froze the console until a
-	// non-rAF path repainted (see liveOutputFlusher). Created once; the flush reads live refs.
+	// non-rAF path repainted (see liveOutputFlusher). Created once on mount, so the flush reads live
+	// refs outside render; unmount drops any pending frame so a flush never fires into it.
 	const flushSchedulerRef = useRef<FlushScheduler | null>(null);
-	if (flushSchedulerRef.current === null) {
-		flushSchedulerRef.current = createFlushScheduler(() => {
+	useEffect(() => {
+		const scheduler = createFlushScheduler(() => {
 			setText(textRef.current);
 			if (!terminalRef.current) setIsStreaming(true);
 		});
-	}
+		flushSchedulerRef.current = scheduler;
+		return () => {
+			scheduler.cancel();
+			flushSchedulerRef.current = null;
+		};
+	}, []);
 	const scheduleFlush = () => flushSchedulerRef.current?.schedule();
 	const cancelFlush = () => flushSchedulerRef.current?.cancel();
 
@@ -106,13 +122,8 @@ export function useRunLiveOutput(
 		terminalRef.current = isSettledStatus(statusRef.current);
 		snapshotWatermarkRef.current = 0;
 		cancelFlush();
-		setText('');
-		setIsStreaming(false);
 		// cancelFlush only touches refs/state setters, so it needs no dependency entry here.
 	}, [id]);
-
-	// Drop any pending frame on unmount so a flush never fires into an unmounted component.
-	useEffect(() => cancelFlush, []);
 
 	useEffect(() => {
 		const snapshot = query.data;

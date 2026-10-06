@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 
@@ -46,8 +45,12 @@ export function ProjectCreateLane({
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
 	const [descriptionTouched, setDescriptionTouched] = useState(false);
-	const [root, setRoot] = useState('');
-	const [templateName, setTemplateName] = useState(templates[0]?.name ?? '');
+	// Unchosen fields fall back to the first configured root and the first template, derived here
+	// rather than copied into state by an effect.
+	const [chosenRoot, setRoot] = useState('');
+	const root = chosenRoot || firstRoot;
+	const [chosenTemplateName, setTemplateName] = useState('');
+	const templateName = chosenTemplateName || (templates[0]?.name ?? '');
 	const [specKind, setSpecKind] = useState<SpecKind>('none');
 	const [specText, setSpecText] = useState('');
 	const [specPath, setSpecPath] = useState('');
@@ -55,15 +58,6 @@ export function ProjectCreateLane({
 	const [launchTarget, setLaunchTarget] = useState<LaunchTargetValue>({});
 	const [stopBeforeImplementation, setStopBeforeImplementation] = useState(true);
 	const github = useGithubTemplateSource(name, setName);
-
-	useEffect(() => {
-		if (root === '' && firstRoot) setRoot(firstRoot);
-	}, [firstRoot, root]);
-	useEffect(() => {
-		if (lane === 'template' && templateName === '' && templates.length > 0) {
-			setTemplateName(templates[0]?.name ?? '');
-		}
-	}, [lane, templateName, templates]);
 
 	const selectedTemplate =
 		lane === 'template'

@@ -1,6 +1,5 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import { toast } from 'sonner';
 
 import { probeAuth } from '../../api/client.ts';
@@ -22,13 +21,17 @@ export function AuthTokenDialog() {
 	const setToken = useAuthTokenStore((state) => state.setToken);
 	const token = useAuthTokenStore((state) => state.token);
 	const [draft, setDraft] = useState(token);
+	// The token the draft was last seeded from while open. Opening, or a token change while open,
+	// re-seeds the draft during render; null while closed so the next open always re-seeds.
+	const [draftSource, setDraftSource] = useState<null | string>(open ? token : null);
 	const [verifying, setVerifying] = useState(false);
 	const readiness = authTokenDialogReadiness(draft, token, verifying);
 
-	useEffect(() => {
-		if (!open) return;
-		setDraft(token);
-	}, [open, token]);
+	const nextDraftSource = open ? token : null;
+	if (nextDraftSource !== draftSource) {
+		setDraftSource(nextDraftSource);
+		if (nextDraftSource !== null) setDraft(nextDraftSource);
+	}
 
 	async function submit(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -66,8 +69,11 @@ export function AuthTokenDialog() {
 			onClose={closePrompt}
 			open={open}>
 			<DialogPanel className="w-full max-w-md">
-				{/* eslint-disable-next-line @typescript-eslint/no-misused-promises */}
-				<form className="space-y-5 p-5" onSubmit={submit}>
+				<form
+					className="space-y-5 p-5"
+					onSubmit={(event) => {
+						void submit(event);
+					}}>
 					<div>
 						<h2 className="text-base font-semibold text-foreground" id={TITLE_ID}>
 							Access token

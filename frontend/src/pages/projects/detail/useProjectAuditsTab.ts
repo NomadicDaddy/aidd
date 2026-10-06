@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import type { AuditOverrideEffect } from '../../../api/types.ts';
@@ -37,10 +36,11 @@ export function useProjectAuditsTab(projectId: string, projectName: string) {
 		return left.name.localeCompare(right.name);
 	});
 
-	useEffect(() => {
-		const valid = new Set(filtered.map((entry) => entry.name));
-		setSelected((current) => current.filter((name) => valid.has(name)));
-	}, [filtered]);
+	// Audits the filters hide leave the selection, adjusted during render.
+	const filteredNames = new Set(filtered.map((entry) => entry.name));
+	if (selected.some((name) => !filteredNames.has(name))) {
+		setSelected(selected.filter((name) => filteredNames.has(name)));
+	}
 
 	const selectedRunnable = selected.filter((name) =>
 		(audits.data?.entries ?? []).find((entry) => entry.name === name && entry.enabled),

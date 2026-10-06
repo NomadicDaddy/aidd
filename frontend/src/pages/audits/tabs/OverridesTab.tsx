@@ -1,8 +1,8 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
 import type {
+	AuditDefinition,
 	AuditEffect,
 	AuditOverrideEffect,
 	AuditProfileOverrides,
@@ -23,7 +23,7 @@ import {
 	useUpdateProjectAuditOverrides,
 } from '../../../hooks/useAudits.ts';
 import { countActiveFilters, filterRegister } from '../../../lib/filterFields.ts';
-import { countChangedEffects, seedAudits } from './overridesFormState.ts';
+import { countChangedEffects, explicitEffects, seedAudits } from './overridesFormState.ts';
 import { OverridesList } from './OverridesList.tsx';
 import { OverridesRulesCard } from './OverridesRulesCard.tsx';
 
@@ -47,6 +47,10 @@ export function OverridesTab() {
 	const [audits, setAudits] = useState<Record<string, 'default' | AuditOverrideEffect>>({});
 	const [rulesText, setRulesText] = useState('[]');
 	const [rulesError, setRulesError] = useState<null | string>(null);
+	const [seededFrom, setSeededFrom] = useState<{
+		definitions: AuditDefinition[] | undefined;
+		overrides: AuditProfileOverrides | undefined;
+	}>({ definitions: undefined, overrides: undefined });
 	const [query, setQuery] = useState('');
 	const [stateFilter, setStateFilter] = useState<OverridesStateFilter>('all');
 	function resetFilters(): void {
@@ -63,26 +67,26 @@ export function OverridesTab() {
 		},
 	]);
 
-	useEffect(() => {
-		if (!manager.data?.projects.length) return;
-		if (projectId === null) setProjectId(manager.data.projects[0]?.id ?? null);
-	}, [manager.data?.projects, projectId]);
-
-	useEffect(() => {
-		if (!overrides.data) return;
-		setAudits(seedAudits(manager.data?.definitions ?? [], overrides.data.audits));
-		setRulesText(JSON.stringify(overrides.data.rules, null, 2));
+	function seedForm(saved: AuditProfileOverrides): void {
+		setAudits(seedAudits(manager.data?.definitions ?? [], saved.audits));
+		setRulesText(JSON.stringify(saved.rules, null, 2));
 		setRulesError(null);
-	}, [manager.data?.definitions, overrides.data]);
+	}
 
-	const explicitAudits = ((): Record<string, AuditOverrideEffect> => {
-		const explicit: Record<string, AuditOverrideEffect> = {};
-		for (const [name, effect] of Object.entries(audits)) {
-			if (effect === 'default') continue;
-			explicit[name] = effect;
-		}
-		return explicit;
-	})();
+	// Defaults to the first project, and re-seeds the form whenever the saved overrides or the
+	// catalog they are laid over change. Both adjust during render rather than after commit.
+	const firstProjectId = manager.data?.projects[0]?.id;
+	if (projectId === null && firstProjectId) setProjectId(firstProjectId);
+	const seedKey = { definitions: manager.data?.definitions, overrides: overrides.data };
+	if (
+		overrides.data &&
+		(seededFrom.definitions !== seedKey.definitions || seededFrom.overrides !== overrides.data)
+	) {
+		setSeededFrom(seedKey);
+		seedForm(overrides.data);
+	}
+
+	const explicitAudits = explicitEffects(audits);
 
 	const rulesDirty =
 		overrides.data !== undefined && rulesText !== JSON.stringify(overrides.data.rules, null, 2);
@@ -170,10 +174,7 @@ export function OverridesTab() {
 	}
 
 	function discardOverrides(): void {
-		if (!overrides.data) return;
-		setAudits(seedAudits(definitions, overrides.data.audits));
-		setRulesText(JSON.stringify(overrides.data.rules, null, 2));
-		setRulesError(null);
+		if (overrides.data) seedForm(overrides.data);
 	}
 
 	function discardAndChangeProject(): void {

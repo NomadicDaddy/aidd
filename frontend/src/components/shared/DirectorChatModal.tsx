@@ -1,7 +1,6 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { default as Bot } from 'lucide-react/dist/esm/icons/bot';
 import { default as X } from 'lucide-react/dist/esm/icons/x';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 
@@ -41,10 +40,8 @@ export function DirectorChatModal({ onClose, open }: { onClose: () => void; open
 
 	// Default to the most recent chat so a capture lands in an existing conversation
 	// (and is immediately visible there); a fresh session is created lazily on first
-	// send only when none exist yet.
-	useEffect(() => {
-		if (open && !sessionId && firstSessionId) setSessionId(firstSessionId);
-	}, [firstSessionId, open, sessionId]);
+	// send only when none exist yet. Adjusted during render rather than after commit.
+	if (open && !sessionId && firstSessionId) setSessionId(firstSessionId);
 
 	const sending = pendingContent !== null;
 

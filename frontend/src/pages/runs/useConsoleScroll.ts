@@ -34,7 +34,7 @@ export function useConsoleScroll(consoleOpen: boolean, followOn: unknown[]) {
 		const node = scrollRef.current;
 		if (!node) return;
 		node.scrollTop = node.scrollHeight;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- followOn is the caller's dependency list, spread so any change re-pins.
 	}, [consoleOpen, ...followOn]);
 
 	// The follow effect above only fires on new output, so a container that changes size while the

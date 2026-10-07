@@ -239,12 +239,14 @@ describe('the decision is committed with the cycle', () => {
 });
 
 describe('a restart resumes exactly what is owed', () => {
-	test('one cycle recovery failure does not strand the cycles after it', async () => {
+	// Since 0011 the database holds one running cycle at a time, so there are no "cycles after
+	// it" to strand; what remains to prove is that a recovery failure is recorded on the cycle
+	// and does not escape reconciliation.
+	test('a cycle recovery failure is recorded on the cycle, not thrown out of reconciliation', async () => {
 		const h = harness();
 		const dataDir = await testTempDir('aidd-director-reconcile-');
 		try {
 			await seedCycle(h.db, { id: 'cycle_bad', initiator: 'operator' });
-			await seedCycle(h.db, { id: 'cycle_next', initiator: 'operator' });
 			await h.db.insert(runs).values({
 				backend: 'native',
 				id: 'run_bad',
@@ -276,7 +278,6 @@ describe('a restart resumes exactly what is owed', () => {
 
 			const rows = await h.db.select().from(directorCycles);
 			expect(rows.find((row) => row.id === 'cycle_bad')?.status).toBe('failed');
-			expect(rows.find((row) => row.id === 'cycle_next')?.status).toBe('failed');
 		} finally {
 			h.sqlite.close();
 			await removeTempTree(dataDir);

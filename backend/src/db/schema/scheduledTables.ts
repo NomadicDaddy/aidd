@@ -97,6 +97,11 @@ export const scheduledTaskExecutions = sqliteTable(
 	(table) => [
 		index('idx_scheduled_task_executions_task_started').on(table.taskId, table.startedAt),
 		index('idx_scheduled_task_executions_status').on(table.status),
+		// One queued or running occurrence per task, held by the database: claimScheduledTask
+		// remains the admission gate, this is the backstop. Predicate text matches migration 0011.
+		uniqueIndex('uq_scheduled_task_executions_active_task')
+			.on(table.taskId)
+			.where(sql`status IN ('queued', 'running')`),
 		foreignKey({
 			columns: [table.taskId],
 			foreignColumns: [scheduledTasks.id],

@@ -75,13 +75,16 @@ describe('run initiator constraint', () => {
 	test('director cycles carry the same vocabulary under their own constraint', () => {
 		const sqlite = seededDatabase();
 		try {
+			// Only one cycle may be running at a time (uq_director_cycles_running, 0011), so the
+			// earlier cycles are recorded as completed: the initiator vocabulary is the subject
+			// here, and the rejection below must come from its CHECK, not from the index.
 			sqlite.run(
-				`INSERT INTO director_cycles (id, started_at, status, initiator)
-					VALUES ('cycle-operator', 100, 'running', 'operator')`,
+				`INSERT INTO director_cycles (id, started_at, completed_at, status, initiator)
+					VALUES ('cycle-operator', 100, 101, 'completed', 'operator')`,
 			);
 			sqlite.run(
-				`INSERT INTO director_cycles (id, started_at, status, initiator)
-					VALUES ('cycle-automatic', 200, 'running', 'automatic')`,
+				`INSERT INTO director_cycles (id, started_at, completed_at, status, initiator)
+					VALUES ('cycle-automatic', 200, 201, 'completed', 'automatic')`,
 			);
 			sqlite.run(
 				`INSERT INTO director_cycles (id, started_at, status)
@@ -90,10 +93,10 @@ describe('run initiator constraint', () => {
 
 			expect(() =>
 				sqlite.run(
-					`INSERT INTO director_cycles (id, started_at, status, initiator)
-						VALUES ('cycle-bad', 400, 'running', 'schedule')`,
+					`INSERT INTO director_cycles (id, started_at, completed_at, status, initiator)
+						VALUES ('cycle-bad', 400, 401, 'completed', 'schedule')`,
 				),
-			).toThrow();
+			).toThrow(/ck_director_cycles_initiator/);
 
 			expect(
 				sqlite

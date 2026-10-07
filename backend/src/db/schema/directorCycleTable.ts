@@ -7,6 +7,7 @@ import {
 	real,
 	sqliteTable,
 	text,
+	uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
 
 import { scheduledTaskExecutions } from './scheduledTables.ts';
@@ -57,6 +58,12 @@ export const directorCycles = sqliteTable(
 	(table) => [
 		index('idx_director_cycles_scheduled_execution_id').on(table.scheduledTaskExecutionId),
 		index('idx_director_cycles_started_at').on(sql`${table.startedAt} DESC`),
+		// One running cycle at a time, held by the database: startDirectorCycleIfIdle remains the
+		// admission gate, this is the backstop for any writer that bypasses it. Predicate text
+		// matches migration 0011 exactly.
+		uniqueIndex('uq_director_cycles_running')
+			.on(table.status)
+			.where(sql`status = 'running'`),
 		foreignKey({
 			columns: [table.scheduledTaskExecutionId],
 			foreignColumns: [scheduledTaskExecutions.id],

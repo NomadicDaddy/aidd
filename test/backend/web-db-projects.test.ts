@@ -100,6 +100,7 @@ const EXPECTED_MIGRATION_VERSIONS = [
 	'0008_scheduled_directive_target',
 	'0009_system_metrics_timestamp_index',
 	'0010_runs_status_queued',
+	'0011_single_active_row_indexes',
 ];
 
 describe('web database and project APIs', () => {

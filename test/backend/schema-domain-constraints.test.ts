@@ -4,6 +4,7 @@ import { expect, test } from 'bun:test';
 import { getTableName } from 'drizzle-orm';
 
 import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
+import { migrations } from '../../backend/src/db/migrations/registry.ts';
 import { directorCycles, runs } from '../../backend/src/db/schema.ts';
 
 function insertTask(sqlite: Database): void {
@@ -37,6 +38,109 @@ function insertSuggestion(
 		[id, cycleId, dismissedBy],
 	);
 }
+
+// audit-schema-constraints-1790879440: both single-active-row rules were held by command code
+// alone; migration 0011 makes the database hold them too.
+test('the database itself allows one running director cycle and one active execution per task', () => {
+	const sqlite = new Database(':memory:');
+	try {
+		migrateWebDatabase(sqlite);
+		insertTask(sqlite);
+		sqlite.run(
+			"INSERT INTO scheduled_tasks (id,name,target_type,target_json,project_scope,schedule_kind,timezone,created_at,updated_at) VALUES ('other','Other','audit','{}','all','once','UTC',1,1)",
+		);
+		insertCycle(sqlite, 'cycle-1');
+		expect(() => insertCycle(sqlite, 'cycle-2')).toThrow(/UNIQUE constraint failed/);
+		sqlite.run(
+			"UPDATE director_cycles SET status = 'completed', completed_at = 2 WHERE id = 'cycle-1'",
+		);
+		insertCycle(sqlite, 'cycle-2');
+
+		insertExecution(sqlite, 'exec-1', 'all');
+		expect(() => insertExecution(sqlite, 'exec-2', 'all')).toThrow(/UNIQUE constraint failed/);
+		sqlite.run("UPDATE scheduled_task_executions SET status = 'running' WHERE id = 'exec-1'");
+		expect(() => insertExecution(sqlite, 'exec-2', 'all')).toThrow(/UNIQUE constraint failed/);
+		// A skipped or completed second occurrence is history, not a second active row.
+		for (const [id, status] of [
+			['exec-skipped', 'skipped'],
+			['exec-done', 'completed'],
+		] as const) {
+			sqlite.run(
+				"INSERT INTO scheduled_task_executions (id,task_id,due_at,trigger,target_json,project_paths_json,project_scope,status,started_at,completed_at) VALUES (?,'task',1,'manual','{}','[]','all',?,1,1)",
+				[id, status],
+			);
+		}
+		// Another task holds its own active occurrence.
+		sqlite.run(
+			"INSERT INTO scheduled_task_executions (id,task_id,due_at,trigger,target_json,project_paths_json,project_scope,started_at) VALUES ('exec-other','other',1,'manual','{}','[]','all',1)",
+		);
+		expect(
+			sqlite
+				.query<{ n: number }, []>(
+					"SELECT count(*) AS n FROM scheduled_task_executions WHERE status IN ('queued','running')",
+				)
+				.get()?.n,
+		).toBe(2);
+	} finally {
+		sqlite.close();
+	}
+});
+
+test('migration 0011 demotes duplicates already on disk and keeps the newest row active', () => {
+	const sqlite = new Database(':memory:');
+	try {
+		// Apply the chain up to 0010, seed the duplicates the old code could have left, then 0011.
+		const before = migrations.findIndex((m) => m.version === '0011_single_active_row_indexes');
+		expect(before).toBeGreaterThan(0);
+		const tail = migrations.splice(before);
+		try {
+			migrateWebDatabase(sqlite);
+			insertTask(sqlite);
+			sqlite.run(
+				"INSERT INTO director_cycles (id,status,started_at) VALUES ('old','running',1),('new','running',2)",
+			);
+			sqlite.run(
+				"INSERT INTO scheduled_task_executions (id,task_id,due_at,trigger,target_json,project_paths_json,project_scope,status,started_at) VALUES ('e-old','task',1,'manual','{}','[]','all','queued',1),('e-new','task',1,'manual','{}','[]','all','running',2)",
+			);
+		} finally {
+			migrations.push(...tail);
+		}
+		migrateWebDatabase(sqlite);
+		const cycles = sqlite
+			.query<{ failure_reason: null | string; id: string; status: string }, []>(
+				'SELECT id, status, failure_reason FROM director_cycles ORDER BY id',
+			)
+			.all();
+		expect(cycles).toEqual([
+			{ failure_reason: null, id: 'new', status: 'running' },
+			{
+				failure_reason:
+					'Demoted by migration 0011_single_active_row_indexes: a later cycle was already running.',
+				id: 'old',
+				status: 'failed',
+			},
+		]);
+		const executions = sqlite
+			.query<{ completed_at: null | number; id: string; status: string }, []>(
+				'SELECT id, status, completed_at FROM scheduled_task_executions ORDER BY id',
+			)
+			.all();
+		expect(executions).toEqual([
+			{ completed_at: null, id: 'e-new', status: 'running' },
+			{ completed_at: 1, id: 'e-old', status: 'failed' },
+		]);
+		const indexes = sqlite
+			.query<{ name: string }, []>(
+				"SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE 'uq_%' ORDER BY name",
+			)
+			.all()
+			.map((row) => row.name);
+		expect(indexes).toContain('uq_director_cycles_running');
+		expect(indexes).toContain('uq_scheduled_task_executions_active_task');
+	} finally {
+		sqlite.close();
+	}
+});
 
 test('schema facade preserves director cycle and run table identities', () => {
 	expect(getTableName(directorCycles)).toBe('director_cycles');
@@ -115,6 +219,11 @@ test('named domain checks accept every supported value and reject raw invalid wr
 
 		for (const scope of ['all', 'explicit', 'none']) {
 			expect(() => insertExecution(sqlite, `valid-${scope}`, scope)).not.toThrow();
+			// One active occurrence per task since 0011: retire it before the next scope's row.
+			sqlite.run(
+				"UPDATE scheduled_task_executions SET status = 'completed', completed_at = 1 WHERE id = ?",
+				[`valid-${scope}`],
+			);
 		}
 		expect(() => insertExecution(sqlite, 'invalid-scope', 'everything')).toThrow(
 			/ck_scheduled_task_executions_project_scope/,

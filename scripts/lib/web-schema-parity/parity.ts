@@ -1,28 +1,92 @@
 import type { Database } from 'bun:sqlite';
 
-import type { ColumnRow, ForeignKeyRow, IndexInfoRow, TableSqlRow } from './types.ts';
+import type {
+	ColumnRow,
+	DrizzleColumnShape,
+	ForeignKeyRow,
+	IndexInfoRow,
+	TableSqlRow,
+} from './types.ts';
 
 import { getSqliteCheckConstraints } from './constraints.ts';
 
+/**
+ * TEXT primary keys the baseline created without NOT NULL while Drizzle declares them notNull.
+ *
+ * Every row in these tables is written through Drizzle, which supplies the id, so no code path
+ * can leave one empty; rebuilding fifteen tables to add a constraint nothing can violate is not
+ * worth the migration. The list is explicit so that a sixteenth is reported: a new table declares
+ * its TEXT primary key NOT NULL rather than joining it.
+ */
+export const NULLABLE_TEXT_PRIMARY_KEYS: ReadonlySet<string> = new Set([
+	'app_launches.project_path',
+	'diary_entries.id',
+	'director_chat_messages.id',
+	'director_chat_sessions.id',
+	'director_cycles.id',
+	'director_profiles.id',
+	'invocation_events.id',
+	'pipeline_sessions.id',
+	'pipeline_step_results.id',
+	'project_init_failures.id',
+	'runs.id',
+	'scheduled_task_executions.id',
+	'scheduled_tasks.id',
+	'settings.key',
+	'suggestions.id',
+]);
+
+/**
+ * Names first, then the shape of every column both sides have: NOT NULL, declared type and
+ * whether a default is declared. Comparing names alone let a nullable-versus-notNull mismatch
+ * pass for fifteen primary keys. An INTEGER PRIMARY KEY is the rowid and never stores NULL,
+ * whatever table_info reports, so it is exempt from the nullability comparison.
+ */
 export function checkColumnParity(
 	sqlite: Database,
 	tableName: string,
-	drizzleColumnNames: Set<string>,
+	drizzleColumns: DrizzleColumnShape[],
 ): string[] {
 	const mismatches: string[] = [];
 	const pragmaColumns = sqlite.query<ColumnRow, []>(`PRAGMA table_info(${tableName})`).all();
-	const sqliteColumnNames = new Set(pragmaColumns.map((col) => col.name));
+	const sqliteByName = new Map(pragmaColumns.map((col) => [col.name, col]));
+	const drizzleByName = new Map(drizzleColumns.map((col) => [col.name, col]));
 
-	for (const colName of drizzleColumnNames) {
-		if (!sqliteColumnNames.has(colName)) {
+	for (const [colName, drizzle] of drizzleByName) {
+		const row = sqliteByName.get(colName);
+		if (row === undefined) {
 			mismatches.push(
 				`  MISSING COLUMN: ${tableName}.${colName} (in Drizzle, not in SQLite)`,
+			);
+			continue;
+		}
+		const qualified = `${tableName}.${colName}`;
+		const rowidAlias = row.pk > 0 && row.type.toUpperCase() === 'INTEGER';
+		const sqliteNotNull = row.notnull !== 0;
+		if (
+			!rowidAlias &&
+			sqliteNotNull !== drizzle.notNull &&
+			!NULLABLE_TEXT_PRIMARY_KEYS.has(qualified)
+		) {
+			mismatches.push(
+				`  NULLABILITY: ${qualified} (SQLite ${sqliteNotNull ? 'NOT NULL' : 'nullable'}, Drizzle ${drizzle.notNull ? 'notNull' : 'nullable'})`,
+			);
+		}
+		if (row.type.toUpperCase() !== drizzle.sqlType.toUpperCase()) {
+			mismatches.push(
+				`  TYPE: ${qualified} (SQLite ${row.type || '<none>'}, Drizzle ${drizzle.sqlType})`,
+			);
+		}
+		const sqliteHasDefault = row.dflt_value !== null;
+		if (sqliteHasDefault !== drizzle.hasDefault) {
+			mismatches.push(
+				`  DEFAULT: ${qualified} (SQLite ${sqliteHasDefault ? `default ${row.dflt_value}` : 'no default'}, Drizzle ${drizzle.hasDefault ? 'default declared' : 'no default'})`,
 			);
 		}
 	}
 
-	for (const colName of sqliteColumnNames) {
-		if (!drizzleColumnNames.has(colName)) {
+	for (const colName of sqliteByName.keys()) {
+		if (!drizzleByName.has(colName)) {
 			mismatches.push(`  EXTRA COLUMN: ${tableName}.${colName} (in SQLite, not in Drizzle)`);
 		}
 	}

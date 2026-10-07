@@ -1,8 +1,21 @@
 import { Database } from 'bun:sqlite';
 import { expect, test } from 'bun:test';
-import { sql } from 'drizzle-orm';
-import { foreignKey, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { is, sql } from 'drizzle-orm';
+import {
+	foreignKey,
+	getTableConfig,
+	sqliteTable,
+	SQLiteTable,
+	text,
+	uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 
+import { migrateWebDatabase } from '../../backend/src/db/migrate.ts';
+import * as schema from '../../backend/src/db/schema.ts';
+import {
+	checkColumnParity,
+	NULLABLE_TEXT_PRIMARY_KEYS,
+} from '../../scripts/lib/web-schema-parity/parity.ts';
 import { checkConstraintShapes } from '../../scripts/lib/web-schema-parity/shapes.ts';
 
 const parents = sqliteTable('parents', { id: text('id').primaryKey() });
@@ -37,6 +50,88 @@ const matchingIndex =
 
 test('matching foreign-key behavior and partial unique index pass', () => {
 	expect(inspect(matchingIndex)).toEqual([]);
+});
+
+// audit-schema-constraints-1790879440: column parity compared names only, so a nullable column
+// declared notNull in Drizzle, a type change or a dropped default all passed.
+function columnShapes(ddl: string, shapes: Parameters<typeof checkColumnParity>[2]): string[] {
+	const database = new Database(':memory:');
+	try {
+		database.exec(ddl);
+		return checkColumnParity(database, 'things', shapes);
+	} finally {
+		database.close();
+	}
+}
+
+const thingsNotNull = { hasDefault: false, name: 'id', notNull: true, sqlType: 'text' };
+
+test('a nullability mismatch is reported, with the rowid alias and the legacy keys exempt', () => {
+	expect(columnShapes('CREATE TABLE things(id TEXT PRIMARY KEY)', [thingsNotNull])).toEqual([
+		'  NULLABILITY: things.id (SQLite nullable, Drizzle notNull)',
+	]);
+	expect(
+		columnShapes('CREATE TABLE things(id TEXT PRIMARY KEY NOT NULL)', [thingsNotNull]),
+	).toEqual([]);
+	// INTEGER PRIMARY KEY is the rowid: never NULL, whatever table_info says.
+	expect(
+		columnShapes('CREATE TABLE things(id INTEGER PRIMARY KEY)', [
+			{ ...thingsNotNull, sqlType: 'integer' },
+		]),
+	).toEqual([]);
+	expect(NULLABLE_TEXT_PRIMARY_KEYS.has('runs.id')).toBe(true);
+	expect(NULLABLE_TEXT_PRIMARY_KEYS.has('things.id')).toBe(false);
+});
+
+test('a declared type or default-presence mismatch is reported', () => {
+	expect(
+		columnShapes('CREATE TABLE things(id TEXT NOT NULL, n INTEGER)', [
+			thingsNotNull,
+			{ hasDefault: false, name: 'n', notNull: false, sqlType: 'text' },
+		]),
+	).toEqual(['  TYPE: things.n (SQLite INTEGER, Drizzle text)']);
+	expect(
+		columnShapes("CREATE TABLE things(id TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'new')", [
+			thingsNotNull,
+			{ hasDefault: false, name: 'state', notNull: true, sqlType: 'text' },
+		]),
+	).toEqual(["  DEFAULT: things.state (SQLite default 'new', Drizzle no default)"]);
+	expect(
+		columnShapes('CREATE TABLE things(id TEXT NOT NULL, state TEXT NOT NULL)', [
+			thingsNotNull,
+			{ hasDefault: true, name: 'state', notNull: true, sqlType: 'text' },
+		]),
+	).toEqual(['  DEFAULT: things.state (SQLite no default, Drizzle default declared)']);
+});
+
+test('the real migrated schema has no column-shape mismatch', () => {
+	const database = new Database(':memory:');
+	try {
+		migrateWebDatabase(database);
+		const mismatches: string[] = [];
+		let tables = 0;
+		for (const table of Object.values(schema)) {
+			if (!is(table, SQLiteTable)) continue;
+			const config = getTableConfig(table);
+			tables += 1;
+			mismatches.push(
+				...checkColumnParity(
+					database,
+					config.name,
+					config.columns.map((col) => ({
+						hasDefault: col.default !== undefined,
+						name: col.name,
+						notNull: col.notNull,
+						sqlType: col.getSQLType(),
+					})),
+				),
+			);
+		}
+		expect(tables).toBeGreaterThan(10);
+		expect(mismatches).toEqual([]);
+	} finally {
+		database.close();
+	}
 });
 
 test('predicate normalization preserves decimal values', () => {

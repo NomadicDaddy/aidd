@@ -68,7 +68,12 @@ function collectTableMismatches(sqlite: Database): ParityScan {
 		}
 
 		const config = getTableConfig(table);
-		const drizzleColumnNames = new Set(config.columns.map((col) => col.name));
+		const drizzleColumns = config.columns.map((col) => ({
+			hasDefault: col.default !== undefined,
+			name: col.name,
+			notNull: col.notNull,
+			sqlType: col.getSQLType(),
+		}));
 		const drizzleIndexNames = new Set(config.indexes.map((idx) => idx.config.name));
 		const fkFromColumns = new Set<string>();
 
@@ -79,7 +84,7 @@ function collectTableMismatches(sqlite: Database): ParityScan {
 			}
 		}
 
-		allMismatches.push(...checkColumnParity(sqlite, tableName, drizzleColumnNames));
+		allMismatches.push(...checkColumnParity(sqlite, tableName, drizzleColumns));
 		allMismatches.push(...checkIndexParity(sqlite, tableName, drizzleIndexNames));
 		allMismatches.push(...checkForeignKeyParity(sqlite, tableName, fkFromColumns));
 		allMismatches.push(...checkConstraintShapes(sqlite, table));

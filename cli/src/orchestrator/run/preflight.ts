@@ -13,7 +13,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { type createModeHandler } from '../../modes/factory.ts';
 import { writeRunSummary } from './artifacts.ts';
 import { claimSelectedFeatureForIteration } from './feature-scope.ts';
-import { gitDirtyFileCount } from './git.ts';
+import { gitDirtyFileCount, gitDirtySourcePaths } from './git.ts';
 import { endRunIfClaimsKeepVanishing } from './run-ending.ts';
 import {
 	type MoveFn,
@@ -32,7 +32,20 @@ export async function handleDirtyTreeSkip(
 	// Exclude aidd-owned .aidd/ metadata from the gate: it is write-allowlisted separately
 	// and intake's own metadata writes must not block the audit steps intake runs next.
 	const dirtyFileCount = await gitDirtyFileCount(runRepoDir(plan), { excludeAiddMetadata: true });
-	if (dirtyFileCount <= plan.dirtyTreeThreshold) return undefined;
+	if (dirtyFileCount <= plan.dirtyTreeThreshold) {
+		// Under the threshold the run proceeds, but in the live tree the operator's uncommitted
+		// work is exposed to the agent (most of all to an external CLI started with permission
+		// bypass, where the bash deny-list does not apply), so say so once, with the paths.
+		if (dirtyFileCount > 0 && plan.worktree === undefined) {
+			const paths = (await gitDirtySourcePaths(runRepoDir(plan))) ?? [];
+			const shown = paths.slice(0, 5).join(', ');
+			const rest = paths.length > 5 ? `, … ${String(paths.length - 5)} more` : '';
+			console.warn(
+				`[orchestrator] ${String(dirtyFileCount)} uncommitted file(s) in the live tree are exposed to the agent (${shown}${rest}); --worktree isolates the run.`,
+			);
+		}
+		return undefined;
+	}
 	const blockedAt = new Date().toISOString();
 	const summaryText = `Dirty working tree (${dirtyFileCount} files) exceeds threshold (${plan.dirtyTreeThreshold}); skipping run.`;
 	console.warn(`[orchestrator] ${summaryText}`);

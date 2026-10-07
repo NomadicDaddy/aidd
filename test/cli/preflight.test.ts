@@ -1,11 +1,13 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
 import { parseArgs } from 'aidd-shared/args/index';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import { createModeHandler } from '../../cli/src/modes/factory.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
+import { handleDirtyTreeSkip } from '../../cli/src/orchestrator/run/preflight.ts';
+import type { OrchestratorDeps, RunAccumulator } from '../../cli/src/orchestrator/run/types.ts';
 import {
 	checkExplicitCompletedFeature,
 	writeCompletedFeatureRunSummary,
@@ -631,5 +633,77 @@ describe('assertProjectForRun project directory', () => {
 	// --web and --director never target a project, so they must not be gated on one existing.
 	test('skips the check for modes that do not target a project', async () => {
 		await expect(assertProjectForRun(parseArgs(['--web']))).resolves.toBeUndefined();
+	});
+});
+
+// audit-git-destructive-safety-1790863167: under the threshold the live-tree gate proceeded in
+// silence, so the operator was never told their uncommitted work was exposed to the agent.
+describe('dirty-tree gate under the threshold', () => {
+	async function repoWithCommit(): Promise<string> {
+		const dir = await testTempDir('aidd-preflight-dirty-');
+		const git = async (...args: string[]): Promise<void> => {
+			const proc = Bun.spawn(['git', ...args], {
+				cwd: dir,
+				stderr: 'pipe',
+				stdout: 'pipe',
+				windowsHide: true,
+			});
+			if ((await proc.exited) !== 0) throw new Error(`git ${args.join(' ')} failed`);
+		};
+		await git('init');
+		await git('config', 'user.email', 'test@test');
+		await git('config', 'user.name', 'test');
+		await writeFile(join(dir, 'tracked.ts'), 'original\n', 'utf8');
+		await git('add', 'tracked.ts');
+		await git('commit', '-q', '-m', 'init');
+		return dir;
+	}
+
+	async function gate(dir: string): Promise<{ result: number | undefined; warnings: string[] }> {
+		const plan = resolveRunPlan(parseArgs(['--project-dir', dir, '--cli', 'native']), config);
+		const warnings: string[] = [];
+		const warn = spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+			warnings.push(args.map(String).join(' '));
+		});
+		try {
+			const result = await handleDirtyTreeSkip(
+				{ rootDir: dir, store: new FileAiddStore(dir) } as unknown as OrchestratorDeps,
+				plan,
+				{ runId: 'run-dirty' } as unknown as RunAccumulator,
+				1,
+				() => {},
+			);
+			return { result, warnings };
+		} finally {
+			warn.mockRestore();
+		}
+	}
+
+	test('one uncommitted file proceeds with a warning naming it and --worktree', async () => {
+		const dir = await repoWithCommit();
+		try {
+			await writeFile(join(dir, 'tracked.ts'), 'edited\n', 'utf8');
+			const { result, warnings } = await gate(dir);
+			expect(result).toBeUndefined();
+			expect(warnings).toHaveLength(1);
+			expect(warnings[0]).toContain(
+				'1 uncommitted file(s) in the live tree are exposed to the agent',
+			);
+			expect(warnings[0]).toContain('tracked.ts');
+			expect(warnings[0]).toContain('--worktree');
+		} finally {
+			await removeTempTree(dir);
+		}
+	});
+
+	test('a clean tree proceeds without a warning', async () => {
+		const dir = await repoWithCommit();
+		try {
+			const { result, warnings } = await gate(dir);
+			expect(result).toBeUndefined();
+			expect(warnings).toEqual([]);
+		} finally {
+			await removeTempTree(dir);
+		}
 	});
 });

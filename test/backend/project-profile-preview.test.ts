@@ -137,7 +137,22 @@ describe('project profile preview', () => {
 				effect: 'required',
 				name: 'PERFORMANCE',
 			});
-			expect(effectOf(preview, 'LIGHTHOUSE')?.effect).toBe('disabled');
+			// "Nothing else" is proven against the same profile with no override: every other
+			// audit's cell is identical.
+			const plain = await makeProject();
+			try {
+				const without = await createProjectProfilePreview(
+					contextFor(plain),
+					'p0',
+					lowExposureLocal,
+				);
+				expect(preview.audits.filter((audit) => audit.name !== 'PERFORMANCE')).toEqual(
+					without.audits.filter((audit) => audit.name !== 'PERFORMANCE'),
+				);
+				expect(effectOf(without, 'PERFORMANCE')?.effect).toBe('disabled');
+			} finally {
+				await removeTempTree(plain);
+			}
 			expect(preview.isLowExposureLocal).toBe(true);
 			expect(await readFile(profilePath, 'utf8')).toBe(saved);
 		} finally {
@@ -145,22 +160,35 @@ describe('project profile preview', () => {
 		}
 	});
 
-	test('the batch form previews each project under its own key', async () => {
-		const projectDir = await makeProject();
+	test('the batch form previews each project under its own key with its own overrides', async () => {
+		const overridden = await makeProject();
+		const plain = await makeProject();
 		try {
-			const previews = await createProjectProfilePreviews(contextFor(projectDir), [
+			await writeFile(
+				join(overridden, '.aidd', 'audit-profile-overrides.json'),
+				`${JSON.stringify({ audits: { PERFORMANCE: 'required' }, rules: [], updatedAt: '2026-10-07T00:00:00.000Z', version: 1 })}\n`,
+			);
+			const dirs: Record<string, string> = { hardened: plain, local: overridden };
+			const context = {
+				projectService: { resolveDiscoveredProject: async (id: string) => dirs[id] },
+				rootDir: AIDD_ROOT,
+			} as unknown as WebContext;
+			const previews = await createProjectProfilePreviews(context, [
 				{ profile: lowExposureLocal, projectId: 'local' },
-				{ profile: fullHardening, projectId: 'hardened' },
+				{ profile: lowExposureLocal, projectId: 'hardened' },
 			]);
 			expect(Object.keys(previews).sort()).toEqual(['hardened', 'local']);
-			expect(previews.local?.isLowExposureLocal).toBe(true);
-			expect(previews.hardened?.requiresFullHardening).toBe(true);
+			// Each project is read through its own directory: the override reaches one and not
+			// the other, with the same profile on both.
+			expect(effectOf(previews.local!, 'PERFORMANCE')?.effect).toBe('required');
+			expect(effectOf(previews.hardened!, 'PERFORMANCE')?.effect).toBe('disabled');
 		} finally {
-			await removeTempTree(projectDir);
+			await removeTempTree(overridden);
+			await removeTempTree(plain);
 		}
 	});
 
-	test('an invalid profile is refused before anything is read', async () => {
+	test('an invalid facet is refused and names the facet', async () => {
 		const projectDir = await makeProject();
 		try {
 			let refusal = '';

@@ -21,17 +21,9 @@ import type {
 	TriumvirateStageName,
 } from './types.ts';
 
+import { type BackendEventLoopResult, consumeBackendStream } from '../backend-event-loop.ts';
 import { BackendSafetyEnvelope } from '../backend-safety.ts';
-import { CompletionUsageDrain } from '../completion-usage-drain.ts';
-import {
-	formatBackendStarted,
-	formatIdleWarningLine,
-	formatThinkingLine,
-	formatToolArgs,
-} from '../formatters.ts';
 import { OrchestratorProgressReporter } from '../progress.ts';
-import { acceptedCompletedFeatureFromEvents } from '../run/feature-scope.ts';
-import { waitForCommitOrTimeout } from '../run/git.ts';
 import { summarizeSelectedWork } from './metadata.ts';
 
 export function runStageWithOptions(
@@ -74,14 +66,8 @@ export function runStageWithOptions(
 export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 	process.stdout.write(`\n[triumvirate] ${input.stage} starting with ${input.role.backend}\n`);
 	const startedAtMs = Date.now();
-	const startedAt = new Date(startedAtMs).toISOString();
 	const controller = new AbortController();
 	const events: AgentEvent[] = [];
-	const completionMarkerGrace = 'completion_marker_grace' as const;
-	let acceptedCompletionFeature: string | undefined;
-	let completionCommittedDuringGrace = false;
-	let completionFinalizedBeforeBackendExit = false;
-	const completionUsageDrain = new CompletionUsageDrain();
 	const envelope = new BackendSafetyEnvelope({
 		controller,
 		onLogLine: (line) => {
@@ -111,87 +97,28 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 		},
 	)[Symbol.asyncIterator]();
 	let closeStream = true;
+	let loop: BackendEventLoopResult | undefined;
 	try {
-		while (true) {
-			const nextEvent = stream.next();
-			let stepResult =
-				acceptedCompletionFeature !== undefined && input.completion !== undefined
-					? await Promise.race([
-							nextEvent,
-							waitForCommitOrTimeout(
-								input.cwd,
-								input.completion.gitHeadBefore,
-								input.completion.graceMs,
-							).then((outcome) => {
-								completionCommittedDuringGrace = outcome.committed;
-								return completionMarkerGrace;
-							}),
-						])
-					: await nextEvent;
-			if (stepResult === completionMarkerGrace) {
-				const drainedEvent = await completionUsageDrain.afterCommit(
-					input.role.backend,
-					nextEvent,
-				);
-				if (drainedEvent !== undefined) stepResult = drainedEvent;
-			}
-			if (stepResult === completionMarkerGrace) {
-				completionFinalizedBeforeBackendExit = true;
-				controller.abort('completion_marker_accepted');
-				break;
-			}
-			if (stepResult.done) {
-				closeStream = false;
-				if (acceptedCompletionFeature === undefined && input.completion !== undefined) {
-					acceptedCompletionFeature = await acceptedCompletedFeatureFromEvents(
-						input.completion.store,
-						events,
-						input.work,
-					);
-				}
-				if (
-					acceptedCompletionFeature !== undefined &&
-					input.completion?.gitHeadBefore !== undefined
-				) {
-					const outcome = await waitForCommitOrTimeout(
-						input.cwd,
-						input.completion.gitHeadBefore,
-						input.completion.graceMs,
-					);
-					completionCommittedDuringGrace = outcome.committed;
-					completionFinalizedBeforeBackendExit = true;
-				}
-				break;
-			}
-			const event = stepResult.value;
-			completionUsageDrain.record(event);
-			if (event.type !== 'assistant_delta') events.push(event);
-			progress.recordAgentEvent(event);
-			await input.onAgentEvent?.(event);
-			if ((await envelope.observe(event)) === 'abort_flailing') break;
-			if (event.type === 'started') {
-				process.stdout.write(formatBackendStarted(event.backend, event.pid));
-				process.stdout.write(formatThinkingLine(event.backend));
-			} else if (event.type === 'idle_warning') {
-				process.stdout.write(formatIdleWarningLine(event.afterMs));
-			} else if (event.type === 'assistant_text') {
-				process.stdout.write(event.chunk.endsWith('\n') ? event.chunk : `${event.chunk}\n`);
-				if (input.completion !== undefined && acceptedCompletionFeature === undefined) {
-					acceptedCompletionFeature = await acceptedCompletedFeatureFromEvents(
-						input.completion.store,
-						events,
-						input.work,
-					);
-					if (acceptedCompletionFeature !== undefined) {
-						progress.setStage('completion_marker_grace', {
-							last: `accepted ${acceptedCompletionFeature}`,
-						});
-					}
-				}
-			} else if (event.type === 'tool_call') {
-				process.stdout.write(`· ${event.tool}${formatToolArgs(event.args)}\n`);
-			}
-		}
+		loop = await consumeBackendStream({
+			backend: input.role.backend,
+			completion:
+				input.completion !== undefined
+					? {
+							cwd: input.cwd,
+							gitHeadBefore: input.completion.gitHeadBefore,
+							graceMs: input.completion.graceMs,
+							store: input.completion.store,
+							work: input.work,
+						}
+					: undefined,
+			controller,
+			envelope,
+			events,
+			onAgentEvent: input.onAgentEvent,
+			progress,
+			stream,
+		});
+		closeStream = loop.closeStream;
 		progress.setStage('stage_complete', { last: `events ${events.length}` });
 	} finally {
 		if (closeStream) await stream.return?.();
@@ -199,14 +126,37 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 		if (reapLine) process.stdout.write(reapLine);
 		progress.stop();
 	}
+	return shapeStageResult(input, events, {
+		completionCommittedDuringGrace: loop?.completionCommittedDuringGrace ?? false,
+		completionFinalizedBeforeBackendExit: loop?.completionFinalizedBeforeBackendExit ?? false,
+		flailingDetected: envelope.flailingDetected,
+		startedAtMs,
+		wallClockTimedOut: envelope.wallClockTimedOut,
+	});
+}
+
+interface StageOutcome {
+	completionCommittedDuringGrace: boolean;
+	completionFinalizedBeforeBackendExit: boolean;
+	flailingDetected: boolean;
+	startedAtMs: number;
+	wallClockTimedOut: boolean;
+}
+
+// The run result and the persisted stage artifact, from the transcript and the loop's outcome.
+function shapeStageResult(
+	input: StageRunInput,
+	events: AgentEvent[],
+	outcome: StageOutcome,
+): StageRunResult {
 	const endedAtMs = Date.now();
 	const structuredResult = extractStructuredResult(events);
 	const stageMetrics = metricsFromEvents(events);
 	const result: AgentRunResult = {
 		events,
-		exitCode: completionFinalizedBeforeBackendExit
+		exitCode: outcome.completionFinalizedBeforeBackendExit
 			? orchestratorExitCodes.success
-			: envelope.flailingDetected
+			: outcome.flailingDetected
 				? orchestratorExitCodes.flailing
 				: exitCodeFromEvents(events),
 		filesModified: filesModifiedFromEvents(events),
@@ -218,7 +168,7 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 		assistantText: assistantText(events),
 		backend: input.role.backend,
 		cwdKind: input.cwdKind,
-		durationMs: endedAtMs - startedAtMs,
+		durationMs: endedAtMs - outcome.startedAtMs,
 		endedAt: new Date(endedAtMs).toISOString(),
 		exitCode: result.exitCode,
 		metrics: stageMetrics,
@@ -226,23 +176,25 @@ export async function runStage(input: StageRunInput): Promise<StageRunResult> {
 		role: input.stage,
 		selectedWork: summarizeSelectedWork(input.work),
 		stage: input.stage,
-		startedAt,
+		startedAt: new Date(outcome.startedAtMs).toISOString(),
 		transcript: result.transcript,
 	};
 	if (input.role.model !== undefined) artifact.model = input.role.model;
-	if (completionCommittedDuringGrace) artifact.completionCommittedDuringGrace = true;
-	if (completionFinalizedBeforeBackendExit) artifact.completionFinalizedBeforeBackendExit = true;
+	if (outcome.completionCommittedDuringGrace) artifact.completionCommittedDuringGrace = true;
+	if (outcome.completionFinalizedBeforeBackendExit) {
+		artifact.completionFinalizedBeforeBackendExit = true;
+	}
 	if (structuredResult !== undefined) artifact.structuredResult = structuredResult;
-	if (envelope.flailingDetected) artifact.flailingDetected = true;
-	if (envelope.wallClockTimedOut) artifact.wallClockTimedOut = true;
+	if (outcome.flailingDetected) artifact.flailingDetected = true;
+	if (outcome.wallClockTimedOut) artifact.wallClockTimedOut = true;
 	return {
 		artifact,
-		completionCommittedDuringGrace,
-		completionFinalizedBeforeBackendExit,
-		flailingDetected: envelope.flailingDetected,
+		completionCommittedDuringGrace: outcome.completionCommittedDuringGrace,
+		completionFinalizedBeforeBackendExit: outcome.completionFinalizedBeforeBackendExit,
+		flailingDetected: outcome.flailingDetected,
 		metrics: stageMetrics,
 		result,
-		wallClockTimedOut: envelope.wallClockTimedOut,
+		wallClockTimedOut: outcome.wallClockTimedOut,
 	};
 }
 

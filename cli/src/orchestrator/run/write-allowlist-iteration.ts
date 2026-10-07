@@ -146,11 +146,8 @@ export async function enforceWriteAllowlistForIteration(
 	);
 	let state = toState(input);
 	if (!input.stopRequestedAfterRun) {
-		const retry = await runBackendStreamLoop(
-			input.deps,
-			input.plan,
-			input.work,
-			{
+		const retry = await runBackendStreamLoop({
+			compiled: {
 				...input.compiled,
 				text: buildWriteAllowlistRetryPrompt(
 					input.compiled.text,
@@ -158,12 +155,15 @@ export async function enforceWriteAllowlistForIteration(
 					violations,
 				),
 			},
-			input.controller,
-			input.iteration,
-			input.startedAtMs,
-			input.runStartedAtMs,
-			input.gitHeadBefore,
-		);
+			controller: input.controller,
+			deps: input.deps,
+			gitHeadBefore: input.gitHeadBefore,
+			iteration: input.iteration,
+			iterationStartedAtMs: input.startedAtMs,
+			plan: input.plan,
+			runStartedAtMs: input.runStartedAtMs,
+			work: input.work,
+		});
 		state = {
 			activeProgress: retry.progress,
 			completionCommittedDuringGrace: retry.completionCommittedDuringGrace,

@@ -56,17 +56,17 @@ export async function executeIteration(
 	input: ExecuteIterationInput,
 ): Promise<ExecuteIterationOutcome> {
 	if (!input.plan.triumvirate) {
-		const streamResult = await runBackendStreamLoop(
-			input.deps,
-			input.plan,
-			input.work,
-			input.compiled,
-			input.controller,
-			input.iteration,
-			input.startedAtMs,
-			input.runStartedAtMs,
-			input.gitHeadBefore,
-		);
+		const streamResult = await runBackendStreamLoop({
+			compiled: input.compiled,
+			controller: input.controller,
+			deps: input.deps,
+			gitHeadBefore: input.gitHeadBefore,
+			iteration: input.iteration,
+			iterationStartedAtMs: input.startedAtMs,
+			plan: input.plan,
+			runStartedAtMs: input.runStartedAtMs,
+			work: input.work,
+		});
 		return {
 			kind: 'complete',
 			state: {

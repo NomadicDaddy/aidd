@@ -110,17 +110,17 @@ describe('run teardown reaps leaked children (runBackendStreamLoop)', () => {
 					id: 'feature-core',
 					kind: 'feature',
 				};
-				const result = await runBackendStreamLoop(
-					{ backend, rootDir, store: new FileAiddStore(projectDir) },
+				const result = await runBackendStreamLoop({
+					compiled: { fragments: [], snapshotKey: '', text: 'prompt' },
+					controller: new AbortController(),
+					deps: { backend, rootDir, store: new FileAiddStore(projectDir) },
+					gitHeadBefore: undefined,
+					iteration: 1,
+					iterationStartedAtMs: Date.now(),
 					plan,
+					runStartedAtMs: Date.now(),
 					work,
-					{ fragments: [], snapshotKey: '', text: 'prompt' },
-					new AbortController(),
-					1,
-					Date.now(),
-					Date.now(),
-					undefined,
-				);
+				});
 				expect(result.exitCode).toBe(orchestratorExitCodes.success);
 				// The leak was real: the server answered while the run was live, and it was
 				// still alive the moment the backend stream ended.

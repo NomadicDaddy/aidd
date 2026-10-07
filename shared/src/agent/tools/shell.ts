@@ -1,7 +1,7 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 
 import { killProcessTree } from '../../lib/processTree.ts';
-import { buildToolSubprocessEnv } from '../../subprocess-env.ts';
+import { AGENT_MARKER_ENV, buildToolSubprocessEnv } from '../../subprocess-env.ts';
 import { augmentEnvPathForGitBash, resolvedBash } from './bash-runtime.ts';
 import {
 	excludedSearchDirs,
@@ -32,7 +32,12 @@ export async function runBash(args: Record<string, unknown>, cwd: string): Promi
 			// PATH is augmented with Git's toolchain dirs: a non-login `bash.exe -c` never
 			// self-prepends /usr/bin, so on a stock Windows PATH (Git\cmd only) every coreutil
 			// would otherwise exit 127 "command not found".
-			env: augmentEnvPathForGitBash(bash.path, buildToolSubprocessEnv()),
+			// The agent marker is what the repository's pre-push force-push guard reads; the
+			// policy above denies the spellings it knows, the hook judges the ref update itself.
+			env: augmentEnvPathForGitBash(bash.path, {
+				...buildToolSubprocessEnv(),
+				[AGENT_MARKER_ENV]: '1',
+			}),
 			stderr: 'pipe',
 			stdout: 'pipe',
 			windowsHide: true,

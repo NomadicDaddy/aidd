@@ -17,6 +17,7 @@ const VALUE_SHORT: Record<string, string> = {
 	apply: 'pC',
 	checkout: 'bB',
 	clean: 'e',
+	push: 'o',
 	restore: 's',
 	switch: 'cC',
 };
@@ -24,6 +25,7 @@ const VALUE_SHORT: Record<string, string> = {
 /** Long options whose value may be the next word, for the subcommands that grant an exemption. */
 const VALUE_LONG: Record<string, string[]> = {
 	clean: ['--exclude'],
+	push: ['--push-option', '--repo', '--receive-pack', '--exec'],
 	restore: ['--source', '--conflict', '--pathspec-from-file'],
 };
 
@@ -40,6 +42,8 @@ function hasOption(args: string[], ...names: string[]): boolean {
 interface ReadOptions {
 	/** Long options and anything else before `--` that was not consumed as a value. */
 	long: string[];
+	/** Words that are neither an option nor an option's value: a remote, a refspec, a path. */
+	positional: string[];
 	/** Every short flag letter git would act on. */
 	short: Set<string>;
 }
@@ -53,7 +57,7 @@ function optionWords(args: string[]): string[] {
 function readOptions(subcommand: string, args: string[]): ReadOptions {
 	const valueShort = VALUE_SHORT[subcommand] ?? '';
 	const valueLong = VALUE_LONG[subcommand] ?? [];
-	const read: ReadOptions = { long: [], short: new Set() };
+	const read: ReadOptions = { long: [], positional: [], short: new Set() };
 	let nextIsValue = false;
 	for (const arg of optionWords(args)) {
 		if (nextIsValue) {
@@ -72,6 +76,8 @@ function readOptions(subcommand: string, args: string[]): ReadOptions {
 				}
 				read.short.add(letter);
 			}
+		} else {
+			read.positional.push(arg);
 		}
 	}
 	return read;
@@ -125,6 +131,31 @@ function restoreDiscards(read: ReadOptions, args: string[], root: string): boole
 	return !staged || worktree;
 }
 
+/**
+ * A push that can rewrite or delete what the remote holds. The flags are read as git reads them,
+ * so `--force-with-lease` and `--force-if-includes` count as well as `--force`, and a refspec that
+ * forces (`+main`) or deletes (`:gone`) counts without any flag. A remote name never starts with
+ * either character. Fast-forward pushes are not judged here; the repository's pre-push guard
+ * refuses a rewrite whatever it was spelled as.
+ */
+function pushRewritesRemote(read: ReadOptions): boolean {
+	if (read.short.has('f') || read.short.has('d')) return true;
+	if (
+		hasOption(
+			read.long,
+			'--force',
+			'--force-with-lease',
+			'--force-if-includes',
+			'--delete',
+			'--mirror',
+			'--prune',
+		)
+	) {
+		return true;
+	}
+	return read.positional.some((word) => word.startsWith('+') || word.startsWith(':'));
+}
+
 export function isDestructive(subcommand: string, args: string[], root: string): boolean {
 	const read = readOptions(subcommand, args);
 	const forces = hasOption(read.long, '--force') || read.short.has('f');
@@ -142,6 +173,8 @@ export function isDestructive(subcommand: string, args: string[], root: string):
 			return forces || read.short.has('a') || hasOption(read.long, '--all');
 		case 'clean':
 			return cleanDeletes(read);
+		case 'push':
+			return pushRewritesRemote(read);
 		case 'read-tree':
 			return hasOption(read.long, '--reset') || read.short.has('u');
 		case 'reset':
@@ -166,6 +199,7 @@ export const JUDGED = new Set([
 	'checkout',
 	'checkout-index',
 	'clean',
+	'push',
 	'read-tree',
 	'reset',
 	'restore',

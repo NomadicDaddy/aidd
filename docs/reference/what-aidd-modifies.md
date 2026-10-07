@@ -78,7 +78,8 @@ your project's own `deploy` script; aidd never stores or handles deploy credenti
   Creating a project from a template or GitHub repo is the other init path: aidd shallow-clones the
   source, deletes the template's `.git`, and inits a fresh repository in its place.
 - **Git hooks:** wherever aidd creates `.aidd/` in a git repository the project itself owns, it
-  copies `.githooks/` in (a `pre-push` guard that blocks a push carrying `.aidd/` metadata, and a
+  copies `.githooks/` in (a `pre-push` hook that blocks a push carrying `.aidd/` metadata and
+  refuses a push that rewrites or deletes remote history when an aidd agent issues it, and a
   `pre-commit` secret-leak guard), points the repository's local `core.hooksPath` at `.githooks`,
   and stages those files so they survive a clone. It refuses and leaves everything alone if the
   repository already has its own `core.hooksPath`, real `.git/hooks`, or a `pre-push` aidd did not
@@ -102,9 +103,13 @@ your project's own `deploy` script; aidd never stores or handles deploy credenti
 - **Worktrees:** runs configured with `--worktree` execute in a throwaway git worktree (under your
   temp dir, or the panel's data dir) on a `aidd/run-<id>` branch, which is removed when the run ends.
 - The native agent's shell policy rejects recognized destructive git commands (`git reset --hard`,
-  `git checkout .`, `git clean -fdx`). This command-text check is not a guarantee against every way
-  executable code can discard work; see the shell boundary below. External backend CLIs apply
-  their own permission controls.
+  `git checkout .`, `git clean -fdx`, `git push --force`). This command-text check is not a
+  guarantee against every way executable code can discard work; see the shell boundary below.
+  External backend CLIs apply their own permission controls.
+- Every process that acts for an agent, an external backend CLI or the native agent's bash tool,
+  carries `AIDD_AGENT=1`. The `pre-push` hook above reads it and refuses a non-fast-forward push or
+  a remote deletion from such a process, whichever CLI or shell issued the command. The operator's
+  own pushes are not affected.
 
 ## Configuration
 
@@ -166,8 +171,8 @@ will do on your behalf, so it's worth understanding:
 ## Native agent shell boundary
 
 The native agent's Bash tool inspects command text before execution. Its policy rejects recognized
-home-directory references (`$HOME`/`$USERPROFILE`), environment dumps, destructive git commands,
-and paths it detects escaping the workspace. These are lexical checks, not an operating-system
+home-directory references (`$HOME`/`$USERPROFILE`), environment dumps, destructive git commands
+(including a forced push or a remote deletion), and paths it detects escaping the workspace. These are lexical checks, not an operating-system
 filesystem sandbox.
 
 **Accepted limitation on Windows:** an interpreter invoked through the tool can construct paths

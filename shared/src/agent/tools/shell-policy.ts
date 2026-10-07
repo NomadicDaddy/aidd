@@ -122,9 +122,10 @@ function evaluateBashWorkspacePolicy(command: string, cwd: string): null | strin
 
 	// --- Destructive git command deny-list (Critical: silent worktree destruction) ---
 	// These discard uncommitted work without naming a path, so the write-allowlist guard's
-	// dirty-path diff cannot detect them. See shell-policy-git.ts for the forms recognised.
+	// dirty-path diff cannot detect them; a forced push or a remote deletion leaves the tree
+	// untouched and rewrites the remote instead. See shell-policy-git.ts for the forms recognised.
 	if (usesDestructiveGit(command, root)) {
-		return 'ERROR: bash command uses a destructive git operation (e.g. git reset --hard, git checkout ., git clean) that can silently discard uncommitted work outside the write-allowlist boundary';
+		return 'ERROR: bash command uses a destructive git operation (e.g. git reset --hard, git checkout ., git clean, git push --force) that can silently discard uncommitted work outside the write-allowlist boundary or rewrite remote history';
 	}
 
 	// --- Dangerous construct deny-list (Critical: eval/subshell/base64 bypass) ---

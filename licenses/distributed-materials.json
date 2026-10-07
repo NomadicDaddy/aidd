@@ -159,6 +159,7 @@
 			"scaffolding/.editorconfig",
 			"scaffolding/.gitattributes",
 			"scaffolding/.githooks/aidd-history-guard.sh",
+			"scaffolding/.githooks/force-push-guard.sh",
 			"scaffolding/.githooks/leak-guard.sh",
 			"scaffolding/.githooks/pre-commit-leak-guard-only",
 			"scaffolding/.githooks/pre-push",

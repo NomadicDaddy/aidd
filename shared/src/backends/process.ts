@@ -11,7 +11,7 @@ import { resolveCommand, shouldDetachProcessBackend } from './process-command.ts
 
 // Re-exported so this module stays the single import surface for running a process backend.
 export { resolveCommand, shouldDetachProcessBackend } from './process-command.ts';
-import { buildBackendSubprocessEnv } from '../subprocess-env.ts';
+import { AGENT_MARKER_ENV, buildBackendSubprocessEnv } from '../subprocess-env.ts';
 import { createPlainBackendParser, finalizePlainBackend } from './parsers/plain.ts';
 
 export interface ProcessBackendOptions {
@@ -70,7 +70,10 @@ export async function* runProcessBackend(
 			// aidd after Ctrl-C/terminal-close. POSIX still detaches to keep the existing
 			// process-group isolation behavior there.
 			detached: shouldDetachProcessBackend(),
-			env: buildBackendSubprocessEnv(options.env),
+			// The agent marker goes under the caller's overrides, never over them: a backend that
+			// needs it unset has no such need today, and the hook that reads it must be able to
+			// trust that every CLI aidd starts carries it.
+			env: buildBackendSubprocessEnv({ [AGENT_MARKER_ENV]: '1', ...options.env }),
 			stderr: 'pipe',
 			stdin: 'pipe',
 			stdout: 'pipe',

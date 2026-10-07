@@ -2,7 +2,9 @@
  * Destructive git commands, recognised from the words bash would run.
  *
  * These discard uncommitted work without naming a path the write-allowlist diff can see: they make
- * the tree cleaner, not dirtier. The check used to be one regex over the raw command, and every
+ * the tree cleaner, not dirtier. A push that forces, deletes or prunes is judged here too: it leaves
+ * the tree alone and rewrites the remote, which no post-run diff can see at all. The check used to
+ * be one regex over the raw command, and every
  * spelling it did not literally contain went through. It now splits the command into simple
  * commands, finds each `git` word, and judges every subcommand it could be running by its
  * arguments. Where the text cannot settle the question (a variable in a judged command, an option

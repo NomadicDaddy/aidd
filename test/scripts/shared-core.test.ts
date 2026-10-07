@@ -254,6 +254,60 @@ describe('shared core check and write', () => {
 		expect(report.findings.filter(isFatal)).toHaveLength(1);
 	});
 
+	// The first change to .githooks/pre-push since aidd 3.0.0 (2026-10-06) read all sixty targets as
+	// diverged-hook, unwritable: each held exactly the previous owner copy, which matched no CURRENT
+	// variant. A generation the owner once committed is the stale copy drift was defined for.
+	test('a hook equal to a generation the owner once committed is stale drift, not a diverged chain', () => {
+		const fleet = testTempDirSync('aidd-shared-core-generations-');
+		const owner = join(fleet, 'owner-repo');
+		const generation1 = '#!/bin/sh\n# ours\nbash .githooks/guard.sh\n';
+		const generation2 =
+			'#!/bin/sh\n# ours\nbash .githooks/guard.sh\nbash .githooks/second.sh\n';
+		put(owner, 'package.json', JSON.stringify({ name: 'owner-repo' }));
+		put(owner, 'roster.json', JSON.stringify(['stale', 'handmade']));
+		put(owner, '.githooks/pre-push', generation1);
+		put(owner, '.githooks/guard.sh', 'guard\n');
+		gitCommitAll(owner);
+		put(owner, '.githooks/pre-push', generation2);
+		put(owner, '.githooks/second.sh', 'second\n');
+		const hooked: SharedCoreGroup = {
+			...GUARDS,
+			files: [
+				{ disposition: 'synced', source: 'pre-push' },
+				{ disposition: 'synced', source: 'guard.sh' },
+				{ disposition: 'synced', source: 'second.sh' },
+			],
+			hook: 'pre-push',
+			hookMarker: '# ours',
+		};
+		const handmade = '#!/bin/sh\n# ours\nbash .githooks/guard.sh\necho mine\n';
+		for (const name of ['stale', 'handmade']) {
+			const target = join(fleet, name);
+			put(target, '.githooks/guard.sh', 'guard\n');
+			put(target, '.githooks/pre-push', name === 'stale' ? generation1 : handmade);
+			gitCommitAll(target);
+			Bun.spawnSync(['git', '-C', target, 'config', 'core.hooksPath', '.githooks'], {
+				windowsHide: true,
+			});
+		}
+
+		const report = checkGroup(hooked, fleet, owner);
+		const hookFinding = (target: string) =>
+			report.findings.find((f) => f.target === target && f.kind !== 'uncovered');
+		expect(hookFinding('stale')?.kind).toBe('drift');
+		expect(hookFinding('stale')?.destination).toBeDefined();
+		expect(hookFinding('handmade')?.kind).toBe('diverged-hook');
+		expect(hookFinding('handmade')?.destination).toBeUndefined();
+
+		applyFindings(report.findings, fleet, false);
+		expect(readFileSync(join(fleet, 'stale', '.githooks', 'pre-push'), 'utf8')).toBe(
+			generation2,
+		);
+		expect(readFileSync(join(fleet, 'handmade', '.githooks', 'pre-push'), 'utf8')).toBe(
+			handmade,
+		);
+	});
+
 	// serialtcp, 2026-10-01: core.autocrlf checked its LF hooks out as CRLF and every one of them
 	// read as drifted, although the committed content was the owner's exactly.
 	test('a checkout that differs only in line endings is current, not drifted', () => {

@@ -109,8 +109,9 @@ git tag -a vX.Y.Z -m "aidd vX.Y.Z — <summary>"
 git push origin vX.Y.Z
 ```
 
-The tag push runs the pre-push guards: the history guard (no `.aidd/` in the pushed range) and the
-screenshot guard (the selected immutable capture proves the tagged candidate). If the screenshot
+The tag push runs the pre-push guards: the force-push guard (inert outside an agent process), the
+history guard (no `.aidd/` in the pushed range) and the screenshot guard (the selected immutable
+capture proves the tagged candidate). If the screenshot
 guard fires, resolve the reported failure, rebuild and recapture as above, and retry. Do not bypass
 it or move an already published tag.
 

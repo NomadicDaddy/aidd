@@ -98,6 +98,15 @@ const backendEnvKeys = [
 	'XDG_CONFIG_HOME',
 ];
 
+/**
+ * Set to `1` in every process that acts for an agent: an external coding CLI aidd launches and the
+ * native agent's bash tool. Nothing in aidd reads it; the repository's `pre-push` force-push guard
+ * does, and refuses to rewrite or delete remote history while it is set. Those CLIs run with
+ * permission bypass, outside aidd's bash deny-list, so the marker is what lets a git hook tell an
+ * agent's push from the operator's own.
+ */
+export const AGENT_MARKER_ENV = 'AIDD_AGENT';
+
 function pickEnv(keys: string[], source: NodeJS.ProcessEnv): Record<string, string> {
 	const env: Record<string, string> = {};
 	for (const key of keys) {

@@ -37,7 +37,7 @@ const HOOK = 'pre-push';
  * shipped a hook calling a guard it did not deliver for that exact reason. scripts/ imports this;
  * shared/ never imports scripts/.
  */
-export const GUARDS = ['aidd-history-guard.sh', 'screenshot-guard.sh'];
+export const GUARDS = ['force-push-guard.sh', 'aidd-history-guard.sh', 'screenshot-guard.sh'];
 const MARKER = 'aidd history guard';
 
 export const COMMIT_HOOK = 'pre-commit';

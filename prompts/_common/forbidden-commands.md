@@ -31,6 +31,7 @@
 - Forbidden unless explicitly authorized: `git reset --hard`, `git push --force`, `git push -f`, `git branch -D` (on shared branches), `rm -rf` on project directories, `DROP TABLE`, `DROP DATABASE`
 - **Why:** These cannot be undone safely. The user must own the decision.
 - **What to do instead:** Surface the situation, propose the destructive action with rationale, wait for approval.
+- **Enforced for pushes:** the repository's `pre-push` guard refuses a push that rewrites or deletes remote history when an aidd agent issues it. A refusal means the push needs the operator, not another spelling or a bypass flag.
 
 ### Constraint Verification
 

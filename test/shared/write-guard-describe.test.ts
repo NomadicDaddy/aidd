@@ -74,6 +74,20 @@ describe('describeWriteGuardRevert', () => {
 			['notes.md'],
 			'isolated',
 		);
+		// The failed revert established nothing about the file, so the text does not say what
+		// the path holds (spirit review of 33132535).
+		expect(text).toBe(
+			'uncommitted edits were discarded and are NOT restored, and the revert failed, so check what the path holds now: notes.md',
+		);
+		expect(text).not.toContain('committed version is in place');
+	});
+
+	test('a tracked discard the revert restored is described as the committed version in place', () => {
+		const text = describeWriteGuardRevert(
+			[violation('notes.md', { destructivelyDiscarded: true })],
+			[],
+			'isolated',
+		);
 		expect(text).toBe(
 			'uncommitted edits were discarded and are NOT restored (the committed version is in place): notes.md',
 		);

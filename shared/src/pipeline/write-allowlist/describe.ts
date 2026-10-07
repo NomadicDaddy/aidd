@@ -50,9 +50,21 @@ export function describeWriteGuardRevert(
 	} else if (discarded.length < violations.length) {
 		parts.push('writes reverted');
 	}
-	if (lost.length > 0) {
+	// "The committed version is in place" is a claim about the file on disk. The isolated revert
+	// checks the baseline commit's version out, so where it succeeded the claim is true; where it
+	// failed nothing established what the path holds, and the message must not say it did. A
+	// shared checkout never reverts, and the discard itself (a reset, a checkout of the tree)
+	// is what left the committed version there.
+	const unverified = checkout === 'shared' ? [] : lost.filter((p) => revertFailed.includes(p));
+	const inPlace = lost.filter((path) => !unverified.includes(path));
+	if (inPlace.length > 0) {
 		parts.push(
-			`uncommitted edits were discarded and are NOT restored (the committed version is in place): ${shown(lost)}`,
+			`uncommitted edits were discarded and are NOT restored (the committed version is in place): ${shown(inPlace)}`,
+		);
+	}
+	if (unverified.length > 0) {
+		parts.push(
+			`uncommitted edits were discarded and are NOT restored, and the revert failed, so check what the path holds now: ${shown(unverified)}`,
 		);
 	}
 	if (unrecoverable.length > 0) {

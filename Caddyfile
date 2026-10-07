@@ -1,3 +1,11 @@
+# Local HTTPS reverse proxy for the aidd control panel (https://aidd.local -> 127.0.0.1:3210).
+#
+# A proxied request arrives forwarded, and the panel's bearer-token guard denies forwarded
+# requests unless a token is configured, so this file only works with both of these set:
+#   - AIDD_WEB_AUTH_TOKEN in the backend's environment (web.authToken; the UI sends it on every
+#     request and on the WebSocket upgrade), and
+#   - "https://aidd.local" in web.allowedOrigins, or the Origin check answers 403.
+# Without them every proxied request is a 401. See docs/reference/deployment.md, "Reverse proxy".
 aidd.local {
 	tls internal
 	encode zstd gzip

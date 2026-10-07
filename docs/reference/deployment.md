@@ -117,6 +117,16 @@ To verify a LAN-facing listener without changing config:
 bun scripts/crawltest.ts --local-network --base-url http://demo-host:3210 --local-network-host demo-host --page /settings
 ```
 
+### Reverse proxy
+
+The tracked root `Caddyfile` fronts the panel at `https://aidd.local` with Caddy's internal CA and
+proxies to `127.0.0.1:3210`. A proxied request reaches the backend as a forwarded request, and the
+bearer-token guard denies forwarded requests that carry no valid token even though the listener is
+loopback, so the proxy only works with `AIDD_WEB_AUTH_TOKEN` set in the backend's environment and
+`https://aidd.local` listed in `web.allowedOrigins`. Without the token every proxied request is a
+401; without the origin entry the browser's requests are 403. `web.allowRemote` can stay `false`:
+the backend itself still binds loopback.
+
 ## Log And Data Locations
 
 All runtime state is written under the repository root:

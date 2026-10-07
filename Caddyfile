@@ -5,7 +5,7 @@
 #   - AIDD_WEB_AUTH_TOKEN in the backend's environment (web.authToken; the UI sends it on every
 #     request and on the WebSocket upgrade), and
 #   - "https://aidd.local" in web.allowedOrigins, or the Origin check answers 403.
-# Without them every proxied request is a 401. See docs/reference/deployment.md, "Reverse proxy".
+# Without them every proxied API request is a 401. See docs/reference/deployment.md, "Reverse proxy".
 aidd.local {
 	tls internal
 	encode zstd gzip

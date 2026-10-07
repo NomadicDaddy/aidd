@@ -35,7 +35,8 @@ export async function handleDirtyTreeSkip(
 	if (dirtyFileCount <= plan.dirtyTreeThreshold) {
 		// Under the threshold the run proceeds, but in the live tree the operator's uncommitted
 		// work is exposed to the agent (most of all to an external CLI started with permission
-		// bypass, where the bash deny-list does not apply), so say so once, with the paths.
+		// bypass, where the bash deny-list does not apply), so say so at each gate pass, with the
+		// paths: once per iteration, not once per run.
 		if (dirtyFileCount > 0 && plan.worktree === undefined) {
 			const paths = (await gitDirtySourcePaths(runRepoDir(plan))) ?? [];
 			const shown = paths.slice(0, 5).join(', ');

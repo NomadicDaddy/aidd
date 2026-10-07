@@ -123,8 +123,9 @@ The tracked root `Caddyfile` fronts the panel at `https://aidd.local` with Caddy
 proxies to `127.0.0.1:3210`. A proxied request reaches the backend as a forwarded request, and the
 bearer-token guard denies forwarded requests that carry no valid token even though the listener is
 loopback, so the proxy only works with `AIDD_WEB_AUTH_TOKEN` set in the backend's environment and
-`https://aidd.local` listed in `web.allowedOrigins`. Without the token every proxied request is a
-401; without the origin entry the browser's requests are 403. `web.allowRemote` can stay `false`:
+`https://aidd.local` listed in `web.allowedOrigins`. Without the token every proxied request under
+`/api/` is a 401 (the guard covers the API, not the static panel assets); without the origin entry
+the browser's requests are 403. `web.allowRemote` can stay `false`:
 the backend itself still binds loopback.
 
 ## Log And Data Locations
@@ -178,8 +179,10 @@ create a fresh database. Take a copy first if the history matters to you; nothin
 **Start refused by the writer lock:** `data/aidd-panel.db.lock` records the backend that holds the
 database. A holder from a different host, from before the current boot, or older than 30 days is
 reclaimed automatically; a lock whose recorded process is alive on this host is not. If a start is
-refused and no backend is actually running, confirm nothing is listening on the configured port
-(`curl http://127.0.0.1:3210/api/v1/health` fails), remove `data/aidd-panel.db.lock`, and start
+refused, establish that the backend is actually gone before touching the lock: the process id the
+lock file records must no longer exist (`Get-Process -Id <pid>` or `ps -p <pid>` finds nothing) and
+nothing is listening on the configured port. A failed health request on its own proves neither; a
+backend can be alive and not yet serving. Only then remove `data/aidd-panel.db.lock` and start
 again. Do not remove it while a backend is serving.
 
 **Rollback:**

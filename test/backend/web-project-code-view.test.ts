@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { WebContext } from '../../backend/src/context.ts';
@@ -56,6 +56,38 @@ async function makeRepo(): Promise<string> {
 }
 
 describe('project code view service', () => {
+	// The stat loop runs in batches of 64; a tree larger than several batches, with a tracked
+	// file missing from the working tree, pins that batching keeps every path exactly once,
+	// with its own size, drops the absent one, and still sorts the result.
+	test('a tree of 200+ tracked files is listed once each, sized, sorted, without a deleted one', async () => {
+		const repoDir = await makeRepo();
+		try {
+			await mkdir(join(repoDir, 'many'), { recursive: true });
+			const expected = new Map<string, number>();
+			for (let index = 0; index < 210; index += 1) {
+				const name = `many/file-${String(index).padStart(3, '0')}.ts`;
+				const body = `export const n${String(index)} = ${'x'.repeat(index)};\n`;
+				await writeFile(join(repoDir, name), body);
+				expected.set(name, Buffer.byteLength(body));
+			}
+			await git(repoDir, 'add', 'many');
+			await git(repoDir, 'commit', '-m', 'feat: many files');
+			await rm(join(repoDir, 'many', 'file-100.ts'));
+			expected.delete('many/file-100.ts');
+
+			const result = await readProjectCodeTree(repoDir);
+			expect(result.state).toBe('ok');
+			const listed = result.files.filter((file) => file.path.startsWith('many/'));
+			expect(listed.map((file) => file.path)).toEqual([...expected.keys()].sort());
+			for (const file of listed) expect(file.sizeBytes).toBe(expected.get(file.path) ?? -1);
+			const paths = result.files.map((file) => file.path);
+			expect(paths).toEqual([...paths].sort((left, right) => left.localeCompare(right)));
+			expect(new Set(paths).size).toBe(paths.length);
+		} finally {
+			await removeTempTree(repoDir);
+		}
+	});
+
 	test('lists git-tracked files and excludes ignored untracked files', async () => {
 		const repoDir = await makeRepo();
 		try {

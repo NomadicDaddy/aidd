@@ -20,6 +20,8 @@ export type { ProjectCodeFileResult, ProjectCodeTreeResult } from './codeViewTyp
 
 const commandTimeoutMs = 5_000;
 const maxTreeFiles = 10_000;
+/** Paths stat'ed concurrently per batch: enough to hide the per-call latency, few enough not to open thousands of handles at once. */
+const STAT_BATCH_SIZE = 64;
 const maxCodeFileBytes = 768 * 1024;
 
 function failureTree(state: ProjectCodeTreeState, reason: string): ProjectCodeTreeResult {
@@ -104,15 +106,24 @@ export async function readProjectCodeTree(projectPath: string): Promise<ProjectC
 	const truncated = allPaths.length > maxTreeFiles;
 	const visiblePaths = truncated ? allPaths.slice(0, maxTreeFiles) : allPaths;
 	const files: ProjectCodeFileEntry[] = [];
-	for (const path of visiblePaths) {
-		const stat = await statOrNull(resolve(projectPath, path));
-		if (!stat?.isFile()) continue;
-		files.push({
-			language: languageForPath(path),
-			name: nameForPath(path),
-			path,
-			sizeBytes: stat.size,
-		});
+	// Stat in bounded batches rather than one await per path: at the 10,000-file cap the
+	// sequential loop was 10,000 round trips through the event loop per tree request.
+	for (let start = 0; start < visiblePaths.length; start += STAT_BATCH_SIZE) {
+		const batch = visiblePaths.slice(start, start + STAT_BATCH_SIZE);
+		const stats = await Promise.all(
+			batch.map((path) => statOrNull(resolve(projectPath, path))),
+		);
+		for (let index = 0; index < batch.length; index += 1) {
+			const path = batch[index];
+			const stat = stats[index];
+			if (path === undefined || !stat?.isFile()) continue;
+			files.push({
+				language: languageForPath(path),
+				name: nameForPath(path),
+				path,
+				sizeBytes: stat.size,
+			});
+		}
 	}
 	files.sort((left, right) => left.path.localeCompare(right.path));
 	recordDataMovement({

@@ -1,4 +1,5 @@
 import { statOrNull } from '../fsHelpers.ts';
+import { type GitOutput, runGit } from './runGit.ts';
 
 export type ProjectGitStatusState =
 	'clean' | 'conflicted' | 'dirty' | 'error' | 'not-a-repo' | 'project-missing';
@@ -19,13 +20,6 @@ export interface ProjectGitStatusMapEntry {
 	id: string;
 	path: string;
 	status: ProjectGitStatusSummary;
-}
-
-interface GitOutput {
-	exitCode: number;
-	stderr: string;
-	stdout: string;
-	timedOut: boolean;
 }
 
 const commandTimeoutMs = 3_000;
@@ -51,42 +45,12 @@ const emptyStatus: Omit<ProjectGitStatusSummary, 'state'> = {
 	untracked: 0,
 };
 
-async function runGitStatus(projectPath: string): Promise<GitOutput> {
-	let subprocess: ReturnType<typeof Bun.spawn>;
-	try {
-		subprocess = Bun.spawn(
-			['git', 'status', '--porcelain=v1', '--branch', '--untracked-files=all'],
-			{
-				cwd: projectPath,
-				stderr: 'pipe',
-				stdin: 'ignore',
-				stdout: 'pipe',
-				windowsHide: true,
-			},
-		);
-	} catch (err) {
-		const stderr = err instanceof Error ? err.message : String(err);
-		return { exitCode: 1, stderr, stdout: '', timedOut: false };
-	}
-	const readStream = (stream: unknown): Promise<string> =>
-		stream instanceof ReadableStream ? new Response(stream).text() : Promise.resolve('');
-	const settled = (async () => {
-		const [stdout, stderr, exitCode] = await Promise.all([
-			readStream(subprocess.stdout),
-			readStream(subprocess.stderr),
-			subprocess.exited,
-		]);
-		return { exitCode, stderr, stdout };
-	})();
-	const race = await Promise.race([
-		settled,
-		Bun.sleep(commandTimeoutMs).then(() => 'timeout' as const),
-	]);
-	if (race === 'timeout') {
-		subprocess.kill();
-		return { exitCode: 1, stderr: 'git status timed out', stdout: '', timedOut: true };
-	}
-	return { ...race, timedOut: false };
+function runGitStatus(projectPath: string): Promise<GitOutput> {
+	return runGit(
+		projectPath,
+		['status', '--porcelain=v1', '--branch', '--untracked-files=all'],
+		commandTimeoutMs,
+	);
 }
 
 function parseBranchLine(
@@ -150,7 +114,7 @@ export async function readProjectGitStatus(projectPath: string): Promise<Project
 	const dirStat = await statOrNull(projectPath);
 	if (!dirStat?.isDirectory()) return failure('project-missing');
 	const result = await runGitStatus(projectPath);
-	if (result.exitCode === 0) return parsePorcelain(result.stdout);
+	if (result.ok) return parsePorcelain(result.stdout);
 	if (/not a git repository/i.test(result.stderr)) return failure('not-a-repo');
 	return failure('error');
 }

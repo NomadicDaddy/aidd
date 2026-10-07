@@ -13,55 +13,14 @@ import { pathIsInside } from '../../paths.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { statOrNull } from '../fsHelpers.ts';
 import { languageForPath } from '../git/repoLanguages.ts';
+import { runGit } from '../git/runGit.ts';
 import { readProjectCodeImageFile } from './codeViewImages.ts';
 
 export type { ProjectCodeFileResult, ProjectCodeTreeResult } from './codeViewTypes.ts';
 
-interface GitOutput {
-	ok: boolean;
-	stderr: string;
-	stdout: string;
-	timedOut: boolean;
-}
-
 const commandTimeoutMs = 5_000;
 const maxTreeFiles = 10_000;
 const maxCodeFileBytes = 768 * 1024;
-
-async function runGit(cwd: string, args: string[]): Promise<GitOutput> {
-	let subprocess: ReturnType<typeof Bun.spawn>;
-	try {
-		subprocess = Bun.spawn(['git', ...args], {
-			cwd,
-			stderr: 'pipe',
-			stdin: 'ignore',
-			stdout: 'pipe',
-			windowsHide: true,
-		});
-	} catch (err) {
-		const stderr = err instanceof Error ? err.message : String(err);
-		return { ok: false, stderr, stdout: '', timedOut: false };
-	}
-	const readStream = (stream: unknown): Promise<string> =>
-		stream instanceof ReadableStream ? new Response(stream).text() : Promise.resolve('');
-	const settled = (async () => {
-		const [stdout, stderr, exitCode] = await Promise.all([
-			readStream(subprocess.stdout),
-			readStream(subprocess.stderr),
-			subprocess.exited,
-		]);
-		return { exitCode, stderr, stdout };
-	})();
-	const race = await Promise.race([
-		settled,
-		Bun.sleep(commandTimeoutMs).then(() => 'timeout' as const),
-	]);
-	if (race === 'timeout') {
-		subprocess.kill();
-		return { ok: false, stderr: `git ${args[0]} timed out`, stdout: '', timedOut: true };
-	}
-	return { ok: race.exitCode === 0, stderr: race.stderr, stdout: race.stdout, timedOut: false };
-}
 
 function failureTree(state: ProjectCodeTreeState, reason: string): ProjectCodeTreeResult {
 	return { files: [], reason, state, totalFiles: 0, truncated: false };
@@ -85,7 +44,11 @@ async function detectWorkTree(projectPath: string): Promise<null | ProjectCodeTr
 	if (!dirStat?.isDirectory()) {
 		return failureTree('project-missing', 'The project directory does not exist on disk.');
 	}
-	const probe = await runGit(projectPath, ['rev-parse', '--is-inside-work-tree']);
+	const probe = await runGit(
+		projectPath,
+		['rev-parse', '--is-inside-work-tree'],
+		commandTimeoutMs,
+	);
 	if (probe.ok && probe.stdout.trim() === 'true') return null;
 	if (probe.timedOut)
 		return failureTree('error', 'git timed out while inspecting the repository.');
@@ -109,7 +72,11 @@ function nameForPath(path: string): string {
 }
 
 async function gitTrackedPath(projectPath: string, normalizedPath: string): Promise<boolean> {
-	const result = await runGit(projectPath, ['ls-files', '--error-unmatch', '--', normalizedPath]);
+	const result = await runGit(
+		projectPath,
+		['ls-files', '--error-unmatch', '--', normalizedPath],
+		commandTimeoutMs,
+	);
 	return result.ok;
 }
 
@@ -124,7 +91,7 @@ export async function readProjectCodeTree(projectPath: string): Promise<ProjectC
 	const notRepo = await detectWorkTree(projectPath);
 	if (notRepo) return notRepo;
 
-	const tracked = await runGit(projectPath, ['ls-files', '-z']);
+	const tracked = await runGit(projectPath, ['ls-files', '-z'], commandTimeoutMs);
 	if (!tracked.ok) {
 		return failureTree(
 			tracked.timedOut ? 'error' : 'not-a-repo',

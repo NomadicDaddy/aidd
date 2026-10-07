@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { statOrNull } from '../fsHelpers.ts';
 import { countLines, languageForPath } from './repoLanguages.ts';
+import { runGit } from './runGit.ts';
 
 export type RepositoryInfoState = 'error' | 'not-a-repo' | 'ok' | 'project-missing';
 
@@ -59,47 +60,6 @@ const maxAuthors = 8;
 // ASCII unit separator: a delimiter that cannot appear in a commit hash, author, date, or subject.
 const FIELD_SEP = '';
 const LOG_FORMAT = `--format=%H${FIELD_SEP}%an${FIELD_SEP}%aI${FIELD_SEP}%s`;
-
-interface GitOutput {
-	ok: boolean;
-	stderr: string;
-	stdout: string;
-	timedOut: boolean;
-}
-
-// Bun.spawn (never node:child_process) — on Windows the latter leaks the HTTP listen socket into
-// the child and orphans the port. Argv array means no shell interpolation of the project path.
-async function runGit(cwd: string, args: string[], timeoutMs: number): Promise<GitOutput> {
-	let subprocess: ReturnType<typeof Bun.spawn>;
-	try {
-		subprocess = Bun.spawn(['git', ...args], {
-			cwd,
-			stderr: 'pipe',
-			stdin: 'ignore',
-			stdout: 'pipe',
-			windowsHide: true,
-		});
-	} catch (err) {
-		const stderr = err instanceof Error ? err.message : String(err);
-		return { ok: false, stderr, stdout: '', timedOut: false };
-	}
-	const readStream = (stream: unknown): Promise<string> =>
-		stream instanceof ReadableStream ? new Response(stream).text() : Promise.resolve('');
-	const settled = (async () => {
-		const [stdout, stderr, exitCode] = await Promise.all([
-			readStream(subprocess.stdout),
-			readStream(subprocess.stderr),
-			subprocess.exited,
-		]);
-		return { exitCode, stderr, stdout };
-	})();
-	const race = await Promise.race([settled, Bun.sleep(timeoutMs).then(() => 'timeout' as const)]);
-	if (race === 'timeout') {
-		subprocess.kill();
-		return { ok: false, stderr: `git ${args[0]} timed out`, stdout: '', timedOut: true };
-	}
-	return { ok: race.exitCode === 0, stderr: race.stderr, stdout: race.stdout, timedOut: false };
-}
 
 function nonEmptyLines(text: string): string[] {
 	return text.split(/\r?\n/).filter((line) => line.trim().length > 0);

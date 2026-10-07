@@ -47,7 +47,12 @@ async function collectCappedStdout(
 	stdout: ReadableStream<Uint8Array>,
 ): Promise<{ received: number; text: string; timedOut: boolean; truncated: boolean }> {
 	const reader = stdout.getReader();
-	const deadline = Bun.sleep(diffTimeoutMs).then(() => 'timeout' as const);
+	// A cleared handle, not Bun.sleep: a sleep would keep the event loop open for the rest of the
+	// timeout after the patch finished.
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const deadline = new Promise<'timeout'>((resolve) => {
+		timer = setTimeout(() => resolve('timeout'), diffTimeoutMs);
+	});
 	const chunks: Uint8Array[] = [];
 	let received = 0;
 	let kept = 0;
@@ -72,6 +77,7 @@ async function collectCappedStdout(
 			}
 		}
 	} finally {
+		clearTimeout(timer);
 		reader.releaseLock();
 	}
 	if (truncated || timedOut) subprocess.kill();

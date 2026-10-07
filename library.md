@@ -1,1 +1,0 @@
-- IF documenting project changes, release notes, version bumps, or commit bundles → read [[D]]

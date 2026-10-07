@@ -51,6 +51,36 @@ describe('describeWriteGuardRevert', () => {
 		);
 	});
 
+	// audit-git-destructive-safety-1790863167: a never-committed file that git clean removed was
+	// described as "the committed version is in place" and, in an isolated checkout, also listed
+	// as "REVERT FAILED, still dirty"; neither is true, the file is simply gone.
+	test('a discarded path that was never committed is reported as deleted and not recoverable', () => {
+		const text = describeWriteGuardRevert(
+			[violation('scratch/new.md', { destructivelyDiscarded: true, untracked: true })],
+			['scratch/new.md'],
+			'isolated',
+		);
+		expect(text).toBe('deleted and NOT recoverable (it was never committed): scratch/new.md');
+		expect(text).not.toContain('REVERT FAILED');
+		expect(text).not.toContain('committed version is in place');
+	});
+
+	test('a mixed list keeps every path in exactly one bucket', () => {
+		const text = describeWriteGuardRevert(
+			[
+				violation('src/a.ts'),
+				violation('notes.md', { destructivelyDiscarded: true }),
+				violation('scratch/new.md', { destructivelyDiscarded: true, untracked: true }),
+				violation('src/b.ts'),
+			],
+			['src/b.ts', 'scratch/new.md'],
+			'isolated',
+		);
+		expect(text).toBe(
+			'REVERT FAILED, still dirty: src/b.ts; uncommitted edits were discarded and are NOT restored (the committed version is in place): notes.md; deleted and NOT recoverable (it was never committed): scratch/new.md',
+		);
+	});
+
 	test('truncates a long path list', () => {
 		const many = Array.from({ length: 10 }, (_, index) => `f${String(index)}.ts`);
 		expect(

@@ -20,7 +20,21 @@ export function describeWriteGuardRevert(
 		const rest = paths.length > limit ? ` … and ${paths.length - limit} more` : '';
 		return `${paths.slice(0, limit).join(', ')}${rest}`;
 	};
-	const lost = violations.filter((item) => item.destructivelyDiscarded).map((item) => item.path);
+	// A discarded path with no committed version (untracked or added at baseline) is gone outright:
+	// nothing restores it, and listing it as "still dirty" or "the committed version is in place"
+	// would both be false. The revert that "fails" on it is the same absence, not a second problem.
+	const discarded = violations.filter((item) => item.destructivelyDiscarded);
+	// In a shared checkout every path is reported as not reverted by design, so only an isolated
+	// checkout's failed revert says anything about the file.
+	const unrecoverable = discarded
+		.filter(
+			(item) => item.untracked || (checkout !== 'shared' && revertFailed.includes(item.path)),
+		)
+		.map((item) => item.path);
+	const lost = discarded
+		.filter((item) => !unrecoverable.includes(item.path))
+		.map((item) => item.path);
+	const stillDirty = revertFailed.filter((path) => !unrecoverable.includes(path));
 	const parts: string[] = [];
 	if (checkout === 'shared') {
 		const present = violations
@@ -31,15 +45,18 @@ export function describeWriteGuardRevert(
 				`NOT reverted, left as they are: this checkout is shared, so the run's writes cannot be told from yours: ${shown(present)}`,
 			);
 		}
-	} else if (revertFailed.length > 0) {
-		parts.push(`REVERT FAILED, still dirty: ${shown(revertFailed)}`);
-	} else if (lost.length < violations.length) {
+	} else if (stillDirty.length > 0) {
+		parts.push(`REVERT FAILED, still dirty: ${shown(stillDirty)}`);
+	} else if (discarded.length < violations.length) {
 		parts.push('writes reverted');
 	}
 	if (lost.length > 0) {
 		parts.push(
 			`uncommitted edits were discarded and are NOT restored (the committed version is in place): ${shown(lost)}`,
 		);
+	}
+	if (unrecoverable.length > 0) {
+		parts.push(`deleted and NOT recoverable (it was never committed): ${shown(unrecoverable)}`);
 	}
 	return parts.join('; ');
 }

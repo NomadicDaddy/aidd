@@ -157,7 +157,7 @@ export async function runSmokeQc(args: SmokeQcArgs, projectRoot = cwd()): Promis
 	);
 	if (shouldWarnProjectedWallTime(projectedMs)) {
 		console.warn(
-			`[WARN] Uncached steps project to ${(projectedMs / 1000).toFixed(1)}s, which may exceed a 10-minute agent tool timeout. Run bun run test:coverage separately first, or re-invoke bun run smoke:qc after a timeout; completed steps are cached.`,
+			`[WARN] Uncached steps project to ${(projectedMs / 1000).toFixed(1)}s, which may exceed a 10-minute agent tool timeout. Re-invoke bun run smoke:qc after a timeout; completed steps are cached and the run resumes from the first uncached step.`,
 		);
 	}
 

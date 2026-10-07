@@ -32,8 +32,10 @@ The cold gate measured 656.2 seconds on 2026-09-06, with `test:coverage` taking 
 (77.4%). Across 1,101 recorded suite runs, test duration was p50 328.7 seconds, p90 431.7 seconds,
 and at most 670.6 seconds. A ten-minute agent tool timeout is therefore insufficient for a cold
 run. Each completed step writes its pass to `scripts/smoke-cache.json`, so invoking
-`bun run smoke:qc` again after a tool timeout resumes through the normal cache. On a cold tree, run
-`bun run test:coverage` first and then `bun run smoke:qc` so the longest step completes separately.
+`bun run smoke:qc` again after a tool timeout resumes through the normal cache. Only the smoke:qc
+runner records a pass: running `bun run test:coverage` on its own completes the suite without
+caching it, so the next `smoke:qc` runs it again. `bun run qc:status` shows the current per-step
+durations.
 
 Steps (in order):
 

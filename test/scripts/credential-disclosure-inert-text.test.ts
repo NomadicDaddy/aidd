@@ -21,6 +21,20 @@ describe('credential-disclosure: a credential path that is only text', () => {
 		expect(commandCredentialLabel(command, 'ok')).toBeUndefined();
 	});
 
+	// audit-secret-handling-retention-1790879440: a CRLF log kept `\r` on the terminator line, so it
+	// never matched and every command after the heredoc was swallowed as body.
+	test('a CRLF-joined heredoc still ends at its terminator, so the read after it is judged', () => {
+		const lines = [
+			'T=/tmp/work && cat > "$T/cmds.txt" <<\'EOF\'',
+			'N cat ~/.ssh/id_ed25519',
+			'EOF',
+			'cat ~/.aidd/config.json',
+		];
+		expect(commandCredentialLabel(lines.join('\r\n'), 'x')).toBe('aidd user config');
+		expect(commandCredentialLabel(lines.join('\n'), 'x')).toBe('aidd user config');
+		expect(commandCredentialLabel(lines.slice(0, 2).join('\r\n'), 'x')).toBeUndefined();
+	});
+
 	test('a quoted heredoc written with tee, or with the redirect after it, is data too', () => {
 		expect(
 			commandCredentialLabel("tee list.txt <<'EOF'\ncat ~/.aidd/config.json\nEOF", 'x'),

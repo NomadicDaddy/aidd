@@ -74,7 +74,9 @@ export function stripInertHeredocs(command: string): string {
 		const stripTabs = operator[1] === '-';
 		let end = index + 1;
 		while (end < lines.length) {
-			const candidate = lines[end] ?? '';
+			// A CRLF log leaves the carriage return on every line; the shell would see the
+			// terminator, so the comparison must too, or the rest of the command reads as body.
+			const candidate = (lines[end] ?? '').replace(/\r$/, '');
 			if ((stripTabs ? candidate.replace(/^\t+/, '') : candidate) === delimiter) break;
 			end += 1;
 		}

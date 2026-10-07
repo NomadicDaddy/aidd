@@ -26,6 +26,30 @@ import { stat } from 'node:fs/promises';
 import type { AuditDefinitionDto } from './auditTypes.ts';
 
 import { HttpError } from '../errors.ts';
+import { mapSettledWithConcurrency } from '../project/listings/shared.ts';
+
+/**
+ * Projects examined at once inside one audit's summary. The catalog already runs every audit in
+ * parallel; inside each, projects were walked one await at a time, and the first audit to reach a
+ * project paid its git probes while every other audit queued behind that same project. With 75
+ * projects that serial walk was the floor of GET /api/v1/audits (about 4 s). Eight keeps the git
+ * process count bounded while the walk no longer serialises on the slowest project.
+ */
+const PROJECT_CONCURRENCY = 8;
+
+// Settled results with the first rejection rethrown: the catalog never reports partial counts.
+async function forEachProject<TProject, TOut>(
+	projects: readonly TProject[],
+	mapper: (project: TProject) => Promise<TOut>,
+): Promise<TOut[]> {
+	const settled = await mapSettledWithConcurrency([...projects], PROJECT_CONCURRENCY, mapper);
+	const out: TOut[] = [];
+	for (const result of settled) {
+		if (result.status === 'rejected') throw result.reason;
+		out.push(result.value);
+	}
+	return out;
+}
 
 const auditNamePattern = /^[A-Z0-9_]+$/;
 
@@ -130,16 +154,14 @@ async function computeApplicability(
 		appliesToBucket[bucket] = applies;
 		if (applies) applicableBucketCount++;
 	}
-	let applicableProjectCount = 0;
-	for (const project of projects) {
+	const applicable = await forEachProject(projects, async (project) => {
 		const { overrides, packages, profile } = await resolveProfileEntry(
 			profileCache,
 			project.path,
 		);
-		if (isAuditApplicableToProject(profile, packages, name, mapping, overrides)) {
-			applicableProjectCount++;
-		}
-	}
+		return isAuditApplicableToProject(profile, packages, name, mapping, overrides);
+	});
+	const applicableProjectCount = applicable.filter(Boolean).length;
 	return {
 		applicableBucketCount,
 		applicableProjectCount,
@@ -162,7 +184,7 @@ async function computeReportHealth(
 	let freshReportCount = 0;
 	let missingReportCount = 0;
 	let staleReportCount = 0;
-	for (const project of projects) {
+	const statuses = await forEachProject(projects, async (project) => {
 		// Equivalent to filterApplicableAuditNames(rootDir, project.path, [name]) but using
 		// the shared profile/overrides cache and the already-loaded mapping instead of
 		// re-reading all three from disk for every audit × project.
@@ -170,16 +192,22 @@ async function computeReportHealth(
 			profileCache,
 			project.path,
 		);
-		if (!isAuditApplicableToProject(profile, packages, name, mapping, overrides)) continue;
+		if (!isAuditApplicableToProject(profile, packages, name, mapping, overrides)) return null;
+		// The context map is shared by every audit of the listing; the lookup and the insert are
+		// synchronous, so two audits reaching one project still share one context.
 		let context = freshnessContexts.get(project.path);
 		if (!context) {
 			context = createAuditFreshnessContext();
 			freshnessContexts.set(project.path, context);
 		}
 		const freshness = await evaluateAuditReportFreshness(project.path, name, { context });
-		if (freshness.status === 'missing') {
+		return freshness.status;
+	});
+	for (const status of statuses) {
+		if (status === null) continue;
+		if (status === 'missing') {
 			missingReportCount++;
-		} else if (freshness.status === 'stale') {
+		} else if (status === 'stale') {
 			staleReportCount++;
 		} else {
 			freshReportCount++;

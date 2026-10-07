@@ -37,6 +37,29 @@ describe('migration statement execution', () => {
 		);
 	});
 
+	// audit-database-1790858369: foreign keys are off during migrations, so an orphan row used to
+	// be committed and recorded, and every later start failed without naming the migration.
+	test('rejects a migration that leaves an orphan row, naming it, before the ledger row exists', () => {
+		withMigration(
+			'CREATE TABLE fk_parent(id INTEGER PRIMARY KEY); CREATE TABLE fk_child(id INTEGER PRIMARY KEY, parent_id INTEGER NOT NULL REFERENCES fk_parent(id)); INSERT INTO fk_child VALUES (1, 99);',
+			(sqlite) => {
+				expect(() => migrateWebDatabase(sqlite)).toThrow(
+					/Migration test_atomicity left 1 foreign key violation/,
+				);
+				expect(
+					sqlite.query("SELECT name FROM sqlite_master WHERE name = 'fk_child'").all(),
+				).toEqual([]);
+				expect(
+					sqlite
+						.query(
+							"SELECT version FROM schema_migrations WHERE version = 'test_atomicity'",
+						)
+						.all(),
+				).toEqual([]);
+			},
+		);
+	});
+
 	test('uses SQLite parsing for comments, quoted semicolons and trigger bodies', () => {
 		withMigration(
 			`-- leading comment;

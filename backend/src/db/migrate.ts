@@ -1,6 +1,10 @@
 import type { Database } from 'bun:sqlite';
 
-import { assertNoForeignKeyViolations } from './integrity.ts';
+import {
+	assertNoForeignKeyViolations,
+	formatForeignKeyViolation,
+	getForeignKeyViolations,
+} from './integrity.ts';
 import { migrations } from './migrations/registry.ts';
 
 const BASELINE_VERSION = migrations[0]?.version ?? '0001_baseline';
@@ -81,6 +85,15 @@ function assertBaselineRecorded(sqlite: Database, applied: Set<string>): void {
 	throw new DatabaseBaselineError(sqlite.filename);
 }
 
+function assertMigrationLeftNoOrphans(sqlite: Database, version: string): void {
+	const violations = getForeignKeyViolations(sqlite);
+	if (violations.length === 0) return;
+	const sample = violations.slice(0, 5).map(formatForeignKeyViolation).join('; ');
+	throw new Error(
+		`Migration ${version} left ${violations.length} foreign key violation(s): ${sample}`,
+	);
+}
+
 export function migrateWebDatabase(sqlite: Database): void {
 	// Ensure the migrations ledger table exists.
 	sqlite.exec(`
@@ -113,6 +126,11 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 			sqlite.exec('BEGIN');
 			try {
 				executeMigration(sqlite, migration.sql);
+				// Foreign keys are off while migrations run, so a migration that leaves an orphan
+				// row would otherwise be recorded as applied and every later start would fail
+				// without naming it. Check before the ledger row is written, inside the
+				// transaction, so the catch below rolls the whole migration back.
+				assertMigrationLeftNoOrphans(sqlite, migration.version);
 				recordVersion(sqlite, migration.version);
 				sqlite.exec('COMMIT');
 			} catch (err) {

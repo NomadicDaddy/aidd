@@ -1,5 +1,5 @@
 import { readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { hostname } from 'node:os';
+import { hostname, uptime } from 'node:os';
 import { resolve } from 'node:path';
 
 import { webLogger } from '../logger.ts';
@@ -63,6 +63,7 @@ function isProcessAlive(pid: number): boolean {
  * uptime for the control panel.
  */
 const MAX_PLAUSIBLE_LOCK_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const BOOT_TOLERANCE_MS = 5_000;
 
 /**
  * Corroborate a lock payload's recorded host and startedAt before treating a live PID
@@ -85,6 +86,11 @@ function isLockCorroborated(payload: LockPayload): boolean {
 	if (payload.startedAt === 0) return true;
 	const ageMs = Date.now() - payload.startedAt;
 	if (ageMs > MAX_PLAUSIBLE_LOCK_AGE_MS) return false;
+	// A holder that started before this boot cannot be alive: after a hard kill or power loss
+	// the lock survives and the OS can hand its PID to an unrelated process. The tolerance
+	// covers uptime's second resolution.
+	const bootAtMs = Date.now() - uptime() * 1000;
+	if (payload.startedAt < bootAtMs - BOOT_TOLERANCE_MS) return false;
 	return true;
 }
 

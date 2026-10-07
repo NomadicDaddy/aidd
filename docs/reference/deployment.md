@@ -165,6 +165,13 @@ were created by anything other than that baseline — the ledger lacks the `0001
 `data/aidd-panel.db` together with its `-wal`, `-shm`, and `.lock` sidecars, and start again to
 create a fresh database. Take a copy first if the history matters to you; nothing imports it back.
 
+**Start refused by the writer lock:** `data/aidd-panel.db.lock` records the backend that holds the
+database. A holder from a different host, from before the current boot, or older than 30 days is
+reclaimed automatically; a lock whose recorded process is alive on this host is not. If a start is
+refused and no backend is actually running, confirm nothing is listening on the configured port
+(`curl http://127.0.0.1:3210/api/v1/health` fails), remove `data/aidd-panel.db.lock`, and start
+again. Do not remove it while a backend is serving.
+
 **Rollback:**
 
 1. Stop the running backend.

@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { readFile, utimes, writeFile } from 'node:fs/promises';
-import { hostname } from 'node:os';
+import { hostname, uptime } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { acquireWriterLock } from '../../backend/src/db/writerLock.ts';
@@ -121,6 +121,34 @@ describe('acquireWriterLock', () => {
 				}),
 			);
 			const lock = acquireWriterLock(dbPath); // must reclaim rather than throw
+			const payload = JSON.parse(await readFile(lock.path, 'utf8')) as { pid: number };
+			expect(payload.pid).toBe(process.pid);
+			lock.release();
+		} finally {
+			child.kill();
+			await child.exited;
+		}
+	});
+
+	// audit-deployment-1790858369: a lock left by a hard kill survived a reboot, the OS reused its
+	// PID, and the backend refused to start for up to 30 days; the holder's startedAt predates
+	// this boot, which no live holder's can.
+	test('reclaims a lock whose holder started before this boot even though its pid is alive', async () => {
+		const dbPath = await tempDbPath();
+		const lockPath = `${dbPath}.lock`;
+		const child = Bun.spawn(['bun', '-e', 'setTimeout(() => {}, 60_000)'], {
+			windowsHide: true,
+		});
+		try {
+			await writeFile(
+				lockPath,
+				JSON.stringify({
+					host: hostname(),
+					pid: child.pid,
+					startedAt: Date.now() - uptime() * 1000 - 60_000, // a minute before boot
+				}),
+			);
+			const lock = acquireWriterLock(dbPath);
 			const payload = JSON.parse(await readFile(lock.path, 'utf8')) as { pid: number };
 			expect(payload.pid).toBe(process.pid);
 			lock.release();

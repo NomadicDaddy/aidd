@@ -23,18 +23,18 @@ export function describeWriteGuardRevert(
 	// A discarded path with no committed version (untracked or added at baseline) is gone outright:
 	// nothing restores it, and listing it as "still dirty" or "the committed version is in place"
 	// would both be false. The revert that "fails" on it is the same absence, not a second problem.
+	// The verdict comes from the detector's baseline status alone: a failed revert says nothing
+	// about whether a committed version exists (the isolated unwind also refuses when the baseline
+	// is no longer an ancestor), and in a shared checkout nothing is reverted by design.
 	const discarded = violations.filter((item) => item.destructivelyDiscarded);
-	// In a shared checkout every path is reported as not reverted by design, so only an isolated
-	// checkout's failed revert says anything about the file.
-	const unrecoverable = discarded
-		.filter(
-			(item) => item.untracked || (checkout !== 'shared' && revertFailed.includes(item.path)),
-		)
-		.map((item) => item.path);
+	const unrecoverable = discarded.filter((item) => item.untracked).map((item) => item.path);
 	const lost = discarded
 		.filter((item) => !unrecoverable.includes(item.path))
 		.map((item) => item.path);
-	const stillDirty = revertFailed.filter((path) => !unrecoverable.includes(path));
+	// A discarded path is not dirty whatever its revert did; the lost line already says it is
+	// not restored. "Still dirty" names only the paths the run wrote and the revert left behind.
+	const discardedPaths = discarded.map((item) => item.path);
+	const stillDirty = revertFailed.filter((path) => !discardedPaths.includes(path));
 	const parts: string[] = [];
 	if (checkout === 'shared') {
 		const present = violations

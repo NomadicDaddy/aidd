@@ -80,19 +80,21 @@ async function revertOne(
 	baseline: WriteGuardSnapshot,
 	violation: WriteViolation,
 ): Promise<boolean> {
-	if (violation.untracked) {
-		await rm(join(projectDir, violation.path), { force: true, recursive: true });
-		return true;
-	}
 	if (violation.destructivelyDiscarded) {
 		// A destructive operation (git reset --hard, etc.) discarded the baseline dirty state.
 		// Restore the file content from the baseline HEAD so the operator's uncommitted work is
-		// recovered as far as it can be — the staged/unstaged split is not recoverable.
-		if (!baseline.head) return false;
+		// recovered as far as it can be — the staged/unstaged split is not recoverable. A path
+		// that had no committed version (untracked or added at baseline) has nothing to restore
+		// from, and is reported as failed rather than "reverted" by deleting what is already gone.
+		if (violation.untracked || !baseline.head) return false;
 		return (
 			(await gitCapture(projectDir, ['checkout', baseline.head, '--', violation.path])) !==
 			null
 		);
+	}
+	if (violation.untracked) {
+		await rm(join(projectDir, violation.path), { force: true, recursive: true });
+		return true;
 	}
 	if (baseline.entries.has(violation.path)) {
 		// Dirty at baseline in some other way: the operator's own index content is the best

@@ -81,14 +81,18 @@ export async function diffWriteViolations(
 	// bash workspace policy never fires, and they make the tree CLEANER — so the dirty-path
 	// diff above finds nothing. Flagging these paths as violations lets the caller block
 	// or report the loss of uncommitted operator work outside the allowlist.
-	for (const [path] of baseline.entries) {
+	for (const [path, status] of baseline.entries) {
 		if (current.has(path)) continue;
 		if (isPathAllowlisted(path, allowlist)) continue;
 		byPath.set(path, {
 			committed: false,
 			destructivelyDiscarded: true,
 			path,
-			untracked: false,
+			// Whether any committed version exists is read from the baseline status, which is the
+			// only evidence there is: a path untracked (`??`) or newly added (`A`) at baseline had
+			// none, so its discard deleted the file outright. This was `false` unconditionally,
+			// and the loss message then promised a committed version that did not exist.
+			untracked: status === '??' || status.startsWith('A'),
 		});
 	}
 	return [...byPath.values()].sort((left, right) => left.path.localeCompare(right.path));

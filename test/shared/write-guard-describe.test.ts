@@ -65,6 +65,20 @@ describe('describeWriteGuardRevert', () => {
 		expect(text).not.toContain('committed version is in place');
 	});
 
+	// Spirit review of 7371fc89: a failed isolated revert was read as proof the path had never
+	// been committed. It proves nothing of the kind (the unwind also refuses when the baseline is
+	// no longer an ancestor); only the detector's baseline status may say so.
+	test('a tracked discarded path whose revert failed is lost, not never-committed, and not dirty', () => {
+		const text = describeWriteGuardRevert(
+			[violation('notes.md', { destructivelyDiscarded: true })],
+			['notes.md'],
+			'isolated',
+		);
+		expect(text).toBe(
+			'uncommitted edits were discarded and are NOT restored (the committed version is in place): notes.md',
+		);
+	});
+
 	test('a mixed list keeps every path in exactly one bucket', () => {
 		const text = describeWriteGuardRevert(
 			[

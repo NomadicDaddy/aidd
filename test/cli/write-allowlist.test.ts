@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
+import { describeWriteGuardRevert } from '../../shared/src/pipeline/write-allowlist/describe.ts';
 import {
 	buildWriteAllowlistRetryPrompt,
 	captureWriteGuardSnapshot,
@@ -181,6 +182,26 @@ describe('write-allowlist guard', () => {
 		if (!violations) throw new Error('Expected violations diff');
 		expect(violations.map((v) => v.path)).toEqual(['tracked.ts']);
 		expect(violations.every((v) => v.destructivelyDiscarded === true)).toBe(true);
+		// A committed version exists, so the loss message may promise it.
+		expect(violations[0]?.untracked).toBe(false);
+		expect(describeWriteGuardRevert(violations, [], 'shared')).toContain(
+			'the committed version is in place',
+		);
+	});
+
+	test('a file added at baseline and discarded by git reset --hard had no committed version', async () => {
+		const dir = await makeRepo('aidd-wal-added-');
+		await writeFile(join(dir, 'new.ts'), 'staged, never committed\n', 'utf8');
+		await git(dir, 'add', 'new.ts');
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+
+		await git(dir, 'reset', '--hard', 'HEAD');
+
+		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
+		if (!violations) throw new Error('Expected violations diff');
+		expect(violations.map((v) => v.path)).toEqual(['new.ts']);
+		expect(violations[0]?.untracked).toBe(true);
 	});
 
 	test('detects git clean that discards untracked baseline paths', async () => {
@@ -197,6 +218,13 @@ describe('write-allowlist guard', () => {
 		if (!violations) throw new Error('Expected violations diff');
 		expect(violations.map((v) => v.path)).toEqual(['scratch.txt']);
 		expect(violations[0]?.destructivelyDiscarded).toBe(true);
+		// The detector, not the caller, says the file never had a committed version: with the
+		// flag read from the baseline status the loss message stops promising one. This is the
+		// wiring the describe-level tests cannot see (spirit review of 7371fc89).
+		expect(violations[0]?.untracked).toBe(true);
+		const text = describeWriteGuardRevert(violations, [], 'shared');
+		expect(text).toContain('deleted and NOT recoverable (it was never committed): scratch.txt');
+		expect(text).not.toContain('committed version is in place');
 	});
 
 	test('revert restores destructively discarded tracked file from baseline HEAD', async () => {

@@ -28,6 +28,7 @@
 		"cli/src/**/*.ts",
 		"shared/src/**/*.ts",
 		"test/**/*.ts",
-		"scripts/**/*.ts"
+		"scripts/**/*.ts",
+		"skills/**/scripts/**/*.ts"
 	]
 }

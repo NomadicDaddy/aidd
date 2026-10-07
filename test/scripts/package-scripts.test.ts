@@ -78,7 +78,28 @@ describe('package script lifecycle contracts', () => {
 		expect(scripts['lint:fix']).toContain('bun run lint:config:fix');
 	});
 
-	test('runs all seven lint scopes through the bounded runner', () => {
+	// Tracked, agent-run Bun scripts under skills/ were outside every tsconfig include and every
+	// lint scope, so a type error or a lint finding there shipped unseen (audit-ts-standards).
+	test('lints the TypeScript under skills/ through every lint lifecycle', async () => {
+		expect(scripts['lint:skills']).toBe(
+			'bunx eslint skills --report-unused-disable-directives --max-warnings 0',
+		);
+		expect(scripts['lint:skills:fast']).toBe(
+			'bunx eslint skills --cache --cache-location node_modules/.cache/eslint-skills/ --report-unused-disable-directives --max-warnings 0',
+		);
+		expect(scripts['lint:skills:fix']).toBe(
+			'bunx eslint skills --report-unused-disable-directives --max-warnings 0 --fix',
+		);
+		expect(lintTasks(false).map((task) => task.name)).toContain('skills');
+		expect(lintTasks(true).map((task) => task.command.at(-1))).toContain('lint:skills:fast');
+		expect(scripts['lint:fix']).toContain('bun run lint:skills:fix');
+		const tsconfig = JSON.parse(
+			await readFile(join(import.meta.dir, '..', '..', 'tsconfig.json'), 'utf8'),
+		) as { include: string[] };
+		expect(tsconfig.include).toContain('skills/**/scripts/**/*.ts');
+	});
+
+	test('runs all eight lint scopes through the bounded runner', () => {
 		expect(scripts.lint).toBe('bun scripts/run-lint.ts');
 		expect(scripts['lint:fast']).toBe('bun scripts/run-lint.ts --fast');
 		expect(lintTasks(false).map((task) => task.name)).toEqual([
@@ -89,8 +110,9 @@ describe('package script lifecycle contracts', () => {
 			'cli',
 			'test',
 			'config',
+			'skills',
 		]);
-		expect(lintTasks(true)).toHaveLength(7);
+		expect(lintTasks(true)).toHaveLength(8);
 	});
 
 	test('keeps --cache out of the authoritative lint gate', () => {

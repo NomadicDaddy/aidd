@@ -67,6 +67,7 @@ const LINT_DEPENDENCIES = [
 	'scripts/**/*.ts',
 	'shared/package.json',
 	'shared/src/**/*.ts',
+	'skills/**/*.ts',
 	'test/**/*.js',
 	'test/**/*.jsx',
 	'test/**/*.ts',
@@ -203,6 +204,7 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'frontend/src/**/*',
 		'test/**/*.ts',
 		'scripts/**/*.ts',
+		'skills/**/scripts/**/*.ts',
 	],
 	// Same artifact-hashing rationale as check:critical-path; see GENERATED_OUTPUT_STEPS.
 	'verify-minification': [

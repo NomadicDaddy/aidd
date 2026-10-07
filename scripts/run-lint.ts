@@ -13,7 +13,7 @@ export function lintTasks(fast: boolean): LintTask[] {
 			command: ['bun', 'run', '--cwd', workspace, `lint${suffix}`],
 			name: workspace,
 		})),
-		...['scripts', 'cli', 'test', 'config'].map((scope) => ({
+		...['scripts', 'cli', 'test', 'config', 'skills'].map((scope) => ({
 			command: ['bun', 'run', `lint:${scope}${suffix}`],
 			name: scope,
 		})),

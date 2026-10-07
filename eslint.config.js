@@ -198,7 +198,7 @@ export default defineConfig([
 		},
 	},
 	{
-		files: ['backend/**/*.{ts,tsx}', 'cli/**/*.{ts,tsx}', 'scripts/**/*.ts'],
+		files: ['backend/**/*.{ts,tsx}', 'cli/**/*.{ts,tsx}', 'scripts/**/*.ts', 'skills/**/*.ts'],
 		languageOptions: {
 			globals: globals.node,
 		},

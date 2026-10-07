@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { resolve } from 'node:path';
 
 import {
+	COVERAGE_AREAS,
 	type FileCoverageMetrics,
 	isProductionSourcePath,
 } from '../../scripts/lib/test-coverage/contracts.ts';
@@ -94,7 +95,10 @@ describe('production test coverage', () => {
 		expect(coveragePercent(backend?.lines ?? { covered: 0, total: 0 })).toBe(80);
 		expect(report.branchCoverage.available).toBe(false);
 		expect(report.passed).toBe(false);
-		expect(backend?.failures).toContain('lines 80.0% is below 81.0%');
+		// The floor is whatever contracts.ts currently holds; the case pins the shape of the
+		// failure line, not a particular floor.
+		const linesFloor = COVERAGE_AREAS.find((area) => area.id === 'backend')?.thresholds.lines;
+		expect(backend?.failures).toContain(`lines 80.0% is below ${linesFloor?.toFixed(1)}%`);
 	});
 
 	test('configures Bun to exclude test files from coverage', async () => {

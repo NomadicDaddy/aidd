@@ -73,6 +73,36 @@ describe('write-allowlist guard', () => {
 		);
 	});
 
+	// audit-git-destructive-safety-1790863167: git quoted and octal-escaped a non-ASCII path, so a
+	// committed `.aidd/…é.md` failed the allowlist prefix test and was unwound as a violation, and
+	// an untracked one outside the allowlist matched nothing on disk and could not be reverted.
+	test('a committed non-ASCII path under the allowlist is not a violation', async () => {
+		const dir = await makeRepo('aidd-wal-unicode-commit-');
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+
+		await mkdir(join(dir, '.aidd'), { recursive: true });
+		await writeFile(join(dir, '.aidd', 'résumé.md'), 'allowed\n', 'utf8');
+		await git(dir, 'add', '.aidd/résumé.md');
+		await git(dir, 'commit', '-m', 'metadata');
+
+		expect(await diffWriteViolations(dir, ['.aidd'], baseline)).toEqual([]);
+	});
+
+	test('an untracked non-ASCII path outside the allowlist is reverted in an isolated checkout', async () => {
+		const dir = await makeRepo('aidd-wal-unicode-revert-');
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+
+		await writeFile(join(dir, 'déjà.ts'), 'new file\n', 'utf8');
+
+		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
+		if (!violations) throw new Error('Expected violations diff');
+		expect(violations.map((violation) => violation.path)).toEqual(['déjà.ts']);
+		expect(await revertWriteViolations(dir, baseline, violations, 'isolated')).toEqual([]);
+		expect(await Bun.file(join(dir, 'déjà.ts')).exists()).toBe(false);
+	});
+
 	test('detects violations, reverts new files and tracked modifications', async () => {
 		const dir = await makeRepo('aidd-wal-revert-');
 		const baseline = await captureWriteGuardSnapshot(dir);

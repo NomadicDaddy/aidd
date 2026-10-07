@@ -39,18 +39,30 @@ export async function gitStatusEntries(projectDir: string): Promise<Map<string, 
 		// `R  a -> b` named only `b`, so the path the run removed was in no list: a tracked file
 		// moved into `.aidd` passed the boundary, and a reverted move left the original deleted
 		// while the summary said it was reverted.
+		// `-z` with quotePath off: git otherwise prints a non-ASCII or special-character path
+		// quoted and octal-escaped, a string that matches nothing on disk and fails every prefix
+		// test, so a committed `.aidd/é.md` read as a violation and an untracked one could not be
+		// reverted. NUL-terminated records carry the path as it is.
 		const proc = Bun.spawn(
-			['git', 'status', '--porcelain=v1', '--untracked-files=all', '--no-renames'],
+			[
+				'git',
+				'-c',
+				'core.quotePath=false',
+				'status',
+				'--porcelain=v1',
+				'-z',
+				'--untracked-files=all',
+				'--no-renames',
+			],
 			{ cwd: projectDir, stderr: 'pipe', stdout: 'pipe', windowsHide: true },
 		);
 		const [stdout, code] = await Promise.all([readProcessText(proc.stdout), proc.exited]);
 		if (code !== 0) return null;
 		const entries = new Map<string, string>();
-		for (const line of stdout.split('\n')) {
-			if (line.length < 4) continue;
-			const status = line.slice(0, 2);
-			let path = line.slice(3);
-			if (path.startsWith('"') && path.endsWith('"')) path = path.slice(1, -1);
+		for (const record of stdout.split('\0')) {
+			if (record.length < 4) continue;
+			const status = record.slice(0, 2);
+			const path = record.slice(3);
 			if (path.length > 0) entries.set(path, status);
 		}
 		return entries;
@@ -68,7 +80,14 @@ export async function committedPathsSince(
 	const range = baselineHead
 		? `${baselineHead}..${currentHead}`
 		: '4b825dc642cb6eb9a060e54bf8d69288fbee4904..HEAD';
-	const out = await gitCapture(projectDir, ['diff', '--name-only', range]);
+	const out = await gitCapture(projectDir, [
+		'-c',
+		'core.quotePath=false',
+		'diff',
+		'--name-only',
+		'-z',
+		range,
+	]);
 	if (out === null) return [];
-	return out.split('\n').filter((line) => line.length > 0);
+	return out.split('\0').filter((line) => line.length > 0);
 }

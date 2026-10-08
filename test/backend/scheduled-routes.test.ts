@@ -28,6 +28,21 @@ test('scheduled execution history accepts bounded pagination', async () => {
 	expect(await response.json()).toEqual({ executions: [], nextOffset: null });
 });
 
+// audit-architecture-1790856991: GET /:id had no caller outside tests; the detail read stays on
+// the service for its internal callers, the route is gone.
+test('a scheduled task has no GET detail route', async () => {
+	const service = {
+		detail: async () => {
+			throw new Error('detail must not be reached through a route');
+		},
+	} as unknown as ScheduledTaskService;
+	const app = new Elysia()
+		.use(errorHandlerPlugin)
+		.use(createScheduledTaskRoutes({ scheduledTaskService: service } as unknown as WebContext));
+	const response = await app.handle(new Request('http://localhost/api/v1/scheduled-tasks/task'));
+	expect(response.status).toBe(404);
+});
+
 test('an empty project selection is accepted as the all-projects task shape', async () => {
 	let received: unknown;
 	const service = {

@@ -101,9 +101,6 @@ export function createScheduledTaskRoutes(context: WebContext) {
 			}),
 			{ body: writeBody },
 		)
-		.get('/:id', async ({ params }) => ({ task: await service().detail(params.id) }), {
-			params: idParams,
-		})
 		.put(
 			'/:id',
 			async ({ body, params }) => ({

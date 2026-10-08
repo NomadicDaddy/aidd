@@ -83,6 +83,39 @@ test('a nullability mismatch is reported, with the rowid alias and the legacy ke
 	expect(NULLABLE_TEXT_PRIMARY_KEYS.has('things.id')).toBe(false);
 });
 
+// Review of c00008fa: an INTEGER column inside a composite key is not the rowid, and a name on
+// the legacy allowlist earns no exemption for a shape other than the one accepted.
+test('the rowid exemption is a single INTEGER key, and the allowlist is one exact shape', () => {
+	const database = new Database(':memory:');
+	try {
+		database.exec('CREATE TABLE things(id INTEGER, tenant TEXT, PRIMARY KEY(id, tenant))');
+		expect(
+			checkColumnParity(database, 'things', [
+				{ ...thingsNotNull, sqlType: 'integer' },
+				{ hasDefault: false, name: 'tenant', notNull: true, sqlType: 'text' },
+			]),
+		).toEqual([
+			'  NULLABILITY: things.id (SQLite nullable, Drizzle notNull)',
+			'  NULLABILITY: things.tenant (SQLite nullable, Drizzle notNull)',
+		]);
+		// `runs.id` is on the allowlist as a nullable TEXT PRIMARY KEY. The same name as a plain
+		// nullable column, or as a NOT NULL column that Drizzle declares nullable, is reported.
+		database.exec('CREATE TABLE runs(id TEXT, other TEXT)');
+		expect(checkColumnParity(database, 'runs', [thingsNotNull])).toEqual([
+			'  NULLABILITY: runs.id (SQLite nullable, Drizzle notNull)',
+			'  EXTRA COLUMN: runs.other (in SQLite, not in Drizzle)',
+		]);
+		database.exec('CREATE TABLE settings(key TEXT PRIMARY KEY NOT NULL)');
+		expect(
+			checkColumnParity(database, 'settings', [
+				{ hasDefault: false, name: 'key', notNull: false, sqlType: 'text' },
+			]),
+		).toEqual(['  NULLABILITY: settings.key (SQLite NOT NULL, Drizzle nullable)']);
+	} finally {
+		database.close();
+	}
+});
+
 test('a declared type or default-presence mismatch is reported', () => {
 	expect(
 		columnShapes('CREATE TABLE things(id TEXT NOT NULL, n INTEGER)', [

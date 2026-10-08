@@ -51,6 +51,9 @@ export function checkColumnParity(
 	const pragmaColumns = sqlite.query<ColumnRow, []>(`PRAGMA table_info(${tableName})`).all();
 	const sqliteByName = new Map(pragmaColumns.map((col) => [col.name, col]));
 	const drizzleByName = new Map(drizzleColumns.map((col) => [col.name, col]));
+	// Only a single-column INTEGER PRIMARY KEY is the rowid; an INTEGER column inside a composite
+	// key is an ordinary column that SQLite will happily store NULL in.
+	const primaryKeyColumns = pragmaColumns.filter((col) => col.pk > 0).length;
 
 	for (const [colName, drizzle] of drizzleByName) {
 		const row = sqliteByName.get(colName);
@@ -61,18 +64,24 @@ export function checkColumnParity(
 			continue;
 		}
 		const qualified = `${tableName}.${colName}`;
-		const rowidAlias = row.pk > 0 && row.type.toUpperCase() === 'INTEGER';
+		const sqliteType = row.type.toUpperCase();
+		const rowidAlias = primaryKeyColumns === 1 && row.pk === 1 && sqliteType === 'INTEGER';
 		const sqliteNotNull = row.notnull !== 0;
-		if (
-			!rowidAlias &&
-			sqliteNotNull !== drizzle.notNull &&
-			!NULLABLE_TEXT_PRIMARY_KEYS.has(qualified)
-		) {
+		// The allowlist covers one exact shape, a nullable TEXT primary key that Drizzle declares
+		// notNull, and nothing else that happens to share the name: a column that stops being the
+		// primary key, changes type or gains a different mismatch is reported like any other.
+		const acceptedLegacyShape =
+			NULLABLE_TEXT_PRIMARY_KEYS.has(qualified) &&
+			row.pk > 0 &&
+			sqliteType === 'TEXT' &&
+			!sqliteNotNull &&
+			drizzle.notNull;
+		if (!rowidAlias && sqliteNotNull !== drizzle.notNull && !acceptedLegacyShape) {
 			mismatches.push(
 				`  NULLABILITY: ${qualified} (SQLite ${sqliteNotNull ? 'NOT NULL' : 'nullable'}, Drizzle ${drizzle.notNull ? 'notNull' : 'nullable'})`,
 			);
 		}
-		if (row.type.toUpperCase() !== drizzle.sqlType.toUpperCase()) {
+		if (sqliteType !== drizzle.sqlType.toUpperCase()) {
 			mismatches.push(
 				`  TYPE: ${qualified} (SQLite ${row.type || '<none>'}, Drizzle ${drizzle.sqlType})`,
 			);

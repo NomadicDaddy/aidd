@@ -147,13 +147,13 @@ describe('settings tab local design contracts', () => {
 		const quickstart = await source(resolve(repoRoot, 'docs'), 'quickstart.md');
 
 		expect(network).toContain('An access token is configured.');
-		expect(network).toContain('An access token will be generated');
+		expect(network).toContain('No access token is configured. Set AIDD_WEB_AUTH_TOKEN');
 		expect(network).toContain('configured access token as Authorization: Bearer <token>');
 		expect(network).not.toContain('bearer token');
 		expect(dialog).toContain('Access token');
 		expect(layout).toContain('ariaLabel="Set access token"');
 		expect(architecture).toContain('optional access token');
-		expect(settingsDocs).toContain('generates an access token if needed');
+		expect(settingsDocs).toContain('requires an access token in the panel environment');
 		expect(configuration).toContain('Access token guarding the API.');
 		expect(deployment).toContain('Access token for the web API;');
 		expect(quickstart).toContain('LAN-binding access token');
@@ -180,7 +180,7 @@ describe('settings validation render boundaries', () => {
 			})`,
 		);
 
-		expect(unconfigured).toContain('An access token will be generated');
+		expect(unconfigured).toContain('No access token is configured. Set AIDD_WEB_AUTH_TOKEN');
 		expect(configured).toContain('An access token is configured.');
 		expect(`${unconfigured}${configured}`).not.toContain('bearer token');
 	});

@@ -291,6 +291,11 @@ provider whose own key is missing. `NATIVE_API_KEY` is the only provider-agnosti
 them from `defaultProvider`, `providers.<provider>.*`, and the top-level `reasoningEffort` when
 unset. Set them only when direct AI should diverge from the agent-loop defaults.
 
+A Director cycle running through `directorCycle` falls back to a full CLI Director run when the
+direct call times out, the provider answers 5xx, or the completion is not JSON, and records the
+Direct AI error beside the run's outcome; a configuration error (HTTP 400) or a provider 401 or
+403 fails the cycle outright, because a CLI run cannot cure either.
+
 When `directAi.enabled` is false and the Settings API has no prior direct AI config to preserve,
 the settings service omits `directAi` from the persisted file.
 

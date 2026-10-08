@@ -16,6 +16,7 @@ import type { FleetSummary } from './types.ts';
 import { webLogger } from '../../logger.ts';
 import { IN_FLIGHT_RUN_STATUSES } from '../run/types.ts';
 import { type DirectorChatService } from './chatService.ts';
+import { combineFailureReasons, isUnrecoverableDirectAiError } from './directAiFallback.ts';
 import {
 	buildDirectCyclePrompt,
 	normalizeDirectDirectorOutput,
@@ -93,12 +94,21 @@ export async function runDirectCycle(
 		if (rawOutput === null) return { directAiError: null, output: null };
 		output = normalizeDirectDirectorOutput(rawOutput, fleetSummary);
 	} catch (err) {
-		// A transient direct-AI failure (request timeout, provider 5xx, or a
-		// malformed/non-JSON completion) must not fail the whole cycle. Fall back
-		// to the slower-but-robust CLI backend path instead of propagating to
-		// runCycle's catch (which failCycles it). Errors after this point
-		// (writeFile, persistCycleResult) are genuine local failures and are
-		// intentionally left to propagate.
+		// A fault the CLI path cannot cure (a Direct AI configuration error, or the provider
+		// refusing the credentials) fails the cycle here with the Direct AI message; a full CLI
+		// run would only turn every scheduled cycle into a slower, costlier run with the same
+		// answer. A transient direct-AI failure (request timeout, provider 5xx, or a
+		// malformed/non-JSON completion) must not fail the whole cycle: fall back to the
+		// slower-but-robust CLI backend path instead of propagating to runCycle's catch (which
+		// failCycles it). Errors after this point (writeFile, persistCycleResult) are genuine
+		// local failures and are intentionally left to propagate.
+		if (isUnrecoverableDirectAiError(err)) {
+			webLogger.warn(
+				{ cycleId, err },
+				'Direct AI director cycle failed with a fault the CLI fallback cannot cure',
+			);
+			throw err;
+		}
 		webLogger.warn(
 			{ cycleId, err },
 			'Direct AI director cycle failed; falling back to CLI backend',
@@ -262,20 +272,6 @@ async function readRunFailureReason(
 		webLogger.warn({ err, runId }, 'Failed to read run failure reason for director cycle');
 	}
 	return null;
-}
-
-// Join the direct-AI fallback cause (if any) with the CLI run's reason. Either may
-// be absent: direct AI may have been disabled (no error) or the run reason may be
-// unreadable. Returns null only when both are empty, letting persistCycleResult
-// apply its own default.
-function combineFailureReasons(
-	directAiError: null | string | undefined,
-	runReason: null | string,
-): null | string {
-	const parts: string[] = [];
-	if (directAiError) parts.push(`Direct AI fell back to CLI: ${directAiError}`);
-	if (runReason) parts.push(runReason);
-	return parts.length > 0 ? parts.join(' — ') : null;
 }
 
 async function waitForCycleRun(

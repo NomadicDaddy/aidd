@@ -113,7 +113,7 @@ export function NetworkAccessSection({
 				description={
 					form.authTokenConfigured
 						? 'Saving restarts the panel with network access enabled. Remote API callers must send the configured access token as Authorization: Bearer <token>. Use a trusted network.'
-						: 'No access token is configured, so this save will be refused. Set AIDD_WEB_AUTH_TOKEN in the panel environment and restart the panel; a token is never written to config.json. Then enable network access on a trusted network.'
+						: 'No access token is configured, so this save will be refused. Set AIDD_WEB_AUTH_TOKEN in the panel environment and restart the panel; Settings never generates a token into config.json (an existing file token is kept as it is). Then enable network access on a trusted network.'
 				}
 				onClose={() => setConfirmRemoteOpen(false)}
 				onConfirm={confirmAllowRemote}

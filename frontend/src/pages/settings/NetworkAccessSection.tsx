@@ -96,8 +96,8 @@ export function NetworkAccessSection({
 						</FormGrid>
 						<p className={`text-xs text-muted-foreground ${proseMeasureClass}`}>
 							{form.authTokenConfigured
-								? ' An access token is configured.'
-								: 'An access token will be generated when network access is saved.'}
+								? 'An access token is configured.'
+								: 'No access token is configured. Set AIDD_WEB_AUTH_TOKEN in the panel environment and restart the panel before enabling network access; saving without it is refused.'}
 						</p>
 					</div>
 					<ListEditor
@@ -113,7 +113,7 @@ export function NetworkAccessSection({
 				description={
 					form.authTokenConfigured
 						? 'Saving restarts the panel with network access enabled. Remote API callers must send the configured access token as Authorization: Bearer <token>. Use a trusted network.'
-						: 'Saving generates an access token and restarts the panel with network access enabled. Remote API callers need that token. Use a trusted network.'
+						: 'No access token is configured, so this save will be refused. Set AIDD_WEB_AUTH_TOKEN in the panel environment and restart the panel; a token is never written to config.json. Then enable network access on a trusted network.'
 				}
 				onClose={() => setConfirmRemoteOpen(false)}
 				onConfirm={confirmAllowRemote}

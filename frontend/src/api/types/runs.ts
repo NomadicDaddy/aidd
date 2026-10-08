@@ -1,3 +1,4 @@
+import type { RunInitiator } from 'aidd-shared/metadata/active-runs/provenance';
 import type { AiddRunDriverKind } from 'aidd-shared/run-provenance';
 import type { SkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
 
@@ -23,12 +24,12 @@ export type RunStatus =
 export type RunSource = 'cli' | 'director' | 'scheduled' | 'web';
 
 /**
- * Whether a person asked for this run, or aidd started it on its own. Mirrors the backend
- * RunInitiator (shared/src/metadata/active-runs/provenance.ts). `source` cannot answer this: the
- * same door carries both — a 'web' run is a Launch click or an auto-chained follow-up, a
- * 'director' run is a Run Cycle click or a scheduled sweep.
+ * Whether a person asked for this run, or aidd started it on its own: the backend's own
+ * RunInitiator, re-exported rather than mirrored. `source` cannot answer this: the same door
+ * carries both — a 'web' run is a Launch click or an auto-chained follow-up, a 'director' run is
+ * a Run Cycle click or a scheduled sweep.
  */
-export type RunInitiator = 'automatic' | 'operator';
+export type { RunInitiator };
 
 /** Why a terminal coding run supports a one-click follow-up launch (backend RunContinuationReason). */
 export type RunContinuationReason = 'initializer_handoff' | 'wall_clock_timeout';

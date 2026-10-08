@@ -67,8 +67,13 @@ export function discoverBackendEndpoints(path: string): Set<string> {
 			const pathNode = node.arguments[0];
 			if (HTTP_METHODS.has(method) && pathNode) {
 				const pathValue = literalPath(pathNode);
-				if (pathValue !== undefined)
-					endpoints.add(`${method.toUpperCase()} ${prefix}${pathValue}`);
+				if (pathValue !== undefined) {
+					// `.get('/')` under a prefix is the prefix itself: the browser calls
+					// /api/v1/launch-defaults, never /api/v1/launch-defaults/.
+					const route =
+						pathValue === '/' && prefix !== '' ? prefix : `${prefix}${pathValue}`;
+					endpoints.add(`${method.toUpperCase()} ${route}`);
+				}
 			}
 		}
 		ts.forEachChild(node, visit);

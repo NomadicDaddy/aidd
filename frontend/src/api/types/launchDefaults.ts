@@ -1,34 +1,10 @@
 import type { BackendName } from './skills.ts';
 
-// Mirrors backend GET /api/v1/launch-defaults (backend/src/routes/launchDefaults.ts).
-export type LaunchBackendSource = 'config' | 'override';
-
-export type LaunchModelSource =
-	'backend-config' | 'mode-config' | 'override' | 'provider-default' | 'shared-config' | 'unset';
-
-export interface EffectiveLaunchTarget {
-	backend: BackendName;
-	backendSource: LaunchBackendSource;
-	model: string | undefined;
-	modelSource: LaunchModelSource;
-	provider: string | undefined;
-	reasoningEffort: string;
-}
-
-export interface LaunchRoleDefault {
-	backend: BackendName | null;
-	model: null | string;
-}
-
-export interface LaunchDefaults {
-	effective: EffectiveLaunchTarget;
-	projectConfigApplied: boolean;
-	triumvirate: {
-		exec: LaunchRoleDefault;
-		overseer: LaunchRoleDefault;
-		secondary: LaunchRoleDefault;
-	};
-}
+// GET /api/v1/launch-defaults is one shared shape (aidd-shared/contracts/launch-defaults), not a
+// mirror kept in step by hand; check:api-types holds this module to it.
+// The browser reads only the whole response; the launch-target source unions and the role
+// default live in aidd-shared for anything that needs them, and nothing here restates them.
+export type { LaunchDefaults } from 'aidd-shared/contracts/launch-defaults';
 
 // The user's optional per-launch override; undefined fields mean "use the resolved default".
 export interface LaunchTargetValue {

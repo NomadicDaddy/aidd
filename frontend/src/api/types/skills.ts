@@ -1,15 +1,6 @@
-export type BackendName =
-	| 'claude-code'
-	| 'cline'
-	| 'codex'
-	| 'grok'
-	| 'kilocode'
-	| 'lmstudio'
-	| 'native'
-	| 'ollama'
-	| 'openai'
-	| 'opencode';
-export type BackendInputName = BackendName;
+// The backend vocabulary is shared, not copied: a backend added to aidd-shared/plan/types reaches
+// every launch form through this one line.
+export type { BackendInputName, BackendName } from 'aidd-shared/plan/types';
 
 export type SkillCategory =
 	| 'audit-remediation'

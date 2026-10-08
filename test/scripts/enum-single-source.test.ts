@@ -187,7 +187,8 @@ describe('every restatement of a shared enum matches its canonical list', () => 
 	});
 
 	// A regex that stopped matching would leave every assertion above trivially true, so the floors
-	// are deliberately close to the counts observed when this was written (17 and 7). They are
+	// are deliberately close to the counts observed when this was written (17 and 7; the frontend
+	// backend-name copy became a re-export of aidd-shared/plan/types in 2026-10, so 6). They are
 	// floors rather than exact counts because consolidating a hand-written copy onto the shared
 	// import is the improvement this test wants to encourage, not a failure.
 	test('the scan reached the declarations it claims to cover', () => {
@@ -197,7 +198,7 @@ describe('every restatement of a shared enum matches its canonical list', () => 
 				(site) =>
 					site.vocabulary === vocabulary && sameSet(site.members, vocabulary.canonical),
 			);
-			return `${vocabulary.name}: ${copies.length >= (vocabulary.name === 'backend name' ? 6 : 15)}`;
+			return `${vocabulary.name}: ${copies.length >= (vocabulary.name === 'backend name' ? 5 : 15)}`;
 		});
 
 		expect(counted).toEqual(['reasoning effort: true', 'backend name: true']);

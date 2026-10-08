@@ -1,3 +1,5 @@
+import type { LaunchDefaults } from 'aidd-shared/contracts/launch-defaults';
+
 import { resolveEffectiveLaunchTarget } from 'aidd-shared/plan/launch-target';
 import { Elysia, t } from 'elysia';
 
@@ -53,7 +55,8 @@ export function createLaunchDefaultsRoutes(context: WebContext) {
 					model: config.triumvirate?.secondaryModel ?? null,
 				},
 			};
-			return { effective, projectConfigApplied, triumvirate };
+			const response: LaunchDefaults = { effective, projectConfigApplied, triumvirate };
+			return response;
 		},
 		{
 			query: t.Object({

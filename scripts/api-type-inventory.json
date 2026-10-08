@@ -1,6 +1,26 @@
 {
 	"surfaces": [
 		{
+			"backendRoute": "backend/src/routes/launchDefaults.ts",
+			"contracts": [
+				{
+					"endpoint": "GET /api/v1/launch-defaults",
+					"response": {
+						"backend": {
+							"exportName": "LaunchDefaults",
+							"module": "shared/src/contracts/launch-defaults.ts"
+						},
+						"frontend": {
+							"exportName": "LaunchDefaults",
+							"module": "frontend/src/api/types/launchDefaults.ts"
+						}
+					}
+				}
+			],
+			"frontendModule": "frontend/src/api/launchDefaults.ts",
+			"pathPrefix": "/api/v1/launch-defaults"
+		},
+		{
 			"backendRoute": "backend/src/routes/director.ts",
 			"contracts": [
 				{
@@ -251,10 +271,6 @@
 		},
 		{
 			"module": "frontend/src/api/diary.ts",
-			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
-		},
-		{
-			"module": "frontend/src/api/launchDefaults.ts",
 			"reason": "No contract inventory yet: its request and response types are not compared with the backend, so field drift is not caught here."
 		},
 		{

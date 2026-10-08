@@ -5,7 +5,10 @@ import { join } from 'node:path';
 import type { ApiTypeInventory } from '../../scripts/lib/api-types/inventory.ts';
 
 import { checkApiCoverage } from '../../scripts/lib/api-types/coverage.ts';
-import { discoverApiModules } from '../../scripts/lib/api-types/discover.ts';
+import {
+	discoverApiModules,
+	discoverBackendEndpoints,
+} from '../../scripts/lib/api-types/discover.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from '../backend/_helpers/remove-temp-tree.ts';
 
@@ -53,6 +56,24 @@ describe('checkApiCoverage', () => {
 		expect(coverage.findings).toEqual([
 			'a.ts is listed in uncheckedModules but has a contract surface',
 			'gone.ts is listed in uncheckedModules but makes no API call or is gone',
+		]);
+	});
+});
+
+describe('discoverBackendEndpoints', () => {
+	test("a bare '/' route under a prefix is the prefix itself", async () => {
+		const root = await testTempDir('aidd-api-prefix-');
+		roots.push(root);
+		const route = join(root, 'x.ts');
+		await writeFile(
+			route,
+			"export const r = new Elysia({ prefix: '/api/v1/x' })\n" +
+				"\t.get('/', () => 1)\n" +
+				"\t.get('/sub/:id', () => 2);\n",
+		);
+		expect([...discoverBackendEndpoints(route)].sort()).toEqual([
+			'GET /api/v1/x',
+			'GET /api/v1/x/sub/:param',
 		]);
 	});
 });

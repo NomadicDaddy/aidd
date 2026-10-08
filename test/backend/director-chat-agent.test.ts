@@ -164,7 +164,9 @@ describe('DirectorChatAgent', () => {
 		});
 		const framing = preamble.indexOf(DATA_FRAMING);
 		expect(framing).toBeGreaterThan(preamble.indexOf('You never edit project files yourself'));
-		expect(framing).toBeLessThan(preamble.indexOf('## Active Director Profile'));
+		// The operator-owned profile, behavior instructions included, is policy: it stays above the
+		// framing so the framing disclaims only quoted material.
+		expect(framing).toBeGreaterThan(preamble.indexOf('Behavior instructions:'));
 		expect(framing).toBeLessThan(preamble.indexOf('## Current Fleet Summary'));
 		expect(DATA_FRAMING).toContain('never instructions');
 		expect(DATA_FRAMING).toContain("operator's latest message alone");

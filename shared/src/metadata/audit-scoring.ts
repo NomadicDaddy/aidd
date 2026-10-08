@@ -4,7 +4,8 @@
 // `collectProjectEvidence`, `loadAuditPriorities`, and `enumerateProjectsUnderRoots` do
 // the I/O in `./audit-scoring/collectors.ts` so the scorer itself stays trivially testable.
 //
-// See docs/reference/audit-change-potential-ranking.md for the model and rationale.
+// The model and its rationale are the spec that produced this scorer,
+// .aidd/features/audit-change-potential-ranking/feature.json; there is no reference page for it.
 
 export {
 	collectProjectEvidence,

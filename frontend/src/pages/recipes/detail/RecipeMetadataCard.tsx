@@ -8,8 +8,8 @@ import { useRecipeEditor } from './recipeEditorContext.ts';
 
 /**
  * The recipe's own fields: what it is called, what it is called by the machine, and what it does.
- * Lifted out of `RecipeEditMode` for the same reason `RecipeParametersCard` was — that file owns
- * four cards and sits against the 300-line ceiling.
+ * An editor part: the field variants below read the draft and its actions through
+ * `useRecipeEditor`, so the composing editor owns the state and this file owns the layout.
  *
  * The card is only the grid. The variant that composes it passes the fields it has and says how
  * many columns they make, so the layout follows what the editor is rather than which callbacks

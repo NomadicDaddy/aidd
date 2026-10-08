@@ -16,8 +16,8 @@ import { dangerRowActionClass } from '../../../lib/tones.ts';
 const parameterGridTracks = `${formGridMeasureClass} @min-[61rem]:grid-cols-[minmax(0,20rem)_minmax(0,36rem)_minmax(0,20rem)_auto]`;
 
 /**
- * The recipe's parameter table. Lifted out of RecipeEditMode, which owns four cards and reached the
- * 300-line ceiling; this one is self-contained, taking the list and the setter and nothing else.
+ * The recipe's parameter table, self-contained: it takes the list and the setter and nothing else,
+ * so the editor that composes it owns the state and this file owns the rows.
  */
 export function RecipeParametersCard({
 	parameters,

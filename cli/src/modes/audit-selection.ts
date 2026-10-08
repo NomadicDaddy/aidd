@@ -77,8 +77,8 @@ async function warnOnRejectedProfile(projectDir: string): Promise<void> {
 
 // Ranks `--audit-all` discovery output descending by change-potential score. Explicit
 // `--audit X,Y` selection bypasses this ranker — see `auditNamesForSelection`. Evidence
-// is gathered from the current project plus every project under `context.scoringRoots`
-// (deduplicated), matching the spec at aidd-audit-change-potential-ranking.md line 91.
+// is gathered from the current project plus every project under `context.scoringRoots`,
+// each project once: the scorer reads the whole configured fleet, not only the project being run.
 async function rankAuditsByChangePotential(
 	audits: string[],
 	catalogDir: string,

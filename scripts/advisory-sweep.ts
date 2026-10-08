@@ -17,9 +17,15 @@
 import { exit } from 'node:process';
 import { parseArgs } from 'node:util';
 
-import type { Hit, RootScan } from './lib/advisory-sweep/scan.ts';
+import type { Hit } from './lib/advisory-sweep/scan.ts';
 
-import { appendRowOnce, formatRow, type SweepResult } from './lib/advisory-sweep/row.ts';
+import {
+	appendRowOnce,
+	filesCovered,
+	formatRow,
+	type SweepResult,
+	type SweptRoot,
+} from './lib/advisory-sweep/row.ts';
 import { matchFile, scanRoot } from './lib/advisory-sweep/scan.ts';
 
 const DEFAULT_ROOTS = ['D:\\applications', 'D:\\infra', 'D:\\public', 'D:\\scripts'];
@@ -49,18 +55,26 @@ export async function runSweep(options: {
 	roots: readonly string[];
 	toolCheck: string;
 }): Promise<SweepResult> {
-	const roots: RootScan[] = [];
+	const roots: SweptRoot[] = [];
 	const hits: { hit: Hit; root: string }[] = [];
 	let controlFile: null | string = null;
 	const names = [...new Set(options.packages)].sort();
 	for (const root of options.roots) {
 		const scan = await scanRoot(root);
-		roots.push(scan);
+		const failed: SweptRoot['failed'] = [];
 		for (const file of scan.files) {
-			for (const hit of await matchFile(file, names)) hits.push({ hit, root });
-			if (controlFile === null && (await matchFile(file, [options.control])).length > 0)
-				controlFile = file;
+			// One read answers both questions; a file that failed covers neither.
+			const match = await matchFile(file, [...names, options.control]);
+			if (match.failure !== null) {
+				failed.push({ failure: match.failure, file });
+				continue;
+			}
+			for (const hit of match.hits) {
+				if (hit.name === options.control) controlFile ??= file;
+				else hits.push({ hit, root });
+			}
 		}
+		roots.push({ failed, scan });
 	}
 	return {
 		control: { file: controlFile, name: options.control },
@@ -106,7 +120,7 @@ if (import.meta.main) {
 	});
 	const row = formatRow(result);
 	console.log(row);
-	const filesRead = result.roots.reduce((sum, scan) => sum + scan.files.length, 0);
+	const filesRead = result.roots.reduce((sum, root) => sum + filesCovered(root), 0);
 	if (filesRead === 0) {
 		console.error(
 			'No manifest or lockfile was read; the row is the FAILED form and was not appended.',

@@ -34,7 +34,7 @@ export type DirectoryLister = (dir: string) => Promise<DirectoryEntry[]>;
 export const listDirectory: DirectoryLister = (dir) => readdir(dir, { withFileTypes: true });
 
 export interface RootScan {
-	/** Manifest and lockfile paths read, in walk order. */
+	/** Manifest and lockfile paths found, in walk order. */
 	files: string[];
 	/** False when the root itself could not be listed: UNSWEPT, never "no npm surface". */
 	readable: boolean;
@@ -92,14 +92,19 @@ function escapeRegExp(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// package.json: the name is a key of one of the four dependency maps; the value is its range.
-function matchPackageJson(text: string, name: string): string[] {
-	let parsed: Record<string, unknown>;
+function parseJson(text: string): null | Record<string, unknown> {
 	try {
-		parsed = JSON.parse(text) as Record<string, unknown>;
+		const parsed: unknown = JSON.parse(text);
+		return typeof parsed === 'object' && parsed !== null
+			? (parsed as Record<string, unknown>)
+			: null;
 	} catch {
-		return [];
+		return null;
 	}
+}
+
+// package.json: the name is a key of one of the four dependency maps; the value is its range.
+function matchPackageJson(parsed: Record<string, unknown>, name: string): string[] {
 	const versions: string[] = [];
 	for (const map of DEPENDENCY_MAPS) {
 		const entries = parsed[map];
@@ -119,21 +124,22 @@ function matchBunLock(text: string, name: string): string[] {
 
 // package-lock.json: a resolved entry is `packages["…node_modules/<name>"].version`; v1 files
 // carry a `dependencies` map keyed by the bare name.
-function matchPackageLock(text: string, name: string): string[] {
-	let parsed: { dependencies?: Record<string, unknown>; packages?: Record<string, unknown> };
-	try {
-		parsed = JSON.parse(text) as typeof parsed;
-	} catch {
-		return [];
-	}
+function matchPackageLock(parsed: Record<string, unknown>, name: string): string[] {
 	const versions: string[] = [];
 	const suffix = `node_modules/${name}`;
-	for (const [key, entry] of Object.entries(parsed.packages ?? {})) {
-		if (key !== suffix && !key.endsWith(`/${suffix}`)) continue;
-		const version = (entry as { version?: unknown }).version;
-		versions.push(typeof version === 'string' ? version : 'unknown');
+	const packages = parsed['packages'];
+	if (typeof packages === 'object' && packages !== null) {
+		for (const [key, entry] of Object.entries(packages as Record<string, unknown>)) {
+			if (key !== suffix && !key.endsWith(`/${suffix}`)) continue;
+			const version = (entry as { version?: unknown }).version;
+			versions.push(typeof version === 'string' ? version : 'unknown');
+		}
 	}
-	const legacy = parsed.dependencies?.[name];
+	const dependencies = parsed['dependencies'];
+	const legacy =
+		typeof dependencies === 'object' && dependencies !== null
+			? (dependencies as Record<string, unknown>)[name]
+			: undefined;
 	if (typeof legacy === 'object' && legacy !== null) {
 		const version = (legacy as { version?: unknown }).version;
 		versions.push(typeof version === 'string' ? version : 'unknown');
@@ -154,38 +160,53 @@ export interface Hit {
 	version: string;
 }
 
+export interface FileMatch {
+	/** Why the file contributed nothing: it could not be read, or its JSON did not parse. */
+	failure: null | string;
+	hits: Hit[];
+}
+
 /**
- * Every exact dependency or lockfile match for the named packages in one file.
+ * Every exact dependency or lockfile match for the named packages in one file. A file that could
+ * not be read or parsed reports its failure instead of an empty result: a file the sweep could
+ * not see is not a file the sweep covered.
  * @param file The manifest or lockfile path.
  * @param names The package names the advisories named.
  * @param read The file reader; tests inject one.
- * @returns One hit per matching entry, in name order.
+ * @returns The hits in name order, or the failure.
  */
 export async function matchFile(
 	file: string,
 	names: readonly string[],
 	read: (path: string) => Promise<string> = (path) => readFile(path, 'utf8'),
-): Promise<Hit[]> {
+): Promise<FileMatch> {
 	let text: string;
 	try {
 		text = await read(file);
-	} catch {
-		return [];
+	} catch (err) {
+		return {
+			failure: `unreadable: ${err instanceof Error ? err.message : String(err)}`,
+			hits: [],
+		};
 	}
 	const base = file.split(sep).pop() ?? file;
+	const json = base === 'package.json' || base === 'package-lock.json' ? parseJson(text) : null;
+	if ((base === 'package.json' || base === 'package-lock.json') && json === null) {
+		return { failure: 'unparsable JSON', hits: [] };
+	}
 	const hits: Hit[] = [];
 	for (const name of names) {
 		const versions =
-			base === 'package.json'
-				? matchPackageJson(text, name)
+			base === 'package.json' && json
+				? matchPackageJson(json, name)
 				: base === 'bun.lock'
 					? matchBunLock(text, name)
-					: base === 'package-lock.json'
-						? matchPackageLock(text, name)
+					: base === 'package-lock.json' && json
+						? matchPackageLock(json, name)
 						: matchTextLock(text, name);
 		for (const version of versions) hits.push({ file, name, version });
 	}
-	return hits;
+	return { failure: null, hits };
 }
 
 /**

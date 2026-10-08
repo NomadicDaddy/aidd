@@ -75,7 +75,7 @@ describe('advisory sweep scan', () => {
 		const names = ['next', 'ghost', 'payload'];
 		const hits = [];
 		for (const file of (await scanRoot(root)).files)
-			hits.push(...(await matchFile(file, names)));
+			hits.push(...(await matchFile(file, names)).hits);
 		expect(hits.map((hit) => `${hit.name}@${hit.version}`).sort()).toEqual([
 			'ghost@5.0.0',
 			'ghost@5.0.0',
@@ -98,6 +98,48 @@ describe('advisory sweep scan', () => {
 		const missing = await scanRoot(join(root, 'absent'));
 		expect(missing.readable).toBe(false);
 		expect(missing.files).toEqual([]);
+	});
+});
+
+describe('advisory sweep coverage', () => {
+	// Roger (#7418): a read or parse failure returned no matches while the file still counted as
+	// read, so a malformed manifest beside a found control printed "2 files | hits: none" with no
+	// sign that half the population was never seen.
+	test('a file that cannot be read or parsed is reported, not counted as covered', async () => {
+		const root = await fleet();
+		await writeFile(join(root, 'app', 'frontend', 'package-lock.json'), '{ not json');
+		const result = await runSweep({
+			control: '@ianvs/prettier-plugin-sort-imports',
+			date: '2026-10-08',
+			packages: ['payload'],
+			query: 'q',
+			roots: [root],
+			toolCheck: 'did not apply',
+		});
+		const row = formatRow(result);
+		const broken = join(root, 'app', 'frontend', 'package-lock.json');
+		expect(row).toContain(`roots: ${root} 2 files (1 unreadable: ${broken} (unparsable JSON))`);
+		expect(row).toContain('| hits: none |');
+		const denied = await matchFile(join(root, 'app', 'package.json'), ['ghost'], async () => {
+			throw new Error('EACCES');
+		});
+		expect(denied).toEqual({ failure: 'unreadable: EACCES', hits: [] });
+	});
+
+	test('a root whose every file failed is UNSWEPT, and a sweep covering nothing is FAILED', async () => {
+		const root = await testTempDir('aidd-advisory-sweep-broken-');
+		roots.push(root);
+		await writeFile(join(root, 'package.json'), '{ not json');
+		const result = await runSweep({
+			control: 'x',
+			date: '2026-10-08',
+			packages: [],
+			query: 'q',
+			roots: [root],
+			toolCheck: 'did not apply',
+		});
+		expect(result.roots[0]?.failed).toHaveLength(1);
+		expect(formatRow(result)).toBe('2026-10-08 | FAILED: 0 files scanned');
 	});
 });
 
@@ -177,5 +219,21 @@ describe('advisory sweep row', () => {
 		expect(
 			text.startsWith('# header\n2026-10-07 | advisory query: old | roots: r | hits: none\n'),
 		).toBe(true);
+	});
+
+	// Roger (#7418): twelve concurrent calls with one date and query each appended the row.
+	test('concurrent appends of one row record it once', async () => {
+		const root = await testTempDir('aidd-advisory-sweep-concurrent-');
+		roots.push(root);
+		const file = join(root, 'advisory-sweeps.md');
+		const row =
+			'2026-10-08 | advisory query: q | roots: r 1 files | packages checked: (none named) | hits: none | control: c found in f | tool check: did not apply';
+		const outcomes = await Promise.all(
+			Array.from({ length: 12 }, () => appendRowOnce(file, row)),
+		);
+		expect(outcomes.filter((o) => o.written)).toHaveLength(1);
+		const text = await readFile(file, 'utf8');
+		expect(text.split('\n').filter((line) => line.startsWith('2026-10-08 |'))).toEqual([row]);
+		expect(await Bun.file(`${file}.lock`).exists()).toBe(false);
 	});
 });

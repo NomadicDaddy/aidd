@@ -9,6 +9,7 @@ export interface OriginInterfaceAddress {
 	internal: boolean;
 }
 
+// An IPv6 literal must be bracketed in an origin (`http://[::1]:3210`); a name or IPv4 is not.
 function addOrigin(origins: Set<string>, hostname: string, port: number): void {
 	if (!hostname) return;
 	if (hostname.includes(':') && !hostname.startsWith('[')) {
@@ -45,6 +46,8 @@ function addLocalInterfaceOrigins(
 	interfaceAddresses: OriginInterfaceAddress[],
 ): void {
 	for (const entry of interfaceAddresses) {
+		// Internal (loopback) interfaces are covered by the loopback aliases; only the addresses
+		// a LAN client could type are added here.
 		if (entry.internal) continue;
 		addOrigin(origins, entry.address, port);
 	}
@@ -58,6 +61,25 @@ function addLoopbackAliases(origins: Set<string>, hostname: string, port: number
 	}
 }
 
+/**
+ * The browser origins allowed to reach `/api/*`, `/ws` and the terminal sockets, and through
+ * `buildTrustedRequestHost` the `Host` names granted token-free loopback access. Security logic,
+ * so every source is named here:
+ *
+ * 1. The listener itself: `http://<web.hostname>:<web.port>`.
+ * 2. For a loopback or wildcard listener, the loopback aliases `localhost`, `127.0.0.1` and `::1`
+ *    on the same port, since a browser may reach the same socket under any of them.
+ * 3. For a wildcard listener only (`0.0.0.0`, `::`), every non-internal interface address on the
+ *    same port: that listener answers on each of them, so a LAN client's origin is one of them.
+ * 4. Every `web.allowedOrigins` entry, normalised to `URL.origin` (scheme, host, port; no path).
+ *    A malformed entry throws here, at startup, rather than silently admitting nothing.
+ *
+ * A loopback listener therefore never admits a LAN origin, and a reverse proxy in front of the
+ * panel has to be listed in `web.allowedOrigins` (see docs/reference/deployment.md).
+ * @param webConfig The resolved `web` block.
+ * @param interfaceAddresses The host's interfaces; injected by tests, read from the OS otherwise.
+ * @returns Allowed origins in `scheme://host:port` form.
+ */
 export function buildAllowedOrigins(
 	webConfig: ResolvedWebConfig,
 	interfaceAddresses: OriginInterfaceAddress[] = localInterfaceAddresses(),

@@ -74,8 +74,9 @@ function addLoopbackAliases(origins: Set<string>, hostname: string, port: number
  * 4. Every `web.allowedOrigins` entry, normalised to `URL.origin` (scheme, host, port; no path).
  *    A malformed entry throws here, at startup, rather than silently admitting nothing.
  *
- * A loopback listener therefore never admits a LAN origin, and a reverse proxy in front of the
- * panel has to be listed in `web.allowedOrigins` (see docs/reference/deployment.md).
+ * A loopback listener therefore adds no LAN interface origin on its own; whatever
+ * `web.allowedOrigins` names is admitted regardless of the listener, which is how a reverse proxy
+ * in front of the panel gets in (see docs/reference/deployment.md).
  * @param webConfig The resolved `web` block.
  * @param interfaceAddresses The host's interfaces; injected by tests, read from the OS otherwise.
  * @returns Allowed origins in `scheme://host:port` form.

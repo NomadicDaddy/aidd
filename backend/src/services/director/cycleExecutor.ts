@@ -16,6 +16,7 @@ import type { FleetSummary } from './types.ts';
 import { webLogger } from '../../logger.ts';
 import { IN_FLIGHT_RUN_STATUSES } from '../run/types.ts';
 import { type DirectorChatService } from './chatService.ts';
+import { cycleArtifactPaths } from './cyclePersistence.ts';
 import { combineFailureReasons, isUnrecoverableDirectAiError } from './directAiFallback.ts';
 import {
 	buildDirectCyclePrompt,
@@ -63,7 +64,7 @@ export async function writeCycleContext(
 		recentSuggestions,
 		sessionId: input.sessionId ?? null,
 	};
-	const contextPath = join(cycleDir, `${cycleId}-context.json`);
+	const { contextPath } = cycleArtifactPaths(cycleDir, cycleId);
 	await writeFile(contextPath, `${JSON.stringify(context, null, 2)}\n`);
 	return { context, contextPath, profile, sessionId: input.sessionId };
 }
@@ -135,8 +136,7 @@ export async function executeCycle(
 	directorCwd: string,
 	initiator: RunInitiator,
 ): Promise<{ cycleContext: CycleContext; output: DirectorOutput | undefined }> {
-	const fleetSummaryPath = join(cycleDir, `${cycleId}-fleet-summary.json`);
-	const outputPath = join(cycleDir, `${cycleId}-output.json`);
+	const { fleetSummaryPath, outputPath } = cycleArtifactPaths(cycleDir, cycleId);
 	await mkdir(cycleDir, { recursive: true });
 	// Best-effort: a history read failure must not block the cycle.
 	const recentSuggestions = await readRecentSuggestionHistory(deps.db, {
@@ -192,28 +192,33 @@ export async function executeCycle(
 		// click and a scheduled sweep. The caller knows which, so it says.
 		{ initiator, source: 'director' },
 	);
-	const output = await awaitAndPersistCycle(
-		deps,
-		cycleId,
-		runRecord.id,
-		outputPath,
-		fleetSummary,
+	const output = await awaitAndPersistCycle(deps, cycleId, outputPath, fleetSummary, {
 		directAiError,
-	);
+		runId: runRecord.id,
+	});
 	return { cycleContext, output };
+}
+
+/**
+ * The CLI run behind a cycle, and the Direct AI failure that led to it. Named rather than
+ * positional: both are strings, both were optional on advanceCycle, and a caller that swapped
+ * them typed cleanly while persisting a run id as a failure reason.
+ */
+export interface CycleRunIdentity {
+	directAiError?: null | string;
+	runId?: string;
 }
 
 export async function awaitAndPersistCycle(
 	deps: CycleExecutorDeps,
 	cycleId: string,
-	runId: string,
 	outputPath: string,
 	fleetSummary: FleetSummary,
-	directAiError?: null | string,
+	identity: { runId: string } & CycleRunIdentity,
 ): Promise<DirectorOutput | undefined> {
-	const status = await waitForCycleRun(deps, runId);
+	const status = await waitForCycleRun(deps, identity.runId);
 	if (status === undefined || deps.disposed()) return undefined;
-	return advanceCycle(deps, cycleId, status, outputPath, fleetSummary, runId, directAiError);
+	return advanceCycle(deps, cycleId, status, outputPath, fleetSummary, identity);
 }
 
 export async function advanceCycle(
@@ -222,9 +227,9 @@ export async function advanceCycle(
 	runStatus: WebRunStatus,
 	outputPath: string,
 	fleetSummary: FleetSummary,
-	runId?: string,
-	directAiError?: null | string,
+	identity: CycleRunIdentity = {},
 ): Promise<DirectorOutput | undefined> {
+	const { directAiError, runId } = identity;
 	deps.setCycleStage(cycleId, 'persisting_results');
 	const exitCode = statusToExitCode(runStatus);
 	const { output, outputStatus } = await deps.readCycleOutput(outputPath);

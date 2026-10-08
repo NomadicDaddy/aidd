@@ -42,7 +42,9 @@ test('a disposed Director await preserves its running cycle and can resume persi
 	try {
 		await db.insert(directorCycles).values({ id: 'cycle', startedAt: 1, status: 'running' });
 		await expect(
-			awaitAndPersistCycle(deps, 'cycle', 'run', 'output.json', {} as FleetSummary),
+			awaitAndPersistCycle(deps, 'cycle', 'output.json', {} as FleetSummary, {
+				runId: 'run',
+			}),
 		).resolves.toBeUndefined();
 		expect(persisted).toBe(0);
 		expect((await db.select().from(directorCycles))[0]).toMatchObject({
@@ -51,7 +53,9 @@ test('a disposed Director await preserves its running cycle and can resume persi
 		});
 		disposed = false;
 		resume = true;
-		await awaitAndPersistCycle(deps, 'cycle', 'run', 'output.json', {} as FleetSummary);
+		await awaitAndPersistCycle(deps, 'cycle', 'output.json', {} as FleetSummary, {
+			runId: 'run',
+		});
 		expect(persisted).toBe(1);
 		expect((await db.select().from(directorCycles))[0]?.status).toBe('completed');
 	} finally {

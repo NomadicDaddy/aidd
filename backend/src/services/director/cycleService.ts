@@ -27,7 +27,7 @@ import { notifyChatSession, notifyChatSessionFailure } from './cycleChatNotify.t
 import { buildExecutorDeps } from './cycleDeps.ts';
 import { awaitAndPersistCycle, type CycleExecutorDeps, executeCycle } from './cycleExecutor.ts';
 import { failCycle } from './cycleFailure.ts';
-import { broadcastCycle, toCycleRecord } from './cyclePersistence.ts';
+import { broadcastCycle, cycleArtifactPaths, toCycleRecord } from './cyclePersistence.ts';
 import { reconcileStaleCycles } from './cycleReconcile.ts';
 import { type DirectorFleetSummaryService } from './fleetSummaryService.ts';
 import { createCycleId } from './helpers.ts';
@@ -226,7 +226,7 @@ export class DirectorCycleService {
 			const fleetSummary = await this.fleetSummaryService.getFleetSummary();
 			const cycleDir = this.cycleDir();
 			await mkdir(cycleDir, { recursive: true });
-			const fleetSummaryPath = join(cycleDir, `${cycleId}-fleet-summary.json`);
+			const { fleetSummaryPath } = cycleArtifactPaths(cycleDir, cycleId);
 			await writeFile(fleetSummaryPath, `${JSON.stringify(fleetSummary, null, 2)}\n`);
 			this.setCycleStage(cycleId, 'writing_context');
 
@@ -255,7 +255,9 @@ export class DirectorCycleService {
 		outputPath: string,
 		fleetSummary: FleetSummary,
 	): Promise<DirectorOutput | undefined> {
-		return awaitAndPersistCycle(this.executorDeps(), cycleId, runId, outputPath, fleetSummary);
+		return awaitAndPersistCycle(this.executorDeps(), cycleId, outputPath, fleetSummary, {
+			runId,
+		});
 	}
 
 	private executorDeps(): CycleExecutorDeps {

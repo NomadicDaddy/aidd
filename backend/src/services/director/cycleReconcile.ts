@@ -130,7 +130,7 @@ async function reconcileOneCycle(
 		run.status as WebRunStatus,
 		artifacts.outputPath,
 		fleetSummary,
-		run.id,
+		{ runId: run.id },
 	);
 	return 'advanced';
 }

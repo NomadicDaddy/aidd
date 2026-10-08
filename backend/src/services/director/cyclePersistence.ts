@@ -44,14 +44,26 @@ export interface CyclePersistenceDeps {
 	hub: WebSocketHub;
 }
 
+// The three files a cycle leaves in the director directory, named here and nowhere else: the
+// executor writing them, the service seeding the fleet summary, and the reconciler reading them
+// back after a restart all derive the paths from this one function.
+export function cycleArtifactPaths(
+	cycleDir: string,
+	cycleId: string,
+): { contextPath: string; fleetSummaryPath: string; outputPath: string } {
+	return {
+		contextPath: join(cycleDir, `${cycleId}-context.json`),
+		fleetSummaryPath: join(cycleDir, `${cycleId}-fleet-summary.json`),
+		outputPath: join(cycleDir, `${cycleId}-output.json`),
+	};
+}
+
 export function cycleArtifacts(
 	getConfig: DirectorConfigProvider,
 	cycleId: string,
 ): DirectorCycleArtifacts {
 	const cycleDir = join(getConfig().web.dataDir, 'director');
-	const contextPath = join(cycleDir, `${cycleId}-context.json`);
-	const fleetSummaryPath = join(cycleDir, `${cycleId}-fleet-summary.json`);
-	const outputPath = join(cycleDir, `${cycleId}-output.json`);
+	const { contextPath, fleetSummaryPath, outputPath } = cycleArtifactPaths(cycleDir, cycleId);
 	return {
 		contextExists: existsSync(contextPath),
 		contextPath,

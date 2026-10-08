@@ -7,6 +7,8 @@ import type { ChatAgentToolContext, DispatchContext, DispatchResult } from './ty
 import {
 	asArgs,
 	buildLaunchInput,
+	dataResult,
+	dataText,
 	jsonResult,
 	optionalString,
 	requireString,
@@ -76,12 +78,12 @@ async function dispatchOrchestrateTool(
 		case 'get_project': {
 			const projectId = requireString(args, 'projectId');
 			const result = await ctx.getProjectDetail(projectId);
-			return ok('query', name, `Inspected project ${projectId}`, jsonResult(result));
+			return ok('query', name, `Inspected project ${projectId}`, dataResult(result));
 		}
 		case 'get_recipe': {
 			const recipeId = requireString(args, 'recipeId');
 			const result = await ctx.getRecipe(recipeId);
-			return ok('query', name, `Inspected recipe ${recipeId}`, jsonResult(result));
+			return ok('query', name, `Inspected recipe ${recipeId}`, dataResult(result));
 		}
 		case 'get_run': {
 			const runId = requireString(args, 'runId');
@@ -94,7 +96,7 @@ async function dispatchOrchestrateTool(
 					summary: `Read run ${runId}`,
 					tool: name,
 				},
-				resultText: jsonResult(result),
+				resultText: dataResult(result),
 			};
 		}
 		case 'kill_run': {
@@ -184,7 +186,7 @@ async function dispatchOrchestrateTool(
 					summary: `Read output for run ${runId}`,
 					tool: name,
 				},
-				resultText: jsonResult(result),
+				resultText: dataResult(result),
 			};
 		}
 		case 'stop_run': {
@@ -235,7 +237,8 @@ async function dispatchFileTool(
 			...(path !== undefined ? { path } : {}),
 			...(resultText.startsWith('ERROR:') ? { error: resultText } : {}),
 		},
-		resultText,
+		// A file the agent read is the one tool result most likely to carry instruction-shaped text.
+		resultText: kind === 'query' ? dataText(resultText) : resultText,
 	};
 }
 

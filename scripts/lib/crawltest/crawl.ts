@@ -4,7 +4,7 @@ import puppeteer, { type Browser } from 'puppeteer';
 
 import { normalizeRoute, resolveCrawlArgs } from '../../crawltest-config.ts';
 import { getInteractiveElements, testInteractiveElements } from '../../crawltest-interactions.ts';
-import { printReport, writeCrawlReport } from '../../crawltest-reporting.ts';
+import { crawlEvidencePaths, printReport, writeCrawlReport } from '../../crawltest-reporting.ts';
 import { TestResults } from '../../crawltest-results.ts';
 import { getVersionedScreenshotDir } from '../../crawltest-screenshots.ts';
 import {
@@ -248,7 +248,8 @@ export async function runCrawltest(args: CrawlArgs): Promise<number> {
 				resolvedArgs,
 				viewportName,
 				results,
-				capture?.directory ?? join(root, 'logs', 'crawltest-screenshots'),
+				capture?.directory ??
+					crawlEvidencePaths(root, resolvedArgs.viewport).screenshotsDir,
 			);
 			results.routesDiscovered = Math.max(results.routesDiscovered, result.visited.length);
 			if (result.errors.length > 0) {
@@ -261,7 +262,7 @@ export async function runCrawltest(args: CrawlArgs): Promise<number> {
 			}
 		}
 		const report = results.generateReport();
-		const written = await writeCrawlReport(report, process.cwd());
+		const written = await writeCrawlReport(report, process.cwd(), resolvedArgs.viewport);
 		printReport(report, written);
 		if (!report.summary.success) {
 			exitCode = 1;

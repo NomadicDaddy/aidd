@@ -13,7 +13,11 @@ function runBun(args: string[]): number {
 	return result.exitCode ?? 1;
 }
 
-const crawlExit = runBun(['scripts/crawltest.ts', ...Bun.argv.slice(2)]);
-const analyzeExit = runBun(['scripts/crawltest-analyze.ts']);
+const crawlArgs = Bun.argv.slice(2);
+const crawlExit = runBun(['scripts/crawltest.ts', ...crawlArgs]);
+// The analyzer reads the evidence file the crawl wrote, so it takes the same viewport.
+const viewportIndex = crawlArgs.indexOf('--viewport');
+const viewportArgs = viewportIndex === -1 ? [] : ['--viewport', crawlArgs[viewportIndex + 1] ?? ''];
+const analyzeExit = runBun(['scripts/crawltest-analyze.ts', ...viewportArgs]);
 
 process.exit(crawlExit !== 0 ? crawlExit : analyzeExit);

@@ -5,6 +5,8 @@ import { resolve } from 'node:path';
 import type { CrawlReport } from './crawltest-types.ts';
 import type { MetricSnapshot } from './lib/crawltest/vitals-p75.ts';
 
+import { parseViewportArg } from './crawltest-config.ts';
+import { crawlEvidencePaths } from './crawltest-reporting.ts';
 import { distIndexHash } from './lib/crawltest/build-identity.ts';
 import {
 	evaluateCrawlVitals,
@@ -180,10 +182,15 @@ export function printAnalysis(
 
 if (import.meta.main) {
 	const rootDir = resolve(import.meta.dirname, '..');
-	const reportPath = resolve(rootDir, 'logs', 'crawltest.json');
+	// The same --viewport the crawl took selects the same evidence file it wrote.
+	const viewportIndex = process.argv.indexOf('--viewport');
+	const viewport = parseViewportArg(
+		viewportIndex === -1 ? null : (process.argv[viewportIndex + 1] ?? null),
+	);
+	const reportPath = crawlEvidencePaths(rootDir, viewport).jsonPath;
 	if (!existsSync(reportPath)) {
-		console.log('No crawltest report found at logs/crawltest.json.');
-		console.log('Run `bun run crawltest` first to generate it.');
+		console.log(`No crawltest report found at ${reportPath}.`);
+		console.log('Run `bun run crawltest` first to generate it (same --viewport).');
 		process.exit(1);
 	}
 

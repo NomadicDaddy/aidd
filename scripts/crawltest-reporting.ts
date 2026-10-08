@@ -1,11 +1,33 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
-import type { CrawlReport, WebVitalEntry } from './crawltest-types.ts';
+import type { CrawlReport, ViewportArg, WebVitalEntry } from './crawltest-types.ts';
 
 export interface WrittenCrawlReport {
 	jsonPath: string;
 	summaryPath: string;
+}
+
+export interface CrawlEvidencePaths extends WrittenCrawlReport {
+	screenshotsDir: string;
+}
+
+/**
+ * Where a crawl's evidence lives under logs/. The desktop crawl keeps the bare names that the
+ * release capture, the analyzer and the audits read; any other viewport gets the viewport name in
+ * each path, so a phone crawl run after the desktop one (CI does this) does not overwrite it.
+ * @param rootDir Repository root.
+ * @param viewport The crawl's viewport argument.
+ * @returns Report, summary and screenshot paths for that viewport.
+ */
+export function crawlEvidencePaths(rootDir: string, viewport: ViewportArg): CrawlEvidencePaths {
+	const logsDir = join(rootDir, 'logs');
+	const suffix = viewport === 'desktop' ? '' : `-${viewport}`;
+	return {
+		jsonPath: join(logsDir, `crawltest${suffix}.json`),
+		screenshotsDir: join(logsDir, `crawltest-screenshots${suffix}`),
+		summaryPath: join(logsDir, `crawltest${suffix}-summary.md`),
+	};
 }
 
 function formatVitalValue(entry: WebVitalEntry): string {
@@ -84,12 +106,10 @@ export function createSummaryMarkdown(report: CrawlReport): string {
 export async function writeCrawlReport(
 	report: CrawlReport,
 	rootDir: string,
+	viewport: ViewportArg,
 ): Promise<WrittenCrawlReport> {
-	const logsDir = join(rootDir, 'logs');
-	await mkdir(logsDir, { recursive: true });
-
-	const jsonPath = join(logsDir, 'crawltest.json');
-	const summaryPath = join(logsDir, 'crawltest-summary.md');
+	const { jsonPath, summaryPath } = crawlEvidencePaths(rootDir, viewport);
+	await mkdir(join(rootDir, 'logs'), { recursive: true });
 	await writeFile(jsonPath, `${JSON.stringify(report, null, '\t')}\n`, 'utf8');
 	await writeFile(summaryPath, createSummaryMarkdown(report), 'utf8');
 

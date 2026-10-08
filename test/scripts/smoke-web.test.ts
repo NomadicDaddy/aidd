@@ -19,6 +19,11 @@ describe('smoke web command forwarding', () => {
 		expect(args.viewport).toBe('desktop');
 		expect(args.page).toBeNull();
 		expect(args.startFrom).toBeNull();
+		expect(command.analyzeArgs).toEqual([
+			'scripts/crawltest-analyze.ts',
+			'--viewport',
+			'desktop',
+		]);
 	});
 
 	test('preserves diagnostic scope and every supported optional crawler option', async () => {
@@ -50,6 +55,12 @@ describe('smoke web command forwarding', () => {
 			startFrom: '/projects',
 			viewport: 'iphone-12',
 		});
+		// The analyzer must read the file this crawl writes, not the desktop one beside it.
+		expect(command.analyzeArgs).toEqual([
+			'scripts/crawltest-analyze.ts',
+			'--viewport',
+			'iphone-12',
+		]);
 	});
 
 	test('rejects unsupported dimensions, unknown presets, and missing values', async () => {

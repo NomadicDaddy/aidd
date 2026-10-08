@@ -108,6 +108,11 @@ jobs:
             - name: Crawl web control panel
               run: bun run smoke:web
 
+            # WEB-005: the 390px horizontal-overflow assertion only runs at a phone viewport. The
+            # phone crawl writes viewport-suffixed evidence, so the desktop files above survive.
+            - name: Crawl web control panel at the phone viewport
+              run: bun run smoke:web --viewport iphone-12
+
             - name: Stop web control panel
               if: always()
               run: bun run stop:web
@@ -125,5 +130,8 @@ jobs:
                       logs/crawltest.json
                       logs/crawltest-summary.md
                       logs/crawltest-screenshots/**
+                      logs/crawltest-iphone-12.json
+                      logs/crawltest-iphone-12-summary.md
+                      logs/crawltest-screenshots-iphone-12/**
                   if-no-files-found: ignore
                   retention-days: 7

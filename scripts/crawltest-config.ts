@@ -26,7 +26,7 @@ export function normalizeRoute(route: string): string {
 	return normalized;
 }
 
-function parseViewportArg(value: null | string): ViewportArg {
+export function parseViewportArg(value: null | string): ViewportArg {
 	if (value === null) return 'desktop';
 	if ((VIEWPORT_ARG_VALUES as readonly string[]).includes(value)) {
 		return value as ViewportArg;

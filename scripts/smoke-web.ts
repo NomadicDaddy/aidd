@@ -27,7 +27,10 @@ export async function resolveSmokeWebArgs(argv: string[], root = rootDir) {
 		typeof value === 'string' ? [`--${name}`, value] : value ? [`--${name}`] : [],
 	);
 	const args = await resolveCrawlArgs(parseCrawlArgs(forwarded), root);
+	// The analyzer reads the evidence file the crawl wrote, so it takes the same viewport.
+	const analyzeArgs = ['scripts/crawltest-analyze.ts', '--viewport', args.viewport];
 	return {
+		analyzeArgs,
 		baseUrl: args.baseUrl,
 		crawlArgs: ['scripts/crawltest.ts', '--404', ...forwarded, '--base-url', args.baseUrl],
 	};
@@ -61,11 +64,11 @@ async function waitForHttp(url: string, timeoutMs: number): Promise<void> {
 
 async function main(): Promise<number> {
 	try {
-		const { baseUrl, crawlArgs } = await resolveSmokeWebArgs(Bun.argv.slice(2));
+		const { analyzeArgs, baseUrl, crawlArgs } = await resolveSmokeWebArgs(Bun.argv.slice(2));
 		await waitForHttp(new URL('/api/v1/health', baseUrl).toString(), 60_000);
 
 		const crawlExit = runBun(crawlArgs);
-		const analyzeExit = runBun(['scripts/crawltest-analyze.ts']);
+		const analyzeExit = runBun(analyzeArgs);
 		return crawlExit !== 0 ? crawlExit : analyzeExit;
 	} catch (err) {
 		console.error(err instanceof Error ? err.message : String(err));

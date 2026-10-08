@@ -2,6 +2,54 @@
 
 All notable public aidd releases are documented here.
 
+## [3.5.0] - 2026-10-08
+
+### Added
+
+- `bun run advisory:audit` runs `bun audit` across every owned project tree and writes one record of the estate's dependency advisories: findings with severity and range per tree, trees that could not be audited, lockfiles skipped by name, trees whose store still links a version the lock has moved past, acknowledged holds with their age, and what is new or closed since the previous run. A run that finds nothing still writes its history line. A weekly scheduled task runs it.
+- `bun run advisory:sweep` is the daily digest's lockfile check as one deterministic step: it walks the four estate roots for manifests and lockfiles, never `node_modules`, matches each named package as a dependency key or lockfile entry rather than a substring, proves the match with a positive control, and records its row exactly once even when rerun.
+- A mobile audit for Expo and React Native apps joins the audit catalog.
+- The `ux-rethink` skill reviews a product's UX from first principles, separate from the run that produced it.
+- The GitHub Pages site names its sections the way Spernakit and summon do, carries the family footer, uses the whole hero, and keeps its facts readable on a phone. Its files are tracked and licensed like the rest of the static surface.
+- CI's browser-smoke job also crawls the panel at the phone viewport, with its own evidence files, so the 390px horizontal-overflow check is measured on every run.
+- The Settings page refuses to enable network access when no access token is present in the environment or the existing config file, and says so. It no longer generates a token into `~/.aidd/config.json`.
+- Every released database migration is pinned by content hash in the test suite, so a quiet edit to a released migration fails the gate instead of shipping under the same version.
+
+### Changed
+
+- A run that starts over uncommitted work below the dirty-tree threshold warns once, naming the count and the first paths and that `--worktree` avoids the risk; above the threshold it still refuses.
+- The Director chat agent's preamble keeps the operator's policy and profile above a data boundary: the fleet summary, recipe catalog, conversation and every tool result are marked as quoted data, and run, project, recipe and file-read results carry a one-line marker saying so.
+- A Direct AI fault the CLI cannot cure (a configuration 400, a provider 401 or 403) fails the Director cycle instead of falling back to a full CLI run.
+- Audits are selected by what a project does rather than by its bucket, a rejected project profile file is named when it is ignored, and the audit catalog walks a definition's projects eight at a time and loads each project's profile once.
+- The project page loads a tab's code when the tab is opened; the run list is fetched once per load; the shell stops polling the session count every three seconds and polls the sidebar counts once a minute so scheduler-driven changes reach the badge; the Skills page reads one definition at a time and the skills catalog leaves `SKILL.md` bodies out.
+- The projects listing no longer sends run history, and the project code tree stats tracked files in batches.
+- The build timestamp lives in `index.html` instead of the entry chunk, so a rebuild of the same source keeps every asset name and the immutable cache.
+- `check:api-types` accounts for every frontend API module and holds the launch-defaults contract to its shared type; backend names and the run initiator are shared types rather than browser copies.
+- Transcript retention bounds every file under `run-logs`, and purging a project removes its transcripts.
+- The release runbook says that the screenshot capture step requires the analyzer's exit 0, which ties the retained web-vitals report to the built `dist`.
+- Launch surfaces and the Runs page: a queued run holds the Launch controls, failed actions on the dashboard, recipes and runs say so, form dialogs ask before Escape or the backdrop discards typing, the JSON tree's expand toggle says whether it is open and names the group it opens, and paths, URLs, model ids, cron and arguments are not spellchecked by the browser.
+- The light theme's accent and amber status text meet the text contrast floor, the "derived" label in feature details is readable in both themes, the saved theme applies before the first paint, and Space Grotesk ships as latin only.
+- Desktop polish from the design sweep: project card metrics stay grouped at the card top, the Director modal transcript scrolls to its end, the filter toolbar readout wraps below squeezed controls, narrow approval summaries get the row width, the telemetry analytics split aligns with its nested grids, the directive persistence warning has its own hint row, the milestone form dialog content is inset from the panel border, the priority and source tracks fit their widest options, and the Projects table labels the failing feature count.
+- Documentation: Git for Windows is required for the native-family backends and `AIDD_BASH` is documented; `--project-dir` is documented as defaulting to the current directory; the artifact catalogue lists `.aidd/tmp` and the prompt evidence screenshots; the tracked Caddyfile says what it needs before it works; the WebSocket contract page matches the invalidation table and the polling hooks; the audit definitions were corrected against their area owners' reviews.
+
+### Fixed
+
+- The panel refuses DNS-rebound and cross-origin requests on every route, a project config can no longer set the panel token, listener or Telegram channel, and aidd's own tokens stay out of project-owned commands.
+- `start:web` confirms its own backend and `stop:web` kills only the recorded one; a writer lock whose holder started before this boot is reclaimed; a migration that leaves an orphan row is rolled back and named rather than recorded; metadata files are replaced whole and concurrent iteration writes no longer overwrite each other.
+- Runs: a run stopped before it starts is recorded as stopped; a stop or kill requested while a run is still starting is honoured; a UI stop no longer rewrites the CLI's heartbeat record; a launch no longer erases a direct-CLI run's pending stop; a parked run reads waiting_approval on every path; a live run is told from a reused pid by its recorded start time; an unreadable process table is unknown liveness, not death; web startup spares a run still inside its startup window; a launcher-admitted isolated run never falls back to the live tree, and admission counts a run as isolated only when it really is; a run that deleted another run's leased feature records no longer classifies as a clean success; one running Director cycle and one active execution per task are held by unique indexes; a project runs one pipeline session at a time.
+- Pipelines and the write guard: a stopped metadata-only step still checks its write boundary; an auto-fix attempt no longer decides a session's outcome; the guard reads git paths unquoted so a non-ASCII file is judged and reverted by its real name; a discarded file that was never committed is described as gone, not as reverted, and a discard whose revert failed no longer claims the committed version is in place; write violations are reverted only in a run's own worktree; both ends of a rename are tracked; `--write-allowlist` with no git baseline refuses to run instead of failing open.
+- Native agent: the client keeps `finish_reason` so a cut-off turn is not a complete one; a provider HTTP 429 is classified as a rate limit with its reset time; a `cd` with no target, commands that print the environment, and a shell fed its commands through a pipe or redirect are denied; destructive git is judged by the words bash runs rather than one regex; the idle monitor no longer kills a tool call inside its declared timeout.
+- claude-code: a run's final answer prints once, and tool output sits under the call that made it.
+- Gates: `check:credential-disclosure` no longer reports a search inside a command substitution, an inspection's own printed text, a truncated heredoc, a boolean setting or a credential path that is only text as a disclosure, finds a heredoc terminator in a CRLF log, and knows the stores an external backend can reach; a torn smoke cache no longer fails every later `smoke:qc`; `check:max-lines` fails when a scanned root is missing; every test script must run in `smoke:qc`; editing the assertion catalog or an audit reruns the dependent checks; schema parity compares nullability, declared type and default presence per column and exempts only a true rowid alias; the shared-core writer takes the running checkout as owner wherever the targets live; untracked files are judged by the licence gate too.
+- The doctor warns while the user config file still holds a credential and is accurate for custom providers; the scrub rules redact a password in a URL and five other credential shapes.
+- Maturity run-next launches audits through the audit service; a suggestion carries only targeting args, never shell parameters; a cycle whose run is still queued at startup is re-attached; approving a parked feature clears the question it answered; a feature's completion is dated only when it enters completed; a directive in a folder outside Git has nothing to commit; validate mode no longer installs git hooks in the project it checks; a declined repository is no longer also reported as missing by the leak guard.
+- Advisory audit: nested workspace lockfiles are audited, out-of-scope trees are separated from not re-checked ones, each tree's last audited state survives an interruption, each run record is reserved exclusively, a transport-shaped failure is retried once, and the sweep counts only files it could read and records its row under a lock.
+
+### Security
+
+- An agent process can no longer rewrite or delete remote history: a pre-push guard, armed only while `AIDD_AGENT` is set, refuses a non-fast-forward push and a remote deletion, and the native shell policy denies every force-push spelling up front. The guard is delivered to every repository in the estate by the shared-core sync.
+- Dependencies resolved past their advisories: hono 4.13.7, `@modelcontextprotocol/sdk`, proxy-addr, source-map-js and smol-toml. `bun audit` reports no vulnerabilities at this release.
+
 ## [3.4.0] - 2026-09-29
 
 ### Added

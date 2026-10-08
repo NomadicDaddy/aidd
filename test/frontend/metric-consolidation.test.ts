@@ -58,7 +58,7 @@ describe('one labelled-figure tile', () => {
 		const about = await read('pages', 'about', 'AboutPage.tsx');
 		expect(about).not.toContain('<Metric');
 		expect(about).toContain('__AIDD_BUILD_REVISION__');
-		expect(about).toContain('__AIDD_BUILD_TIMESTAMP__');
+		expect(about).toContain('buildTimestamp()');
 		expect(about).toContain('__AIDD_VERSION__');
 	});
 

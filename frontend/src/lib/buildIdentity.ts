@@ -27,16 +27,31 @@ declare global {
 // this module through the web-vitals tests without the frontend's ambient declarations or Vite's
 // client types, and it must still type-check there.
 declare const __AIDD_BUILD_REVISION__: string;
-declare const __AIDD_BUILD_TIMESTAMP__: string;
 declare const __AIDD_VERSION__: string;
 
-/** The build constants Vite inlined into this bundle. */
+/** The meta tag vite.config.ts injects into index.html; the one per-build value outside the chunks. */
+export const BUILD_TIMESTAMP_META = 'aidd-build-timestamp';
+
+/**
+ * When this bundle was built, read from the entry document rather than compiled in: a timestamp
+ * inside a content-hashed chunk renamed the entry and most of the bundle on every rebuild.
+ * @returns The ISO timestamp, or `unknown` when the document carries none (tests, a bare module).
+ */
+export function buildTimestamp(): string {
+	if (typeof document === 'undefined') return 'unknown';
+	const content = document
+		.querySelector(`meta[name="${BUILD_TIMESTAMP_META}"]`)
+		?.getAttribute('content');
+	return content && content.length > 0 ? content : 'unknown';
+}
+
+/** The build constants Vite inlined into this bundle, plus the timestamp from the document. */
 export function buildIdentity(): AiddBuildIdentity {
 	const env: Record<string, string | undefined> = import.meta.env;
 	return {
 		mode: env.MODE ?? 'unknown',
 		revision: __AIDD_BUILD_REVISION__,
-		timestamp: __AIDD_BUILD_TIMESTAMP__,
+		timestamp: buildTimestamp(),
 		version: __AIDD_VERSION__,
 	};
 }

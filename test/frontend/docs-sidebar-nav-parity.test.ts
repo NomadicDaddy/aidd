@@ -298,7 +298,9 @@ describe('small pages', () => {
 		expect(page).not.toContain("buttonClassName('primary')");
 		expect(page.match(/buttonClassName\('secondary'\)/gu)).toHaveLength(2);
 		expect(page).toContain('__AIDD_BUILD_REVISION__');
-		expect(page).toContain('__AIDD_BUILD_TIMESTAMP__');
+		// The timestamp is read from the document, never compiled into a hashed chunk.
+		expect(page).not.toContain('__AIDD_BUILD_TIMESTAMP__');
+		expect(page).toContain('buildTimestamp()');
 		expect(page).toContain('__AIDD_VERSION__');
 		expect(page).toContain('__AIDD_REPOSITORY_URL__');
 		// Each injected value remains separately labelled so the build can be scanned and copied.
@@ -307,7 +309,7 @@ describe('small pages', () => {
 		expect(page).toMatch(/>Version<\/dt>\s*<dd[^>]*>\s*\{__AIDD_VERSION__\}\s*<\/dd>/u);
 		expect(page).toMatch(/>Revision<\/dt>\s*<dd[^>]*>\s*\{__AIDD_BUILD_REVISION__\}\s*<\/dd>/u);
 		expect(page).toMatch(
-			/>Built<\/dt>\s*<dd[^>]*>\s*<time[^>]*dateTime=\{__AIDD_BUILD_TIMESTAMP__\}>\s*\{formatDate\(__AIDD_BUILD_TIMESTAMP__\)\}\s*<\/time>\s*<\/dd>/u,
+			/>Built<\/dt>\s*<dd[^>]*>\s*<time[^>]*dateTime=\{builtAt\}>\s*\{builtAtLabel\}\s*<\/time>\s*<\/dd>/u,
 		);
 		expect(page).toContain('microLabelClass');
 		expect(page).not.toContain("label: 'Interface'");
@@ -321,12 +323,12 @@ describe('small pages', () => {
 		]);
 
 		expect(types).toContain('declare const __AIDD_BUILD_REVISION__: string;');
-		expect(types).toContain('declare const __AIDD_BUILD_TIMESTAMP__: string;');
+		expect(types).not.toContain('__AIDD_BUILD_TIMESTAMP__');
 		expect(types).toContain('declare const __AIDD_REPOSITORY_URL__: string;');
 		expect(types).toContain('declare const __AIDD_VERSION__: string;');
 		expect(config).toContain('__AIDD_BUILD_REVISION__: JSON.stringify(buildRevision)');
-		expect(config).toContain('__AIDD_BUILD_TIMESTAMP__: JSON.stringify(buildTimestamp)');
-		expect(config).toContain('const buildTimestamp = new Date().toISOString();');
+		expect(config).not.toContain('__AIDD_BUILD_TIMESTAMP__');
+		expect(config).toContain("name: 'aidd-build-timestamp'");
 		expect(config).toContain('__AIDD_REPOSITORY_URL__: JSON.stringify(repositoryUrl)');
 		// `git+https://….git` is the clone address; About links a human at the browsable URL.
 		expect(config).toContain("replace(/^git\\+/, '').replace(/\\.git$/, '')");

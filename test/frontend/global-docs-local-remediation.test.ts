@@ -62,7 +62,7 @@ describe('standalone and documentation local remediation', () => {
 		);
 		// No hand-rolled muted line beside the slot that already renders one.
 		expect(about).not.toContain('text-sm text-muted-foreground');
-		expect(about).toContain('formatDate(__AIDD_BUILD_TIMESTAMP__)');
+		expect(about).toContain('formatDate(builtAt)');
 		expect(about).not.toContain('font-display text-xl');
 		expect(about).toContain("buttonClassName('secondary')");
 		expect(about).not.toContain("buttonClassName('primary')");

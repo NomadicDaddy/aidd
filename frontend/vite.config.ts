@@ -23,6 +23,27 @@ const packageJson = JSON.parse(
 const appVersion = typeof packageJson.version === 'string' ? packageJson.version : '0.0.0';
 const buildTimestamp = new Date().toISOString();
 
+/**
+ * The build timestamp goes into index.html, never into a chunk. Every chunk is content-hashed and
+ * served immutable; a per-build value compiled into the entry renamed it and, through the imports
+ * that name it, about four fifths of the bundle on every rebuild of identical source. index.html is
+ * served no-store, so it is the one file that may differ per build.
+ */
+function buildTimestampMeta(): Plugin {
+	return {
+		name: 'aidd-build-timestamp-meta',
+		transformIndexHtml() {
+			return [
+				{
+					attrs: { content: buildTimestamp, name: 'aidd-build-timestamp' },
+					injectTo: 'head',
+					tag: 'meta',
+				},
+			];
+		},
+	};
+}
+
 const buildRevision = readBuildRevision(frontendRoot);
 
 // `git+https://….git` is the package-manager form; About links a human at it, so normalise to the
@@ -112,11 +133,11 @@ function bundleAnalysisManifest(): Plugin {
 export default defineConfig({
 	define: {
 		__AIDD_BUILD_REVISION__: JSON.stringify(buildRevision),
-		__AIDD_BUILD_TIMESTAMP__: JSON.stringify(buildTimestamp),
 		__AIDD_REPOSITORY_URL__: JSON.stringify(repositoryUrl),
 		__AIDD_VERSION__: JSON.stringify(appVersion),
 	},
 	plugins: [
+		buildTimestampMeta(),
 		releaseBuildPlugin(repositoryRoot),
 		react(),
 		babel({ presets: [reactCompilerPreset()] }),

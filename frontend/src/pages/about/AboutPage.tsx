@@ -5,6 +5,7 @@ import { PageRail } from '../../components/shared/PageRail.tsx';
 import { buttonClassName } from '../../components/ui/button.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
+import { buildTimestamp } from '../../lib/buildIdentity.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
 import { formatDate } from '../../lib/formatters.ts';
 import { microLabelClass } from '../../lib/typography.ts';
@@ -13,6 +14,10 @@ const PAGE_RAIL = pageRailByContentType.reading;
 
 export function AboutPage() {
 	useDocumentTitle('About');
+	const builtAt = buildTimestamp();
+	// 'unknown' is what the document reports when it carries no timestamp (a bare render); it is
+	// not a date, so it is shown as the word rather than formatted.
+	const builtAtLabel = builtAt === 'unknown' ? builtAt : formatDate(builtAt);
 
 	return (
 		<PageRail className="page-reveal space-y-5" rail={PAGE_RAIL}>
@@ -74,9 +79,7 @@ export function AboutPage() {
 						</dd>
 						<dt className={`${microLabelClass} text-muted-foreground`}>Built</dt>
 						<dd className="min-w-0 font-mono text-foreground">
-							<time dateTime={__AIDD_BUILD_TIMESTAMP__}>
-								{formatDate(__AIDD_BUILD_TIMESTAMP__)}
-							</time>
+							<time dateTime={builtAt}>{builtAtLabel}</time>
 						</dd>
 					</dl>
 				</div>

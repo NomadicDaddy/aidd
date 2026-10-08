@@ -1,35 +1,14 @@
 import type { AgentEvent } from 'aidd-shared/backends/types';
 import type { SelectedWork } from 'aidd-shared/modes/types';
 
-import { agentErrorFatality } from 'aidd-shared/backends/error-events';
-import {
-	bashToolPattern,
-	commandFromArgs,
-	editToolPattern,
-	pathFromArgs,
-	readToolPattern,
-	writeToolPattern,
-} from 'aidd-shared/orchestrator/details/tool-args';
-
-import type {
-	FinalCheckSummary,
-	IterationDetails,
-	IterationDetailsSummary,
-	IterationError,
-} from './types.ts';
+import type { IterationDetails, IterationDetailsSummary } from './types.ts';
 
 import {
-	classifyErrorText,
-	classifyFinalCheckCommand,
-	cleanProviderMessage,
-	commandMatchesErrorType,
-	commandOutputFailed,
-	commandStatusKnown,
-	finalCheckStatusFromOutput,
-	isProviderExitFallbackMeta,
-	providerErrorText,
-	requestIdFromProviderText,
-} from './classification.ts';
+	createEventAccumulator,
+	recordAgentError,
+	recordToolCall,
+	recordToolResult,
+} from './event-accumulator.ts';
 import {
 	activeVerificationRecoveryFor,
 	detectActiveVerificationTimeout,
@@ -43,134 +22,40 @@ import {
 	uniqueOrdered,
 } from './shared.ts';
 
+interface OutcomeFlags {
+	completionPendingCommit?: boolean;
+	findingsContractDropped?: boolean;
+	missingAiddResult?: boolean;
+	missingAuditArtifacts?: boolean;
+	residualDirtyFilesCount?: number;
+}
+
 export function extractIterationDetails(
 	events: AgentEvent[],
 	exitCode: number,
 	work?: SelectedWork,
-	flags?: {
-		completionPendingCommit?: boolean;
-		findingsContractDropped?: boolean;
-		missingAiddResult?: boolean;
-		missingAuditArtifacts?: boolean;
-		residualDirtyFilesCount?: number;
-	},
+	flags?: OutcomeFlags,
 ): IterationDetails {
-	const filesRead: string[] = [];
-	const filesEdited: string[] = [];
-	const filesCreated: string[] = [];
-	const commands: string[] = [];
-	const advisories: string[] = [];
-	const errors: IterationError[] = [];
-	const failedCommands: string[] = [];
-	const finalChecks: FinalCheckSummary = {};
-	let commandStatusEvidence = false;
-	let pendingCommand: string | undefined;
-	let providerError:
-		| {
-				message: string;
-				requestId?: string;
-		  }
-		| undefined;
-	let providerErrorPriority = -1;
-
+	// Each event type has its own recorder; this loop only routes. The totals read below are the
+	// accumulator's fields, so the summary and outcome assembly that follow are unchanged.
+	const acc = createEventAccumulator();
 	for (const event of events) {
-		if (event.type === 'tool_call') {
-			if (readToolPattern.test(event.tool)) {
-				const path = pathFromArgs(event.args);
-				if (path) filesRead.push(path);
-			} else if (writeToolPattern.test(event.tool)) {
-				const path = pathFromArgs(event.args);
-				if (path) filesCreated.push(path);
-			} else if (editToolPattern.test(event.tool)) {
-				const path = pathFromArgs(event.args);
-				if (path) filesEdited.push(path);
-			} else if (bashToolPattern.test(event.tool)) {
-				const command = commandFromArgs(event.args);
-				if (command) {
-					commands.push(command);
-					pendingCommand = command;
-				}
-			}
-		} else if (event.type === 'tool_result') {
-			const text = eventTextForClassification(event);
-			if (text !== undefined) {
-				const resultCommand = pendingCommand;
-				if (resultCommand !== undefined) {
-					const check = classifyFinalCheckCommand(resultCommand);
-					const status =
-						event.exitCode === undefined
-							? finalCheckStatusFromOutput(text)
-							: event.exitCode === 0
-								? 'passed'
-								: 'failed';
-					if (check !== undefined && status !== undefined) finalChecks[check] = status;
-					pendingCommand = undefined;
-				}
-				if (
-					resultCommand !== undefined &&
-					(event.exitCode !== undefined || commandStatusKnown(text))
-				) {
-					commandStatusEvidence = true;
-				}
-				const errorType = classifyErrorText(text);
-				const failedByExit =
-					event.exitCode === undefined ? commandOutputFailed(text) : event.exitCode !== 0;
-				const failedByDiagnostic =
-					event.exitCode === undefined &&
-					resultCommand !== undefined &&
-					errorType !== undefined &&
-					commandMatchesErrorType(resultCommand, errorType);
-				if (resultCommand !== undefined && (failedByExit || failedByDiagnostic)) {
-					failedCommands.push(resultCommand);
-				}
-				if ((failedByExit || failedByDiagnostic) && errorType !== undefined) {
-					errors.push({
-						message: text.slice(0, 500),
-						type: errorType,
-					});
-				}
-			}
-		} else if (event.type === 'error') {
-			const fatality = agentErrorFatality(event);
-			// A nonfatal event is one a parser explicitly recognized as a known-benign advisory
-			// (e.g. codex's skills-context-budget notice), so it never explains an outcome and is
-			// dropped whatever the exit code. Reporting it as the provider error made advisories
-			// masquerade as the cause of any non-success run that emitted nothing else — a run
-			// that failed on missing_aidd_result read as "provider error: Skill descriptions were
-			// shortened…". No provider error at all is the honest answer in that case.
-			if (fatality === 'nonfatal') {
-				const advisory = advisoryFromMeta(event.meta);
-				if (advisory !== undefined) advisories.push(advisory);
-				continue;
-			}
-			const text = eventTextForClassification(event) ?? event.reason;
-			const classified = classifyErrorText(text);
-			if (event.reason === 'provider' || event.reason === 'provider_flagged') {
-				const isExitFallback = isProviderExitFallbackMeta(event.meta);
-				const priority = isExitFallback ? 0 : fatality === 'unspecified' ? 1 : 2;
-				// The generic {exitCode, stderr} error the parsers emit on process
-				// exit trails provider diagnostics. Unspecified item errors outrank it,
-				// while an explicitly fatal terminal error (codex turn.failed) outranks both.
-				if (priority > providerErrorPriority) {
-					const providerText = providerErrorText(event.meta) ?? text;
-					providerError = {
-						message: cleanProviderMessage(providerText),
-					};
-					const requestId =
-						requestIdFromProviderText(providerText) ?? requestIdFromProviderText(text);
-					if (requestId !== undefined) providerError.requestId = requestId;
-					providerErrorPriority = priority;
-				}
-			}
-			errors.push({
-				message: text.slice(0, 500),
-				type:
-					event.reason === 'provider' || event.reason === 'provider_flagged'
-						? 'provider'
-						: (classified ?? 'general'),
-			});
-		}
+		if (event.type === 'tool_call') recordToolCall(acc, event);
+		else if (event.type === 'tool_result') recordToolResult(acc, event);
+		else if (event.type === 'error') recordAgentError(acc, event);
 	}
+	const {
+		advisories,
+		commands,
+		commandStatusEvidence,
+		errors,
+		failedCommands,
+		filesCreated,
+		filesEdited,
+		filesRead,
+		finalChecks,
+		providerError,
+	} = acc;
 
 	const uniqueRead = uniqueOrdered(filesRead);
 	const uniqueEdited = uniqueOrdered(filesEdited);
@@ -187,22 +72,6 @@ export function extractIterationDetails(
 		uniqueFilesEdited: uniqueEdited.length,
 		uniqueFilesRead: uniqueRead.length,
 	};
-	const verificationLifecycleConflict = detectVerificationLifecycleConflict(
-		commands,
-		events,
-		exitCode,
-	);
-	const activeVerificationTimeout =
-		verificationLifecycleConflict === undefined
-			? detectActiveVerificationTimeout(commands, events, exitCode)
-			: undefined;
-	const activeVerificationRecovery = activeVerificationRecoveryFor(activeVerificationTimeout);
-	const blockedNeedsUserInput = asksForUserInput(events);
-	const blockedDirtyWorktree =
-		blockedNeedsUserInput &&
-		(flags?.residualDirtyFilesCount ?? 0) > 0 &&
-		hasDirtyWorktreeEvidence(events, commands);
-
 	const details: IterationDetails = {
 		commands,
 		commandStatusEvidence,
@@ -211,26 +80,7 @@ export function extractIterationDetails(
 		filesCreated: uniqueCreated,
 		filesEdited: uniqueEdited,
 		filesRead: uniqueRead,
-		outcome: {
-			exitCode,
-			status: pickOutcomeStatus({
-				activeVerificationRecovery,
-				activeVerificationTimeout,
-				blockedDirtyWorktree,
-				blockedNeedsUserInput,
-				completionPendingCommit: flags?.completionPendingCommit ?? false,
-				exitCode,
-				findingsContractDropped: flags?.findingsContractDropped ?? false,
-				missingAiddResult: flags?.missingAiddResult ?? false,
-				missingAuditArtifacts: flags?.missingAuditArtifacts ?? false,
-				verificationLifecycleConflict,
-			}),
-			...(activeVerificationTimeout === undefined ? {} : { activeVerificationTimeout }),
-			...(activeVerificationRecovery === undefined ? {} : { activeVerificationRecovery }),
-			...(verificationLifecycleConflict === undefined
-				? {}
-				: { verificationLifecycleConflict }),
-		},
+		outcome: buildOutcome(commands, events, exitCode, flags),
 		summary,
 	};
 	if (providerError) details.providerError = providerError;
@@ -244,12 +94,60 @@ export function extractIterationDetails(
 	return details;
 }
 
-// Parsers attach the resolving action to a recognized advisory as `meta.advisory`; an advisory
-// without one is pure noise and is dropped rather than reported as something to act on.
-function advisoryFromMeta(meta: unknown): string | undefined {
-	if (typeof meta !== 'object' || meta === null) return undefined;
-	const advisory = (meta as Record<string, unknown>).advisory;
-	return typeof advisory === 'string' && advisory.length > 0 ? advisory : undefined;
+// Every flag the caller left out reads as absent.
+function settledFlags(flags: OutcomeFlags | undefined): Required<OutcomeFlags> {
+	return {
+		completionPendingCommit: flags?.completionPendingCommit ?? false,
+		findingsContractDropped: flags?.findingsContractDropped ?? false,
+		missingAiddResult: flags?.missingAiddResult ?? false,
+		missingAuditArtifacts: flags?.missingAuditArtifacts ?? false,
+		residualDirtyFilesCount: flags?.residualDirtyFilesCount ?? 0,
+	};
+}
+
+// The outcome is the one place the iteration's detections meet its flags; the three detections
+// are ordered (a lifecycle conflict pre-empts an active-verification timeout) and the optional
+// members are present only when they carry a value, which is what the DTO's consumers test.
+function buildOutcome(
+	commands: string[],
+	events: AgentEvent[],
+	exitCode: number,
+	flags: OutcomeFlags | undefined,
+): IterationDetails['outcome'] {
+	const verificationLifecycleConflict = detectVerificationLifecycleConflict(
+		commands,
+		events,
+		exitCode,
+	);
+	const activeVerificationTimeout =
+		verificationLifecycleConflict === undefined
+			? detectActiveVerificationTimeout(commands, events, exitCode)
+			: undefined;
+	const activeVerificationRecovery = activeVerificationRecoveryFor(activeVerificationTimeout);
+	const blockedNeedsUserInput = asksForUserInput(events);
+	const settled = settledFlags(flags);
+	const blockedDirtyWorktree =
+		blockedNeedsUserInput &&
+		settled.residualDirtyFilesCount > 0 &&
+		hasDirtyWorktreeEvidence(events, commands);
+	return {
+		exitCode,
+		status: pickOutcomeStatus({
+			activeVerificationRecovery,
+			activeVerificationTimeout,
+			blockedDirtyWorktree,
+			blockedNeedsUserInput,
+			completionPendingCommit: settled.completionPendingCommit,
+			exitCode,
+			findingsContractDropped: settled.findingsContractDropped,
+			missingAiddResult: settled.missingAiddResult,
+			missingAuditArtifacts: settled.missingAuditArtifacts,
+			verificationLifecycleConflict,
+		}),
+		...(activeVerificationTimeout === undefined ? {} : { activeVerificationTimeout }),
+		...(activeVerificationRecovery === undefined ? {} : { activeVerificationRecovery }),
+		...(verificationLifecycleConflict === undefined ? {} : { verificationLifecycleConflict }),
+	};
 }
 
 function asksForUserInput(events: AgentEvent[]): boolean {

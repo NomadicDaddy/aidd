@@ -153,7 +153,9 @@ describe('settings tab local design contracts', () => {
 		expect(dialog).toContain('Access token');
 		expect(layout).toContain('ariaLabel="Set access token"');
 		expect(architecture).toContain('optional access token');
-		expect(settingsDocs).toContain('requires an access token in the panel environment');
+		expect(settingsDocs).toContain(
+			'requires an access token: one already in the config file is kept',
+		);
 		expect(configuration).toContain('Access token guarding the API.');
 		expect(deployment).toContain('Access token for the web API;');
 		expect(quickstart).toContain('LAN-binding access token');

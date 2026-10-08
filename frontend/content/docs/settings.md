@@ -57,7 +57,7 @@ Source Control
 Control Panel Runtime
 : restart or shut down the panel, and change the listener address. A hostname, port, or local-network-access change triggers a graceful restart and redirects your browser to the configured address.
 Network Access
-: the panel binds to `127.0.0.1` by default. Enabling local-network access requires an access token in the panel environment (`AIDD_WEB_AUTH_TOKEN`); saving without one is refused, and Settings never generates a token into the config file. Remote API callers send it as a bearer token. Saving a hostname or remote-access change restarts the panel automatically; allowed-origin changes take effect after a manual restart.
+: the panel binds to `127.0.0.1` by default. Enabling local-network access requires an access token: one already in the config file is kept as it is, otherwise set `AIDD_WEB_AUTH_TOKEN` in the panel environment and restart the panel. Saving with neither is refused, and Settings never generates a token into the config file. Remote API callers send it as a bearer token. Saving a hostname or remote-access change restarts the panel automatically; allowed-origin changes take effect after a manual restart.
 Observability
 : browser tracing controls.
 System Metrics

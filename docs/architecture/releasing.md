@@ -86,8 +86,15 @@ both the readiness probe and crawl target; otherwise both use the configured web
 waits up to 60 seconds for `/api/v1/health`, includes `--404`, and forwards supported crawler
 options. `--page`, `--start-from`, and mobile viewport presets produce diagnostic evidence and
 cannot satisfy the release guard. A development server cannot substantiate a release capture.
-The wrapper still runs the vitals analyzer for diagnostics; a narrow crawl can exit nonzero for
-missing metric samples even when its page assertions pass. Inspect its report for the reason.
+The wrapper runs the crawl and then `crawltest:analyze`, and its exit code is the analyzer's once
+the crawl itself passed: the capture step is green only when `logs/crawltest.json` substantiates
+p75 web vitals for the build it measured **and** that build is the one in `frontend/dist` (the
+analyzer compares the report's recorded index hash with the dist on disk). Require exit 0. A
+rebuild after a crawl leaves the retained report describing the previous build, and the analyzer
+then exits 1 with `The measured build is not the built one`; re-crawl, do not reuse the report.
+The same verdict is written into the capture's manifest, which the screenshot guard checks at tag
+push. A narrow crawl can exit nonzero for missing metric samples even when its page assertions
+pass. Inspect its report for the reason.
 
 `screenshots/` is gitignored; preserve it locally. Each attempt writes a unique `runs/<run-id>/`
 directory. `release-run.json` selects the latest full attempt, including failed or interrupted

@@ -44,6 +44,11 @@ const DECIDES: { expects: string; file: string; why: string }[] = [
 	},
 	{
 		expects: "initiator: 'operator'",
+		file: 'services/project/intakeLaunch.ts',
+		why: 'the project-intake recipe after a create, an import or a retried init: all operator-driven',
+	},
+	{
+		expects: "initiator: 'operator'",
 		file: 'routes/runs.ts',
 		why: 'the web Launch button AND every MCP launch_run, which proxies to this one route',
 	},

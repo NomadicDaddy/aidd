@@ -1,11 +1,11 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { describe, expect, test } from 'bun:test';
-import type { WebContext } from '../../backend/src/context.ts';
 import {
 	createProjectProfilePreview,
 	createProjectProfilePreviews,
-} from '../../backend/src/routes/projectsProfilePreview.ts';
+	type ProfilePreviewDeps,
+} from '../../backend/src/services/project/profilePreview.ts';
 import { discoverAuditNames } from 'aidd-shared/modes/audit-shared';
 
 import { testTempDir } from '../_helpers/temp.ts';
@@ -50,11 +50,8 @@ async function makeProject(): Promise<string> {
 	return projectDir;
 }
 
-function contextFor(projectDir: string): WebContext {
-	return {
-		projectService: { resolveDiscoveredProject: async () => projectDir },
-		rootDir: AIDD_ROOT,
-	} as unknown as WebContext;
+function contextFor(projectDir: string): ProfilePreviewDeps {
+	return { resolveProject: async () => projectDir, rootDir: AIDD_ROOT };
 }
 
 const effectOf = (preview: Awaited<ReturnType<typeof createProjectProfilePreview>>, name: string) =>
@@ -169,10 +166,10 @@ describe('project profile preview', () => {
 				`${JSON.stringify({ audits: { PERFORMANCE: 'required' }, rules: [], updatedAt: '2026-10-07T00:00:00.000Z', version: 1 })}\n`,
 			);
 			const dirs: Record<string, string> = { hardened: plain, local: overridden };
-			const context = {
-				projectService: { resolveDiscoveredProject: async (id: string) => dirs[id] },
+			const context: ProfilePreviewDeps = {
+				resolveProject: async (id: string) => dirs[id] ?? plain,
 				rootDir: AIDD_ROOT,
-			} as unknown as WebContext;
+			};
 			const previews = await createProjectProfilePreviews(context, [
 				{ profile: lowExposureLocal, projectId: 'local' },
 				{ profile: lowExposureLocal, projectId: 'hardened' },

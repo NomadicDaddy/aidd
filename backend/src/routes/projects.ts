@@ -10,6 +10,12 @@ import {
 	submitProjectInterviewAnswer,
 } from '../services/interviewService.ts';
 import { readProjectFile } from '../services/project/fileContent.ts';
+import { launchProjectIntake } from '../services/project/intakeLaunch.ts';
+import {
+	createProjectProfilePreview,
+	createProjectProfilePreviews,
+	type ProfilePreviewDeps,
+} from '../services/project/profilePreview.ts';
 import { listProjectReports, submitProjectReport } from '../services/projectReports.ts';
 import { projectLaunchTarget } from './projectLaunchTarget.ts';
 import { projectRepositoryRouteGroup } from './projectRepository.ts';
@@ -30,10 +36,14 @@ import {
 } from './projects.schemas.ts';
 import { dashboardSummaryRouteGroup } from './projectsDashboardSummary.ts';
 import { listProjectGitStatuses, listProjectsWithoutFeatureStatus } from './projectsListing.ts';
-import {
-	createProjectProfilePreview,
-	createProjectProfilePreviews,
-} from './projectsProfilePreview.ts';
+
+// The preview service needs the catalog root and a project resolver, not the whole context.
+function previewDeps(context: WebContext): ProfilePreviewDeps {
+	return {
+		resolveProject: (projectId) => context.projectService.resolveDiscoveredProject(projectId),
+		rootDir: context.rootDir,
+	};
+}
 
 export function createProjectsRoutes(context: WebContext) {
 	return (
@@ -79,16 +89,8 @@ export function createProjectsRoutes(context: WebContext) {
 						},
 						(input) => context.runService.launchRun(input, { initiator: 'operator' }),
 						(projectPath) => context.runService.purgeProjectRuns(projectPath),
-						async (projectDir, launchTarget) => {
-							const session = await context.pipelineService.launchRecipe({
-								initiator: 'operator',
-								launchTarget,
-								metadataOnly: true,
-								projectDir,
-								recipeId: 'project-intake',
-							});
-							return { id: session.id };
-						},
+						(projectDir, launchTarget) =>
+							launchProjectIntake(context.pipelineService, projectDir, launchTarget),
 					),
 				{
 					body: projectCreateBody,
@@ -118,7 +120,10 @@ export function createProjectsRoutes(context: WebContext) {
 			.post(
 				'/profile-previews',
 				async ({ body }) => ({
-					previews: await createProjectProfilePreviews(context, body.profiles),
+					previews: await createProjectProfilePreviews(
+						previewDeps(context),
+						body.profiles,
+					),
 				}),
 				{
 					body: projectProfilePreviewsBody,
@@ -130,16 +135,8 @@ export function createProjectsRoutes(context: WebContext) {
 					await context.projectService.importProjects(
 						body.candidateIds,
 						body.action ?? 'register',
-						async (projectDir, launchTarget) => {
-							const session = await context.pipelineService.launchRecipe({
-								initiator: 'operator',
-								launchTarget,
-								metadataOnly: true,
-								projectDir,
-								recipeId: 'project-intake',
-							});
-							return { id: session.id };
-						},
+						(projectDir, launchTarget) =>
+							launchProjectIntake(context.pipelineService, projectDir, launchTarget),
 						projectLaunchTarget(body),
 					),
 				{
@@ -175,7 +172,11 @@ export function createProjectsRoutes(context: WebContext) {
 			.post(
 				'/:id/profile/preview',
 				async ({ body, params }) => ({
-					preview: await createProjectProfilePreview(context, params.id, body),
+					preview: await createProjectProfilePreview(
+						previewDeps(context),
+						params.id,
+						body,
+					),
 				}),
 				{
 					body: projectProfileBody,

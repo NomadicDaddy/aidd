@@ -3,6 +3,7 @@ import { Elysia } from 'elysia';
 import type { WebContext } from '../context.ts';
 
 import { HttpError } from '../services/errors.ts';
+import { launchProjectIntake } from '../services/project/intakeLaunch.ts';
 import { projectInitFailureParams } from './projects.schemas.ts';
 
 // Init-failure management routes (4b) under /api/v1/projects, registered in server.ts.
@@ -22,36 +23,17 @@ export function createProjectInitFailureRoutes(context: WebContext) {
 		.post(
 			'/init-failures/:fid/retry',
 			async ({ params }) => {
-				const failure = await context.initFailureService.getOpen(params.fid);
-				if (!failure)
-					throw new HttpError('Init failure not found or already dismissed', 404);
-				const result = await context.projectService.createProject(
-					{
-						description: failure.description,
-						mode: 'fresh',
-						name: failure.name,
-						root: failure.root,
-						spec: null,
-						// A github-template failure retries by re-cloning its persisted source;
-						// its template field is a pseudo-name, not a registry entry.
-						...(failure.templateUrl
-							? { templateUrl: failure.templateUrl }
-							: { template: failure.template }),
-					},
-					(input) => context.runService.launchRun(input, { initiator: 'operator' }),
-					(projectPath) => context.runService.purgeProjectRuns(projectPath),
-					async (projectDir) => {
-						const session = await context.pipelineService.launchRecipe({
-							initiator: 'operator',
-							metadataOnly: true,
-							projectDir,
-							recipeId: 'project-intake',
-						});
-						return { id: session.id };
-					},
+				const result = await context.initFailureService.retry(params.fid, (input) =>
+					context.projectService.createProject(
+						input,
+						(req) => context.runService.launchRun(req, { initiator: 'operator' }),
+						(projectPath) => context.runService.purgeProjectRuns(projectPath),
+						(projectDir, launchTarget) =>
+							launchProjectIntake(context.pipelineService, projectDir, launchTarget),
+					),
 				);
-				// Retry succeeded: clear the failure so it leaves the fleet.
-				await context.initFailureService.dismiss(params.fid);
+				if (!result)
+					throw new HttpError('Init failure not found or already dismissed', 404);
 				return { result };
 			},
 			{ params: projectInitFailureParams },

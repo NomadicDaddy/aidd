@@ -3,6 +3,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 import { AIDD_ROOT, GUARDS, HOOK, MARKER } from '../../scripts/lib/push-guards/contract.ts';
+import { testTempDir } from '../_helpers/temp.ts';
+import { removeTempTree } from '../backend/_helpers/remove-temp-tree.ts';
 
 // The installer copies a hook outward and, separately, a list of guard files. Nothing links the
 // two: the hook is shell, the list is TypeScript, and a change to one compiles and passes review
@@ -82,5 +84,31 @@ describe('install-history-guard sources', () => {
 		);
 		expect(installer).toContain("from './lib/push-guards/contract.ts'");
 		for (const guard of GUARDS) expect(installer).not.toContain(`'${guard}'`);
+	});
+
+	test('a foreign fleet root is delivered from this checkout as the owner', async () => {
+		// --root D:/public hands the writer a fleet with no aidd in it. The baseline is this
+		// checkout, not a sibling under that root; the first run over D:/public reported the owner
+		// as not checked out and wrote nothing while announcing eight discovered repositories.
+		const fleet = await testTempDir('aidd-foreign-fleet-');
+		try {
+			const run = Bun.spawnSync(
+				[
+					'bun',
+					'scripts/sync-shared-core.ts',
+					'--check',
+					'--group',
+					'push-guards',
+					'--fleet-root',
+					fleet,
+				],
+				{ cwd: AIDD_ROOT, stderr: 'pipe', stdout: 'pipe', windowsHide: true },
+			);
+			const output = run.stdout.toString() + run.stderr.toString();
+			expect(output).toContain('push-guards (owner: aidd)');
+			expect(output).not.toContain('NOT VERIFIED');
+		} finally {
+			await removeTempTree(fleet);
+		}
 	});
 });

@@ -172,6 +172,11 @@
 			"scaffolding/package.json",
 			"scaffolding/scripts/require-bun.ts",
 			"scaffolding/tsconfig.json",
+			"site/explainer-app-builders.html",
+			"site/explainer-cli-users.html",
+			"site/explainer.html",
+			"site/favicon.svg",
+			"site/index.html",
 			"skills/12-factor-guidelines/SKILL.md",
 			"skills/12-factor-guidelines/references/GUIDELINES.md",
 			"skills/audit-finding-review/SKILL.md",
@@ -272,7 +277,9 @@
 			"frontend/public/favicon.ico",
 			"frontend/public/og-image.jpg",
 			"frontend/public/web-app-manifest-192x192.png",
-			"frontend/public/web-app-manifest-512x512.png"
+			"frontend/public/web-app-manifest-512x512.png",
+			"site/favicon.ico",
+			"site/og-image.jpg"
 		],
 		"thirdParty": [
 			{
@@ -355,7 +362,7 @@
 			"config.json.example"
 		],
 		"publicDocumentRoots": ["docs", "licenses"],
-		"publicStaticAssetRoots": ["frontend/public"]
+		"publicStaticAssetRoots": ["frontend/public", "site"]
 	},
 	"verifiedDate": "2026-07-21"
 }

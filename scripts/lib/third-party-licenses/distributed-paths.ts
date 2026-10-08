@@ -7,6 +7,14 @@ import { type TrackedSurfaces } from './registry-types.ts';
 /** The catalog directories and root files published in aidd's source tree. */
 const CORE_CATALOG_DIRS: string[] = ['audits', 'skills', 'scaffolding', 'prompts', 'recipes'];
 
+/**
+ * Static trees that ship verbatim to a public surface: the control panel's public assets inside
+ * the built bundle, and the site/ tree that .github/workflows/pages.yml publishes to GitHub Pages.
+ * A root listed here must appear in the registry's publicStaticAssetRoots, so its files are
+ * classified like any other distributed material.
+ */
+const PUBLIC_STATIC_ASSET_ROOTS: string[] = ['frontend/public', 'site'];
+
 const REQUIRED_FILE_ASSETS: string[] = [
 	'VERSION',
 	'config.json.example',
@@ -18,6 +26,7 @@ export interface PackagedTrackedSurfaces {
 	catalogRoots: string[];
 	publicDocumentPaths: string[];
 	publicDocumentRoots: string[];
+	publicStaticAssetRoots: string[];
 }
 
 function uniqueSorted(paths: readonly string[]): string[] {
@@ -32,6 +41,7 @@ export function expectedPackagedTrackedSurfaces(): PackagedTrackedSurfaces {
 			...PUBLIC_DOCUMENT_FILE_ASSETS,
 		]),
 		publicDocumentRoots: uniqueSorted(PUBLIC_DOCUMENT_ROOT_ASSETS),
+		publicStaticAssetRoots: uniqueSorted(PUBLIC_STATIC_ASSET_ROOTS),
 	};
 }
 

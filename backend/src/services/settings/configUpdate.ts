@@ -3,8 +3,8 @@ import {
 	defaultIgnoredFolders,
 	normalizeAllowedOrigins,
 	type PartialAiddConfig,
+	WEB_AUTH_TOKEN_ENV,
 } from 'aidd-shared/config';
-import { randomBytes } from 'node:crypto';
 
 import type { WebConfigSettingsInput, WebRuntimeConfig } from './types.ts';
 
@@ -45,10 +45,6 @@ const runtimeNumberFields = [
 	'rateLimitBufferSeconds',
 	'timeoutSeconds',
 ] as const;
-
-function generateRemoteAuthToken(): string {
-	return randomBytes(32).toString('base64url');
-}
 
 function applyNetworkInput(next: PartialAiddConfig, input: WebConfigSettingsInput): void {
 	const hostname = optionalString(input.hostname);
@@ -196,11 +192,19 @@ export function buildUpdatedConfig(
 		else next.applicationsRoot = applicationsRoot;
 	}
 
+	// A remote-bound panel needs an access token, and the config file is the one place it must
+	// not live: an agent asked to read the configuration returns it. Saving used to generate one
+	// into ~/.aidd/config.json here; now the save is refused until the operator supplies it in the
+	// environment, the same rule assertWebAuthTokenPresent applies at startup.
 	const existingAuthToken = optionalString(
 		existing.web?.authToken ?? currentConfig.web.authToken ?? null,
 	);
 	if (input.allowRemote === true && existingAuthToken === undefined) {
-		next.web = { ...(next.web ?? {}), authToken: generateRemoteAuthToken() };
+		throw new Error(
+			`web.allowRemote requires an access token. Set ${WEB_AUTH_TOKEN_ENV} in the panel's ` +
+				'environment and restart it, then enable network access; the token is never written ' +
+				'into ~/.aidd/config.json.',
+		);
 	}
 
 	applyNetworkInput(next, input);

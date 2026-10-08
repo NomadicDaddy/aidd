@@ -906,7 +906,10 @@ describe('web settings config', () => {
 		await removeTempTree(workspace);
 	});
 
-	test('generates a remote auth token when enabling remote access without one', async () => {
+	// SEC-008 (audit-assertions-1790856991): enabling network access with no token in the
+	// environment used to generate web.authToken into config.json, the one place a credential
+	// must not live. The save is refused, names the variable, and writes nothing.
+	test('refuses to enable remote access without an environment token', async () => {
 		const workspace = await testTempDir('aidd-web-settings-token-');
 		const configPath = join(workspace, 'config.json');
 		const web = {
@@ -932,22 +935,17 @@ describe('web settings config', () => {
 		};
 		const service = new SettingsService(makeConfig(web), configPath);
 
-		const result = await service.updateConfig({
-			allowRemote: true,
-			applicationRoots: [workspace],
-			cli: 'native',
-			hostname: '0.0.0.0',
-			ignoredFolders: ['node_modules'],
-			reasoningEffort: 'low',
-		});
-		const written = JSON.parse(await readFile(configPath, 'utf8')) as {
-			web?: { authToken?: string; allowRemote?: boolean };
-		};
-
-		expect(written.web?.allowRemote).toBe(true);
-		expect(written.web?.authToken).toMatch(/^[\w-]{40,}$/);
-		expect(result.config.authTokenConfigured).toBe(true);
-		expect(result.resolvedConfig.web.allowRemote).toBe(false);
+		await expect(
+			service.updateConfig({
+				allowRemote: true,
+				applicationRoots: [workspace],
+				cli: 'native',
+				hostname: '0.0.0.0',
+				ignoredFolders: ['node_modules'],
+				reasoningEffort: 'low',
+			}),
+		).rejects.toThrow(new RegExp(WEB_AUTH_TOKEN_ENV));
+		expect(await Bun.file(configPath).exists()).toBe(false);
 
 		await removeTempTree(workspace);
 	});

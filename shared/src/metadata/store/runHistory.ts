@@ -79,7 +79,10 @@ export async function appendRunSummary(
 	summary: Record<string, unknown>,
 ): Promise<void> {
 	await mkdir(metadataDir, { recursive: true });
-	await appendFile(join(metadataDir, 'runs.jsonl'), `${JSON.stringify(summary)}\n`);
+	// The ledger outlives every run as its provenance, and its summary is model-written text. Scrub
+	// it like the iteration artifacts so a credential an agent quoted cannot reach it.
+	const line = JSON.stringify(scrubSecretFields(summary));
+	await appendFile(join(metadataDir, 'runs.jsonl'), `${line}\n`);
 }
 
 const LEDGER_FILE = 'findings-ledger.jsonl';

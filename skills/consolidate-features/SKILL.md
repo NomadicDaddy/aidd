@@ -250,6 +250,14 @@ Consolidation is a source-of-truth maintenance operation. When changes were made
     - Renamed feature directories
     - Updated `.aidd/roadmap.json`, `.aidd/screen-map.md`, or equivalent current artifacts
 3. Do not stage unrelated dirty files. If unrelated dirty files block a clean commit, commit only the intended paths.
+    - Never stage a helper script written to perform this pass. Write such scripts outside the
+      repository (the system temp directory) or delete them before committing: nothing uses them
+      once the pass is done, and a committed one-shot verifier reads as maintained evidence. A
+      keystrike run committed three of them (874 lines), including a note verifier that printed
+      PASS after checking 5 of 15 renamed records.
+    - If `.aidd/` is gitignored in this repository, the consolidation outputs are local-only and
+      there is nothing to commit. Report `not committed: .aidd is gitignored` rather than
+      committing anything else in their place.
 4. Use a conventional commit message, typically:
 
     ```text

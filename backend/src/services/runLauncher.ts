@@ -150,6 +150,9 @@ export async function buildLaunchCommand(
 		'--reasoning-effort',
 		input.reasoningEffort ?? launchDefaults.reasoningEffort,
 	);
+	// The web launch already applied provider rest to --cli above (or the person chose to run
+	// anyway), so the CLI must not decide it again and refuse a backend the launch settled on.
+	args.push('--ignore-rest');
 	addOptionalFlag(args, '--max-iterations', input.maxIterations);
 	addOptionalFlag(args, '--feature', input.feature);
 	addOptionalFlag(args, '--filter-by', input.filterBy);

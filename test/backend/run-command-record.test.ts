@@ -14,6 +14,7 @@ function makeRow(overrides: Partial<RunRow> = {}): RunRow {
 		aiddVersion: null,
 		aiSummary: null,
 		backend: 'native',
+		backendSubstitution: null,
 		cachedTokens: null,
 		costUsd: null,
 		chainedFromRunId: null,

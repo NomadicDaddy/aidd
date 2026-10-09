@@ -42,6 +42,8 @@ export interface RunRecord extends AiddRunDriver, AiddRunProvenance {
 	activityState: null | string;
 	aiSummary: null | string;
 	backend: BackendName;
+	/** Why the run is not on the backend it asked for: provider rest substituted it. */
+	backendSubstitution: null | string;
 	canKill: boolean;
 	canReadOutput: boolean;
 	canStop: boolean;
@@ -102,6 +104,8 @@ export interface RunLaunchRequest {
 	feature?: string;
 	filterBy?: string;
 	filterValue?: string;
+	/** The person chose "run anyway" on a resting backend; provider rest is not applied. */
+	ignoreRest?: boolean;
 	initGitAfterScaffold?: boolean;
 	interview?: boolean;
 	maxIterations?: number;

@@ -25,6 +25,7 @@ export function toWebRunRecord(run: WebRunRow): RunRecord {
 		aiddVersion: run.aiddVersion,
 		aiSummary: run.aiSummary,
 		backend: run.backend as BackendName,
+		backendSubstitution: run.backendSubstitution,
 		canKill: !terminal,
 		canReadOutput: run.logPath !== null,
 		canStop: !terminal,

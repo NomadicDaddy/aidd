@@ -104,6 +104,8 @@ export interface RunRecord {
 	aiddVersion: null | string;
 	aiSummary: null | string;
 	backend: BackendName;
+	/** Set when provider rest moved the run off the backend it asked for. */
+	backendSubstitution: null | string;
 	canKill: boolean;
 	canReadOutput: boolean;
 	canStop: boolean;
@@ -160,6 +162,7 @@ export interface RunLaunchRequest {
 	feature?: string;
 	filterBy?: string;
 	filterValue?: string;
+	ignoreRest?: boolean;
 	interview?: boolean;
 	maxIterations?: number;
 	mode?: RunMode;
@@ -178,6 +181,7 @@ export interface RunLaunchRequest {
 
 export interface DirectiveRunLaunchRequest extends LaunchTargetValue {
 	executionIntent: SkillExecutionIntent;
+	ignoreRest?: boolean;
 	projectDir: string;
 	prompt: string;
 }

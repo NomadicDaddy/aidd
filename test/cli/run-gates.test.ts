@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import type { AgentEvent } from 'aidd-shared/backends/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
+import { readProviderRests } from 'aidd-shared/provider-rest/store';
 
 import type { OrchestratorDeps } from '../../cli/src/orchestrator/run/types.ts';
+import { testTempDir } from '../_helpers/temp.ts';
 
 import {
 	buildRateLimitBudgetSummary,
@@ -38,6 +40,7 @@ describe('handleRateLimit — wall-clock deadline', () => {
 			new AbortController(),
 			1,
 			runStartedAtMs,
+			undefined,
 		);
 		expect(result.backoffExceedsDeadline).toBe(true);
 		expect(result.stopRequested).toBe(false);
@@ -63,9 +66,48 @@ describe('handleRateLimit — wall-clock deadline', () => {
 			new AbortController(),
 			1,
 			Date.now(),
+			undefined,
 		);
 		expect(result.backoffExceedsDeadline).toBe(false);
 		expect(result.stopRequested).toBe(false);
+	});
+});
+
+describe('handleRateLimit — provider rest', () => {
+	// A reset 20 minutes out with 10s of budget left: the run ends without sleeping, which keeps
+	// the test fast, and the rest is written before that decision either way.
+	async function limitedRun(limitedBackend: 'codex' | undefined): Promise<string> {
+		const dataDir = await testTempDir('run-gates-rest-');
+		const events: AgentEvent[] = [
+			{
+				resetAt: new Date(Date.now() + 20 * 60_000).toISOString(),
+				type: 'rate_limit',
+			} as AgentEvent,
+		];
+		await handleRateLimit(
+			{ ...deps, dataDir },
+			makePlan(3600),
+			events,
+			new AbortController(),
+			1,
+			Date.now() - (3600 - 10) * 1000,
+			limitedBackend,
+		);
+		return dataDir;
+	}
+
+	test('a rate limit with a reported reset rests the limited backend until it, plus the buffer', async () => {
+		const dataDir = await limitedRun('codex');
+		const rests = await readProviderRests(dataDir);
+		expect(rests.map((rest) => [rest.backend, rest.source])).toEqual([['codex', 'rate_limit']]);
+		const minutes = (Date.parse(rests[0]?.until ?? '') - Date.now()) / 60_000;
+		expect(minutes).toBeGreaterThan(20.5);
+		expect(minutes).toBeLessThan(21.5);
+	});
+
+	test('a limit whose backend is not known rests nothing', async () => {
+		const dataDir = await limitedRun(undefined);
+		expect(await readProviderRests(dataDir)).toEqual([]);
 	});
 });
 

@@ -215,6 +215,8 @@ export async function runTriumvirateIterationStep(input: {
 			controller,
 			iteration,
 			runStartedAtMs,
+			// The stage result does not name which role's backend was limited, so nothing is rested.
+			undefined,
 		);
 		if (rate.stopRequested) {
 			move({

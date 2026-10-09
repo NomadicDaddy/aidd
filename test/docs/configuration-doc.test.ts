@@ -131,6 +131,9 @@ function expectedDocumentedDefaults(): Record<string, string> {
 		noClean: code(defaults.noClean),
 		noWorkBackoffMs: code(defaults.noWorkBackoffMs),
 		preflightDoctor: code(defaults.preflightDoctor ?? true),
+		providerRestSubstitutes: code(
+			JSON.stringify(defaults.providerRestSubstitutes ?? []).replaceAll(',', ', '),
+		),
 		providers: 'none',
 		quitOnAbort: code(defaults.quitOnAbort),
 		rateLimitBackoffSeconds: code(defaults.rateLimitBackoffSeconds),

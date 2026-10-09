@@ -94,6 +94,18 @@ const DECLARED_SUBSETS: { file: string; members: string[]; name: string; why: st
 		why: 'the in-process backends, all of which resolve to the same prompts/_cli/native.md fragment',
 	},
 	{
+		file: 'shared/src/provider-rest/decide.ts',
+		members: ['claude-code', 'codex', 'grok'],
+		name: 'AUTO_REST_BACKENDS',
+		why: 'the subscription CLIs whose rate limits report a reset time, so they rest on their own',
+	},
+	{
+		file: 'shared/src/provider-rest/decide.ts',
+		members: ['codex', 'claude-code', 'native'],
+		name: 'DEFAULT_PROVIDER_REST_SUBSTITUTES',
+		why: 'where a resting launch goes, in order of use; an order, so it is not a copy of the list',
+	},
+	{
 		file: 'cli/src/prompts/snapshot-matrix.ts',
 		members: ['native', 'claude-code', 'opencode', 'kilocode', 'codex', 'cline', 'grok'],
 		name: 'snapshotBackends',

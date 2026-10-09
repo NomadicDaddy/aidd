@@ -22,6 +22,10 @@ if (argv[0] === 'findings') {
 	const { runFindingsCommand } = await import('./commands/findings.ts');
 	process.exit(await runFindingsCommand(argv.slice(1)));
 }
+if (argv[0] === 'rest') {
+	const { runRestCommand } = await import('./commands/rest.ts');
+	process.exit(await runRestCommand(argv.slice(1)));
+}
 
 const exitCode = await run(argv);
 process.exit(exitCode);

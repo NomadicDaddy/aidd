@@ -95,6 +95,7 @@ export function toDirectorCycleRunRecord(
 		aiddVersion: row.aiddVersion,
 		aiSummary: null,
 		backend: DIRECTOR_BACKEND,
+		backendSubstitution: null,
 		canKill: false,
 		canReadOutput: true,
 		canStop: false,

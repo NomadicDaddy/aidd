@@ -140,6 +140,15 @@ export function RunDetailPanel({
 							/>
 						</dd>
 					</div>
+					{/* Only when provider rest moved the run: the target above is not what it asked
+					    for, and this sentence says what it asked for and why it is elsewhere. */}
+					{selectedRun.backendSubstitution ? (
+						<MetadataItem
+							className="col-span-full"
+							label="Substituted"
+							value={selectedRun.backendSubstitution}
+						/>
+					) : null}
 				</dl>
 				<RunCommandBlock command={selectedRun.launchCommand} runId={selectedRun.id} />
 				<RunCommitsSection run={selectedRun} />

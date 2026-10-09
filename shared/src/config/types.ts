@@ -125,6 +125,8 @@ export interface ResolvedConfig {
 	/** Run the fast backend/toolchain preflight probes before the first iteration (default true). */
 	preflightDoctor?: boolean;
 	projectDir?: string;
+	/** Backends a launch moves to, in order, when the one it would use is resting. */
+	providerRestSubstitutes?: BackendName[];
 	providers?: Record<string, ResolvedProviderConfig>;
 	quitOnAbort: number;
 	rateLimitBackoffSeconds: number;

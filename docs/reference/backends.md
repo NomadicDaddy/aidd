@@ -197,6 +197,41 @@ Or prove the wiring without spending tokens using native simulation:
 bun run start -- --project-dir C:\path\to\a-project --cli native --simulation --max-iterations 1 --feature <id>
 ```
 
+## Provider Rest
+
+A resting backend starts no new runs until its rest ends. Runs already going are never switched;
+rest is decided once, when a launch picks its backend.
+
+- **Who rests.** Any backend can be rested by hand. `claude-code`, `codex` and `grok` also rest on
+  their own: when a run hits a rate limit that reports its reset time, that backend rests until
+  the reset plus `rateLimitBufferSeconds`. A limit with no reset time rests nothing, and the run
+  keeps its old `rateLimitBackoffSeconds` retry. The run that hit the limit still waits or ends as
+  before.
+- **Where a launch goes.** A launch whose backend came from a default or from standing
+  configuration (a schedule, a recipe step, the Director, an audit, project creation) moves to
+  the first backend in `providerRestSubstitutes` that is not resting, by default `codex`, then
+  `claude-code`, then `native`. The substitute runs on its own configured model and effort. The
+  run records the move, for example `codex, substituted for claude-code: resting until 17:40
+(rate limit)`, shown as **Substituted** on the run. If every substitute is resting too, the
+  launch is refused and names the rest that ends first.
+- **When you picked it.** A launch where you picked the resting backend yourself, in the Runs
+  launch form, a feature launch or a directive, is refused instead of moved. The panel offers
+  **Relaunch on** the first available substitute, or **Run anyway**. On the CLI, `--cli` is your
+  pick: a resting one exits with code 2 and names the alternative; add `--ignore-rest` to run it
+  anyway.
+
+Set and end rests in **Settings → Run engine → Provider Rest**, or from the CLI:
+
+```powershell
+bun run start -- rest
+bun run start -- rest set claude-code --until 2h --reason "weekly quota"
+bun run start -- rest clear claude-code
+```
+
+`--until` takes a duration (`90m`, `2h`), a local time (`17:40`, today or else tomorrow), or an
+ISO date and time. Rests live in `data/provider-rest/`, one file per backend, so the panel and the
+CLI see the same rests.
+
 ## Parser Coverage
 
 Parser fixture tests live under `test/fixtures/backends/{backend}`. Each backend has success,

@@ -154,6 +154,8 @@ export const configSchema = z
 		noClean: z.boolean().optional(),
 		noWorkBackoffMs: z.number().int().nonnegative().optional(),
 		preflightDoctor: z.boolean().optional(),
+		// Ordered backends a launch moves to when the backend it would use is resting.
+		providerRestSubstitutes: z.array(backendSchema).optional(),
 		providers: z
 			.record(
 				z.string(),

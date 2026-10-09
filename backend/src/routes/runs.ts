@@ -29,6 +29,8 @@ export const launchBody = t.Object({
 	feature: t.Optional(t.String()),
 	filterBy: t.Optional(t.String()),
 	filterValue: t.Optional(t.String()),
+	// "Run anyway" after a refusal for a resting backend.
+	ignoreRest: t.Optional(t.Boolean()),
 	interview: t.Optional(t.Boolean()),
 	maxIterations: t.Optional(t.Number()),
 	// Modes accepted by the generic launch route. Director and directive use dedicated entry
@@ -59,6 +61,7 @@ export const launchBody = t.Object({
 const directiveLaunchBody = t.Object({
 	backend: t.Optional(backendNameBody),
 	executionIntent: t.Union([t.Literal('apply-changes'), t.Literal('review-only')]),
+	ignoreRest: t.Optional(t.Boolean()),
 	model: t.Optional(safeBackendArg),
 	projectDir: t.String({ minLength: 1 }),
 	prompt: t.String(),
@@ -67,7 +70,11 @@ const directiveLaunchBody = t.Object({
 
 async function launchTrackedRun(context: WebContext, input: RunLaunchRequest, mode: WebRunMode) {
 	if (input.auditNames) input = { ...input, auditNames: normalizeAuditNames(input.auditNames) };
-	const run = await context.runService.launchRun(input, { initiator: 'operator' });
+	// The Runs launch surfaces: a backend in this request is somebody's pick for this run.
+	const run = await context.runService.launchRun(input, {
+		backendChoice: 'person',
+		initiator: 'operator',
+	});
 	// Direct operator launches record telemetry with resourceType='run' so they
 	// appear on the telemetry dashboard alongside launches from the Runs page.
 	await context.telemetryService.recordStart({
@@ -147,7 +154,9 @@ export function createRunsRoutes(context: WebContext) {
 			async ({ body }) => {
 				const run = await directives.launchDirective({
 					...(body.backend !== undefined ? { backend: body.backend } : {}),
+					backendChoice: 'person',
 					executionIntent: body.executionIntent,
+					...(body.ignoreRest === true ? { ignoreRest: true } : {}),
 					initiator: 'operator',
 					...(body.model !== undefined ? { model: body.model } : {}),
 					projectDir: body.projectDir,

@@ -14,6 +14,7 @@ function makeRun(overrides: Partial<RunRecord>): RunRecord {
 		aiddVersion: null,
 		aiSummary: null,
 		backend: 'codex',
+		backendSubstitution: null,
 		canKill: false,
 		canReadOutput: true,
 		canStop: false,

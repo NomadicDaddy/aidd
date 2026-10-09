@@ -2,8 +2,6 @@ import type { ResolvedConfig, ResolvedWebConfig } from 'aidd-shared/config';
 
 import { readGitHead } from 'aidd-shared/lib/gitHead';
 import { type CliActiveRunSource, type RunInitiator } from 'aidd-shared/metadata/active-runs';
-import { resolveEffectiveLaunchTarget } from 'aidd-shared/plan/launch-target';
-import { normalizeBackendName } from 'aidd-shared/plan/types';
 import { resolveAiddRunProvenance } from 'aidd-shared/run-provenance';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -24,6 +22,7 @@ import { admitQueuedRuns } from './admission.ts';
 import { type HeartbeatWatcher } from './heartbeatWatcher.ts';
 import { resolveLaunchConfig } from './launchConfig.ts';
 import { failLaunch, releaseRunSlot } from './launchReservation.ts';
+import { resolveLaunchRest, withoutLaunchTarget } from './launchRest.ts';
 import { guardPendingProjectStop } from './launchStopGuard.ts';
 import { getRun } from './queries.ts';
 import { type RunTailWatcher } from './tailWatcher.ts';
@@ -45,6 +44,16 @@ export interface LaunchContext {
 }
 
 export interface LaunchRunOptions {
+	/**
+	 * Who chose `backend` on this request. 'person' means somebody picked it in a launch dialog
+	 * for this very run, so a resting backend refuses and they choose again. 'standing', the
+	 * default, covers every launch whose backend comes from configuration or a larger flow
+	 * (recipes, schedules, the Director, audits, project creation): a resting backend is
+	 * substituted and the substitution recorded, because there is nobody to ask, and a refusal
+	 * halfway through such a flow would leave it partly done. Defaulting to 'standing' is the safe
+	 * side: a surface that forgets to say 'person' substitutes visibly instead of refusing.
+	 */
+	backendChoice?: 'person' | 'standing';
 	/**
 	 * Required, with no default, on purpose. Every other launch option is optional and a wrong
 	 * guess is visible; a defaulted initiator would be silently wrong, and the failure mode it
@@ -95,11 +104,13 @@ export async function launchRun(
 		projectDir: input.mode === 'director' ? null : projectDir,
 	});
 	const mode = input.mode ?? 'coding';
-	const target = resolveEffectiveLaunchTarget(launchConfig, mode, {
-		backend: input.backend ? normalizeBackendName(input.backend) : undefined,
-		model: input.model,
-		reasoningEffort: input.reasoningEffort,
-	});
+	const { substitution, target } = await resolveLaunchRest(
+		launchConfig,
+		ctx.config.web.dataDir,
+		mode,
+		input,
+		options.backendChoice ?? 'standing',
+	);
 	const effectiveBackend = target.backend;
 	const effectiveModel = target.model;
 	const effectiveProvider = target.provider ?? null;
@@ -116,7 +127,11 @@ export async function launchRun(
 		(await readGitHead(projectDir)) !== undefined;
 	const command = await buildLaunchCommand(
 		ctx.rootDir,
-		{ ...input, projectDir, worktree: useWorktree },
+		{
+			...withoutLaunchTarget(input, substitution !== undefined),
+			projectDir,
+			worktree: useWorktree,
+		},
 		{
 			backend: effectiveBackend,
 			model: effectiveModel,
@@ -155,6 +170,7 @@ export async function launchRun(
 				values: {
 					...aiddProvenance,
 					backend: effectiveBackend,
+					backendSubstitution: substitution?.note ?? null,
 					chainedFromRunId: input.chainedFromRunId ?? null,
 					commandArgsJson: JSON.stringify(command.args),
 					directorCycleId: input.directorCycleId ?? null,

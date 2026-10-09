@@ -44,6 +44,7 @@ const baseArgs: ParsedArgs = {
 	complexityTiering: false,
 	consistencyGate: false,
 	help: false,
+	ignoreRest: false,
 	version: false,
 	worktree: false,
 	writeAllowlist: [],

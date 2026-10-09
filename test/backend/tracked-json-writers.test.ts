@@ -195,6 +195,8 @@ const nonRepositoryPrettyJsonWriters = [
 	'shared/src/metadata/feature-leases.ts',
 	'shared/src/metadata/store/artifacts.ts',
 	'shared/src/metadata/store/runHistory.ts',
+	// Rest files under aidd's own gitignored data/, never a project's tracked tree.
+	'shared/src/provider-rest/store.ts',
 ].sort();
 
 async function sourceFiles(root: string): Promise<string[]> {

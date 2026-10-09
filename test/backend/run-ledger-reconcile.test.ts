@@ -14,6 +14,7 @@ function makeRun(overrides: { id: string; projectPath: string } & Partial<RunRec
 		aiddVersion: null,
 		aiSummary: null,
 		backend: 'native',
+		backendSubstitution: null,
 		canKill: false,
 		canReadOutput: false,
 		canStop: false,

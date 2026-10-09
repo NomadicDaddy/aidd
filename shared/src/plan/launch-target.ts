@@ -2,6 +2,13 @@ import type { ResolvedConfig } from '../config.ts';
 import type { AiddMode, BackendName } from './types.ts';
 
 import { providerDefaults } from '../agent/client.ts';
+import {
+	decideRestedBackend,
+	DEFAULT_PROVIDER_REST_SUBSTITUTES,
+	type ProviderRest,
+	type RestDecision,
+	type RestSubstitution,
+} from '../provider-rest/decide.ts';
 
 export interface LaunchTargetOverrides {
 	backend?: BackendName | undefined;
@@ -9,7 +16,7 @@ export interface LaunchTargetOverrides {
 	reasoningEffort?: string | undefined;
 }
 
-export type LaunchBackendSource = 'config' | 'override';
+export type LaunchBackendSource = 'config' | 'override' | 'substituted';
 
 export type LaunchModelSource =
 	'backend-config' | 'mode-config' | 'override' | 'provider-default' | 'shared-config' | 'unset';
@@ -135,5 +142,51 @@ export function resolveEffectiveLaunchTarget(
 		modelSource,
 		provider,
 		reasoningEffort,
+	};
+}
+
+export interface LaunchRestContext {
+	ignoreRest: boolean;
+	now: Date;
+	/** True only when a person picked `overrides.backend` for this very launch. */
+	personPicked: boolean;
+	rests: readonly ProviderRest[];
+}
+
+export type RestedLaunchTarget =
+	| { kind: 'refuse'; refusal: Extract<RestDecision, { kind: 'refuse' }> }
+	| { kind: 'run'; substitution?: RestSubstitution; target: EffectiveLaunchTarget };
+
+/**
+ * resolveEffectiveLaunchTarget with provider rest applied first; see provider-rest/decide.ts for
+ * when a resting backend is refused and when it is substituted. A substitute runs on its own
+ * configured model and effort: the model and effort the launch carried were chosen for the backend
+ * that is resting, and handing one provider's model id to another is the failure the cross-backend
+ * guards above exist to prevent.
+ */
+export function resolveRestedLaunchTarget(
+	config: ResolvedConfig,
+	mode: AiddMode,
+	overrides: LaunchTargetOverrides,
+	rest: LaunchRestContext,
+	env: NodeJS.ProcessEnv = process.env,
+): RestedLaunchTarget {
+	const decision = decideRestedBackend({
+		ignoreRest: rest.ignoreRest,
+		now: rest.now,
+		personPicked: rest.personPicked && overrides.backend !== undefined,
+		requested: overrides.backend ?? config.cli,
+		rests: rest.rests,
+		substitutes: config.providerRestSubstitutes ?? DEFAULT_PROVIDER_REST_SUBSTITUTES,
+	});
+	if (decision.kind === 'refuse') return { kind: 'refuse', refusal: decision };
+	if (decision.substitution === undefined) {
+		return { kind: 'run', target: resolveEffectiveLaunchTarget(config, mode, overrides, env) };
+	}
+	const target = resolveEffectiveLaunchTarget(config, mode, { backend: decision.backend }, env);
+	return {
+		kind: 'run',
+		substitution: decision.substitution,
+		target: { ...target, backendSource: 'substituted' },
 	};
 }

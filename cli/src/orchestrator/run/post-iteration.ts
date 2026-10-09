@@ -118,6 +118,7 @@ export async function handlePostIteration(input: {
 			controller,
 			iteration,
 			runStartedAtMs,
+			plan.backend,
 		);
 		if (rate.stopRequested) {
 			move({ reason: 'stop requested during rate-limit wait', type: 'stopped' });

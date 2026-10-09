@@ -8,12 +8,15 @@ import {
 import { currentAuthToken, reportUnauthorized } from '../stores/authTokenStore.ts';
 
 export class ApiError extends Error {
+	/** The parsed error response, for errors that carry structured details beyond `error`. */
+	readonly body: unknown;
 	readonly status: number;
 
-	constructor(message: string, status: number) {
+	constructor(message: string, status: number, body: unknown = null) {
 		super(message);
 		this.name = 'ApiError';
 		this.status = status;
+		this.body = body;
 	}
 }
 
@@ -114,7 +117,7 @@ async function readJson<T>(response: Response, trace: ApiTraceContext): Promise<
 			target: trace.path,
 			traceId: trace.traceId,
 		});
-		throw new ApiError(message, response.status);
+		throw new ApiError(message, response.status, parsed ?? null);
 	}
 	if (parsed === undefined) {
 		traceDataMovement({

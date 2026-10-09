@@ -9,7 +9,11 @@ import { HttpError } from './errors.ts';
 
 export interface DirectiveLaunchInput {
 	backend?: BackendInputName;
+	/** 'person' only from the launch modal; see LaunchRunOptions.backendChoice. */
+	backendChoice?: 'person' | 'standing';
 	executionIntent: SkillExecutionIntent;
+	/** The person chose "run anyway" on a resting backend. */
+	ignoreRest?: boolean;
 	/** Who is starting it. Threaded to the run; never inferred from `source`. */
 	initiator: RunInitiator;
 	model?: string;
@@ -45,6 +49,7 @@ export class DirectiveLaunchService {
 			{
 				...(input.backend !== undefined ? { backend: input.backend } : {}),
 				directiveReadonly: input.executionIntent === 'review-only',
+				...(input.ignoreRest === true ? { ignoreRest: true } : {}),
 				// A directive is one instruction, not a backlog to work through.
 				maxIterations: 1,
 				mode: 'directive',
@@ -56,6 +61,7 @@ export class DirectiveLaunchService {
 					: {}),
 			},
 			{
+				...(input.backendChoice ? { backendChoice: input.backendChoice } : {}),
 				initiator: input.initiator,
 				...(input.scheduledTaskExecutionId
 					? { scheduledTaskExecutionId: input.scheduledTaskExecutionId }

@@ -19,6 +19,9 @@ export function applyRunFlags(
 		case '--idle-timeout':
 			args.idleTimeoutSeconds = ctx.parseNumber(i, flag);
 			return i + 2;
+		case '--ignore-rest':
+			args.ignoreRest = true;
+			return i + 1;
 		case '--max-cost-usd':
 			args.maxCostUsd = ctx.parseDecimal(i, flag);
 			return i + 2;

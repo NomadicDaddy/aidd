@@ -17,6 +17,7 @@ function makeRun(overrides: Partial<RunRecord> = {}): RunRecord {
 		aiddVersion: null,
 		aiSummary: null,
 		backend: 'native',
+		backendSubstitution: null,
 		canKill: true,
 		canReadOutput: true,
 		canStop: true,

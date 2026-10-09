@@ -131,6 +131,7 @@
 	"noClean": false,
 	"noWorkBackoffMs": 30000,
 	"preflightDoctor": true,
+	"providerRestSubstitutes": ["codex", "claude-code", "native"],
 	"providers": {
 		"lmstudio": {
 			"baseUrl": "http://localhost:1234/v1",

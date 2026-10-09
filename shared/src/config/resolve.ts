@@ -10,6 +10,7 @@ import type {
 } from './types.ts';
 
 import { isLoopbackHostname } from '../index.ts';
+import { DEFAULT_PROVIDER_REST_SUBSTITUTES } from '../provider-rest/decide.ts';
 import { defaultDirectAiTimeoutSeconds, defaults, defaultWebConfig } from './defaults.ts';
 import { resolveDirectorConfig } from './resolve-director.ts';
 import { resolveProjectTemplates } from './resolve-templates.ts';
@@ -217,6 +218,9 @@ export function resolveMergedConfig(
 		noClean: merged.noClean ?? defaults.noClean,
 		noWorkBackoffMs: merged.noWorkBackoffMs ?? defaults.noWorkBackoffMs,
 		preflightDoctor: merged.preflightDoctor ?? defaults.preflightDoctor ?? true,
+		providerRestSubstitutes: merged.providerRestSubstitutes ?? [
+			...DEFAULT_PROVIDER_REST_SUBSTITUTES,
+		],
 		quitOnAbort: merged.quitOnAbort ?? defaults.quitOnAbort,
 		rateLimitBackoffSeconds: merged.rateLimitBackoffSeconds ?? defaults.rateLimitBackoffSeconds,
 		rateLimitBufferSeconds: merged.rateLimitBufferSeconds ?? defaults.rateLimitBufferSeconds,

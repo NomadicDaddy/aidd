@@ -44,6 +44,8 @@ export function toCliRunRecord(run: CliActiveRunRecord): RunRecord {
 		aiddVersion: run.aiddVersion,
 		aiSummary: run.aiSummary,
 		backend: run.backend as BackendName,
+		// A direct CLI run reports any substitution in its own log; the heartbeat does not carry it.
+		backendSubstitution: null,
 		// A non-terminal CLI run is killable: Kill terminates a live process tree and force-drives
 		// a stranded row (dead/missing process) to a terminal status instead of leaving the button
 		// permanently disabled. Mirrors the DB-backed run capability (queries.ts toWebRunRecord).

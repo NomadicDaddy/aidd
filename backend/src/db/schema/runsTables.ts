@@ -89,6 +89,8 @@ export const runs = sqliteTable(
 		aiddVersion: text('aidd_version'),
 		aiSummary: text('ai_summary'),
 		backend: text('backend').notNull(),
+		// Set only when provider rest moved the run off the backend it asked for (0012).
+		backendSubstitution: text('backend_substitution'),
 		// Output metrics, written once at terminal transition from the CLI heartbeat record (and
 		// by the ledger backfill sweep for rows that carry none). All nullable: NULL means "not
 		// captured" (runs with none captured, commit-less runs for the line columns) — never zero.

@@ -17,13 +17,14 @@ import {
 } from '../api/runs.ts';
 import { reportFailure } from '../lib/failureToast.ts';
 import { beginLaunch, endLaunch, trackLaunchedRun } from '../lib/launchedRuns.ts';
+import { launchHonoringRest } from '../lib/providerRestRefusal.ts';
 import { clearStopRequested, markStopRequested } from '../lib/stopRequests.ts';
 import { useRunsList } from './useRunsList.ts';
 
 export function useLaunchRun() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: (request: RunLaunchRequest) => launchRun(request),
+		mutationFn: (request: RunLaunchRequest) => launchHonoringRest(request, launchRun),
 		// Bracket the launch round-trip so the toast layer can buffer a terminal run_status that
 		// races ahead of onSuccess (an instant no-work run finishes before this POST resolves).
 		onMutate: beginLaunch,
@@ -46,7 +47,8 @@ export function useLaunchRun() {
 export function useLaunchDirectiveRun() {
 	const queryClient = useQueryClient();
 	return useMutation({
-		mutationFn: (request: DirectiveRunLaunchRequest) => launchDirectiveRun(request),
+		mutationFn: (request: DirectiveRunLaunchRequest) =>
+			launchHonoringRest(request, launchDirectiveRun),
 		onMutate: beginLaunch,
 		onSettled: endLaunch,
 		onSuccess: (run) => {

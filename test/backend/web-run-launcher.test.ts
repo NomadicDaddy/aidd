@@ -1245,6 +1245,7 @@ describe('web run launcher', () => {
 				'CODE_QUALITY',
 				'--cli',
 				'codex',
+				'--ignore-rest',
 				'--max-iterations',
 				'1',
 				'--feature',
@@ -1410,6 +1411,7 @@ describe('web run launcher', () => {
 				projectDir,
 				'--cli',
 				'codex',
+				'--ignore-rest',
 				'--filter-by',
 				'id',
 				'--filter',
@@ -1571,6 +1573,7 @@ describe('web run launcher', () => {
 				'native',
 				'--exec-model',
 				'exec-model',
+				'--ignore-rest',
 			]);
 		} finally {
 			await removeTempTree(rootDir);
@@ -1630,6 +1633,7 @@ describe('web run launcher', () => {
 				'opencode',
 				'--overseer-model',
 				'overseer-model',
+				'--ignore-rest',
 			]);
 		} finally {
 			await removeTempTree(rootDir);
@@ -1666,6 +1670,7 @@ describe('web run launcher', () => {
 				'native',
 				'--model',
 				'glm-5.3',
+				'--ignore-rest',
 			]);
 		} finally {
 			await removeTempTree(rootDir);
@@ -1706,6 +1711,7 @@ describe('web run launcher', () => {
 				'claude-code',
 				'--overseer-model',
 				'claude-fable-5-1',
+				'--ignore-rest',
 			]);
 		} finally {
 			await removeTempTree(rootDir);
@@ -2078,6 +2084,7 @@ describe('web run launcher', () => {
 					...(completed.model ? ['--model', completed.model] : []),
 					'--reasoning-effort',
 					completed.reasoningEffort ?? 'low',
+					'--ignore-rest',
 					'--simulation',
 				];
 				expect(JSON.parse(completed.commandArgsJson ?? '[]')).toEqual(expectedCommandArgs);

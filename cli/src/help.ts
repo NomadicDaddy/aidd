@@ -32,6 +32,7 @@ Key options:
   --stop-when-done
   --no-stop-when-done
   --no-clean
+  --ignore-rest               start the --cli backend even if it is resting (see: aidd rest)
   --todo
   --validate
   --in-progress

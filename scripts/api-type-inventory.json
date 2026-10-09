@@ -21,6 +21,52 @@
 			"pathPrefix": "/api/v1/launch-defaults"
 		},
 		{
+			"backendRoute": "backend/src/routes/providerRest.ts",
+			"contracts": [
+				{
+					"endpoint": "DELETE /api/v1/provider-rest/:param"
+				},
+				{
+					"endpoint": "GET /api/v1/provider-rest",
+					"response": {
+						"backend": {
+							"exportName": "ProviderRestState",
+							"module": "shared/src/contracts/provider-rest.ts"
+						},
+						"frontend": {
+							"exportName": "ProviderRestState",
+							"module": "frontend/src/api/types/providerRest.ts"
+						}
+					}
+				},
+				{
+					"endpoint": "PUT /api/v1/provider-rest/:param",
+					"request": {
+						"backend": {
+							"exportName": "ProviderRestInput",
+							"module": "shared/src/contracts/provider-rest.ts"
+						},
+						"frontend": {
+							"exportName": "ProviderRestInput",
+							"module": "frontend/src/api/types/providerRest.ts"
+						}
+					},
+					"response": {
+						"backend": {
+							"exportName": "ProviderRestSetResponse",
+							"module": "shared/src/contracts/provider-rest.ts"
+						},
+						"frontend": {
+							"exportName": "ProviderRestSetResponse",
+							"module": "frontend/src/api/types/providerRest.ts"
+						}
+					}
+				}
+			],
+			"frontendModule": "frontend/src/api/providerRest.ts",
+			"pathPrefix": "/api/v1/provider-rest"
+		},
+		{
 			"backendRoute": "backend/src/routes/director.ts",
 			"contracts": [
 				{

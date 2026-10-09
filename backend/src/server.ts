@@ -16,7 +16,7 @@ import { createAuditsRoutes } from './routes/audits.ts';
 import { createDiaryRoutes } from './routes/diary.ts';
 import { createDirectorRoutes } from './routes/director.ts';
 import { createHealthRoutes } from './routes/health.ts';
-import { createLaunchDefaultsRoutes } from './routes/launchDefaults.ts';
+import { createLaunchTargetRoutes } from './routes/launchTarget.ts';
 import { createNavCountsRoutes } from './routes/navCounts.ts';
 import { createPipelineSessionsRoutes } from './routes/pipelineSessions.ts';
 import { createProjectCodeRoutes } from './routes/projectCode.ts';
@@ -86,7 +86,7 @@ export function createWebServer(context: WebContext) {
 			.use(createDirectorRoutes(context))
 			.use(createNavCountsRoutes(context))
 			.use(createSkillsRoutes(context))
-			.use(createLaunchDefaultsRoutes(context))
+			.use(createLaunchTargetRoutes(context))
 			.use(createRecipesRoutes(context))
 			.use(createPipelineSessionsRoutes(context))
 			// warmStatusCache probes the installed CLIs once at boot, off the request path,

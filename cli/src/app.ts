@@ -43,6 +43,7 @@ import {
 	handleStopSignal,
 	installStopSignalHandler,
 } from './preflight.ts';
+import { applyProviderRest } from './provider-rest.ts';
 import { runDriverForPlan } from './run-driver.ts';
 import { prepareSkillRun } from './skill-run.ts';
 
@@ -59,7 +60,7 @@ export async function run(argv: string[]): Promise<number> {
 			console.log(`aidd v${(await readAiddVersion(rootDir)) ?? 'unknown'}`);
 			return 0;
 		}
-		const config = await resolveConfig(args, {
+		let config = await resolveConfig(args, {
 			applyCliOverrides: !args.configMatrix,
 			baseDir: rootDir,
 		});
@@ -74,6 +75,9 @@ export async function run(argv: string[]): Promise<number> {
 		if (args.mcpMode) {
 			return await startMcpServer(config, { rootDir });
 		}
+		const rested = await applyProviderRest(args, config, rootDir);
+		if ('exitCode' in rested) return rested.exitCode;
+		config = rested.config;
 		const preparedSkill = await prepareSkillRun(args, config, rootDir);
 		await assertProjectForRun(args);
 
@@ -237,6 +241,7 @@ export async function run(argv: string[]): Promise<number> {
 				aiddProvenance,
 				...(aiSummarizer ? { aiSummarizer } : {}),
 				backend,
+				dataDir: config.web.dataDir,
 				...(featureLeases ? { featureLeases } : {}),
 				...(worktreeRun
 					? worktreeOrchestratorDeps(plan, worktreeRun, store, resolveConflict)

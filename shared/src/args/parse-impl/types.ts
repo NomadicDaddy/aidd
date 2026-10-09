@@ -37,6 +37,8 @@ export interface ParsedArgs {
 	help: boolean;
 	idleNudgeTimeoutSeconds?: number;
 	idleTimeoutSeconds?: number;
+	/** Start the backend even if it is resting (a person's "run anyway", or a launcher that decided). */
+	ignoreRest: boolean;
 	initGitAfterScaffold?: boolean;
 	inProgressMode: boolean;
 	interviewFile?: string;
@@ -114,6 +116,7 @@ export function createDefaultParsedArgs(): ParsedArgs {
 		extractBatch: false,
 		extractStructured: false,
 		help: false,
+		ignoreRest: false,
 		initGitAfterScaffold: false,
 		inProgressMode: false,
 		interviewMode: false,

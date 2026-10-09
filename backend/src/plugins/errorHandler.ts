@@ -1,11 +1,15 @@
 import { Elysia } from 'elysia';
 
 import { webLogger } from '../logger.ts';
-import { HttpError } from '../services/errors.ts';
+import { HttpError, ProviderRestingError } from '../services/errors.ts';
 
 export const errorHandlerPlugin = new Elysia({ name: 'error-handler' }).onError(
 	{ as: 'global' },
 	({ code, error, set }) => {
+		if (error instanceof ProviderRestingError) {
+			set.status = error.status;
+			return { ...error.details, error: error.message };
+		}
 		if (error instanceof HttpError) {
 			set.status = error.status;
 			return { error: error.message };

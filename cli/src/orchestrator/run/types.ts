@@ -26,6 +26,8 @@ export interface OrchestratorDeps {
 	backend: CLIBackend;
 	backendFactory?: BackendFactory;
 	completionMarkerGraceMs?: number;
+	/** aidd's data directory, where a rate limit with a reported reset rests its backend. */
+	dataDir?: string;
 	/** Test seam for the preflight doctor's spawn probes. */
 	doctorProber?: DoctorProber;
 	/** Cross-run feature lease coordinator, injected by the CLI entrypoint for coding runs.

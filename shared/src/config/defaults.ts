@@ -1,5 +1,6 @@
 import type { ResolvedConfig, ResolvedWebConfig } from './types.ts';
 
+import { DEFAULT_PROVIDER_REST_SUBSTITUTES } from '../provider-rest/decide.ts';
 import { defaultIgnoredFolders } from './schema.ts';
 
 // The one web default block. `defaults.web` and `resolveWebConfig` both read this object, so a
@@ -40,6 +41,7 @@ export const defaults: ResolvedConfig = {
 	noClean: false,
 	noWorkBackoffMs: 30_000,
 	preflightDoctor: true,
+	providerRestSubstitutes: [...DEFAULT_PROVIDER_REST_SUBSTITUTES],
 	quitOnAbort: 0,
 	rateLimitBackoffSeconds: 300,
 	rateLimitBufferSeconds: 60,

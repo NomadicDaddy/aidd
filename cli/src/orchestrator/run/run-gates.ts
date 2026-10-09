@@ -1,7 +1,8 @@
 import type { AgentEvent } from 'aidd-shared/backends/types';
-import type { RunPlan } from 'aidd-shared/plan/types';
+import type { BackendName, RunPlan } from 'aidd-shared/plan/types';
 
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
+import { restFromRateLimit } from 'aidd-shared/provider-rest/store';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 import type { MoveFn, OrchestratorDeps } from './types.ts';
@@ -10,6 +11,7 @@ import {
 	computeRateLimitSleep,
 	extractRateLimitMessage,
 	extractRateLimitResetAt,
+	type RateLimitSleepDecision,
 } from '../../backends/rate-limit.ts';
 import { formatArtifactCheck, formatFeatureValidation } from '../formatters.ts';
 import { OrchestratorProgressReporter } from '../progress.ts';
@@ -94,6 +96,7 @@ export async function handleRateLimit(
 	controller: AbortController,
 	iteration: number,
 	runStartedAtMs: number,
+	limitedBackend: BackendName | undefined,
 ): Promise<{ backoffExceedsDeadline: boolean; stopRequested: boolean }> {
 	const decision = computeRateLimitSleep(
 		extractRateLimitMessage(events),
@@ -102,6 +105,7 @@ export async function handleRateLimit(
 		plan.outputPolicy.rateLimitBackoffSeconds,
 		extractRateLimitResetAt(events),
 	);
+	await restLimitedBackend(deps, limitedBackend, decision);
 	// A backoff that would sleep across the run's wall-clock deadline can never lead to a
 	// productive iteration — the next iteration would be killed at spawn. Skip the sleep and
 	// tell the caller to end the run as rate-limited instead of burning the wait
@@ -139,4 +143,33 @@ export async function handleRateLimit(
 	}
 	const stopRequested = await hasStopRequested(deps.store, plan.stopPolicy);
 	return { backoffExceedsDeadline: false, stopRequested };
+}
+
+/**
+ * A rate limit that reported when it resets rests its backend until then, so other launches move
+ * to a substitute instead of hitting the same limit. This run keeps its backend and waits or ends
+ * exactly as before: a rest never switches a run that is already going. Failing to write the rest
+ * is reported and otherwise ignored, because the run itself does not depend on it.
+ */
+async function restLimitedBackend(
+	deps: OrchestratorDeps,
+	backend: BackendName | undefined,
+	decision: RateLimitSleepDecision,
+): Promise<void> {
+	if (backend === undefined || deps.dataDir === undefined) return;
+	if (decision.reason !== 'until_reset') return;
+	try {
+		const rest = await restFromRateLimit(
+			deps.dataDir,
+			backend,
+			new Date(Date.now() + decision.sleepMs),
+		);
+		if (rest !== undefined) {
+			const until = rest.until;
+			console.log(`\nProvider rest: ${backend} resting until ${until}.`);
+		}
+	} catch (err) {
+		const message = err instanceof Error ? err.message : String(err);
+		console.warn(`\nProvider rest: could not rest ${backend}: ${message}`);
+	}
 }

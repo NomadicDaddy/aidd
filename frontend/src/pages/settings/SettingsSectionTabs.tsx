@@ -25,6 +25,7 @@ import { ListEditor } from './ListEditor.tsx';
 import { NetworkAccessSection } from './NetworkAccessSection.tsx';
 import { ObservabilitySection } from './ObservabilitySection.tsx';
 import { ProviderConfigSection } from './ProviderConfigSection.tsx';
+import { ProviderRestSection } from './ProviderRestSection.tsx';
 import { RunLimitsSection } from './RunLimitsSection.tsx';
 import { SettingsRuntimeControls } from './SettingsRuntimeControls.tsx';
 import { SourceControlStatusPanel } from './SettingsStatusPanels.tsx';
@@ -144,6 +145,7 @@ export function SettingsSectionTabs({
 						sharedIdleTimeoutSeconds={form.idleTimeoutSeconds}
 						sharedModel={form.model}
 					/>
+					<ProviderRestSection />
 				</div>
 			</TabPanel>
 

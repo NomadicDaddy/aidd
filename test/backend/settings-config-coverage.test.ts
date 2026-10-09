@@ -25,6 +25,8 @@ const JSON_ONLY: Record<string, string> = {
 	director:
 		'Edited through the flattened directorChat*/directorSuggestion* keys. The deprecated schedule block is read once to seed the built-in Director scheduled task, then owned by that task.',
 	preflightDoctor: 'Defaults on; disabling it is a debugging escape hatch, JSON only.',
+	providerRestSubstitutes:
+		'One ordered list, shown read-only on the Provider Rest card; reordering it is a JSON edit.',
 	web: 'Edited through flattened keys (port, hostname, maxConcurrentRuns, …).',
 };
 

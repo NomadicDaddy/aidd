@@ -17,7 +17,7 @@ import { printHelp } from './help.ts';
 import { initGitAfterScaffold } from './metadata/git.ts';
 import { ensureMetadata } from './metadata/init.ts';
 import { extractAllIterations, extractLatestIteration } from './metadata/log-extract.ts';
-import { scaffoldProjectAssets } from './metadata/scaffold.ts';
+import { scaffoldOptionsFor, scaffoldProjectAssets } from './metadata/scaffold.ts';
 import { buildActiveRunCommandArgs } from './orchestrator/active-run-command.ts';
 import { resolveExternalRunContext } from './orchestrator/active-run-heartbeat-support.ts';
 import { CliActiveRunHeartbeat } from './orchestrator/active-run-heartbeat.ts';
@@ -145,19 +145,11 @@ export async function run(argv: string[]): Promise<number> {
 		// both are skipped in validate mode. This keeps `--check-features` safe to run against
 		// a live checkout (e.g. dogfooding aidd on its own repo); only execution modes scaffold.
 		if (plan.mode !== 'validate') {
-			// spernakitRoot = parent of the configured init script (the sole spernakit marker);
-			// it resolves a skill's spernakit-references.
-			await scaffoldProjectAssets(plan, rootDir, {
-				...(config.web.dataDir ? { dataDir: config.web.dataDir } : {}),
-				...(config.sharedDirs !== undefined ? { sharedDirs: config.sharedDirs } : {}),
-				...(config.sharedFiles !== undefined ? { sharedFiles: config.sharedFiles } : {}),
-				...(preparedSkill?.contracts !== undefined
-					? { skillContracts: preparedSkill.contracts }
-					: {}),
-				...(config.web.spernakitInitScript
-					? { spernakitRoot: dirname(config.web.spernakitInitScript) }
-					: {}),
-			});
+			await scaffoldProjectAssets(
+				plan,
+				rootDir,
+				scaffoldOptionsFor(config, preparedSkill?.contracts),
+			);
 			if (plan.initGitAfterScaffold) {
 				await initGitAfterScaffold(plan.projectDir, plan.writeAllowlist);
 			}

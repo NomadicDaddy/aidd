@@ -22,6 +22,10 @@ if (argv[0] === 'findings') {
 	const { runFindingsCommand } = await import('./commands/findings.ts');
 	process.exit(await runFindingsCommand(argv.slice(1)));
 }
+if (argv[0] === 'stage') {
+	const { runStageCommand } = await import('./commands/stage.ts');
+	process.exit(await runStageCommand(argv.slice(1)));
+}
 if (argv[0] === 'rest') {
 	const { runRestCommand } = await import('./commands/rest.ts');
 	process.exit(await runRestCommand(argv.slice(1)));

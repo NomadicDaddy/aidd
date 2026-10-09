@@ -9,6 +9,10 @@ Subcommands:
   findings dismiss --project-dir DIR --feature ID --reason REASON [--note TEXT]
       dismiss a fingerprinted audit finding: one ledger event, then the feature dir is removed
       (reasons: already-handled, false-positive, not-worth-it, wrong-severity, other)
+  stage --project-dir DIR [--skill ID]
+      stage aidd's contract files into DIR/.aidd as a run would, then exit; no agent runs
+  rest [set BACKEND --until WHEN [--reason TEXT] | clear BACKEND]
+      list, set or end provider rests (a resting backend starts no new runs)
 
 Key options:
   --cli native|ollama|lmstudio|openai|claude-code|opencode|kilocode|codex|cline|grok

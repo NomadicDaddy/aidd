@@ -1,9 +1,10 @@
+import type { ResolvedConfig } from 'aidd-shared/config';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { metadataPath } from 'aidd-shared/metadata/paths';
 import { isPathAllowlisted } from 'aidd-shared/pipeline/writeAllowlist';
 import { cp, mkdir, readdir, readFile } from 'node:fs/promises';
-import { isAbsolute, join, resolve, sep } from 'node:path';
+import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
 
 import { copyCommonModules } from './scaffoldCommon.ts';
 import { pathExists } from './scaffoldFs.ts';
@@ -25,6 +26,26 @@ export interface ScaffoldOptions {
 	skillContracts?: SkillContractDeps;
 	/** Spernakit install root (parent of the configured init script); resolves a skill's spernakit-references. */
 	spernakitRoot?: string;
+}
+
+/**
+ * The scaffold options a run derives from its config, shared by the run itself and `aidd stage`
+ * so staging without a run copies exactly what a run would.
+ */
+export function scaffoldOptionsFor(
+	config: ResolvedConfig,
+	skillContracts: SkillContractDeps | undefined,
+): ScaffoldOptions {
+	// spernakitRoot = parent of the configured init script (the sole spernakit marker); it resolves
+	// a skill's spernakit-references.
+	const initScript = config.web.spernakitInitScript;
+	return {
+		...(config.web.dataDir ? { dataDir: config.web.dataDir } : {}),
+		...(config.sharedDirs !== undefined ? { sharedDirs: config.sharedDirs } : {}),
+		...(config.sharedFiles !== undefined ? { sharedFiles: config.sharedFiles } : {}),
+		...(skillContracts !== undefined ? { skillContracts } : {}),
+		...(initScript ? { spernakitRoot: dirname(initScript) } : {}),
+	};
 }
 
 export async function scaffoldProjectAssets(

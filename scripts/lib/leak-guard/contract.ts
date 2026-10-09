@@ -74,6 +74,9 @@ export const SEEDED_SCRIPTS = ['run-bash.ts'];
  */
 export const WIRING: Record<string, string> = {
 	'check:leak-guard': 'bun ./scripts/run-bash.ts scripts/check-leak-guard.sh',
-	prepare:
-		'bun scripts/prepare.ts --setup "bun ./scripts/run-bash.ts .githooks/leak-guard-setup.sh"',
+	// The portable form every carrier can run. aidd's own `prepare` goes through its local
+	// scripts/prepare.ts wrapper, which no other repository has; printing that form told a target
+	// to wire a script that would fail its next `bun install`. Kept equal to the shared-core
+	// manifest's leak-guard-scripts wiring by test/scripts/leak-guard-wiring.test.ts.
+	prepare: 'bun ./scripts/run-bash.ts .githooks/leak-guard-setup.sh',
 };

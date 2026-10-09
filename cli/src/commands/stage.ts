@@ -12,10 +12,12 @@ import { prepareSkillRun } from '../skill-run.ts';
 
 const USAGE = `Usage: aidd stage --project-dir <dir> [--skill <id>]
 
-Copy aidd's contract files into the project's .aidd/ exactly as the start of a run would (shared
-modules, and with --skill, that skill's declared references and sibling contracts), then exit.
-No agent is launched, no feature is claimed, and no git hooks or config are changed. Use it before
-working through a skill by hand, so the staged references the skill reads are present.
+Copy aidd's contract files into the project's .aidd/ as the start of a run would (shared modules,
+and with --skill, that skill's declared references and sibling contracts), then exit. Unlike a run,
+staging writes nothing outside .aidd/ (no configured shared dirs or files in the project root) and
+seeds no blueprint placeholders (project.md, project-structure.md, CHANGELOG.md), so a missing
+artifact still reads as missing. No agent is launched, no feature is claimed, and no git hooks or
+config change.
 
 Exit codes: 0 staged, 1 staging failed, 2 usage error.`;
 
@@ -81,7 +83,17 @@ export async function runStageCommand(
 		// No rootDir: a run installs the history guard here, which writes git config. Staging only
 		// creates the metadata directories and copies what a run would copy.
 		await ensureMetadata(plan.projectDir, undefined, plan.writeAllowlist);
-		await scaffoldProjectAssets(plan, rootDir, scaffoldOptionsFor(config, prepared?.contracts));
+		// Staging fills .aidd/ only. A run also copies the configured shared dirs and files into the
+		// project root, the workspace AGENTS.md among them; staging must not, or a repository with
+		// a public remote is one careless commit away from publishing workspace rules.
+		// Nor does it seed blueprint placeholders, which would make missing artifacts look present.
+		const options = {
+			...scaffoldOptionsFor(config, prepared?.contracts),
+			seedBlueprint: false,
+		};
+		delete options.sharedDirs;
+		delete options.sharedFiles;
+		await scaffoldProjectAssets(plan, rootDir, options);
 		const staged = await stagedEntries(plan.projectDir);
 		console.log(`Staged into ${metadataPath(plan.projectDir)}: ${staged.join(', ')}`);
 		return 0;

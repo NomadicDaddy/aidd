@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { pathExists } from './scaffoldFs.ts';
@@ -71,7 +71,9 @@ async function installProjectMd(
 	}
 	const source = join(metadataScaffold, PROJECT_MD);
 	if (!(await pathExists(source))) return;
-	await cp(source, target, { dereference: true });
+	// Written, not copied: a copy keeps the template's old mtime, and check-artifacts then reports a
+	// file created moments ago as stale.
+	await writeFile(target, await readFile(source));
 }
 
 async function copyMissingEntries(

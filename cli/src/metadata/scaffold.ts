@@ -21,6 +21,12 @@ export interface SharedFileEntry {
 export interface ScaffoldOptions {
 	/** Imported-skill catalog root (`web.dataDir`); lets contract staging resolve imported skills, not just bundled ones. */
 	dataDir?: string;
+	/**
+	 * False skips the scaffold's blueprint seeds (project.md, project-structure.md, CHANGELOG.md, and
+	 * the initializer's root contract). A run seeds them for its agent to fill in; `aidd stage` must
+	 * not, because a placeholder makes a missing artifact look present.
+	 */
+	seedBlueprint?: boolean;
 	sharedDirs?: string[];
 	sharedFiles?: (SharedFileEntry | string)[];
 	skillContracts?: SkillContractDeps;
@@ -68,7 +74,9 @@ export async function scaffoldProjectAssets(
 	const allowsTarget = (relativeTarget: string): boolean =>
 		plan.writeAllowlist === undefined || isPathAllowlisted(relativeTarget, plan.writeAllowlist);
 
-	await copyScaffoldFiles(rootDir, projectDir, aiddDir, allowsTarget, isInitializer);
+	if (options.seedBlueprint !== false) {
+		await copyScaffoldFiles(rootDir, projectDir, aiddDir, allowsTarget, isInitializer);
+	}
 	await copyCommonModules(rootDir, aiddDir);
 	await copyAuditFiles(plan, rootDir, aiddDir);
 	await copySkillContracts(

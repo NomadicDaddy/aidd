@@ -77,8 +77,10 @@ Key options:
   --feature VALUE
   --audit-findings [SOURCE]  coding sweep: include approved category-Audit findings in
                              selection (default off), optionally narrowed to one audit SOURCE
-  --check-features
-  --check-artifacts
+  --check-features           validate feature records; no agent, nothing outside .aidd/ changes,
+                              and one entry is appended to .aidd/runs.jsonl like any run
+  --check-artifacts          report artifact presence and age; writes .aidd/.artifacts-check.json
+                              and appends one .aidd/runs.jsonl entry
   --write-allowlist PATH[,PATH]  revert backend writes outside these relative paths,
                              retry once with the violation in the prompt, then fail (exit 76)
   --worktree                 run execution in an isolated git worktree (branch aidd/run-<id>);

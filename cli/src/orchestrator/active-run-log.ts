@@ -25,6 +25,12 @@ export class ActiveRunLog {
 		if (logPath) {
 			try {
 				handle = await open(logPath, 'a');
+				// Written first and for every backend: the substitution is decided before the log
+				// exists, and the transcript is where a direct CLI run keeps it.
+				if (plan.backendSubstitution !== undefined) {
+					const note = plan.backendSubstitution;
+					await handle.write(scrubSecrets(`Provider rest: ${note}\n`));
+				}
 				if (plan.backend !== 'native') {
 					await handle.write(scrubSecrets(nonNativeRunLogIntro(plan)));
 				}

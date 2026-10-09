@@ -82,6 +82,7 @@ export async function run(argv: string[]): Promise<number> {
 		await assertProjectForRun(args);
 
 		const plan = resolveRunPlan(args, config);
+		if (rested.substitution !== undefined) plan.backendSubstitution = rested.substitution;
 		const runDriver = runDriverForPlan(plan, preparedSkill?.driver);
 		if (runDriver !== undefined) plan.driver = runDriver;
 		const aiddProvenance = await resolveAiddRunProvenance(rootDir);

@@ -35,6 +35,8 @@ export const TERMINAL_STATES: ReadonlySet<string> = new Set([
 export interface CliActiveRunRecord extends AiddRunDriver, AiddRunProvenance {
 	aiSummary: null | string;
 	backend: BackendName;
+	/** Set only when provider rest moved this run off the backend it asked for. */
+	backendSubstitution?: string;
 	cachedTokens: null | number;
 	commandArgs: null | string[];
 	completedAt: null | number;
@@ -188,11 +190,14 @@ export function parseCliActiveRunRecord(value: unknown): CliActiveRunRecord | un
 	}
 	const costUsd = value.costUsd;
 	if (!(costUsd === undefined || costUsd === null || isFiniteNumber(costUsd))) return undefined;
+	const substitution = value.backendSubstitution;
+	if (!(substitution === undefined || typeof substitution === 'string')) return undefined;
 	return {
 		...aiddProvenance,
 		...runDriver,
 		aiSummary: aiSummary ?? null,
 		backend,
+		...(substitution === undefined ? {} : { backendSubstitution: substitution }),
 		commandArgs: commandArgs ? [...commandArgs] : null,
 		completedAt: completedAt ?? null,
 		costUsd: typeof costUsd === 'number' && costUsd > 0 ? costUsd : null,
@@ -223,6 +228,7 @@ export function parseCliActiveRunRecord(value: unknown): CliActiveRunRecord | un
 export function createCliActiveRunRecord(input: {
 	aiddProvenance?: AiddRunProvenance;
 	backend: BackendName;
+	backendSubstitution?: string | undefined;
 	commandArgs?: null | readonly string[];
 	id?: string;
 	initiator?: RunInitiator;
@@ -245,6 +251,7 @@ export function createCliActiveRunRecord(input: {
 		aiddVersion: input.aiddProvenance?.aiddVersion ?? null,
 		aiSummary: null,
 		backend: input.backend,
+		...(input.backendSubstitution ? { backendSubstitution: input.backendSubstitution } : {}),
 		cachedTokens: null,
 		commandArgs: input.commandArgs ? [...input.commandArgs] : null,
 		completedAt: null,

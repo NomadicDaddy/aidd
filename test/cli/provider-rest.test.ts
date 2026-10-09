@@ -62,6 +62,9 @@ describe('applyProviderRest', () => {
 		const { reresolve, seen } = reresolveFrom(config);
 		const outcome = await applyProviderRest(args, config, '.', reresolve);
 		expect('config' in outcome ? outcome.config.cli : null).toBe('codex');
+		expect('config' in outcome ? outcome.substitution : null).toStartWith(
+			'codex, substituted for claude-code: resting until ',
+		);
 		expect(seen.length).toBe(1);
 		expect(seen[0]?.cli).toBe('codex');
 		expect(seen[0]?.model).toBeUndefined();

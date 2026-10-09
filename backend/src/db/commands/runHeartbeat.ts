@@ -83,6 +83,7 @@ function buildRunInsertValues(
 		...driverValues(record),
 		aiSummary: record.aiSummary,
 		backend: record.backend,
+		backendSubstitution: record.backendSubstitution ?? null,
 		commandArgsJson: commandArgsJson(record),
 		completedAt,
 		durationMs,

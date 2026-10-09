@@ -82,6 +82,7 @@ export class CliActiveRunHeartbeat {
 				pidStartId,
 				...(options.aiddProvenance ? { aiddProvenance: options.aiddProvenance } : {}),
 				backend: plan.backend,
+				backendSubstitution: plan.backendSubstitution,
 				commandArgs: options.commandArgs ?? null,
 				...(options.externalRunId ? { id: options.externalRunId } : {}),
 				// Absent for a bare CLI invocation, which createCliActiveRunRecord reads as the

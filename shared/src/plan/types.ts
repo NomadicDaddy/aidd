@@ -173,6 +173,8 @@ export interface PromptPlan {
 export interface RunPlan {
 	audit?: AuditPlan;
 	backend: BackendName;
+	/** Set when provider rest moved a direct CLI run off its resting default backend. */
+	backendSubstitution?: string;
 	/** Soft cost/token ceilings. Warn-only: an overrun is logged and surfaced, never enforced. */
 	budget?: RunBudget;
 	checks: {

@@ -7,7 +7,8 @@ import {
 } from 'aidd-shared/provider-rest/decide';
 import { readProviderRests } from 'aidd-shared/provider-rest/store';
 
-export type CliRestOutcome = { config: ResolvedConfig } | { exitCode: number };
+export type CliRestOutcome =
+	{ config: ResolvedConfig; substitution?: string } | { exitCode: number };
 
 /** Flags that read or report and never start an agent, so a rest has nothing to withhold. */
 function startsAgent(args: ParsedArgs): boolean {
@@ -60,5 +61,5 @@ export async function applyProviderRest(
 	args.cli = decision.backend;
 	delete args.model;
 	delete args.reasoningEffort;
-	return { config: await reresolve(args) };
+	return { config: await reresolve(args), substitution: decision.substitution.note };
 }

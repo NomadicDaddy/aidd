@@ -36,7 +36,17 @@ export async function loadAuditProfileMapping(catalogDir: string): Promise<Audit
 	let stats: Awaited<ReturnType<typeof stat>>;
 	try {
 		stats = await stat(filePath);
-	} catch {
+	} catch (error) {
+		if (!isFileNotFound(error)) throw error;
+		// A catalog without a mapping file has no rules, and every audit applies. A root with no
+		// audits/ directory at all is a different case: the caller passed the wrong directory
+		// (the audits/ folder itself, or a cwd fallback outside aidd), and answering with zero
+		// rules would read exactly like a legitimately empty catalog.
+		if (!(await isDirectory(dirname(filePath)))) {
+			throw new Error(`No audit catalog at ${catalogDir}: expected an audits/ directory`, {
+				cause: error,
+			});
+		}
 		return emptyMapping;
 	}
 	const cached = mappingCache.get(filePath);
@@ -99,6 +109,15 @@ function isFileNotFound(error: unknown): boolean {
 		'code' in error &&
 		(error as { code?: unknown }).code === 'ENOENT'
 	);
+}
+
+async function isDirectory(path: string): Promise<boolean> {
+	try {
+		return (await stat(path)).isDirectory();
+	} catch (error) {
+		if (isFileNotFound(error)) return false;
+		throw error;
+	}
 }
 
 export async function writeAuditProfileOverrides(

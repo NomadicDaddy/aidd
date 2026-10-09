@@ -31,6 +31,13 @@ const localProfile: ProjectAssuranceProfile = {
 	deployment: 'local',
 };
 
+/** An aidd catalog root with an audits/ directory and no audits in it. */
+async function emptyCatalog(): Promise<string> {
+	const catalogDir = await testTempDir('aidd-maturity-catalog-');
+	await mkdir(join(catalogDir, 'audits'));
+	return catalogDir;
+}
+
 async function computeFor(
 	projectDir: string,
 	catalogDir: string,
@@ -65,7 +72,7 @@ function shippedStage(maturity: MaturityDto) {
 describe('maturity shipped stage', () => {
 	test('is the terminal stage and starts with all evidence missing', async () => {
 		const projectDir = await testTempDir('aidd-maturity-shipped-');
-		const catalogDir = await testTempDir('aidd-maturity-catalog-');
+		const catalogDir = await emptyCatalog();
 		try {
 			const maturity = await computeFor(projectDir, catalogDir, serverProfile);
 			const stage = shippedStage(maturity);
@@ -87,7 +94,7 @@ describe('maturity shipped stage', () => {
 
 	test('completes from runbook, deploy config, and a loose release tag', async () => {
 		const projectDir = await testTempDir('aidd-maturity-shipped-');
-		const catalogDir = await testTempDir('aidd-maturity-catalog-');
+		const catalogDir = await emptyCatalog();
 		try {
 			await mkdir(join(projectDir, '.aidd'), { recursive: true });
 			await writeFile(join(projectDir, '.aidd', 'deployment.md'), '# Deployment\n');
@@ -111,7 +118,7 @@ describe('maturity shipped stage', () => {
 
 	test('detects tags recorded only in packed-refs', async () => {
 		const projectDir = await testTempDir('aidd-maturity-shipped-');
-		const catalogDir = await testTempDir('aidd-maturity-catalog-');
+		const catalogDir = await emptyCatalog();
 		try {
 			await mkdir(join(projectDir, '.git'), { recursive: true });
 			await writeFile(
@@ -132,7 +139,7 @@ describe('maturity shipped stage', () => {
 
 	test('ignores packed-refs entries that are not tags', async () => {
 		const projectDir = await testTempDir('aidd-maturity-shipped-');
-		const catalogDir = await testTempDir('aidd-maturity-catalog-');
+		const catalogDir = await emptyCatalog();
 		try {
 			await mkdir(join(projectDir, '.git'), { recursive: true });
 			await writeFile(
@@ -152,7 +159,7 @@ describe('maturity shipped stage', () => {
 
 	test('accepts a non-empty workflows directory as deploy config', async () => {
 		const projectDir = await testTempDir('aidd-maturity-shipped-');
-		const catalogDir = await testTempDir('aidd-maturity-catalog-');
+		const catalogDir = await emptyCatalog();
 		try {
 			await mkdir(join(projectDir, '.github', 'workflows'), { recursive: true });
 			await writeFile(
@@ -174,7 +181,7 @@ describe('maturity shipped stage', () => {
 
 	test('does not require deploy config for local-deployment profiles', async () => {
 		const projectDir = await testTempDir('aidd-maturity-shipped-');
-		const catalogDir = await testTempDir('aidd-maturity-catalog-');
+		const catalogDir = await emptyCatalog();
 		try {
 			await mkdir(join(projectDir, '.aidd'), { recursive: true });
 			await writeFile(join(projectDir, '.aidd', 'deployment.md'), '# Deployment\n');

@@ -1,6 +1,7 @@
 import type { AgentRunResult } from 'aidd-shared/orchestrator/result';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
+import { parseQuestionBullets } from 'aidd-shared/interview/question-bullets';
 import { METADATA_DIR, metadataPath } from 'aidd-shared/metadata/paths';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
@@ -22,9 +23,15 @@ export function interviewQuestionsPath(projectDir: string, plan: RunPlan): strin
 	);
 }
 
+/**
+ * The questionnaire format the panel reads (`- **[PRIORITY]** prompt` bullets, wrapped lines
+ * joined) comes first, so a CLI interview numbers questions exactly as the panel does. A file
+ * written as one `## ` section per question, or as bare question lines, is still read.
+ */
 export async function readInterviewQuestions(path: string): Promise<InterviewQuestion[]> {
 	const content = await readFile(path, 'utf8');
-	const headingQuestions = questionsFromHeadings(content);
+	const bullets = parseQuestionBullets(content).map((question) => question.prompt);
+	const headingQuestions = bullets.length > 0 ? bullets : questionsFromHeadings(content);
 	const questions = headingQuestions.length > 0 ? headingQuestions : questionsFromLines(content);
 	if (questions.length === 0) {
 		throw new Error(`Interview questions file has no parsed questions: ${path}`);

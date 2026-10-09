@@ -1516,10 +1516,12 @@ describe('mode handlers', () => {
 		const work = await mode.selectWork({ projectDir, store });
 		const promptPlan = await mode.buildPromptPlan({ projectDir, store }, work);
 
+		// Each bullet is a question, as in the panel; the category heading is not one, and Legend and
+		// Summary are skipped (the Legend bullet and the Summary's repeated line are not questions).
 		expect(work.id).toBe('question-1');
-		expect(work.description).toContain('Product Intent');
-		expect(work.description).not.toContain('Legend');
-		expect(promptPlan.variables.interviewTotalQuestions).toBe(1);
+		expect(work.description).toContain('What must be true before v1?');
+		expect(work.description).not.toContain('Must answer before assuming ownership');
+		expect(promptPlan.variables.interviewTotalQuestions).toBe(2);
 	});
 
 	test('interview mode selects first missing response by question number', async () => {

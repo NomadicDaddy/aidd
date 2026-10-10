@@ -125,8 +125,8 @@ Zero reflection bullets is a valid outcome for a day. Do not manufacture one, an
 
 ### Phase 2: Scan Git Repositories
 
-5. **Discover repositories**: By default, scan `D:\applications`, `D:\public`, `D:\infra`, and
-   `D:\scripts`. If a listed path is itself a Git repository, include that repository; otherwise,
+5. **Discover repositories**: By default, scan `D:\applications`, `D:\infra`, and `D:\scripts`.
+   If a listed path is itself a Git repository, include that repository; otherwise,
    inspect its direct child directories for repositories. Skip paths that do not exist and
    deduplicate repositories by their resolved Git top-level path.
 

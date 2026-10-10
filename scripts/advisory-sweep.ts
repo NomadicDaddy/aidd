@@ -28,7 +28,7 @@ import {
 } from './lib/advisory-sweep/row.ts';
 import { matchFile, scanRoot } from './lib/advisory-sweep/scan.ts';
 
-const DEFAULT_ROOTS = ['D:\\applications', 'D:\\infra', 'D:\\public', 'D:\\scripts'];
+const DEFAULT_ROOTS = ['D:\\applications', 'D:\\infra', 'D:\\scripts'];
 const DEFAULT_SWEEPS_FILE = 'D:\\infra\\advisory-sweeps.md';
 // The sweeps file's header names @ianvs/prettier-plugin-sort-imports as the control, but in the
 // estate that name occurs only as a peerDependency key inside another package's lockfile entry, so

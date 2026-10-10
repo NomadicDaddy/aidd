@@ -28,7 +28,9 @@ import {
 } from './lib/advisory-sweep/row.ts';
 import { matchFile, scanRoot } from './lib/advisory-sweep/scan.ts';
 
-const DEFAULT_ROOTS = ['D:\\applications', 'D:\\infra', 'D:\\scripts'];
+// Every repo-holding root (Phillip #8053). D:\amiga is not an application root, but it carries
+// an npm install surface of its own, so it is swept like the rest.
+const DEFAULT_ROOTS = ['D:\\amiga', 'D:\\applications', 'D:\\infra', 'D:\\scripts'];
 const DEFAULT_SWEEPS_FILE = 'D:\\infra\\advisory-sweeps.md';
 // The sweeps file's header names @ianvs/prettier-plugin-sort-imports as the control, but in the
 // estate that name occurs only as a peerDependency key inside another package's lockfile entry, so

@@ -59,6 +59,22 @@ function describeRoot(root: SweptRoot): string {
 }
 
 /**
+ * What the sweep covered: each root it read and how, then each root it skipped and why (#8053).
+ * The row carries it, and a sweep that read nothing prints it before exiting, because the FAILED
+ * row alone would lose both the reason the selected roots yielded nothing and the skipped roots.
+ * @param result The completed sweep.
+ * @returns The roots text, without the field label.
+ */
+export function describeScope(result: SweepResult): string {
+	// Only a narrowed sweep skips anything, so the default row keeps the directive's fixed form.
+	const skipped =
+		result.skipped.length === 0
+			? ''
+			: `; skipped ${result.skipped.map((s) => `${s.root} (${s.reason})`).join(', ')}`;
+	return `${result.roots.map(describeRoot).join(' + ')}${skipped}`;
+}
+
+/**
  * The row text. A sweep that covered nothing at all is the FAILED form, never a clean one.
  * @param result The completed sweep.
  * @returns One line, without a trailing newline.
@@ -75,15 +91,10 @@ export function formatRow(result: SweepResult): string {
 		result.control.file === null
 			? `${result.control.name} NOT FOUND`
 			: `${result.control.name} found in ${result.control.file}`;
-	// Only a narrowed sweep skips anything, so the default row keeps the directive's fixed form.
-	const skipped =
-		result.skipped.length === 0
-			? ''
-			: `; skipped ${result.skipped.map((s) => `${s.root} (${s.reason})`).join(', ')}`;
 	return [
 		result.date,
 		`advisory query: ${result.query}`,
-		`roots: ${result.roots.map(describeRoot).join(' + ')}${skipped}`,
+		`roots: ${describeScope(result)}`,
 		`packages checked: ${packages}`,
 		`hits: ${hits}`,
 		`control: ${control}`,

@@ -22,6 +22,7 @@ import type { Hit } from './lib/advisory-sweep/scan.ts';
 
 import {
 	appendRowOnce,
+	describeScope,
 	filesCovered,
 	formatRow,
 	type SkippedRoot,
@@ -157,6 +158,7 @@ if (import.meta.main) {
 		console.error(
 			'No manifest or lockfile was read; the row is the FAILED form and was not appended.',
 		);
+		console.error(`Scope: ${describeScope(result)}`);
 		exit(1);
 	}
 	if (result.control.file === null) {

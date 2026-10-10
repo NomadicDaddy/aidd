@@ -1,9 +1,9 @@
 {
 	"name": "aidd-frontend",
 	"private": true,
-	"packageManager": "bun@1.4.2",
+	"packageManager": "bun@1.4.3",
 	"engines": {
-		"bun": ">=1.4.2"
+		"bun": ">=1.4.3"
 	},
 	"dependencies": {
 		"@dnd-kit/core": "^6.3.1",

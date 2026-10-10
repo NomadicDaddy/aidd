@@ -7,7 +7,7 @@ locations, remote binding, updates, uninstall — see [deployment.md](./referenc
 
 ## Prerequisites
 
-- **Bun 1.4.2 or newer**: aidd is Bun-first; there is no npm/Node build step. aidd ships as
+- **Bun 1.4.3 or newer**: aidd is Bun-first; there is no npm/Node build step. aidd ships as
   source, so Bun is a hard requirement rather than a build-time one.
 - **Git**: used for run diffs, the run ledger, and worktrees. On Windows, **Git for Windows is
   required** for the native-family backends (`native`, `ollama`, `lmstudio`, `openai`): the

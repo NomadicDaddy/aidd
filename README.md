@@ -49,7 +49,7 @@ statement.
 
 ## Prerequisites
 
-- **Bun 1.4.2** or newer.
+- **Bun 1.4.3** or newer.
 - **Git**: aidd uses it for run diffs, the run ledger, and worktrees. On Windows, **Git for
   Windows is required** for the native-family backends (`native`, `ollama`, `lmstudio`,
   `openai`): the agent's shell tool runs through its bundled bash, and the preflight doctor

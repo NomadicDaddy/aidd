@@ -2,7 +2,7 @@
 	"name": "aidd-shared",
 	"private": true,
 	"engines": {
-		"bun": ">=1.4.2"
+		"bun": ">=1.4.3"
 	},
 	"dependencies": {
 		"zod": "4.6.5"

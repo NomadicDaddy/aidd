@@ -105,6 +105,23 @@ describe('smoke cache', () => {
 		expect(await canSkipStep(root, 'typecheck')).toBe(false);
 	});
 
+	// A pass recorded under one Bun said nothing about another, yet a gate run on a candidate Bun
+	// read every unchanged step as already passing on it (Bun 1.4.3 review, room #8215).
+	test('misses when the step was recorded under a different Bun', async () => {
+		const root = await createSmokeProject();
+		await recordStepSuccess(root, 'typecheck', 123);
+		const cache = JSON.parse(await readFile(getSmokeCachePath(root), 'utf8')) as {
+			steps: Record<string, { dependencyHash: string }>;
+		};
+		const entry = cache.steps['typecheck'];
+		expect(entry?.dependencyHash.startsWith(`bun@${Bun.version}:`)).toBe(true);
+		if (entry === undefined) return;
+		entry.dependencyHash = entry.dependencyHash.replace(`bun@${Bun.version}:`, 'bun@0.0.1:');
+		await writeFile(getSmokeCachePath(root), JSON.stringify(cache));
+
+		expect(await canSkipStep(root, 'typecheck')).toBe(false);
+	});
+
 	// A run killed mid-write left a torn cache file, and reading it threw: every later smoke:qc
 	// failed until someone deleted the file by hand. A cache is disposable; a miss reruns steps.
 	test('a torn cache file reads as empty and is then rewritten whole', async () => {

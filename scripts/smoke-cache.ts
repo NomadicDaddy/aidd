@@ -87,6 +87,11 @@ async function collectCacheDependencies(
 	return [...new Set([...baseDependencies, ...testCoveredFiles])].sort();
 }
 
+/**
+ * A step's cache key: its dependency hash, prefixed with the Bun that ran it. A pass recorded
+ * under one runtime says nothing about another, and without the prefix a gate run on a candidate
+ * Bun read every unchanged step as already passing on it (Bun 1.4.3 review, room #8215).
+ */
 async function hashCacheDependencies(
 	projectRoot: string,
 	step: string,
@@ -98,16 +103,16 @@ async function hashCacheDependencies(
 		return null;
 	}
 
-	if (step !== TEST_STEP_NAME && coveredFiles === undefined) {
-		return await hashStepDependencies(projectRoot, step, context?.dependencies);
-	}
-
-	return await hashDependencies(
-		projectRoot,
-		await collectCacheDependencies(projectRoot, step, entry, coveredFiles, context),
-		isGeneratedOutputStep(step),
-		context?.dependencies,
-	);
+	const hash =
+		step !== TEST_STEP_NAME && coveredFiles === undefined
+			? await hashStepDependencies(projectRoot, step, context?.dependencies)
+			: await hashDependencies(
+					projectRoot,
+					await collectCacheDependencies(projectRoot, step, entry, coveredFiles, context),
+					isGeneratedOutputStep(step),
+					context?.dependencies,
+				);
+	return hash === null ? null : `bun@${Bun.version}:${hash}`;
 }
 
 async function readCache(projectRoot: string): Promise<SmokeCacheFile> {

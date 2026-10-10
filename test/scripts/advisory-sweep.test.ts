@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { appendRowOnce, formatRow } from '../../scripts/lib/advisory-sweep/row.ts';
 import { matchFile, scanRoot } from '../../scripts/lib/advisory-sweep/scan.ts';
-import { runSweep } from '../../scripts/advisory-sweep.ts';
+import { runSweep, selectRoots } from '../../scripts/advisory-sweep.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from '../backend/_helpers/remove-temp-tree.ts';
 
@@ -197,6 +197,33 @@ describe('advisory sweep row', () => {
 		expect(formatRow(noControl)).toContain(
 			'| packages checked: (none named) | hits: none | control: not-installed-anywhere NOT FOUND |',
 		);
+	});
+
+	// Roger on d7885b7f: --root replaces the defaults, and the row then named only what it swept,
+	// so a narrowed sweep read as complete coverage (#8053 requires naming skipped roots and why).
+	test('a narrowed sweep names each default root it skipped, and a default one names none', async () => {
+		expect(selectRoots(undefined).skipped).toEqual([]);
+		const narrowed = selectRoots(['d:\\APPLICATIONS']);
+		expect(narrowed.skipped.map((s) => s.root)).toEqual([
+			'D:\\amiga',
+			'D:\\infra',
+			'D:\\scripts',
+		]);
+		const root = await fleet();
+		const result = await runSweep({
+			control: '@ianvs/prettier-plugin-sort-imports',
+			date: '2026-10-08',
+			packages: [],
+			query: 'q',
+			roots: [root],
+			skipped: narrowed.skipped,
+			toolCheck: 'did not apply',
+		});
+		expect(formatRow(result)).toContain(
+			`roots: ${root} 3 files; skipped D:\\amiga (not selected by --root), ` +
+				'D:\\infra (not selected by --root), D:\\scripts (not selected by --root) |',
+		);
+		expect(formatRow({ ...result, skipped: [] })).not.toContain('skipped');
 	});
 
 	test('a rerun on the same day with the same query appends nothing', async () => {

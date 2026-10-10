@@ -14,6 +14,7 @@
  * Run: bun run advisory:sweep -- --query "<result and window>" [--packages a,b] [--append]
  *      [--tool-check "<done: … | did not apply>"] [--root <dir>]... [--sweeps-file <path>]
  */
+import { resolve } from 'node:path';
 import { exit } from 'node:process';
 import { parseArgs } from 'node:util';
 
@@ -23,6 +24,7 @@ import {
 	appendRowOnce,
 	filesCovered,
 	formatRow,
+	type SkippedRoot,
 	type SweepResult,
 	type SweptRoot,
 } from './lib/advisory-sweep/row.ts';
@@ -37,6 +39,30 @@ const DEFAULT_SWEEPS_FILE = 'D:\\infra\\advisory-sweeps.md';
 // an exact match cannot find it and every sweep that reported it found was matching substrings.
 // prettier-plugin-tailwindcss is a resolved entry in several lockfiles.
 const DEFAULT_CONTROL = 'prettier-plugin-tailwindcss';
+
+/**
+ * The roots a sweep reads, and each default root an explicit --root selection leaves out. A
+ * narrowed sweep still has to say which repo-holding roots it skipped and why (#8053), or its row
+ * reads as complete coverage. Both sides are typed paths, so they are compared case-insensitively
+ * after resolving rather than through the filesystem.
+ * @param chosen The --root values, or undefined when none were given.
+ * @returns The roots to sweep and the default roots skipped with their reason.
+ */
+export function selectRoots(chosen: readonly string[] | undefined): {
+	roots: readonly string[];
+	skipped: SkippedRoot[];
+} {
+	if (chosen === undefined || chosen.length === 0) return { roots: DEFAULT_ROOTS, skipped: [] };
+	const key = (root: string): string => resolve(root).toLowerCase();
+	const picked = new Set(chosen.map(key));
+	return {
+		roots: chosen,
+		skipped: DEFAULT_ROOTS.filter((root) => !picked.has(key(root))).map((root) => ({
+			reason: 'not selected by --root',
+			root,
+		})),
+	};
+}
 
 function localDate(): string {
 	const now = new Date();
@@ -55,6 +81,7 @@ export async function runSweep(options: {
 	packages: readonly string[];
 	query: string;
 	roots: readonly string[];
+	skipped?: readonly SkippedRoot[];
 	toolCheck: string;
 }): Promise<SweepResult> {
 	const roots: SweptRoot[] = [];
@@ -85,6 +112,7 @@ export async function runSweep(options: {
 		packages: names,
 		query: options.query,
 		roots,
+		skipped: [...(options.skipped ?? [])],
 		toolCheck: options.toolCheck,
 	};
 }
@@ -112,12 +140,14 @@ if (import.meta.main) {
 		.split(',')
 		.map((name) => name.trim())
 		.filter((name) => name.length > 0 && name !== 'none');
+	const selection = selectRoots(values.root);
 	const result = await runSweep({
 		control: values.control ?? DEFAULT_CONTROL,
 		date: values.date ?? localDate(),
 		packages,
 		query: values.query.trim(),
-		roots: values.root && values.root.length > 0 ? values.root : DEFAULT_ROOTS,
+		roots: selection.roots,
+		skipped: selection.skipped,
 		toolCheck: values['tool-check'] ?? 'did not apply',
 	});
 	const row = formatRow(result);

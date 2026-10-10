@@ -15,6 +15,12 @@ export interface SweptRoot {
 	scan: RootScan;
 }
 
+/** A repo-holding root the sweep did not read, and why (Phillip #8053). */
+export interface SkippedRoot {
+	reason: string;
+	root: string;
+}
+
 export interface SweepResult {
 	control: { file: null | string; name: string };
 	date: string;
@@ -22,6 +28,7 @@ export interface SweepResult {
 	packages: readonly string[];
 	query: string;
 	roots: SweptRoot[];
+	skipped: SkippedRoot[];
 	toolCheck: string;
 }
 
@@ -68,10 +75,15 @@ export function formatRow(result: SweepResult): string {
 		result.control.file === null
 			? `${result.control.name} NOT FOUND`
 			: `${result.control.name} found in ${result.control.file}`;
+	// Only a narrowed sweep skips anything, so the default row keeps the directive's fixed form.
+	const skipped =
+		result.skipped.length === 0
+			? ''
+			: `; skipped ${result.skipped.map((s) => `${s.root} (${s.reason})`).join(', ')}`;
 	return [
 		result.date,
 		`advisory query: ${result.query}`,
-		`roots: ${result.roots.map(describeRoot).join(' + ')}`,
+		`roots: ${result.roots.map(describeRoot).join(' + ')}${skipped}`,
 		`packages checked: ${packages}`,
 		`hits: ${hits}`,
 		`control: ${control}`,

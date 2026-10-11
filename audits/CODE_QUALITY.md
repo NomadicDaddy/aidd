@@ -69,7 +69,7 @@ consolidates: 'ORDER.md, COMPARISON.md, LINT.md, COMMENT.md, FILE.md'
 - Prettier with `prettier-plugin-sort-json`, `prettier-plugin-organize-attributes`, and `prettier-plugin-tailwindcss` (these automate the JSON/object sort rules in section 1 and the attribute/Tailwind ordering rules in section 4 - ordering is plugin-enforced, not manual)
 - TypeScript compiler for type checking
 - `knip` for dead-code / unused-export detection (`bun run check:dead-code`)
-- `check:max-lines` for the 300-line-per-file modularity gate (`bun run check:max-lines`, part of `smoke:qc`)
+- `check:max-lines` for the 300-line-per-file modularity gate (`bun run check:max-lines`, part of `smoke:qc`), unless the project waives the limit (see [File Size and Modularity](#file-size-and-modularity))
 - Git for diff analysis
 
 > **Test framework note**: The Spernakit/aidd stack has no unit-test framework (no vitest/jest/@testing-library). Static gates run via `bun run smoke:qc` and runtime verification via `crawltest`, so "test coverage" is not a CODE_QUALITY axis here.
@@ -393,6 +393,8 @@ The `check:max-lines` gate (part of `smoke:qc`) fails the build when any tracked
 - Oversized files must be split at land-time, not deferred. Typical decompositions: extract complex route handlers (>30 lines) into named functions co-located in the route file; split a growing flat service into a facade + `services/{name}/` subdirectory (see DEVELOPMENT.md).
 - A passing `smoke:qc` already proves compliance - spot-check only when investigating a specific module's structure.
 
+**Owner waiver.** When the target's `.aidd/project.md` records an owner decision that the project carries no file-size limit, this rule does not apply to it: do not report oversized files, and do not report a missing `check:max-lines` script or `smoke:qc` step. Say in the report that the limit is waived and quote the line that waives it. Only an explicit statement in `project.md` counts; a project that merely lacks the gate, or whose gate has been removed without that statement, is still measured against the limit.
+
 ### Module Export Conventions
 
 - **Named exports only**: no `export default` in application modules (a single `default` in a `.d.ts` type-declaration file is acceptable). For `React.lazy()`, adapt named exports with `.then((m) => ({ default: m.Component }))`.
@@ -461,7 +463,7 @@ For each file:
 
 - [ ] **Critical**: All files follow naming conventions
 - [ ] **Critical**: Files are in appropriate directories
-- [ ] **Critical**: No tracked file exceeds 300 lines (`bun run check:max-lines` clean)
+- [ ] **Critical**: No tracked file exceeds 300 lines (`bun run check:max-lines` clean), or `.aidd/project.md` waives the limit
 - [ ] **Critical**: Modules use named exports only - no `export default` in application code, no CommonJS (`require`/`module.exports`)
 - [ ] **Critical**: No `process.env` access outside the approved `configLoader.ts` secret mapping (`bun run check:process-env` clean)
 - [ ] **Critical**: No unused files without clear justification
@@ -651,9 +653,9 @@ For each file:
 
 ### Success Criteria
 
-- **`bun run smoke:qc` passes** (subsumes lint, format check, typecheck, build, `check:max-lines`, `check:process-env`, and the rest of the gate)
+- **`bun run smoke:qc` passes** (subsumes lint, format check, typecheck, build, `check:max-lines` where the limit is not waived, `check:process-env`, and the rest of the gate)
 - **100% ordering compliance** for non-functional sequences (plugin-enforced)
-- **No file over 300 lines** (`check:max-lines` clean)
+- **No file over 300 lines** (`check:max-lines` clean), unless `.aidd/project.md` waives the limit
 - **Named exports only; no `export default` in application code; no CommonJS**
 - **Non-obvious public APIs and security/business-logic documented** (not blanket 100% coverage)
 - **Zero misleading or outdated comments**

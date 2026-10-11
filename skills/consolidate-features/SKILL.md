@@ -110,7 +110,34 @@ For each base feature that has mapped remediation/audit findings:
 
 2. **Analyze what the remediation fixed**: read the remediation feature's `spec` and understand the corrective action.
 
-3. **Update the base feature's `spec`** to incorporate the fix as a requirement. The goal is that if the feature were re-implemented from scratch using only the spec, the remediation issue would not recur.
+    **Classify every numbered criterion of the record being folded**, one by one, before writing
+    anything. Each is exactly one of:
+    - **Requirement**: something that must stay true of the product after the record is gone.
+      Measured values, thresholds, named viewports, time-zone and date boundaries, counts,
+      and "must not change" clauses are requirements, however specific they look.
+    - **Process**: a step that only made sense while the fix was landing and binds nothing
+      afterwards. Examples: "verify `bun run smoke:qc` exits 0", "re-capture every surface after
+      the change", and the closing instruction that tells the coding run to amend the source
+      feature. State the reason a criterion is process; when in doubt it is a requirement.
+
+3. **Update the base feature's `spec`** so that every **requirement** criterion is carried into it. The goal is that if the feature were re-implemented from scratch using only the spec, the remediation issue would not recur and its acceptance could be re-run.
+
+    **Carry the criterion, not a summary of the fix.** Keep its measured values and its
+    must-not-change clauses as written: the numbers, viewports, boundaries and named cases are the
+    acceptance, and a sentence describing the mechanism does not replace them. Rewording is for
+    grammar and file paths only. Two criteria may share one base line only when that line states
+    everything both required.
+
+    **An earlier amendment is not the fold.** A coding run usually appended one criterion to the
+    source feature when it finished the finding. That line counts for the criteria it actually
+    states and no others. Compare the record's criteria against it like any other base line; do not
+    treat its existence as proof the record is already folded. One pass did exactly that: it
+    changed no spec text, added a note, and deleted a twelve-criterion record whose measured
+    boundaries then existed nowhere in `.aidd`.
+
+    **Correct what the fold contradicts.** If a carried criterion contradicts the base feature's
+    `title`, `description` or an existing spec line (for example a title that still prescribes the
+    behaviour the finding removed), correct that sentence and record the change in the fold note.
 
     **Examples of good spec updates:**
     - Before: `"1. Create knip.json with workspace entries for frontend and backend"`
@@ -122,19 +149,33 @@ For each base feature that has mapped remediation/audit findings:
     - Before: `"2. Add theme detection script to index.html"`
     - After: `"2. Add theme detection script to index.html using explicit theme allowlist validation (var validThemes = ['ocean', 'forest', ...]; if (t && validThemes.indexOf(t) !== -1)). Do NOT use a loose truthy check like if (t && t !== 'default')"`
 
-4. **Preserve the base feature's structure**: modify the `spec` field and `updatedAt`, plus `notes`
-   only when recording the required Spernakit template-feature revision note described in Phase 1.
-   Do not change `id`, `category`, `title`, `status`, `priority`, or other fields.
+4. **Preserve the base feature's structure**: modify the `spec` field and `updatedAt`, and append
+   to `notes` one fold note per folded record naming its id and the base criterion numbers that
+   now carry it (plus the Spernakit template-feature revision note described in Phase 1 where it
+   applies). Do not change `id`, `category`, `status`, `priority`, or other fields; change `title`
+   or `description` only to correct a contradiction as described above.
 
 5. **Update `updatedAt`** to current ISO timestamp.
+
+6. **Write the criterion ledger and check it against the file.** For every record being folded,
+   list each of its numbered criteria with its outcome: `carried → {base-feature-id} #{n}` or
+   `process → {reason}`. Then re-read the base feature from disk and confirm, criterion by
+   criterion, that the cited base line contains every distinctive value of the original: each
+   number, viewport, timestamp, quoted string and file path. A requirement with no base line, or
+   whose values are not all present, is **unmapped**. Include the ledger in the final report.
 
 ### Phase 4: Remove Standalone Features
 
 After successfully folding all specs:
 
-1. **Delete the remediation/audit feature directories** that were fully folded. Remove the entire directory (e.g., `rm -rf .aidd/features/remediation-20260311-build-config/`).
+1. **Delete the remediation/audit feature directories** that were fully folded: every criterion in
+   the record's ledger is `carried` or `process`, with none unmapped. Remove the entire directory
+   (e.g., `rm -rf .aidd/features/remediation-20260311-build-config/`).
 
 2. **Do NOT delete** remediation/audit features that:
+    - Have one or more unmapped criteria in the Phase 3 ledger. Keep the whole record and report
+      which criteria could not be carried and why; a partly folded record is still the only place
+      those requirements exist
     - Are not completed and passing (`status` is not `completed` or `passes` is not `true`)
     - Could not be mapped to any base feature (flagged in Phase 2)
     - Were flagged as UPSTREAM (target is a template-owned feature in a derived app)
@@ -188,6 +229,14 @@ Beyond remediation folding, look for consolidation opportunities among base feat
 
 4. **Artifact reference cleanup**: Search current project artifacts for deleted or renamed feature IDs. At minimum check `.aidd/roadmap.json` and `.aidd/screen-map.md`. Remove or replace references to folded remediation/audit features and renamed base features so these artifacts only point at existing feature IDs. Historical audit reports and run logs may retain old names.
 
+5. **Citations of a deleted record**: Search the rest of the repository's tracked files for each
+   deleted record's id and its `.aidd/features/{id}` path: other features' `spec` and `notes`,
+   gate and test scripts, and docs. A surviving criterion that says a deleted record "must land
+   first", or a script comment citing its path, now points at nothing. Rewrite each to name the
+   base feature and the criterion number that carries the requirement. Report any you cannot
+   change (a file outside `.aidd` that the run may not edit) instead of leaving it silently
+   stale.
+
 ### Phase 5b: Roadmap Assignment (mandatory)
 
 Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.json`. This phase makes the **positive** assignment of every surviving and renamed feature an explicit, required check: a feature that exists on disk but has no `roadmap.features` entry is a consolidation defect, not an acceptable end state.
@@ -201,7 +250,7 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
 
     Already-mapped features are left untouched (idempotent; no churn). The owner may re-target afterward.
 
-5. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace. Nothing is propagated on a `--dry-run` pass, because nothing was written.
+5. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — resolved dependency IDs land in the feature.json files (each feature's `priority` is its own and is left alone), and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace. Nothing is propagated on a `--dry-run` pass, because nothing was written.
 
 ### Phase 6: Validation
 
@@ -226,6 +275,12 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
       highest number elsewhere in the document
     - Every edited `notes` value is an array that preserves all pre-existing note content; untouched
       missing/string/array shapes remain untouched
+    - Every deleted record has a complete Phase 3 ledger with no unmapped criterion, and every
+      `carried` line was confirmed against the base feature as it is on disk now. A deleted record
+      being cited by a surviving one proves only that it was mentioned, not that its requirements
+      survived
+    - No tracked file still cites a deleted record's id or path (Phase 5 step 5), or each remaining
+      citation is listed in the report
     - No current roadmap or screen-map entry should point to a deleted folded finding or renamed old ID
     - Every surviving feature directory has a `roadmap.features["{directory}"]` entry whose `milestone` exists in `roadmap.milestones` (Phase 5b invariant; roadmap.json is always present — Phase 5b creates it when missing)
     - `git diff --check -- .aidd` should pass
@@ -237,6 +292,8 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
     - Features after consolidation: N
     - Base features updated: N (list each with ID)
     - Unmapped findings preserved: N (list each)
+    - Findings kept for unmapped criteria: N (list each with the criteria that could not be carried)
+    - Criterion ledger for every folded record (Phase 3 step 6)
     - Validation: PASS/FAIL
 
 ### Phase 7: Commit
@@ -280,6 +337,7 @@ Renamed: {N} feature-* directories to clean slugs
 Updated: {list of base feature IDs that were modified}
 Upstream: {list of remediations targeting template features; need the aidd-local consolidate-features skill for Spernakit}
 Skipped: {list of any unmapped or non-completed findings}
+Kept: {findings left in place because a criterion could not be carried, with those criteria}
 Validation: PASS
 Commit: {commit hash or "not committed: reason"}
 ```
@@ -292,7 +350,7 @@ Commit: {commit hash or "not committed: reason"}
 4. **Validation gate**: Never finish leaving a record you wrote unreadable — aidd's end-of-run feature-contract check is what reports it, and a failure there is your failure.
 5. **Formatting gate**: Format changed feature artifacts before validation and before committing.
 6. **Commit gate**: If consolidation changed files and the run was not `--dry-run`, commit the completed, validated bundle before final reporting unless the user explicitly opts out.
-7. **No data loss**: Base feature semantics must be preserved. Only append/refine spec content, never remove existing requirements.
+7. **No data loss**: Base feature semantics must be preserved. Only append/refine spec content, never remove existing requirements. The same holds for the record being folded: each of its requirements is carried with its measured values, or the record stays.
 8. **Dry-run safety**: When `--dry-run` is specified, report everything but modify nothing.
 9. **Template provenance**: Features with `spernakit_version` are template-owned. In derived apps, never modify, rename, delete, or fold into them. Fixes to template features must be upstreamed to the Spernakit repository. This principle is inert when no feature carries the field.
 10. **Stack independence**: Never decline a consolidation because of the target's stack, framework, or lack of Spernakit provenance. The corpus is the input; if `.aidd/features/` exists, the skill runs. If it genuinely does not exist, say so plainly instead of reporting a scope restriction.

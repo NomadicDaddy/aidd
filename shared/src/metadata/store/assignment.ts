@@ -17,7 +17,7 @@ interface FeatureAssignmentDeps {
 	writeRoadmap: (roadmap: Roadmap) => Promise<void>;
 }
 
-/** Keep a persisted Feature's roadmap milestone and inherited priority aligned. */
+/** Keep a persisted Feature mapped to a roadmap milestone, seeding a priority it lacks. */
 export async function ensureFeatureAssigned(
 	feature: Feature,
 	deps: FeatureAssignmentDeps,
@@ -37,10 +37,10 @@ export async function ensureFeatureAssigned(
 		if (shippedMilestone !== null) {
 			const updatedRoadmap = withFeatureMilestone(roadmap, directory, shippedMilestone);
 			await deps.writeRoadmap(updatedRoadmap);
-			await syncFeaturePriority(feature, updatedRoadmap, shippedMilestone, deps);
+			await seedFeaturePriority(feature, updatedRoadmap, shippedMilestone, deps);
 			return;
 		}
-		await syncFeaturePriority(feature, roadmap, existingMilestone, deps);
+		await seedFeaturePriority(feature, roadmap, existingMilestone, deps);
 		return;
 	}
 
@@ -57,17 +57,19 @@ export async function ensureFeatureAssigned(
 			: roadmap.milestones,
 	};
 	await deps.writeRoadmap(updatedRoadmap);
-	await syncFeaturePriority(feature, updatedRoadmap, selection.milestone, deps);
+	await seedFeaturePriority(feature, updatedRoadmap, selection.milestone, deps);
 }
 
-async function syncFeaturePriority(
+// `priority` is the feature's own. A record filed without one takes its milestone's number as a
+// starting value; a record that already has one keeps it through every later write and move.
+async function seedFeaturePriority(
 	feature: Feature,
 	roadmap: Roadmap,
 	milestone: string,
 	deps: FeatureAssignmentDeps,
 ): Promise<void> {
+	if (feature.priority !== undefined) return;
 	const priority = roadmap.milestones[milestone]?.priority;
 	if (priority === undefined) return;
-	if (feature.priority !== undefined && Number(feature.priority) === priority) return;
 	await deps.persistFeature({ ...feature, priority });
 }

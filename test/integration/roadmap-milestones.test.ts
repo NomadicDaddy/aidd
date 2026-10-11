@@ -230,18 +230,6 @@ describe('planMilestoneReassign', () => {
 			},
 		]);
 	});
-
-	test('reports feature.json priorities that no longer match their milestone', () => {
-		const roadmap = roadmapSchema.parse({
-			features: { drifted: { milestone: 'v2.0' }, synced: { milestone: 'MVP' } },
-			milestones: THREE_MILESTONES,
-		});
-		const plan = planMilestoneReassign(roadmap, [
-			feature('drifted', { priority: 1 }),
-			feature('synced', { priority: 1 }),
-		]);
-		expect(plan.priorityUpdates).toEqual([{ featureDirectory: 'drifted', from: 1, to: 3 }]);
-	});
 });
 
 describe('planMilestoneCreate', () => {
@@ -498,12 +486,6 @@ describe('roadmap entries with no readable feature', () => {
 				to: 'v2.0',
 			},
 		]);
-	});
-
-	test('no feature.json means no priority write is planned for it', () => {
-		const roadmap = roadmapSchema.parse(ORPHANED);
-		const plan = planMilestoneUpdate(roadmap, [feature('ok')], 'MVP', { name: 'foundation' });
-		expect(plan.priorityUpdates.map((entry) => entry.featureDirectory)).toEqual(['ok']);
 	});
 });
 

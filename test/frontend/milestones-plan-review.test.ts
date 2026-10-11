@@ -17,7 +17,6 @@ function plan(overrides: Partial<ProjectMilestonePlan> = {}): ProjectMilestonePl
 		applied: false,
 		backfills: [],
 		moves: [],
-		priorityUpdates: [],
 		view: {
 			activeMilestone: 'MVP',
 			gateBlocked: false,
@@ -45,14 +44,11 @@ describe('milestonePlanNeedsReview', () => {
 
 	test('a plain reorder applies in one click', () => {
 		expect(
-			milestonePlanNeedsReview(
-				plan({ priorityUpdates: [{ featureDirectory: 'a', from: 1, to: 2 }] }),
-				{
-					input: { position: 2 },
-					kind: 'update',
-					name: 'MVP',
-				},
-			),
+			milestonePlanNeedsReview(plan(), {
+				input: { position: 2 },
+				kind: 'update',
+				name: 'MVP',
+			}),
 		).toBe(false);
 	});
 

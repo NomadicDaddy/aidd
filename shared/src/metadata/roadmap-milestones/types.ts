@@ -38,17 +38,6 @@ export interface MilestoneMove {
 	to: string;
 }
 
-/**
- * feature.json `priority` mirrors its milestone's priority — both `syncFeaturePriority` and
- * `aidd-tools roadmap:apply` write it that way. Renumbering milestones or moving a feature therefore
- * has feature-file side effects, and leaving them unapplied shows up later as roadmap:apply drift.
- */
-export interface MilestonePriorityUpdate {
-	featureDirectory: string;
-	from: null | number;
-	to: number;
-}
-
 export type MilestoneWarningCode =
 	'dangling_dependency' | 'dependency_cycle' | 'mvp_status_mismatch';
 
@@ -61,7 +50,7 @@ export interface MilestoneWarning {
 /**
  * A completed feature that never got `shippedVersion` stamped, to be repaired with the app's
  * current version. Settling one rewrites feature.json, so appliers must treat backfills as
- * disruptive the same way they treat priority updates.
+ * disruptive the same way they treat moves.
  */
 export interface ShippedVersionBackfill {
 	featureDirectory: string;
@@ -71,7 +60,6 @@ export interface ShippedVersionBackfill {
 export interface MilestonePlan {
 	backfills: ShippedVersionBackfill[];
 	moves: MilestoneMove[];
-	priorityUpdates: MilestonePriorityUpdate[];
 	/** The resulting roadmap, ready to hand to `FileAiddStore.writeRoadmap`. */
 	roadmap: Roadmap;
 	/** Violations planning could not repair — every one of these is bound up in a dependency cycle. */

@@ -763,7 +763,7 @@ before the Phase 6 verification:
 
     The owner may re-target any feature afterward.
 
-3. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
+3. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — resolved dependency IDs land in the feature.json files (each feature's `priority` is its own and is left alone), and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
 
 ### Phase 6: Verification
 

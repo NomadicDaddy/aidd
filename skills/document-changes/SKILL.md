@@ -214,8 +214,7 @@ common optional `priority`, `spec`, `affectedFiles`, `summary`, `notes`, `create
     feature belongs in the milestone whose `v<major>.<minor>`-named bound is the greatest one at
     or below the shipped version (the last such milestone is open-ended upward). Only pull the
     feature BACK: if its current milestone sits ahead of that target in priority order, rewrite
-    `features.<dir>.milestone` and mirror the new milestone's `priority` into the feature's
-    `priority` field. Never move a feature forward out of an earlier milestone (`shippedVersion`
+    `features.<dir>.milestone` and leave the feature's own `priority` as it is. Never move a feature forward out of an earlier milestone (`shippedVersion`
     records the latest revision, not original delivery — an MVP feature revised in 1.4 stays in
     MVP), and leave the mapping untouched when no milestone name parses as `v<major>.<minor>`.
     The web panel's Milestones tab "Auto-place features" repair applies the same rule as a

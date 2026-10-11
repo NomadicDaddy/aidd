@@ -149,9 +149,9 @@ Formatting rules:
   string and persist the result as an array.
 - Use the project's existing category vocabulary. If it has none, choose the primary delivery area
   (`UI`, `Backend`, `Database`, `Security`, or `Core`) instead of inventing a narrow one-off label.
-- `priority` mirrors the numeric priority of the assigned roadmap milestone. Do not rank the record
-  independently: aidd's run-end reconciliation writes the milestone priority back to
-  `feature.json`.
+- `priority` is the record's own rank inside its roadmap milestone (1 is worked first). Set it
+  deliberately: the milestone decides which records a run may pick, this decides the order among
+  them, and aidd never rewrites it from the milestone.
 - For a new record, do not add fields beyond those shown. When revising an existing record,
   preserve every field outside the confirmed change, including passthrough fields the template
   does not list.

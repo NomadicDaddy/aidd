@@ -240,8 +240,8 @@ each other.
    numeric-priority order, falling back to the last milestone when all are complete. Do not create a
    new milestone while any exists; when none exists, create `v1.0` at priority 1.
 2. Do not shell into the aidd installation to propagate this. Write the assignment into
-   `roadmap.json`; aidd's run-end metadata reconciliation propagates the milestone priority and
-   resolved dependency IDs into mapped feature records, and reports applied updates, drift, or
+   `roadmap.json`; aidd's run-end metadata reconciliation propagates resolved dependency IDs into
+   mapped feature records, leaves each record's own `priority` alone, and reports applied updates, drift, or
    errors with the run. That covers the project this run targets; if you changed assignments in
    another project, report it as needing a separate pass instead of reaching outside the workspace.
 

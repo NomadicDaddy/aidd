@@ -76,16 +76,19 @@ export function useUpdateProjectFeatureMetadata(id: string | undefined) {
 			category,
 			featureId,
 			notes,
+			priority,
 			spec,
 		}: {
 			category?: null | string;
 			featureId: string;
 			notes?: string[];
+			priority?: number;
 			spec?: string;
 		}) => {
-			const body: { category?: null | string; notes?: string[]; spec?: string } = {};
+			const body: Parameters<typeof updateProjectFeatureMetadata>[2] = {};
 			if (category !== undefined) body.category = category;
 			if (notes !== undefined) body.notes = notes;
+			if (priority !== undefined) body.priority = priority;
 			if (spec !== undefined) body.spec = spec;
 			return updateProjectFeatureMetadata(id ?? '', featureId, body);
 		},

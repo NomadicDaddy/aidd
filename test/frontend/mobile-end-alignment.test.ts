@@ -73,7 +73,9 @@ const REGISTERED: Readonly<Record<string, number>> = {
 	'pages/projects/detail/CodeFileTree.tsx': 1,
 	'pages/projects/detail/CodeFileViewer.tsx': 1,
 	'pages/projects/detail/FeatureMobileCard.tsx': 1,
-	'pages/projects/detail/FeaturesTab.tsx': 2,
+	// The "Show unassigned" button moved here from FeaturesTab.tsx with its callout, unchanged.
+	'pages/projects/detail/FeatureRoadmapGateCallout.tsx': 1,
+	'pages/projects/detail/FeaturesTab.tsx': 1,
 	'pages/projects/detail/HistoryTab.tsx': 1,
 	'pages/projects/detail/MetadataRow.tsx': 1,
 	'pages/projects/detail/MilestoneFormDialog.tsx': 1,

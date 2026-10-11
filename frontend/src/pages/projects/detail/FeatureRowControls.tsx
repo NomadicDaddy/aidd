@@ -25,11 +25,13 @@ import {
 } from './featuresUtils.ts';
 import { featureSourceCategoryLabel, featureSourceDisplayLabel, stringValue } from './shared.ts';
 
+const FEATURE_PRIORITY_OPTIONS = [1, 2, 3, 4, 5];
+
 /**
- * Priority, edited the one way. Both the table and the stacked card call this roadmap-backed
- * selector, so changing P1/P2/etc. moves the feature to the matching milestone and lets the store
- * keep the two values aligned. A priority shared by every visible row stays neutral; otherwise the
- * tone carries the distinction (P1 red, P2 amber, P3 neutral).
+ * Priority, edited the one way. Both the table and the stacked card call this selector. The value
+ * is the feature's own: it orders work inside the milestone and does not move the feature between
+ * milestones, which is what the Milestone selector is for. A priority shared by every visible row
+ * stays neutral; otherwise the tone carries the distinction (P1 red, P2 amber, P3 neutral).
  */
 export function FeaturePriorityControl({
 	deemphasized,
@@ -37,29 +39,22 @@ export function FeaturePriorityControl({
 	feature,
 	onChange,
 	priority,
-	roadmap,
 }: {
 	deemphasized: boolean;
 	disabled: boolean;
 	feature: ProjectFeature;
-	onChange: (milestone: string) => void;
+	onChange: (priority: number) => void;
 	priority: number | string | undefined;
-	roadmap: null | ProjectRoadmapSummary;
 }) {
 	if (typeof priority !== 'number') {
 		return <span className="text-xs text-muted-foreground">—</span>;
 	}
 	const id = feature.id || stringValue(feature, 'id');
-	const milestone = typeof feature.milestone === 'string' ? feature.milestone : '';
-	const options =
-		roadmap?.milestoneOrder.map((name, index) => ({ name, priority: index + 1 })) ?? [];
-	if (!milestone || !options.some((option) => option.name === milestone)) {
-		return (
-			<Badge tone={deemphasized ? 'neutral' : featurePriorityTone(priority)}>
-				P{priority}
-			</Badge>
-		);
-	}
+	// A record can carry a value outside the offered range; it stays selectable so opening the
+	// control never changes it.
+	const options = FEATURE_PRIORITY_OPTIONS.includes(priority)
+		? FEATURE_PRIORITY_OPTIONS
+		: [...FEATURE_PRIORITY_OPTIONS, priority].sort((a, b) => a - b);
 	const tone = deemphasized ? 'neutral' : featurePriorityTone(priority);
 	return (
 		<select
@@ -67,19 +62,18 @@ export function FeaturePriorityControl({
 			className={cn(
 				// No fixed width: the select sizes to its widest option and yields to the track
 				// through max-w-full, the same contract the Milestone and Source selectors beside
-				// it already carry. A fixed w-20 clipped every roadmap label longer than a bare
-				// `P1` — the selected `P2 — v2.0` needed 94px against 80.
+				// it already carry.
 				'min-h-11 max-w-full cursor-pointer rounded-md border-0 px-2 py-1 text-xs font-medium whitespace-nowrap ring-1 outline-none ring-inset sm:min-h-0',
 				controlFocusClass,
 				toneBadge[tone],
 			)}
 			disabled={disabled}
-			onChange={(event) => onChange(event.target.value)}
-			title={`Priority P${priority} (${milestone}); changing priority also changes the milestone`}
-			value={milestone}>
+			onChange={(event) => onChange(Number(event.target.value))}
+			title={`Priority P${priority}; orders this feature within its milestone`}
+			value={priority}>
 			{options.map((option) => (
-				<option key={option.name} value={option.name}>
-					P{option.priority} — {option.name}
+				<option key={option} value={option}>
+					P{option}
 				</option>
 			))}
 		</select>

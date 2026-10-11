@@ -159,9 +159,8 @@ Use the comparison severity to decide which gaps become records:
 | Medium (shared components, virtual scroll) | Generate                            |
 | Low (polish, micro-interactions)           | Report only unless explicitly asked |
 
-When a roadmap exists, `priority` mirrors the numeric priority of the assigned milestone; do not
-rank the feature independently. Without a roadmap, use 1 for Critical/High, 2 for Medium, and 3 for
-Low.
+`priority` is the feature's own rank inside its milestone, and aidd never rewrites it from the
+milestone: use 1 for Critical/High, 2 for Medium, and 3 for Low.
 
 **Spec writing rules**:
 
@@ -183,7 +182,7 @@ current milestone: the first incomplete milestone in ascending numeric priority,
 existing milestone when all are complete. Merge each mapping into `roadmap.features` without
 discarding existing dependency data. Never create a new milestone for parity gaps.
 
-Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
+Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — resolved dependency IDs land in the feature.json files (each feature's `priority` is its own and is left alone), and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
 
 Do not shell into the aidd installation to validate. aidd re-validates every feature record when the run ends and reports any contract issues with the run. That covers the project this run targets; for another project, report the metadata as unvalidated instead of reaching outside the workspace. Read back every feature you generated and confirm it is valid JSON with the required fields.
 

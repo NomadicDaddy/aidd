@@ -248,17 +248,4 @@ describe('planMilestoneReassign with an app version', () => {
 		expect(plan.moves).toEqual([]);
 		expect(plan.roadmap.features.done?.milestone).toBe('v2.0');
 	});
-
-	test('a shipped-version move re-syncs the feature priority to its new milestone', () => {
-		const roadmap = roadmapSchema.parse({
-			features: { shipped: { milestone: 'v2.0' } },
-			milestones: THREE_MILESTONES,
-		});
-		const plan = planMilestoneReassign(
-			roadmap,
-			[completed('shipped', { priority: 3, shippedVersion: '1.3.0' })],
-			{},
-		);
-		expect(plan.priorityUpdates).toEqual([{ featureDirectory: 'shipped', from: 3, to: 2 }]);
-	});
 });

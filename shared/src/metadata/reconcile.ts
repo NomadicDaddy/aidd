@@ -24,8 +24,8 @@ export interface MetadataReconcileResult {
 export interface MetadataReconcileOptions {
 	/**
 	 * Persist the propagated records. A read-only run still reports the drift it found, but must
-	 * not rewrite priorities, dependencies, or `updatedAt` behind an operator who asked for a
-	 * review — the report is the deliverable, and a silent mutation is not part of it.
+	 * not rewrite dependencies or `updatedAt` behind an operator who asked for a review — the
+	 * report is the deliverable, and a silent mutation is not part of it.
 	 */
 	write?: boolean;
 }
@@ -48,7 +48,12 @@ function dependenciesMatch(current: unknown, expected: string[]): boolean {
  * invoked them had to `cd` outside the project — which the native backend's workspace policy denies
  * outright, and which every other backend only got away with because the agent happened to have a
  * checkout to reach. Running the same reconciliation from the orchestrator removes the need: no
- * skill has to leave its workspace to keep priorities, dependencies, and contracts consistent.
+ * skill has to leave its workspace to keep dependencies and contracts consistent.
+ *
+ * `priority` is the feature's own and is never written here. The milestone decides which features
+ * the coding gate admits; inside it, each record's own priority orders the work. A pass that reset
+ * every record to its milestone's number erased that ordering across the whole backlog at the end
+ * of each run, including on records the run never touched.
  *
  * Semantics deliberately mirror `scripts/lib/aidd-workspace/roadmap.ts` (which stays as the
  * standalone tool, and serializes through Prettier for the template-sync flows that require it):
@@ -96,32 +101,23 @@ export async function reconcileProjectMetadata(
 				continue;
 			}
 			const milestone = entry.milestone ?? '';
-			const priority = roadmap.milestones[milestone]?.priority;
-			if (priority === undefined) {
+			if (roadmap.milestones[milestone]?.priority === undefined) {
 				errors.push(
 					`Feature '${directory}': unknown or unprioritized milestone '${milestone}'`,
 				);
 				continue;
 			}
 			// A template record's `dependencies` and `updatedAt` describe the upstream edit, not this
-			// pass; only `priority` is app-local on such a record.
-			const templateOwned = isTemplateOwnedFeature(feature, templateRepo);
-			const resolved =
-				templateOwned || entry.dependencies === undefined
-					? undefined
-					: resolveDependencies(entry.dependencies, idByDirectory, warnings);
-			const priorityMatches = Number(feature.priority) === priority;
-			if (
-				priorityMatches &&
-				(resolved === undefined || dependenciesMatch(feature.dependencies, resolved))
-			)
-				continue;
-			if (resolved !== undefined) dependenciesWritten++;
+			// pass, so nothing on such a record is written here.
+			if (isTemplateOwnedFeature(feature, templateRepo)) continue;
+			if (entry.dependencies === undefined) continue;
+			const resolved = resolveDependencies(entry.dependencies, idByDirectory, warnings);
+			if (dependenciesMatch(feature.dependencies, resolved)) continue;
+			dependenciesWritten++;
 			pending.push({
 				...feature,
-				...(resolved === undefined ? {} : { dependencies: resolved }),
-				priority,
-				...(templateOwned ? {} : { updatedAt: new Date().toISOString() }),
+				dependencies: resolved,
+				updatedAt: new Date().toISOString(),
 			});
 		}
 

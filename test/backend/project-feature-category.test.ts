@@ -42,4 +42,32 @@ describe('project feature category metadata', () => {
 		expect(cleared.approval).toEqual({ source: 'web-ui' });
 		expect(cleared.aiddReport).toEqual({ source: 'aidd-web-report' });
 	});
+
+	test("writes the feature's own priority, which its milestone does not override", async () => {
+		const projectDir = await testTempDir('aidd-feature-priority-');
+		const store = new FileAiddStore(projectDir);
+		await store.writeRoadmap({
+			features: { 'feature-ranked': { milestone: 'v1.0' } },
+			milestones: { MVP: { priority: 1 }, 'v1.0': { priority: 2 } },
+		});
+		await store.writeFeature({
+			id: 'feature-ranked',
+			passes: false,
+			priority: 2,
+			status: 'backlog',
+		});
+		const context: FeatureContext = {
+			resolveDiscoveredProject: () => Promise.resolve(projectDir),
+			storeForProject: () => Promise.resolve(store),
+		};
+		const featurePath = join(projectDir, '.aidd', 'features', 'feature-ranked', 'feature.json');
+
+		const updated = await updateFeatureMetadata(context, 'project', 'feature-ranked', {
+			priority: 1,
+		});
+		expect(updated.priority).toBe(1);
+		const changed = JSON.parse(await readFile(featurePath, 'utf8')) as Record<string, unknown>;
+		expect(changed.priority).toBe(1);
+		expect(changed.id).toBe('feature-ranked');
+	});
 });

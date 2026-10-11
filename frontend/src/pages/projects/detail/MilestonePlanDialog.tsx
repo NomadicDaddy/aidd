@@ -97,14 +97,6 @@ export function MilestonePlanDialog({
 						app&rsquo;s current version).
 					</p>
 				) : null}
-				{plan.priorityUpdates.length > 0 ? (
-					<p className="text-xs text-muted-foreground">
-						{plan.priorityUpdates.length} feature
-						{plan.priorityUpdates.length === 1 ? '' : 's'} will have their{' '}
-						<span className="font-mono">priority</span> re-synced to the new milestone
-						numbering.
-					</p>
-				) : null}
 				{plan.warnings.length > 0 ? (
 					<div className="space-y-1.5">
 						<SectionTitle>Warnings</SectionTitle>

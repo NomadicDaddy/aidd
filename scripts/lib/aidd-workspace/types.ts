@@ -72,7 +72,6 @@ export interface RoadmapFeaturePlan {
 	dirName: string;
 	feature: Record<string, unknown>;
 	filePath: string;
-	priority: number;
 	/**
 	 * True when this record is a Spernakit template feature living in a derived app. Such records
 	 * are authored upstream and resynced wholesale, so their dependencies and updatedAt belong to

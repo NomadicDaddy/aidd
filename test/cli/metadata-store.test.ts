@@ -737,7 +737,7 @@ describe('FileAiddStore feature compatibility', () => {
 			await readFile(join(store.metadataDir, 'roadmap.json'), 'utf8'),
 		) as { features: Record<string, { milestone?: string }> };
 		expect(roadmap.features['feature-shipped']?.milestone).toBe('v1.0');
-		// Priority mirrors the new milestone, same propagation as roadmap:apply.
+		// The record was filed without a priority, so it is seeded from the milestone it lands in.
 		const persisted = JSON.parse(
 			await readFile(
 				join(store.metadataDir, 'features', 'feature-shipped', 'feature.json'),
@@ -745,6 +745,38 @@ describe('FileAiddStore feature compatibility', () => {
 			),
 		) as { priority?: number };
 		expect(persisted.priority).toBe(1);
+	});
+
+	test("writeFeature keeps a feature's own priority when it differs from the milestone's", async () => {
+		const store = await makeStore('roadmap-own-priority');
+		await store.writeRoadmap({
+			milestones: { MVP: { priority: 1 }, 'v1.0': { priority: 2 } },
+			features: { 'feature-ranked': { milestone: 'v1.0' } },
+		});
+		const read = async () =>
+			JSON.parse(
+				await readFile(
+					join(store.metadataDir, 'features', 'feature-ranked', 'feature.json'),
+					'utf8',
+				),
+			) as { priority?: number };
+
+		await store.writeFeature({
+			id: 'feature-ranked',
+			passes: false,
+			priority: 4,
+			status: 'backlog',
+		});
+		expect((await read()).priority).toBe(4);
+
+		// A later unrelated write does not pull it back to the milestone's 2.
+		await store.writeFeature({
+			id: 'feature-ranked',
+			passes: false,
+			priority: 4,
+			status: 'in_progress',
+		});
+		expect((await read()).priority).toBe(4);
 	});
 
 	test('writeFeature places an unmapped completed feature by shipped version, not future backlog', async () => {

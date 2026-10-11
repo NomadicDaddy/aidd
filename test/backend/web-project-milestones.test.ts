@@ -32,9 +32,8 @@ async function seedProject(features: SeedFeature[], milestones: string[]): Promi
 	const dir = await testTempDir('aidd-milestones-');
 	tempRoots.push(dir);
 	const metadataDir = join(dir, '.aidd');
-	// Default each feature's priority to its milestone's tier, i.e. no drift — the state a project
-	// is in after roadmap:apply. Tests that want drift set `priority` explicitly, and the active-run
-	// guard treats repairing drift as a feature.json write that has to wait for quiescence.
+	// Default each feature's priority to its milestone's number, the value a record filed without
+	// one is seeded with. Tests that need a different one set `priority` explicitly.
 	const tier = (milestone: string) => milestones.indexOf(milestone) + 1;
 	for (const feature of features) {
 		await mkdir(join(metadataDir, 'features', feature.directory), { recursive: true });
@@ -230,16 +229,19 @@ describe('POST /:id/milestones', () => {
 		);
 	});
 
-	test('inserting a milestone renumbers feature priorities on disk', async () => {
+	test("inserting a milestone leaves a feature's own priority alone", async () => {
 		const dir = await seedProject(
 			[{ directory: 'alpha', milestone: 'v1.0', priority: 1 }],
 			['v1.0'],
 		);
 		const response = await send(createApp(dir), 'POST', '', { name: 'MVP', position: 1 });
 		expect(response.status).toBe(200);
-		const plan = (await response.json()) as ProjectMilestonePlanDto;
-		expect(plan.priorityUpdates).toEqual([{ featureDirectory: 'alpha', from: 1, to: 2 }]);
-		expect(await readPriority(dir, 'alpha')).toBe(2);
+		const parsed = JSON.parse(await readRoadmapFile(dir)) as {
+			milestones: Record<string, { priority: number }>;
+		};
+		// The milestone was renumbered; the record under it was not.
+		expect(parsed.milestones['v1.0']?.priority).toBe(2);
+		expect(await readPriority(dir, 'alpha')).toBe(1);
 	});
 
 	test('rejects a duplicate name', async () => {
@@ -438,7 +440,7 @@ describe('POST /:id/milestones/reassign', () => {
 		expect((await readFeatureFile(dir, 'audit-x-finding')).shippedVersion).toBeUndefined();
 	});
 
-	test('apply re-homes by shipped version, stamps backfills, and re-syncs priorities', async () => {
+	test('apply re-homes by shipped version and stamps backfills', async () => {
 		const dir = await seedProject(
 			[
 				{
@@ -471,12 +473,13 @@ describe('POST /:id/milestones/reassign', () => {
 		// The now-empty v2.0 milestone survives: it documents planned scope, the repair only re-homes.
 		expect(Object.keys(parsed.milestones)).toEqual(['MVP', 'v1.0', 'v2.0']);
 		const backfilled = await readFeatureFile(dir, 'audit-x-finding');
-		expect(backfilled).toMatchObject({ priority: 2, shippedVersion: '1.4.1' });
+		// Both records were seeded at 3 and moved to the milestone numbered 2; each keeps its own 3.
+		expect(backfilled).toMatchObject({ priority: 3, shippedVersion: '1.4.1' });
 		// A backfill is inferred provenance, not a recorded ship — the dated note must say so
 		// (the shippedVersion field contract pairs every stamp with a revision note).
 		expect(backfilled.notes).toEqual([expect.stringContaining('backfilled')]);
 		const stamped = await readFeatureFile(dir, 'shipped');
-		expect(stamped).toMatchObject({ priority: 2, shippedVersion: '1.3.0' });
+		expect(stamped).toMatchObject({ priority: 3, shippedVersion: '1.3.0' });
 		expect(stamped.notes).toBeUndefined();
 	});
 
@@ -604,10 +607,10 @@ describe('milestone name identity', () => {
 	});
 });
 
-describe('active-run guard covers feature.json writes', () => {
-	// A description-only edit moves nothing, but it still settles priorityUpdates when the roadmap
-	// carries pre-existing drift — and settling those rewrites feature.json under a running agent.
-	test('409s when a description edit would repair priority drift mid-run', async () => {
+describe('active-run guard and feature priority', () => {
+	// A feature's priority is its own, so one that differs from its milestone's number is not
+	// drift: a description-only edit writes no feature.json and has nothing to wait for.
+	test('a description edit goes through mid-run and leaves a differing priority alone', async () => {
 		const dir = await seedProject(
 			[{ directory: 'alpha', milestone: 'v1.0', priority: 1 }],
 			['MVP', 'v1.0'],
@@ -615,19 +618,8 @@ describe('active-run guard covers feature.json writes', () => {
 		const response = await send(createApp(dir, true), 'PATCH', '/v1.0', {
 			description: 'harmless looking',
 		});
-		expect(response.status).toBe(409);
-		expect(await readPriority(dir, 'alpha')).toBe(1);
-	});
-
-	test('a description edit with no drift still goes through mid-run', async () => {
-		const dir = await seedProject(
-			[{ directory: 'alpha', milestone: 'v1.0', priority: 2 }],
-			['MVP', 'v1.0'],
-		);
-		const response = await send(createApp(dir, true), 'PATCH', '/v1.0', {
-			description: 'harmless looking',
-		});
 		expect(response.status).toBe(200);
+		expect(await readPriority(dir, 'alpha')).toBe(1);
 	});
 });
 

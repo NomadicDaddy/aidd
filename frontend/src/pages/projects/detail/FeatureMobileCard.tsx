@@ -33,6 +33,7 @@ export function FeatureMobileCard({
 	onDelete,
 	onLaunchRun,
 	onMilestoneChange,
+	onPriorityChange,
 	onSelect,
 	onSourceChange,
 	onStatusChange,
@@ -53,6 +54,7 @@ export function FeatureMobileCard({
 	onDelete: (feature: ProjectFeature) => void;
 	onLaunchRun: (feature: ProjectFeature) => void;
 	onMilestoneChange: (feature: ProjectFeature, milestone: string) => void;
+	onPriorityChange: (feature: ProjectFeature, priority: number) => void;
 	onSelect: (feature: ProjectFeature) => void;
 	onSourceChange: (feature: ProjectFeature, category: string) => void;
 	onStatusChange: (feature: ProjectFeature, status: ProjectFeatureStatus) => void;
@@ -99,9 +101,8 @@ export function FeatureMobileCard({
 							deemphasized={deemphasizePriority}
 							disabled={disabled}
 							feature={feature}
-							onChange={(milestone) => onMilestoneChange(feature, milestone)}
+							onChange={(priority) => onPriorityChange(feature, priority)}
 							priority={feature.priority}
-							roadmap={roadmap}
 						/>
 					</dd>
 				</div>

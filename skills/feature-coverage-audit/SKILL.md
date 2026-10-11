@@ -177,7 +177,7 @@ If new feature JSON files are created and `.aidd/roadmap.json` exists:
    unfinished work, or the last existing milestone when all work is complete. Do not create a new
    milestone; if the roadmap defines none, report the missing assignment instead.
 2. Preserve existing roadmap structure and feature assignments.
-3. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
+3. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — resolved dependency IDs land in the feature.json files (each feature's `priority` is its own and is left alone), and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
 
 Do not shell into the aidd installation to validate. aidd re-validates every feature record when the run ends and reports any contract issues with the run. That covers the project this run targets; for another project, report the metadata as unvalidated instead of reaching outside the workspace.
 

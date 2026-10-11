@@ -32,6 +32,7 @@ import { FEATURES_PAGE_SIZE, stringValue } from './shared.ts';
 import { useFeatureCategoryUpdate } from './useFeatureCategoryUpdate.ts';
 import { useFeatureDispositions } from './useFeatureDispositions.ts';
 import { useFeatureFilterParams } from './useFeatureFilterParams.ts';
+import { useFeaturePriorityUpdate } from './useFeaturePriorityUpdate.ts';
 
 const AUDIT_SOURCE_FILTER_PREFIX = 'Audit: ';
 
@@ -82,6 +83,7 @@ export function useFeaturesTab({
 	} = dispositions;
 	const updateFeatureMilestone = useUpdateProjectFeatureMilestone(projectId);
 	const updateFeatureStatus = useUpdateProjectFeatureStatus(projectId);
+	const updateFeaturePriority = useFeaturePriorityUpdate(projectId);
 	const updateFeatureSource = useFeatureCategoryUpdate(projectId);
 	const launchRun = useLaunchRun();
 	const runs = useRuns(projectPath);
@@ -125,6 +127,7 @@ export function useFeaturesTab({
 		deleteFeature.isPending ||
 		dismissFeature.isPending ||
 		updateFeatureMilestone.isPending ||
+		updateFeaturePriority.isPending ||
 		updateFeatureSource.isPending ||
 		updateFeatureStatus.isPending ||
 		launchRun.isPending;
@@ -264,6 +267,7 @@ export function useFeaturesTab({
 		onDelete,
 		onLaunchRun,
 		onMilestoneChange,
+		onPriorityChange: updateFeaturePriority.onPriorityChange,
 		onSourceChange: updateFeatureSource.onSourceChange,
 		onStatusChange,
 		onWorkAuditFindings,

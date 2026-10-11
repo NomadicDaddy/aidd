@@ -224,7 +224,7 @@ describe('feature status collection', () => {
 });
 
 describe('roadmap apply', () => {
-	test('supports dry-run and applies priority plus dependency ids', async () => {
+	test("supports dry-run and applies dependency ids without touching a feature's priority", async () => {
 		const root = await tempRoot('roadmap');
 		const projectDir = join(root, 'demo');
 		await writeJson(join(projectDir, '.prettierrc'), {
@@ -262,19 +262,17 @@ describe('roadmap apply', () => {
 			'utf8',
 		);
 
-		expect(dryRun.updated).toBe(2);
+		expect(dryRun.updated).toBe(1);
 		expect(beforeApply.priority).toBe(9);
-		expect(applied).toMatchObject({ errors: [], skipped: 0, updated: 2 });
-		expect(base).toMatchObject({
-			dependencies: [],
-			priority: 1,
-			updatedAt: '2026-05-22T12:34:56.000Z',
-		});
+		expect(applied).toMatchObject({ errors: [], skipped: 1, updated: 1 });
+		// feature-base sits in the milestone numbered 1 and keeps its own 9: its dependencies
+		// already match, so the record is not written at all.
+		expect(base).toEqual(beforeApply);
 		expect(child).toMatchObject({
 			dependencies: ['feature-base'],
-			priority: 2,
 			updatedAt: '2026-05-22T12:34:56.000Z',
 		});
+		expect(child).not.toHaveProperty('priority');
 		expect(childRaw).toContain('\t"dependencies": ["feature-base"],');
 	});
 
@@ -394,21 +392,23 @@ describe('roadmap apply', () => {
 			'--dry-run',
 		]);
 
+		// Nothing is written: the template record is upstream's, and the app record's dependencies
+		// already match. Neither takes the milestone's number as its priority.
 		expect(applied).toMatchObject({
 			dependenciesPreserved: 0,
 			dependenciesTemplateOwned: 1,
 			dependenciesWritten: 1,
-			updated: 2,
+			updated: 0,
 		});
 		expect(templateFeature).toMatchObject({
 			dependencies: ['feature-base'],
-			priority: 1,
+			priority: 9,
 			updatedAt: '2026-05-01T00:00:00.000Z',
 		});
 		expect(appFeature).toMatchObject({
 			dependencies: [],
-			priority: 1,
-			updatedAt: '2026-05-22T12:34:56.000Z',
+			priority: 9,
+			updatedAt: '2026-05-01T00:00:00.000Z',
 		});
 		expect(cliResult.exitCode).toBe(0);
 		expect(cliResult.stdout).toContain('Dependencies template-owned: 1');
@@ -444,7 +444,7 @@ describe('roadmap apply', () => {
 		});
 		expect(templateFeature).toMatchObject({
 			dependencies: [],
-			priority: 1,
+			priority: 9,
 			updatedAt: '2026-05-22T12:34:56.000Z',
 		});
 	});

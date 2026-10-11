@@ -164,6 +164,8 @@ export async function updateFeatureStatus(
 export interface FeatureMetadataInput {
 	category?: null | string;
 	notes?: string[];
+	/** The feature's own priority. Nothing derives it from the milestone after the first seed. */
+	priority?: number;
 	spec?: string;
 }
 
@@ -182,6 +184,7 @@ export async function updateFeatureMetadata(
 		...(category ? { category } : {}),
 		...(input.spec !== undefined ? { spec: input.spec } : {}),
 		...(input.notes !== undefined ? { notes: input.notes } : {}),
+		...(input.priority !== undefined ? { priority: input.priority } : {}),
 	};
 	if (input.category !== undefined && !category) delete updatedFeature.category;
 	await store.writeFeature(updatedFeature);

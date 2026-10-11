@@ -298,9 +298,9 @@ If `.aidd/roadmap.json` exists, add every new feature directory to its `features
 assign it to a milestone already defined in `milestones`, following the target roadmap's placement
 convention. Preserve milestone definitions and unrelated mappings. Write the roadmap entry's
 `dependencies` using the dependencies' **directory names**; roadmap dependencies are directory-keyed
-even when a feature record uses IDs. Set the new feature's `priority` to the selected milestone's
-numeric priority. A feature left unmapped is a hard validation issue; end-of-run reconciliation
-propagates mapped priority and dependency data but does not invent a missing assignment.
+even when a feature record uses IDs. Set the new feature's `priority` to its rank inside that
+milestone (1 is worked first). A feature left unmapped is a hard validation issue; end-of-run
+reconciliation propagates mapped dependency data but does not invent a missing assignment.
 
 Create each `feature.json`, then read it back and confirm it is valid JSON with the required fields. Do not shell into the aidd installation to validate. aidd re-validates every feature record when the run ends and reports any contract issues with the run. That covers the project this run targets; for another project, report the metadata as unvalidated instead of reaching outside the workspace.
 

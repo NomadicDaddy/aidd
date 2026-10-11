@@ -366,11 +366,12 @@ re-reading their findings or code.
     - Verified Spernakit-relative `affectedFiles` and a `notes` array naming the source finding
     - `status` = "backlog", `passes` = false
     - `auditSeverity` matching the evaluated severity
-    - `priority` matching the assigned current milestone; roadmap priority is authoritative
+    - `priority` ranking the record inside its milestone by the evaluated severity (1 is worked
+      first); it is the record's own and aidd does not rewrite it from the milestone
 
 4. **DOWNGRADE findings**: Update the feature.json in-place:
-    - Reduce `auditSeverity` to the evaluated severity; do not hand-edit `priority`, which mirrors
-      the roadmap milestone
+    - Reduce `auditSeverity` to the evaluated severity, and lower `priority` to match when the
+      record's rank inside its milestone rested on the old severity
     - Narrow `description` and `spec` to actual scope
     - Update `updatedAt` to current timestamp
 
@@ -396,7 +397,7 @@ KEEP/CONSOLIDATE/REMOVE/DOWNGRADE; `<spernakit-root>` for ESCALATE):
 3. **CONSOLIDATE**: delete the merged-away finding entries; assign the surviving/new consolidated feature.
 4. **ESCALATE**: assign the newly created `remediation-{YYYYMMDD}-{slug}` feature in Spernakit's roadmap.json.
 5. **New assignments** use `roadmap.features["{feature-id}"] = { "milestone": "{target}" }` (merge; preserve existing `dependencies`). The target is the current milestone: the existing milestone with the highest numeric `priority`. Do not create a new milestone. The owner may re-target afterward. DOWNGRADE keeps its existing milestone; only re-assert an entry exists (idempotent; no churn if already mapped).
-6. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — milestone priority and resolved dependency IDs land in the feature.json files, and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace. ESCALATE features written into Spernakit's roadmap are a separate project by definition — name them in the report as needing their own pass.
+6. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — resolved dependency IDs land in the feature.json files (each feature's `priority` is its own and is left alone), and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace. ESCALATE features written into Spernakit's roadmap are a separate project by definition — name them in the report as needing their own pass.
 
 ### Phase 7: Verification
 

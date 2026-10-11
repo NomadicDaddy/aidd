@@ -3,23 +3,13 @@ import { resolve } from 'node:path';
 
 const FRONTEND_ROOT = resolve(import.meta.dir, '../../frontend');
 
-function renderPriorityControl(): string {
+function renderPriorityControl(priority: number): string {
 	const script = String.raw`
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { FeaturePriorityControl } from './src/pages/projects/detail/FeatureRowControls.tsx';
 
-const feature = { id: 'move-me', milestone: 'Later', priority: 2, status: 'backlog' };
-const roadmap = {
-	currentMilestone: 'Soon',
-	invalidMappings: [],
-	milestoneOrder: ['Soon', 'Later'],
-	milestones: {
-		Later: { completed: 0, total: 1 },
-		Soon: { completed: 0, total: 2 },
-	},
-	unmappedFeatureDirectories: [],
-};
+const feature = { id: 'rank-me', milestone: 'Later', priority: ${priority}, status: 'backlog' };
 
 console.log(renderToStaticMarkup(createElement(FeaturePriorityControl, {
 	disabled: false,
@@ -27,7 +17,6 @@ console.log(renderToStaticMarkup(createElement(FeaturePriorityControl, {
 	feature,
 	onChange: () => undefined,
 	priority: feature.priority,
-	roadmap,
 })));
 `;
 	const result = Bun.spawnSync([process.execPath, '-e', script], {
@@ -41,11 +30,20 @@ console.log(renderToStaticMarkup(createElement(FeaturePriorityControl, {
 }
 
 describe('feature priority control', () => {
-	test('renders the roadmap priorities as an accessible inline selector', () => {
-		const markup = renderPriorityControl();
+	test("renders the feature's own priority as an accessible inline selector", () => {
+		const markup = renderPriorityControl(2);
 
-		expect(markup).toContain('aria-label="Priority for move-me"');
-		expect(markup).toContain('<option value="Soon">P1 — Soon</option>');
-		expect(markup).toContain('<option value="Later" selected="">P2 — Later</option>');
+		expect(markup).toContain('aria-label="Priority for rank-me"');
+		expect(markup).toContain('<option value="1">P1</option>');
+		expect(markup).toContain('<option value="2" selected="">P2</option>');
+		// The options are priorities, not milestones: choosing one must not move the feature.
+		expect(markup).not.toContain('Later');
+	});
+
+	test('keeps a recorded priority outside the offered range selectable', () => {
+		const markup = renderPriorityControl(7);
+
+		expect(markup).toContain('<option value="5">P5</option>');
+		expect(markup).toContain('<option value="7" selected="">P7</option>');
 	});
 });

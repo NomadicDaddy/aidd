@@ -8,17 +8,17 @@ import { Pagination } from '../../../components/shared/Pagination.tsx';
 import { TabIntro } from '../../../components/shared/TabIntro.tsx';
 import { Button } from '../../../components/ui/button.tsx';
 import { Card } from '../../../components/ui/card.tsx';
-import { cn } from '../../../lib/cn.ts';
-import { toneBorder, toneText } from '../../../lib/tones.ts';
+import { toneText } from '../../../lib/tones.ts';
 import { FeatureDetailsDialog } from './FeatureDetailsDialog.tsx';
 import { FeatureDispositionDialogs } from './FeatureDispositionDialogs.tsx';
 import { featureFilterRegister } from './featureFilterRegister.ts';
 import { FeatureFilters } from './FeatureFilters.tsx';
 import { FeatureLaunchTargetRow } from './FeatureLaunchTargetRow.tsx';
 import { FeatureMobileCard } from './FeatureMobileCard.tsx';
+import { FeatureRoadmapGateCallout } from './FeatureRoadmapGateCallout.tsx';
 import { FEATURE_SORT_COLUMNS } from './features-list-sort.ts';
 import { FeaturesDesktopTable } from './FeaturesDesktopTable.tsx';
-import { featureDirectory, unmappedRoadmapCallout } from './featuresUtils.ts';
+import { featureDirectory } from './featuresUtils.ts';
 import { FEATURES_PAGE_SIZE, stringValue } from './shared.ts';
 import { useFeaturesTab } from './useFeaturesTab.ts';
 
@@ -55,6 +55,7 @@ export function FeaturesTab({
 		onDelete,
 		onLaunchRun,
 		onMilestoneChange,
+		onPriorityChange,
 		onSourceChange,
 		onStatusChange,
 		onWorkAuditFindings,
@@ -117,55 +118,8 @@ export function FeaturesTab({
 				statusFilter={statusFilter}
 				total={total}
 			/>
-			{(() => {
-				const gate = unmappedRoadmapCallout(roadmap);
-				if (!gate) return null;
-				return (
-					<Card className={cn('flex flex-wrap items-center gap-2', toneBorder.red)}>
-						<ShieldCheck className={`h-4 w-4 ${toneText.red}`} />
-						<span className="text-sm text-muted-foreground">
-							{gate.names.length > 0 ? (
-								<>
-									{gate.names.length} feature director
-									{gate.names.length === 1 ? 'y has' : 'ies have'} no roadmap
-									milestone and block{gate.names.length === 1 ? 's' : ''} coding
-									selection:{' '}
-									<span className="font-mono" title={gate.names.join(', ')}>
-										{gate.names.slice(0, 5).join(', ')}
-										{gate.names.length > 5 ? ', …' : ''}
-									</span>
-								</>
-							) : null}
-							{gate.invalid.length > 0 ? (
-								<>
-									{gate.names.length > 0 ? ' — plus ' : ''}
-									{gate.invalid.length} invalid milestone reference
-									{gate.invalid.length === 1 ? '' : 's'} (
-									<span className="font-mono">
-										{gate.invalid
-											.slice(0, 3)
-											.map(
-												(entry) =>
-													`${entry.featureDirectory}→${entry.milestone}`,
-											)
-											.join(', ')}
-										{gate.invalid.length > 3 ? ', …' : ''}
-									</span>
-									)
-								</>
-							) : null}
-						</span>
-						{gate.names.length > 0 ? (
-							<Button
-								className="ml-auto"
-								onClick={showUnassigned}
-								variant="secondary">
-								Show unassigned
-							</Button>
-						) : null}
-					</Card>
-				);
-			})()}
+			<FeatureRoadmapGateCallout onShowUnassigned={showUnassigned} roadmap={roadmap} />
+
 			{auditFindingsCount > 0 ? (
 				<Card className="flex flex-wrap items-center gap-2">
 					<ShieldCheck className={`h-4 w-4 ${toneText.amber}`} />
@@ -214,6 +168,7 @@ export function FeaturesTab({
 						onDelete={onDelete}
 						onLaunchRun={onLaunchRun}
 						onMilestoneChange={onMilestoneChange}
+						onPriorityChange={onPriorityChange}
 						onSelect={setSelectedFeature}
 						onSourceChange={onSourceChange}
 						onStatusChange={onStatusChange}
@@ -255,6 +210,7 @@ export function FeaturesTab({
 									onDelete={onDelete}
 									onLaunchRun={onLaunchRun}
 									onMilestoneChange={onMilestoneChange}
+									onPriorityChange={onPriorityChange}
 									onSelect={setSelectedFeature}
 									onSourceChange={onSourceChange}
 									onStatusChange={onStatusChange}

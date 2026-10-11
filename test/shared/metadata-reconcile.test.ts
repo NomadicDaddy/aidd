@@ -52,20 +52,41 @@ async function project(): Promise<string> {
 }
 
 describe('reconcileProjectMetadata', () => {
-	test('propagates milestone priority and resolves dependencies by directory', async () => {
+	test("resolves dependencies by directory and leaves each feature's priority alone", async () => {
 		const projectDir = await project();
 		const result = await reconcileProjectMetadata(new FileAiddStore(projectDir));
 
 		expect(result).toMatchObject({ dependenciesWritten: 2, errors: [], total: 2, updated: 2 });
+		// Both records sit in milestones numbered 1 and 2; neither takes that number.
 		expect(await readFeature(projectDir, 'feature-base')).toMatchObject({
 			dependencies: [],
-			priority: 1,
+			priority: 9,
 		});
 		// The roadmap names the *directory* `feature-base`; the record must reference its *id*.
 		expect(await readFeature(projectDir, 'feature-child')).toMatchObject({
 			dependencies: ['feature-base'],
-			priority: 2,
+			priority: 9,
 		});
+	});
+
+	// The regression this pass caused: at the end of every run it reset each roadmap feature to its
+	// milestone's number, including records the run never touched.
+	test('writes nothing to a record whose only difference is its priority', async () => {
+		const projectDir = await project();
+		await reconcileProjectMetadata(new FileAiddStore(projectDir));
+		const before = await readFile(
+			join(projectDir, '.aidd', 'features', 'feature-base', 'feature.json'),
+			'utf8',
+		);
+		const second = await reconcileProjectMetadata(new FileAiddStore(projectDir));
+
+		expect(second).toMatchObject({ errors: [], updated: 0 });
+		expect(
+			await readFile(
+				join(projectDir, '.aidd', 'features', 'feature-base', 'feature.json'),
+				'utf8',
+			),
+		).toBe(before);
 	});
 
 	test('is idempotent — a second pass rewrites nothing', async () => {

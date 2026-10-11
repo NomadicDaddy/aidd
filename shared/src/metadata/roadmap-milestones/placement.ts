@@ -4,7 +4,6 @@ import type {
 	MilestoneMove,
 	MilestoneMoveReason,
 	MilestonePlan,
-	MilestonePriorityUpdate,
 	MilestoneWarning,
 } from './types.ts';
 
@@ -24,9 +23,9 @@ import {
  *
  * `roadmap` must already carry the caller's intended milestone set (created/renamed/deleted);
  * `seedMoves` states where the caller wants specific features to land. Everything else — repairing
- * unmapped features, pushing dependents past their dependencies, renumbering priorities, and
- * propagating those priorities into feature.json — happens here, so every milestone operation shares
- * one placement rule instead of each re-deriving it.
+ * unmapped features, pushing dependents past their dependencies, and renumbering milestone
+ * priorities — happens here, so every milestone operation shares one placement rule instead of
+ * each re-deriving it. A feature's own `priority` is never part of the plan.
  *
  * Placement only ever moves a feature **later**. Pulling a dependency earlier would satisfy the same
  * constraint, but it grows the milestone the gate is currently admitting work from — silently, and
@@ -44,7 +43,6 @@ export function repairPlacement(
 		return {
 			backfills: [],
 			moves: [],
-			priorityUpdates: [],
 			roadmap: normalized,
 			violations: [],
 			warnings: [],
@@ -119,7 +117,6 @@ export function repairPlacement(
 		// Backfills are not placement's concern — planMilestoneReassign attaches the real ones.
 		backfills: [],
 		moves,
-		priorityUpdates: collectPriorityUpdates(planned, features, finalRank, ordered),
 		roadmap: planned,
 		violations: findCrossMilestoneViolations(planned, features),
 		warnings: collectWarnings({ cycleBound, dangling, features, moves, roadmap: planned }),
@@ -140,28 +137,6 @@ function placementNodes(roadmap: Roadmap, features: Feature[]): string[] {
 	const nodes = new Set(features.map((feature) => featureNodeId(feature)));
 	for (const node of Object.keys(roadmap.features)) nodes.add(node);
 	return [...nodes];
-}
-
-function collectPriorityUpdates(
-	roadmap: Roadmap,
-	features: Feature[],
-	finalRank: Map<string, number>,
-	ordered: string[],
-): MilestonePriorityUpdate[] {
-	const updates: MilestonePriorityUpdate[] = [];
-	for (const feature of features) {
-		const node = featureNodeId(feature);
-		const rank = finalRank.get(node);
-		const milestone = rank === undefined ? undefined : ordered[rank];
-		const priority =
-			milestone === undefined ? undefined : roadmap.milestones[milestone]?.priority;
-		if (priority === undefined) continue;
-		const parsed = feature.priority === undefined ? Number.NaN : Number(feature.priority);
-		const from = Number.isNaN(parsed) ? null : parsed;
-		if (from === priority) continue;
-		updates.push({ featureDirectory: node, from, to: priority });
-	}
-	return updates.sort((a, b) => a.featureDirectory.localeCompare(b.featureDirectory));
 }
 
 interface WarningInput {

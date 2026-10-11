@@ -182,8 +182,8 @@ export class FileAiddStore implements AiddStore {
 	// Roadmap-assignment invariant: every persisted feature must be mapped to a milestone
 	// while roadmap.json is present. Idempotent for already-mapped features (no roadmap
 	// rewrite), so routine feature metadata writes incur no churn. Unmapped/invalid features
-	// are assigned per selectAssignmentMilestone and their priority is synced back into
-	// feature.json (same priority propagation as aidd-tools roadmap:apply).
+	// are assigned per selectAssignmentMilestone; a record with no priority of its own is
+	// seeded with its milestone's.
 	async ensureFeatureAssigned(feature: Feature): Promise<void> {
 		await ensureFeatureRoadmapAssignment(feature, {
 			listFeatures: () => this.listFeatures({ includeAudit: true }),

@@ -14,7 +14,6 @@ export {
 	type MilestoneMove,
 	type MilestoneMoveReason,
 	type MilestonePlan,
-	type MilestonePriorityUpdate,
 	type MilestoneWarning,
 	type MilestoneWarningCode,
 	type ShippedVersionBackfill,

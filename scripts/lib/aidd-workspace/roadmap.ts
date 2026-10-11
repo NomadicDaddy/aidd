@@ -88,13 +88,13 @@ function buildMilestoneSummaries(
 }
 
 function computeRoadmapChange(plan: RoadmapFeaturePlan): RoadmapChangePlan {
-	const priorityMatches = Number(plan.feature.priority) === plan.priority;
-	const depsMatch =
-		plan.dependencies === undefined ||
-		dependenciesMatch(plan.feature.dependencies, plan.dependencies);
+	// `priority` is the feature's own and is never written from the roadmap; only declared
+	// dependencies propagate.
 	return {
 		...plan,
-		changed: !priorityMatches || !depsMatch,
+		changed:
+			plan.dependencies !== undefined &&
+			!dependenciesMatch(plan.feature.dependencies, plan.dependencies),
 	};
 }
 
@@ -166,7 +166,6 @@ export async function applyRoadmap(
 			dirName,
 			feature,
 			filePath,
-			priority: milestoneConfig.priority as number,
 			templateOwned,
 		});
 	}
@@ -197,12 +196,8 @@ export async function applyRoadmap(
 		for (const plan of changed) {
 			const nextFeature = {
 				...plan.feature,
-				...(plan.dependencies === undefined ? {} : { dependencies: plan.dependencies }),
-				priority: plan.priority,
-				// A template record's updatedAt describes the upstream edit, not this apply. Only
-				// priority is app-local on such a record, so stamping it here would make every
-				// resynced app look drifted against the template for no content change.
-				...(plan.templateOwned ? {} : { updatedAt }),
+				dependencies: plan.dependencies,
+				updatedAt,
 			};
 			await mkdir(join(featuresDir, plan.dirName), { recursive: true });
 			await writeFile(plan.filePath, await serializeFeature(plan.filePath, nextFeature));

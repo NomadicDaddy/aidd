@@ -3,7 +3,6 @@ import type { Roadmap } from 'aidd-shared/metadata/roadmap';
 import type { MilestonePlan } from 'aidd-shared/metadata/roadmap-milestones';
 import type { FileAiddStore } from 'aidd-shared/metadata/store';
 
-import { featureNodeId } from 'aidd-shared/metadata/features';
 import { orderedMilestoneNames } from 'aidd-shared/metadata/roadmap';
 import {
 	MilestoneOperationError,
@@ -27,7 +26,7 @@ import { recordDataMovement } from '../dataMovementTrace.ts';
 import { HttpError } from '../errors.ts';
 import { readAppVersion } from '../projectMetadata/versionHelpers.ts';
 import { buildMilestonesView, reordersExistingMilestones } from './milestonesView.ts';
-import { syncFeaturePriorities, syncShippedVersions } from './milestoneSync.ts';
+import { syncShippedVersions } from './milestoneSync.ts';
 
 export type MilestoneContext = FeatureContext;
 
@@ -109,11 +108,7 @@ async function settle(
 	if (!options.dryRun) {
 		await assertQuiescent(state, milestonePlan, options.hasActiveRuns);
 		await state.store.writeRoadmap(milestonePlan.roadmap);
-		// Backfills before priorities: both rewrite feature.json via re-read, so a priority write
-		// after the backfill preserves it, while the reverse order would also work — the fixed order
-		// just keeps the writes deterministic for the data-movement trace.
 		await syncShippedVersions(state.store, milestonePlan);
-		await syncFeaturePriorities(state.store, milestonePlan);
 		recordDataMovement({
 			category: 'metadata',
 			operation: `milestone.${operation}`,
@@ -121,20 +116,18 @@ async function settle(
 			summary: {
 				backfills: milestonePlan.backfills.length,
 				moves: milestonePlan.moves.length,
-				priorityUpdates: milestonePlan.priorityUpdates.length,
 			},
 			target: join(state.store.metadataDir, 'roadmap.json'),
 		});
 	}
 	const view: ProjectMilestonesViewDto = buildMilestonesView(
 		milestonePlan.roadmap,
-		applyPriorities(state.features, milestonePlan),
+		state.features,
 	);
 	return {
 		applied: !options.dryRun,
 		backfills: milestonePlan.backfills,
 		moves: milestonePlan.moves,
-		priorityUpdates: milestonePlan.priorityUpdates,
 		view,
 		violations: milestonePlan.violations,
 		warnings: milestonePlan.warnings,
@@ -144,11 +137,8 @@ async function settle(
 // A run in flight has already been handed the active milestone's feature list. Moving features or
 // resequencing existing milestones under it would change what the gate admits mid-run, so those
 // operations wait; description edits and appended milestones do not touch either and go through.
-//
-// `priorityUpdates` counts as disruptive even though it changes no milestone membership, because
-// settling one rewrites feature.json files. A description-only edit normally produces none; it
-// produces them only when it happens to repair pre-existing priority drift, and that is exactly the
-// case where an unguarded write would land on top of a running agent's edits.
+// A backfill counts as disruptive even though it changes no milestone membership, because settling
+// one rewrites a feature.json file a running agent may be editing.
 async function assertQuiescent(
 	state: MilestoneState,
 	milestonePlan: MilestonePlan,
@@ -156,7 +146,6 @@ async function assertQuiescent(
 ): Promise<void> {
 	const disruptive =
 		milestonePlan.moves.length > 0 ||
-		milestonePlan.priorityUpdates.length > 0 ||
 		milestonePlan.backfills.length > 0 ||
 		reordersExistingMilestones(
 			orderedMilestoneNames(state.roadmap),
@@ -169,16 +158,6 @@ async function assertQuiescent(
 			409,
 		);
 	}
-}
-
-function applyPriorities(features: Feature[], milestonePlan: MilestonePlan): Feature[] {
-	const updates = new Map(
-		milestonePlan.priorityUpdates.map((entry) => [entry.featureDirectory, entry.to]),
-	);
-	return features.map((feature) => {
-		const priority = updates.get(featureNodeId(feature));
-		return priority === undefined ? feature : { ...feature, priority };
-	});
 }
 
 export async function getMilestones(

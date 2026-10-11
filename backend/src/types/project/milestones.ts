@@ -1,7 +1,6 @@
 import type {
 	CrossMilestoneViolation,
 	MilestoneMove,
-	MilestonePriorityUpdate,
 	MilestoneWarning,
 	ShippedVersionBackfill,
 } from 'aidd-shared/metadata/roadmap-milestones';
@@ -9,7 +8,6 @@ import type {
 export type {
 	CrossMilestoneViolation,
 	MilestoneMove,
-	MilestonePriorityUpdate,
 	MilestoneWarning,
 	ShippedVersionBackfill,
 } from 'aidd-shared/metadata/roadmap-milestones';
@@ -46,7 +44,6 @@ export interface ProjectMilestonePlanDto {
 	/** Completed features whose missing `shippedVersion` will be stamped with the app's version. */
 	backfills: ShippedVersionBackfill[];
 	moves: MilestoneMove[];
-	priorityUpdates: MilestonePriorityUpdate[];
 	view: ProjectMilestonesViewDto;
 	violations: CrossMilestoneViolation[];
 	warnings: MilestoneWarning[];

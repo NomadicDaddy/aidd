@@ -49,10 +49,10 @@ update-roadmap <app> [--dry-run]
    dependent later when necessary so it never precedes its dependency. Flag dangling dependencies
    and cycles instead of inventing targets or guessing through an unorderable cycle.
 8. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when
-   the run ends: milestone priorities and resolved dependency IDs land in the feature records, and
-   the `updated / unchanged / errors` summary is reported with the run. That covers the project
-   this run targets; if you changed assignments in another project, report it as needing a separate
-   pass instead of reaching outside the workspace.
+   the run ends: resolved dependency IDs land in the feature records, each feature's own `priority`
+   is left as recorded, and the `updated / unchanged / errors` summary is reported with the run.
+   That covers the project this run targets; if you changed assignments in another project, report
+   it as needing a separate pass instead of reaching outside the workspace.
 9. Do not shell into the aidd installation to validate. aidd re-validates every feature record when
    the run ends and reports contract issues with the run. Re-read the roadmap and confirm every
    feature directory is mapped to a defined milestone and every roadmap key still exists. For

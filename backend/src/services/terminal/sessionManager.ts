@@ -108,6 +108,9 @@ export class TerminalSessionManager {
 			// Full-environment pass-through is deliberate, unlike aidd-managed tool/CLI
 			// subprocesses (buildBackendSubprocessEnv allowlist): this PTY IS the user's own
 			// interactive shell and must behave exactly like one they opened themselves.
+			// It is also load-bearing: since bun-pty 0.5 `env` is the child's whole environment
+			// and is no longer merged over this process's, so anything narrower than the full
+			// spread starts a shell with no PATH.
 			session.pty = spawnPty(shell.path, shell.args, {
 				cols: session.cols,
 				cwd: session.cwd,

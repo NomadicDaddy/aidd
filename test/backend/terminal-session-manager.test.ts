@@ -132,6 +132,18 @@ describe('TerminalSessionManager', () => {
 		expect(manager.listSessions()).toHaveLength(2);
 	});
 
+	// The PTY library takes `env` as the child's whole environment, so the shell only has a PATH
+	// if the session hands it one. A narrowed environment is the regression this pins.
+	test('create hands the shell this process environment whole', () => {
+		const { manager, spawned } = createManager();
+		manager.create();
+		const env = spawned[0]?.options.env ?? {};
+		const pathKey = Object.keys(process.env).find((key) => key.toUpperCase() === 'PATH');
+		expect(pathKey).toBeDefined();
+		expect(env[pathKey ?? 'PATH']).toBe(process.env[pathKey ?? 'PATH'] ?? '');
+		expect(Object.keys(env).length).toBe(Object.keys(process.env).length);
+	});
+
 	test('create honors a valid cwd and rejects a bogus one', () => {
 		const { manager, spawned } = createManager();
 		const info = manager.create({ cwd: ROOT_DIR });

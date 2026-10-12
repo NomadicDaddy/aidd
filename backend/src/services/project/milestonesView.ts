@@ -1,7 +1,7 @@
 import type { Feature } from 'aidd-shared/metadata/features';
 import type { Roadmap } from 'aidd-shared/metadata/roadmap';
 
-import { featureNodeId } from 'aidd-shared/metadata/features';
+import { featureNodeId, isFeatureDeferred } from 'aidd-shared/metadata/features';
 import { evaluateRoadmapCodingGate, orderedMilestoneNames } from 'aidd-shared/metadata/roadmap';
 import { findCrossMilestoneViolations } from 'aidd-shared/metadata/roadmap-milestones';
 
@@ -9,7 +9,32 @@ import type { ProjectMilestonesViewDto } from '../../types/project/milestones.ts
 
 interface MilestoneTally {
 	completed: number;
+	/** Deferred members: listed with the milestone, left out of its fraction. */
+	deferred: number;
 	directories: string[];
+}
+
+function tallyMilestones(
+	roadmap: Roadmap,
+	features: Feature[],
+	order: string[],
+): Map<string, MilestoneTally> {
+	const tallies = new Map<string, MilestoneTally>(
+		order.map((name) => [name, { completed: 0, deferred: 0, directories: [] }]),
+	);
+	for (const feature of features) {
+		const node = featureNodeId(feature);
+		const milestone = roadmap.features[node]?.milestone;
+		const tally = milestone === undefined ? undefined : tallies.get(milestone);
+		if (!tally) continue;
+		tally.directories.push(node);
+		// `passes`, not `status`, so a milestone reads as complete here exactly when the coding
+		// gate considers it complete and moves on to the next one. The gate does not wait on a
+		// deferred record either, so it is out of the fraction.
+		if (feature.passes === true) tally.completed += 1;
+		else if (isFeatureDeferred(feature)) tally.deferred += 1;
+	}
+	return tallies;
 }
 
 // Builds the editable milestone view from a roadmap plus the features on disk. Milestone membership
@@ -21,32 +46,21 @@ export function buildMilestonesView(
 ): ProjectMilestonesViewDto {
 	const gate = evaluateRoadmapCodingGate(roadmap, features);
 	const order = orderedMilestoneNames(roadmap);
-	const tallies = new Map<string, MilestoneTally>(
-		order.map((name) => [name, { completed: 0, directories: [] }]),
-	);
-	for (const feature of features) {
-		const node = featureNodeId(feature);
-		const milestone = roadmap.features[node]?.milestone;
-		const tally = milestone === undefined ? undefined : tallies.get(milestone);
-		if (!tally) continue;
-		tally.directories.push(node);
-		// `passes`, not `status`, so a milestone reads as complete here exactly when the coding
-		// gate considers it complete and moves on to the next one.
-		if (feature.passes === true) tally.completed += 1;
-	}
+	const tallies = tallyMilestones(roadmap, features, order);
 	return {
 		activeMilestone: gate.activeMilestone,
 		gateBlocked: gate.blocked,
 		lifecycle: roadmap.lifecycle ?? 'active',
 		milestones: order.map((name, index) => {
-			const tally = tallies.get(name) ?? { completed: 0, directories: [] };
+			const tally = tallies.get(name) ?? { completed: 0, deferred: 0, directories: [] };
 			return {
 				completed: tally.completed,
+				deferred: tally.deferred,
 				description: roadmap.milestones[name]?.description ?? null,
 				featureDirectories: tally.directories.sort((a, b) => a.localeCompare(b)),
 				name,
 				priority: roadmap.milestones[name]?.priority ?? index + 1,
-				total: tally.directories.length,
+				total: tally.directories.length - tally.deferred,
 			};
 		}),
 		unmappedFeatureDirectories: gate.unmappedFeatureDirectories,

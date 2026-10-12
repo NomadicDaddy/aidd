@@ -105,7 +105,10 @@ export function groupMovesByTarget(moves: MilestoneMove[]): MilestoneMoveGroup[]
 	}));
 }
 
-export function milestoneProgressLabel(completed: number, total: number): string {
-	if (total === 0) return 'No features';
-	return `${completed}/${total} passing`;
+// Deferred members are out of the fraction, so the label says how many there are: without it a
+// milestone holding only set-aside records would read as empty.
+export function milestoneProgressLabel(completed: number, total: number, deferred: number): string {
+	const progress = total === 0 ? 'No features' : `${completed}/${total} passing`;
+	if (deferred === 0) return progress;
+	return total === 0 ? `${deferred} deferred` : `${progress} · ${deferred} deferred`;
 }

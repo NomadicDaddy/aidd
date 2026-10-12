@@ -70,6 +70,9 @@ A `deferred` record is kept with its spec and its milestone, but it is not work:
   record.
 - It is not counted as open, failing, dependency-blocked or waiting on approval. It has its own
   count.
+- It is out of the progress figures the panel shows: the project's feature total, its percentage,
+  and each milestone's fraction are measured against planned work, with the deferred count shown
+  beside them. A milestone whose only record is deferred reads 0 of 0.
 - It does not hold its milestone open: the roadmap gate treats a milestone whose only unfinished
   records are deferred as done.
 - A feature that depends on a deferred record stays dependency-blocked, because the dependency is

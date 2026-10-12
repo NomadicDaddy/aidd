@@ -16,6 +16,7 @@ function view(
 		milestones: [
 			{
 				completed: 1,
+				deferred: 0,
 				description: null,
 				featureDirectories: ['a'],
 				name: 'v2.0',
@@ -24,6 +25,7 @@ function view(
 			},
 			{
 				completed: 0,
+				deferred: 0,
 				description: null,
 				featureDirectories: ['b'],
 				name: 'v3.0',

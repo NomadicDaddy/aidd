@@ -41,12 +41,13 @@ function MilestoneStateBadge({
 	);
 }
 
-function MilestoneProgress({ completed, total }: { completed: number; total: number }) {
+function MilestoneProgress({ milestone }: { milestone: ProjectMilestone }) {
+	const { completed, deferred, total } = milestone;
 	const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
 	return (
 		<div className="min-w-[6rem] space-y-1">
 			<span className="block font-mono text-xs whitespace-nowrap text-muted-foreground">
-				{milestoneProgressLabel(completed, total)}
+				{milestoneProgressLabel(completed, total, deferred)}
 			</span>
 			<div
 				aria-label={`${percent}% passing`}
@@ -167,10 +168,7 @@ function MilestonesList({
 						{milestone.description ?? '—'}
 					</p>
 					<div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3 max-sm:flex-col max-sm:items-stretch">
-						<MilestoneProgress
-							completed={milestone.completed}
-							total={milestone.total}
-						/>
+						<MilestoneProgress milestone={milestone} />
 						<MilestoneRowActions
 							busy={busy}
 							count={milestones.length}
@@ -260,10 +258,7 @@ export function MilestonesTable(props: MilestonesProps) {
 									</span>
 								</td>
 								<td className="px-4 py-3 whitespace-nowrap">
-									<MilestoneProgress
-										completed={milestone.completed}
-										total={milestone.total}
-									/>
+									<MilestoneProgress milestone={milestone} />
 								</td>
 								<td className="px-4 py-3 whitespace-nowrap">
 									<MilestoneRowActions

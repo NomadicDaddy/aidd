@@ -86,7 +86,8 @@ describe('milestone chips differ by presence of colour, not by two adjacent gree
 		expect(milestoneBadgeTone({ completed: 5, total: 5 })).toBe('emerald');
 		expect(milestoneBadgeTone({ completed: 3, total: 5 })).toBe('neutral');
 		expect(milestoneBadgeTone({ completed: 0, total: 5 })).toBe('neutral');
-		// An empty milestone is not vacuously complete.
+		// An empty milestone is not vacuously complete. One holding only set-aside records is
+		// the same case: they are out of `total`.
 		expect(milestoneBadgeTone({ completed: 0, total: 0 })).toBe('neutral');
 	});
 });

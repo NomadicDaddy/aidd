@@ -173,6 +173,7 @@ export function ProjectTableRow({
 			) : null}
 			<td className={projectTableCellClass}>
 				<FeatureProgressCell
+					deferred={project.featureStats.deferred}
 					failing={project.featureStats.failing}
 					passing={project.featureStats.passing}
 					total={project.featureStats.total}

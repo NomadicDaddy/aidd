@@ -81,6 +81,7 @@ export function RoadmapMilestones({ roadmap }: { roadmap: null | ProjectRoadmapS
 						</div>
 						<span className="font-mono text-xs text-muted-foreground">
 							{formatRatio(item.completed, item.total)}
+							{item.deferred > 0 ? ` · ${item.deferred} deferred` : null}
 						</span>
 					</Link>
 				);

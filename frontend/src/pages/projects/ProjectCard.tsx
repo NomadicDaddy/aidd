@@ -201,6 +201,11 @@ export function ProjectCard({
 					{failing > 0 ? (
 						<span className={`ml-2 text-xs ${toneText.red}`}>({failing} failing)</span>
 					) : null}
+					{project.featureStats.deferred > 0 ? (
+						<span className="ml-2 text-xs text-muted-foreground">
+							({project.featureStats.deferred} deferred)
+						</span>
+					) : null}
 				</div>
 				<div className="h-2 overflow-hidden rounded-full bg-muted">
 					{totalFeatures > 0 ? (

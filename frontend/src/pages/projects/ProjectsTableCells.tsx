@@ -154,11 +154,19 @@ export function PortsCell({
 	);
 }
 
+// Set-aside records are out of the fraction, so they are named beside it.
+function DeferredCount({ deferred }: { deferred: number }) {
+	if (deferred === 0) return null;
+	return <span className="ml-1 text-muted-foreground">({deferred} deferred)</span>;
+}
+
 export function FeatureProgressCell({
+	deferred,
 	failing,
 	passing,
 	total,
 }: {
+	deferred: number;
 	failing: number;
 	passing: number;
 	total: number;
@@ -174,6 +182,7 @@ export function FeatureProgressCell({
 					// that only the red tone explains.
 					<span className={`ml-1 ${toneText.red}`}>({failing} failing)</span>
 				) : null}
+				<DeferredCount deferred={deferred} />
 			</div>
 			<div
 				aria-label={`${passing} passing of ${total} features, ${failing} failing`}

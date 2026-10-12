@@ -20,7 +20,9 @@ export function toWebFeatureStats(
 		failing: stats.failing,
 		open: stats.open,
 		passing: stats.passing,
-		total: stats.total,
+		// What the panel measures progress against. A deferred record is kept scope, not planned
+		// work, so it is out of this figure and shown beside it as `deferred`.
+		total: stats.total - stats.deferred,
 		waitingApproval: stats.waitingApproval,
 	};
 }

@@ -2,6 +2,7 @@ import type { Feature } from 'aidd-shared/metadata/features';
 import type { DetectProjectStackOptions, ProjectStack } from 'aidd-shared/metadata/project-stack';
 import type { FileAiddStore } from 'aidd-shared/metadata/store';
 
+import { isFeatureDeferred } from 'aidd-shared/metadata/features';
 import { detectProjectStack } from 'aidd-shared/metadata/project-stack';
 import { evaluateRoadmapCodingGate, orderedMilestoneNames } from 'aidd-shared/metadata/roadmap';
 import { readdir } from 'node:fs/promises';
@@ -191,8 +192,10 @@ export async function gatherRoadmap(
 	if (!roadmapResult.ok) return null;
 	const roadmap = roadmapResult.value;
 	const passesById = new Map<string, boolean>();
+	const deferredIds = new Set<string>();
 	for (const feature of resolvedFeatures) {
 		passesById.set(feature.id, Boolean(feature.passes));
+		if (isFeatureDeferred(feature)) deferredIds.add(feature.id);
 	}
 	// Priority order, not key order: the coding gate walks milestones by ascending priority, and a
 	// summary that disagrees with it names the wrong current milestone. The two orders coincide today
@@ -202,14 +205,15 @@ export async function gatherRoadmap(
 	const milestones: ProjectRoadmapSummary['milestones'] = {};
 	let currentMilestone: null | string = null;
 	for (const name of milestoneNames) {
-		let total = 0;
-		let completed = 0;
-		for (const [featureId, entry] of Object.entries(roadmap.features)) {
-			if (entry.milestone !== name) continue;
-			total++;
-			if (passesById.get(featureId) === true) completed++;
-		}
-		milestones[name] = { completed, total };
+		const members = Object.entries(roadmap.features)
+			.filter(([, entry]) => entry.milestone === name)
+			.map(([featureId]) => featureId);
+		// Deferred records are out of the fraction, as they are out of the gate's reckoning: a
+		// milestone whose only unfinished record is deferred reads as complete in both.
+		const planned = members.filter((featureId) => !deferredIds.has(featureId));
+		const completed = planned.filter((featureId) => passesById.get(featureId) === true).length;
+		const total = planned.length;
+		milestones[name] = { completed, deferred: members.length - total, total };
 		if (currentMilestone === null && total > 0 && completed < total) {
 			currentMilestone = name;
 		}

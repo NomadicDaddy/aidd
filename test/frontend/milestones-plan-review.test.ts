@@ -145,7 +145,13 @@ describe('request copy', () => {
 
 describe('milestoneProgressLabel', () => {
 	test('an empty milestone says so rather than reading 0/0', () => {
-		expect(milestoneProgressLabel(0, 0)).toBe('No features');
-		expect(milestoneProgressLabel(2, 5)).toBe('2/5 passing');
+		expect(milestoneProgressLabel(0, 0, 0)).toBe('No features');
+		expect(milestoneProgressLabel(2, 5, 0)).toBe('2/5 passing');
+	});
+
+	test('deferred members are counted beside the fraction, never inside it', () => {
+		expect(milestoneProgressLabel(2, 5, 3)).toBe('2/5 passing · 3 deferred');
+		// Only set-aside records: not empty, and not 0 of anything.
+		expect(milestoneProgressLabel(0, 0, 1)).toBe('1 deferred');
 	});
 });

@@ -29,6 +29,8 @@ export interface ProjectPorts {
 
 export interface ProjectMilestoneSummary {
 	completed: number;
+	/** Members the owner has set aside: out of `total`, shown beside the fraction. */
+	deferred: number;
 	total: number;
 }
 

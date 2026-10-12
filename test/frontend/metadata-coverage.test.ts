@@ -51,7 +51,7 @@ function makeMetadata(overrides: Partial<ProjectMetadata> = {}): ProjectMetadata
 			currentMilestone: 'v2.0',
 			invalidMappings: [],
 			milestoneOrder: ['v2.0'],
-			milestones: { 'v2.0': { completed: 1, total: 1 } },
+			milestones: { 'v2.0': { completed: 1, deferred: 0, total: 1 } },
 			unmappedFeatureDirectories: [],
 		},
 		screenMapRouteCount: 12,

@@ -169,7 +169,8 @@ function classifyFeatureSynthetic(featureStats: WebFeatureStats): {
 } {
 	return {
 		mtime: null,
-		status: featureStats.total > 0 ? 'fresh' : 'missing',
+		// `total` is planned work only; a project whose records are all deferred still has them.
+		status: featureStats.total + featureStats.deferred > 0 ? 'fresh' : 'missing',
 	};
 }
 

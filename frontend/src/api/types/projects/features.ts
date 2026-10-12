@@ -5,7 +5,8 @@ import {
 
 export interface FeatureStats {
 	closed: number;
-	/** Records the owner has set aside; in `total` and in no other count. */
+	/** Records the owner has set aside. They are in no other count, `total` included: progress is
+	 * measured against the work that is planned, with this figure shown beside it. */
 	deferred: number;
 	dependencyBlocked: number;
 	failing: number;

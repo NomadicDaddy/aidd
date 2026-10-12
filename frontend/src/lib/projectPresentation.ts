@@ -31,6 +31,8 @@ export const artifactTone: Record<ProjectSummary['artifactHealth'], BadgeTone> =
  * Only a finished milestone gets a colour; progress is already carried by the `3/5` each chip
  * prints, and hue between neighbours is not legible at 11px.
  */
-export function milestoneBadgeTone(ms: ProjectMilestoneSummary): BadgeTone {
+export function milestoneBadgeTone(
+	ms: Pick<ProjectMilestoneSummary, 'completed' | 'total'>,
+): BadgeTone {
 	return ms.total > 0 && ms.completed === ms.total ? 'emerald' : 'neutral';
 }

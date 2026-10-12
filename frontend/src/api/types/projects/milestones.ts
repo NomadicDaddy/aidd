@@ -14,6 +14,8 @@ export type {
 
 export interface ProjectMilestone {
 	completed: number;
+	/** Members the owner has set aside: out of `total`, shown beside the fraction. */
+	deferred: number;
 	description: null | string;
 	featureDirectories: string[];
 	name: string;

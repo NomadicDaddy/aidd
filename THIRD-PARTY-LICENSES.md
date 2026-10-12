@@ -24,11 +24,11 @@ the repository material distributed outside the npm graph.
 | [@modelcontextprotocol/sdk](https://www.npmjs.com/package/@modelcontextprotocol/sdk) | 1.32.1  | MIT        |
 | [@xterm/addon-serialize](https://www.npmjs.com/package/@xterm/addon-serialize)       | 0.14.0  | MIT        |
 | [@xterm/headless](https://www.npmjs.com/package/@xterm/headless)                     | 6.0.0   | MIT        |
-| [bun-pty](https://www.npmjs.com/package/bun-pty)                                     | 0.4.10  | MIT        |
+| [bun-pty](https://www.npmjs.com/package/bun-pty)                                     | 0.5.1   | MIT        |
 | [croner](https://www.npmjs.com/package/croner)                                       | 10.0.1  | MIT        |
 | [drizzle-orm](https://www.npmjs.com/package/drizzle-orm)                             | 0.45.4  | Apache-2.0 |
 | [elysia](https://www.npmjs.com/package/elysia)                                       | 1.4.30  | MIT        |
-| [pino](https://www.npmjs.com/package/pino)                                           | 10.3.1  | MIT        |
+| [pino](https://www.npmjs.com/package/pino)                                           | 10.4.0  | MIT        |
 | [zod](https://www.npmjs.com/package/zod)                                             | 4.6.5   | MIT        |
 
 ## Frontend runtime dependencies
@@ -41,20 +41,20 @@ the repository material distributed outside the npm graph.
 | [@fontsource-variable/geist](https://www.npmjs.com/package/@fontsource-variable/geist)                 | 5.3.0   | OFL-1.1    |
 | [@fontsource-variable/geist-mono](https://www.npmjs.com/package/@fontsource-variable/geist-mono)       | 5.3.0   | OFL-1.1    |
 | [@fontsource-variable/space-grotesk](https://www.npmjs.com/package/@fontsource-variable/space-grotesk) | 5.3.0   | OFL-1.1    |
-| [@tanstack/react-query](https://www.npmjs.com/package/@tanstack/react-query)                           | 5.104.0 | MIT        |
+| [@tanstack/react-query](https://www.npmjs.com/package/@tanstack/react-query)                           | 5.104.2 | MIT        |
 | [@xterm/addon-fit](https://www.npmjs.com/package/@xterm/addon-fit)                                     | 0.11.0  | MIT        |
 | [@xterm/addon-search](https://www.npmjs.com/package/@xterm/addon-search)                               | 0.16.0  | MIT        |
 | [@xterm/addon-web-links](https://www.npmjs.com/package/@xterm/addon-web-links)                         | 0.12.0  | MIT        |
 | [@xterm/addon-webgl](https://www.npmjs.com/package/@xterm/addon-webgl)                                 | 0.19.0  | MIT        |
 | [@xterm/xterm](https://www.npmjs.com/package/@xterm/xterm)                                             | 6.0.0   | MIT        |
 | [cmdk](https://www.npmjs.com/package/cmdk)                                                             | 1.1.1   | MIT        |
-| [lucide-react](https://www.npmjs.com/package/lucide-react)                                             | 1.48.0  | ISC        |
+| [lucide-react](https://www.npmjs.com/package/lucide-react)                                             | 1.55.0  | ISC        |
 | [react](https://www.npmjs.com/package/react)                                                           | 19.3.0  | MIT        |
 | [react-dom](https://www.npmjs.com/package/react-dom)                                                   | 19.3.0  | MIT        |
 | [react-router](https://www.npmjs.com/package/react-router)                                             | 8.4.0   | MIT        |
 | [sonner](https://www.npmjs.com/package/sonner)                                                         | 2.0.8   | MIT        |
 | [tailwind-merge](https://www.npmjs.com/package/tailwind-merge)                                         | 3.7.0   | MIT        |
-| [web-vitals](https://www.npmjs.com/package/web-vitals)                                                 | 6.2.2   | Apache-2.0 |
+| [web-vitals](https://www.npmjs.com/package/web-vitals)                                                 | 6.2.3   | Apache-2.0 |
 | [zustand](https://www.npmjs.com/package/zustand)                                                       | 5.0.15  | MIT        |
 
 ## Non-package distributed material
@@ -139,13 +139,13 @@ are included in the distributed asset tree.
 ## Runtime dependency closure
 
 The tables above enumerate the direct production dependencies. Counting everything they
-pull in transitively, the runtime closure is **177** third-party
+pull in transitively, the runtime closure is **176** third-party
 packages (174 unique names). Development and build tooling is not part
 of it and is not counted here. Its license distribution is:
 
 | License      | Packages |
 | ------------ | -------- |
-| MIT          | 158      |
+| MIT          | 157      |
 | ISC          | 9        |
 | BSD-3-Clause | 3        |
 | OFL-1.1      | 3        |

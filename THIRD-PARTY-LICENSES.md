@@ -26,7 +26,7 @@ the repository material distributed outside the npm graph.
 | [@xterm/headless](https://www.npmjs.com/package/@xterm/headless)                     | 6.0.0   | MIT        |
 | [bun-pty](https://www.npmjs.com/package/bun-pty)                                     | 0.4.10  | MIT        |
 | [croner](https://www.npmjs.com/package/croner)                                       | 10.0.1  | MIT        |
-| [drizzle-orm](https://www.npmjs.com/package/drizzle-orm)                             | 0.45.3  | Apache-2.0 |
+| [drizzle-orm](https://www.npmjs.com/package/drizzle-orm)                             | 0.45.4  | Apache-2.0 |
 | [elysia](https://www.npmjs.com/package/elysia)                                       | 1.4.30  | MIT        |
 | [pino](https://www.npmjs.com/package/pino)                                           | 10.3.1  | MIT        |
 | [zod](https://www.npmjs.com/package/zod)                                             | 4.6.5   | MIT        |

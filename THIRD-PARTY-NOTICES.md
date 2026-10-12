@@ -25,7 +25,7 @@ reproduced in the summary document; the copyright holder is the package author.
 - `@tokenizer/token@0.3.0` (MIT)
 - `@xterm/addon-serialize@0.14.0` (MIT)
 - `@xterm/headless@6.0.0` (MIT)
-- `drizzle-orm@0.45.3` (Apache-2.0)
+- `drizzle-orm@0.45.4` (Apache-2.0)
 - `react-remove-scroll-bar@2.3.8` (MIT)
 
 ## Non-package notices
@@ -2074,7 +2074,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### drizzle-orm@0.45.3
+### drizzle-orm@0.45.4
 
 License: Apache-2.0
 

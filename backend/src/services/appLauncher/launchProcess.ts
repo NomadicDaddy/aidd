@@ -20,7 +20,8 @@ const MAX_CAPTURE_BYTES = 64 * 1024;
 export interface CommandResult {
 	code: null | number;
 	output: string;
-	signal: NodeJS.Signals | null;
+	/** A name where the runtime knows one, otherwise the raw signal number. */
+	signal: NodeJS.Signals | null | number;
 }
 
 /**

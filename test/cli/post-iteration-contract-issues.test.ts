@@ -140,9 +140,13 @@ describe('post-iteration feature contract check', () => {
 	// Metadata bookkeeping must never be what ends an otherwise good iteration.
 	test('fails soft when validation throws', async () => {
 		const acc = accumulator();
+		// The store can list features (so the deferred guard, which reports its own failures
+		// instead of swallowing them, has nothing to say) but has no validator, which is the throw
+		// under test.
+		const store = { listFeatures: () => Promise.resolve([]) };
 		const exit = await endRunIfIterationGuardTripped({
 			acc,
-			deps: { store: {} } as unknown as OrchestratorDeps,
+			deps: { store } as unknown as OrchestratorDeps,
 			featureSnapshotBefore: emptySnapshot(),
 			finalize: finalize(),
 			move: () => undefined,

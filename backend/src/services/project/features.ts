@@ -5,6 +5,7 @@ import { type FileAiddStore } from 'aidd-shared/metadata/store';
 import { join } from 'node:path';
 
 import type { ProjectFeatureDto } from '../../types.ts';
+import type { HasActiveRuns } from './milestones.ts';
 
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { HttpError } from '../errors.ts';
@@ -155,12 +156,26 @@ export async function updateFeatureStatus(
 	projectId: string,
 	featureDirectory: string,
 	statusInput: string,
+	hasActiveRuns: HasActiveRuns,
 ): Promise<Feature> {
 	const store = await ctx.storeForProject(projectId);
 	const directory = assertFeatureDirectory(featureDirectory);
 	const feature = await readFeatureForMutation(store, directory);
 	const status = assertProjectFeatureStatus(statusInput);
 	assertInlineStatusChange(feature, status);
+	// A run restores any record that moved into or out of `deferred` during its iteration, because
+	// it cannot tell an agent's edit from this one. Refusing here keeps a person's decision from
+	// being accepted and then undone; the alternative was a guard that reverses the very thing it
+	// exists to protect.
+	if (
+		(status === 'deferred' || feature.status === 'deferred') &&
+		(await hasActiveRuns(store.projectDir))
+	) {
+		throw new HttpError(
+			'A run is active in this project. A feature can be deferred, or returned to backlog, once it ends.',
+			409,
+		);
+	}
 	const updatedFeature = updatePassStateForStatus(feature, status);
 	await store.writeFeature(updatedFeature);
 	recordDataMovement({

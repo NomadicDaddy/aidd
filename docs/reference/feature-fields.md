@@ -75,7 +75,11 @@ A `deferred` record is kept with its spec and its milestone, but it is not work:
 - A feature that depends on a deferred record stays dependency-blocked, because the dependency is
   not complete.
 - From the Features tab, a backlog record or one waiting on approval can be deferred, and a deferred
-  record can only be returned to `backlog`.
+  record can only be returned to `backlog`. Both are refused while a run is active in the project:
+  a run restores any record that crossed into or out of `deferred` during its iteration and cannot
+  tell a person's change from an agent's, so the change waits until the run ends.
+- An audit that reports a finding whose record is deferred does not file it again. It is the same
+  unresolved finding, not one that came back.
 
 Validation rejects `passes: true` on any status other than `completed`. Completed audit findings and
 remediations with `passes: true` must also carry a non-empty `notes` resolution explaining how

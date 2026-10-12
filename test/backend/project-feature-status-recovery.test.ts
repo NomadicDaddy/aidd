@@ -5,9 +5,21 @@ import { FileAiddStore } from 'aidd-shared/metadata/store';
 
 import {
 	type FeatureContext,
-	updateFeatureStatus,
+	updateFeatureStatus as updateFeatureStatusWithRuns,
 } from '../../backend/src/services/project/features.ts';
 import { testTempDir } from '../_helpers/temp.ts';
+
+/** The ordinary case: nothing is running in the project. */
+function updateFeatureStatus(
+	context: FeatureContext,
+	projectId: string,
+	featureDirectory: string,
+	status: string,
+) {
+	return updateFeatureStatusWithRuns(context, projectId, featureDirectory, status, () =>
+		Promise.resolve(false),
+	);
+}
 
 async function contextWithFeature(status: string): Promise<{
 	context: FeatureContext;
@@ -96,6 +108,39 @@ describe('deferring a feature from the panel', () => {
 				'A deferred feature can only be returned to backlog',
 			);
 		}
+	});
+
+	// A run restores any record that crossed into or out of deferred during its iteration, and it
+	// cannot tell an agent's edit from a person's. So the panel refuses the change while a run is
+	// active, instead of accepting a decision the run would then undo.
+	test('refuses to defer, or to return a deferred feature, while a run is active', async () => {
+		const runActive = () => Promise.resolve(true);
+
+		const deferring = await contextWithFeature('backlog');
+		await expect(
+			updateFeatureStatusWithRuns(deferring.context, 'project-id', id, 'deferred', runActive),
+		).rejects.toThrow('A run is active in this project');
+		const stillBacklog = JSON.parse(await readFile(deferring.featurePath, 'utf8')) as {
+			status: string;
+		};
+		expect(stillBacklog.status).toBe('backlog');
+
+		const returning = await contextWithFeature('deferred');
+		await expect(
+			updateFeatureStatusWithRuns(returning.context, 'project-id', id, 'backlog', runActive),
+		).rejects.toThrow('A run is active in this project');
+
+		// The control: a change that does not touch deferred is not held up by the run.
+		const completing = await contextWithFeature('backlog');
+		expect(
+			await updateFeatureStatusWithRuns(
+				completing.context,
+				'project-id',
+				id,
+				'completed',
+				runActive,
+			),
+		).toMatchObject({ status: 'completed' });
 	});
 
 	test('work already in progress cannot be deferred inline', async () => {

@@ -38,6 +38,7 @@ export function createProjectFeatureRoutes(context: WebContext) {
 						params.id,
 						params.featureId,
 						body.status,
+						(projectPath) => context.runService.hasActiveRunForProject(projectPath),
 					),
 				}),
 				{

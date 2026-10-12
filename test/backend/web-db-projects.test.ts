@@ -1380,6 +1380,7 @@ describe('web database and project APIs', () => {
 			encodeProjectId(projectDir),
 			'feature-status',
 			'in_progress',
+			() => Promise.resolve(false),
 		);
 
 		expect(updated).toMatchObject({

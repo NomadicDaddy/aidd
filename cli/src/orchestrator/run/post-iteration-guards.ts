@@ -146,6 +146,10 @@ export async function endRunIfIterationGuardTripped(input: {
 	const { acc, deps, featureSnapshotBefore, finalize, move, plan, wallClockTimedOut, work } =
 		input;
 
+	// First, ahead of every exit below: a run that ends on its wall clock has still had an agent
+	// editing records, and a deferral it changed must not outlive the run unrestored.
+	await pushDeferredRestorations(acc, deps, featureSnapshotBefore);
+
 	// The wall-clock budget is exhausted: end the run as an explicit timeout. This must win
 	// over the scope-overrun and completion-marker checks below — a run killed mid-completion
 	// otherwise gets ledgered as "blocked by gates" (exit 7), masking the real cause. The one
@@ -187,8 +191,6 @@ export async function endRunIfIterationGuardTripped(input: {
 	await pushFeatureContractIssues(acc, deps);
 
 	await pushDestroyedLeasedFeatures(acc, deps, plan, featureSnapshotBefore);
-
-	await pushDeferredRestorations(acc, deps, featureSnapshotBefore);
 
 	pushRejectedAuditReports(acc, finalize);
 

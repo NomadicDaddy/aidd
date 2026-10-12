@@ -113,6 +113,18 @@ export function deferredStatusRestoredNote(
 	);
 }
 
+// The guard itself failed, so nothing was restored and nothing was shown to be unchanged.
+export function deferredStatusUncheckedNote(reason: string): string {
+	return (
+		'**aidd could not check whether any feature record was moved into or out of `deferred` ' +
+		`during the last iteration** (${reason}). \`deferred\` marks scope the owner has set aside ` +
+		'and only a person sets or clears it.\n\n' +
+		'- If you changed any record to or from `"status": "deferred"`, put it back exactly as it ' +
+		'was and say so in your summary.\n' +
+		'- If you did not, say so plainly.'
+	);
+}
+
 export function destroyedLeasedFeaturesNote(
 	leases: readonly { featureId: string; runId: string }[],
 ): string {

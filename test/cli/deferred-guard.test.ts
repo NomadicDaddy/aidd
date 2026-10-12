@@ -1,7 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 
-import { restoreDeferredStatus } from '../../cli/src/orchestrator/run/deferred-guard.ts';
+import type { OrchestratorDeps, RunAccumulator } from '../../cli/src/orchestrator/run/types.ts';
+
+import {
+	pushDeferredRestorations,
+	restoreDeferredStatus,
+} from '../../cli/src/orchestrator/run/deferred-guard.ts';
+import { endRunIfIterationGuardTripped } from '../../cli/src/orchestrator/run/post-iteration-guards.ts';
 import {
 	captureFeatureCompletionSnapshot,
 	claimSelectedFeatureForIteration,
@@ -88,6 +94,53 @@ describe('deferred guard', () => {
 		expect(await restoreDeferredStatus(store, before)).toEqual([]);
 		expect(await statusOf(store, 'open-work')).toEqual({ passes: true, status: 'completed' });
 		expect((await statusOf(store, 'set-aside')).status).toBe('deferred');
+	});
+
+	// A run that ends on its wall clock has still had an agent editing records. The restoration
+	// runs ahead of that exit, so the timeout path cannot leave a changed deferral behind. The
+	// timeout branch itself needs a whole run to write its summary, which this fixture does not
+	// have, so the call is allowed to fail after the point under test.
+	test('restores before a wall-clock timeout ends the run', async () => {
+		const store = await storeWith({ 'set-aside': { passes: false, status: 'deferred' } });
+		const before = await captureFeatureCompletionSnapshot(store);
+		const worked = await store.readFeature('set-aside');
+		await store.writeFeature({ ...worked, status: 'in_progress' });
+		const acc = { pendingCarryoverNotes: [] } as unknown as RunAccumulator;
+
+		await endRunIfIterationGuardTripped({
+			acc,
+			deps: { store } as unknown as OrchestratorDeps,
+			featureSnapshotBefore: before,
+			finalize: {
+				completedResultFeature: undefined,
+				displayedSummary: 'ran out of time',
+			} as never,
+			move: () => undefined,
+			plan: {} as never,
+			wallClockTimedOut: true,
+			work: { kind: 'directive' } as never,
+		}).catch(() => undefined);
+
+		expect((await statusOf(store, 'set-aside')).status).toBe('deferred');
+		expect(acc.pendingCarryoverNotes.join('\n')).toContain('has put it back');
+	});
+
+	// A guard that failed has not shown that nothing changed, so its failure is never silent.
+	test('says so when the records cannot be checked', async () => {
+		const acc = { pendingCarryoverNotes: [] } as unknown as RunAccumulator;
+		const brokenStore = {
+			listFeatures: () => Promise.reject(new Error('features directory unreadable')),
+		};
+
+		await pushDeferredRestorations(acc, { store: brokenStore } as unknown as OrchestratorDeps, {
+			completed: new Map(),
+			status: new Map(),
+			unreadable: [],
+		});
+
+		expect(acc.pendingCarryoverNotes).toHaveLength(1);
+		expect(acc.pendingCarryoverNotes[0]).toContain('could not check');
+		expect(acc.pendingCarryoverNotes[0]).toContain('features directory unreadable');
 	});
 
 	test('claiming a deferred record does not turn it into work in progress', async () => {

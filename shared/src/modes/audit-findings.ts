@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import type { Feature } from '../metadata/features.ts';
 import type { FindingLedgerEvent } from '../metadata/findings-ledger.ts';
 
-import { isFeatureOutstanding } from '../metadata/features.ts';
+import { isFeatureDeferred, isFeatureOutstanding } from '../metadata/features.ts';
 import {
 	arrayOfStrings,
 	type AuditFindingInput,
@@ -115,8 +115,9 @@ function matchingFeature(
 	fingerprint: string,
 ): Feature | undefined {
 	const fingerprintMatches = existing.filter((feature) => feature.fingerprint === fingerprint);
-	const exactOpen = fingerprintMatches.find(isOpenFinding);
-	if (exactOpen) return exactOpen;
+	const exactUnresolved =
+		fingerprintMatches.find(isOpenFinding) ?? fingerprintMatches.find(isFeatureDeferred);
+	if (exactUnresolved) return exactUnresolved;
 	if (fingerprintMatches[0]) return fingerprintMatches[0];
 
 	const legacyMatches = existing.filter((feature) => {
@@ -129,7 +130,11 @@ function matchingFeature(
 			affectedFiles.some((file) => existingFiles.includes(file));
 		return sameTitle || sameFiles;
 	});
-	return legacyMatches.find(isOpenFinding) ?? legacyMatches[0];
+	return (
+		legacyMatches.find(isOpenFinding) ??
+		legacyMatches.find(isFeatureDeferred) ??
+		legacyMatches[0]
+	);
 }
 
 function latestLedgerResolution(
@@ -152,6 +157,10 @@ function findingDisposition(
 	// An open record on disk is the strongest evidence: whatever the ledger says happened
 	// earlier, creating a second record for the same finding would only split its history.
 	if (featureMatch && isOpenFinding(featureMatch)) return 'suppress-duplicate';
+	// A deferred record is the same finding, still unresolved, that the owner chose to set aside.
+	// Seeing it again is not a resolved issue coming back, and emitting it as a recurrence would
+	// put the scope straight back in the backlog under a second record.
+	if (featureMatch && isFeatureDeferred(featureMatch)) return 'suppress-duplicate';
 	if (ledgerResolution?.event === 'dismissed' && ledgerResolution.reason === 'false-positive') {
 		return 'suppress-dismissed';
 	}

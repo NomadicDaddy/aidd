@@ -4,6 +4,7 @@ import type { Roadmap } from 'aidd-shared/metadata/roadmap';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 
 import type { ProjectFeatureDto } from '../../types.ts';
+import type { HasActiveRuns } from './milestones.ts';
 import type { FeatureApprovalInput, FindingDismissalInput } from './types.ts';
 
 import {
@@ -79,12 +80,14 @@ export class ProjectFeatureService {
 		projectId: string,
 		featureDirectory: string,
 		statusInput: string,
+		hasActiveRuns: HasActiveRuns,
 	): Promise<Feature> {
 		return updateFeatureStatusInternal(
 			this.context(),
 			projectId,
 			featureDirectory,
 			statusInput,
+			hasActiveRuns,
 		);
 	}
 

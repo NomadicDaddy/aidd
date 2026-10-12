@@ -2,7 +2,7 @@ import type { AiddStore } from 'aidd-shared/metadata/store';
 
 import type { FeatureCompletionSnapshot, OrchestratorDeps, RunAccumulator } from './types.ts';
 
-import { deferredStatusRestoredNote } from './carryover-notes.ts';
+import { deferredStatusRestoredNote, deferredStatusUncheckedNote } from './carryover-notes.ts';
 
 export interface DeferredRestoration {
 	featureId: string;
@@ -55,14 +55,26 @@ export async function restoreDeferredStatus(
 
 /**
  * Run the guard after an iteration, say what it restored, and tell the next iteration not to try
- * again. Fail-soft: a store that cannot be read here must not end an otherwise good iteration.
+ * again. A store that cannot be read or written here does not end an otherwise good iteration,
+ * but it is never silent: a guard that failed has not shown that nothing changed, so the failure
+ * goes to the console and to the next iteration.
  */
 export async function pushDeferredRestorations(
 	acc: RunAccumulator,
 	deps: OrchestratorDeps,
 	snapshotBefore: FeatureCompletionSnapshot,
 ): Promise<void> {
-	const restorations = await restoreDeferredStatus(deps.store, snapshotBefore).catch(() => []);
+	let restorations: DeferredRestoration[];
+	try {
+		restorations = await restoreDeferredStatus(deps.store, snapshotBefore);
+	} catch (err) {
+		const reason = err instanceof Error ? err.message : String(err);
+		console.error(
+			`[deferred] could not check or restore deferred feature records after this iteration: ${reason}`,
+		);
+		acc.pendingCarryoverNotes.push(deferredStatusUncheckedNote(reason));
+		return;
+	}
 	if (restorations.length === 0) return;
 	for (const item of restorations) {
 		console.error(

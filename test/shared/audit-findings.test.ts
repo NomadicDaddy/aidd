@@ -192,6 +192,45 @@ describe('audit finding fingerprints', () => {
 		expect(normalized.priorFeatureId).toBe('audit-security-recreated');
 	});
 
+	// A deferred finding is unresolved scope the owner set aside. An audit that sees it again must
+	// not file it as a recurrence: that put the scope straight back in the backlog under a second
+	// record, which is the one thing deferring it was meant to stop.
+	test('a deferred record is the same unresolved finding, not a recurrence', () => {
+		const fingerprint = findingFingerprint(auditName, 'Missing auth guard', [
+			'src/a.ts',
+			'src/b.ts',
+		]);
+		const deferredFeature: Feature = {
+			affectedFiles: ['src/a.ts', 'src/b.ts'],
+			auditSource: auditName,
+			fingerprint,
+			id: 'audit-security-set-aside',
+			passes: false,
+			status: 'deferred',
+			title: 'Missing auth guard',
+		};
+		const completedTwin: Feature = {
+			...deferredFeature,
+			id: 'audit-security-old',
+			status: 'completed',
+		};
+
+		const normalized = normalizeFinding(finding(), auditName, [deferredFeature], 0, []);
+		expect(normalized.disposition).toBe('suppress-duplicate');
+		expect(normalized.priorFeatureId).toBe('audit-security-set-aside');
+
+		// With an older resolved record beside it, the deferred one is still the match.
+		const beside = normalizeFinding(
+			finding(),
+			auditName,
+			[completedTwin, deferredFeature],
+			0,
+			[],
+		);
+		expect(beside.disposition).toBe('suppress-duplicate');
+		expect(beside.priorFeatureId).toBe('audit-security-set-aside');
+	});
+
 	test('a completed record without passes true counts as resolved and recurs', () => {
 		const fingerprint = findingFingerprint(auditName, 'Missing auth guard', [
 			'src/a.ts',

@@ -58,7 +58,8 @@ function requiredSurface(
 	evidence: ProjectAuditEvidence,
 	auditName: string,
 ): ProfilePreview['audits'][number]['surface'] {
-	const name = mapping.requiresSurface?.[auditName];
+	// Upper-cased as the resolver does, so the two cannot disagree about a name's spelling.
+	const name = mapping.requiresSurface?.[auditName.toUpperCase()];
 	if (name === undefined) return undefined;
 	const text = evidence.surfaces.get(name);
 	return {

@@ -134,15 +134,23 @@ async function collectRunLedger(projectDir: string, evidence: ProjectAuditEviden
 			continue;
 		}
 		for (const auditName of auditNames) {
-			recordAuditRunEvidence(
-				auditName,
-				breakdown.get(auditName) ?? 0,
-				entry.stopReason,
-				evidence,
-			);
+			// The driver names the run's whole worklist; the breakdown names the audits it
+			// performed. An audit the run gave up on, or that could not run, is on the first and
+			// not the second, and crediting it with a performance that found nothing would raise
+			// its rank on the strength of a run that never audited anything.
+			const findingCount = breakdown.get(auditName);
+			if (findingCount === undefined) continue;
+			recordAuditRunEvidence(auditName, findingCount, entry.stopReason, evidence);
 		}
 	}
 }
+
+// A run that gave up on one audit ends as a partial success; the audits on its breakdown were
+// still performed in full, so they are credited exactly as in a run that completed.
+const performedStopReasons: ReadonlySet<unknown> = new Set([
+	'completed',
+	'partial_success_blocked',
+]);
 
 function recordAuditRunEvidence(
 	auditName: string,
@@ -150,7 +158,7 @@ function recordAuditRunEvidence(
 	stopReason: unknown,
 	evidence: ProjectAuditEvidence,
 ): void {
-	if (stopReason === 'completed' && findingCount > 0) {
+	if (performedStopReasons.has(stopReason) && findingCount > 0) {
 		incrementCounter(evidence.completedRunsWithFindings, auditName);
 	} else {
 		incrementCounter(evidence.incompleteAuditRuns, auditName);

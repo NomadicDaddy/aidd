@@ -15,8 +15,9 @@ lifecycle: 'post-release'
 
 This audit converts real Lighthouse JSON and Spernakit crawltest Web Vitals artifacts into
 business-context performance guidance. It must not score, pass, or recommend remediation without
-parsing at least one real measurement artifact. If artifacts cannot be acquired, the only valid
-result is **SKIPPED / data-unavailable** with a concise record of what was attempted.
+parsing at least one real measurement artifact. If artifacts cannot be acquired, the audit cannot
+be performed: the only valid result declares it unavailable (`auditStatus: "unavailable"`), with
+a concise record of what was attempted as its `unavailableReason`.
 
 ## Table of Contents
 
@@ -102,13 +103,14 @@ This audit processes Lighthouse JSON. When no JSON is handed over (the common ca
 
 ### No Served URL
 
-Lighthouse measures a page fetched over HTTP. A target whose interface is not served (a desktop renderer loading `file://`, for example an Electron window) has nothing to measure. Do not start a server the project does not define in order to manufacture one. Record what the interface is, mark the report **SKIPPED / data-unavailable** under the rule below, and stop. That outcome is expected for such targets and is not a defect in the target.
+Lighthouse measures a page fetched over HTTP. A target whose interface is not served (a desktop renderer loading `file://`, for example an Electron window) has nothing to measure. Do not start a server the project does not define in order to manufacture one. Such a target should not have this audit applied at all; its project profile or an audit override is where that is settled. If the audit is applied anyway, declare it unavailable under the rule below, with a reason that says what the interface is, file no finding, and stop. The audit stays stale.
 
 ### Data-Availability Rule (SKIPPED vs. PASS)
 
 - When **at least one** real artifact (Lighthouse JSON or `logs/crawltest.json`) was parsed, proceed with the workflow and report only the scores supported by that data.
 - When only `logs/crawltest.json` is available, produce a crawltest-only Web Vitals report. Leave Lighthouse category scores unavailable; do not infer Performance, Accessibility, Best Practices, or SEO scores from crawler data.
-- When **neither** a Lighthouse JSON nor a crawltest JSON artifact can be produced, the report **MUST** be marked **SKIPPED / data-unavailable** and **MUST NOT** report a passing score, score-like `N/A`, issue counts, recommendations, or implied PASS. State explicitly that no measurement artifact was available and what was attempted.
+- When **neither** a Lighthouse JSON nor a crawltest JSON artifact can be produced, the audit cannot be performed. Declare `auditStatus: "unavailable"` in the result, with an `unavailableReason` that states explicitly that no measurement artifact was available and what was attempted. A report, if you write one, **MUST** be marked **SKIPPED / data-unavailable** and **MUST NOT** report a passing score, score-like `N/A`, issue counts, recommendations, or implied PASS.
+- File a High finding in that result only when the missing instrument is a defect of this project: its interface is served and nothing can produce a Lighthouse or crawltest artifact for it. File none when the target has nothing to measure.
 
 ## Processing Workflow
 
@@ -462,5 +464,5 @@ Do not include scores, issue counts, or recommendations.
 
 - A Lighthouse report at `.aidd/audit-reports/LIGHTHOUSE-YYYY-MM-DD.md`.
 - The mobile and desktop Lighthouse JSON artifacts when available, or a clear note that only `logs/crawltest.json` was available.
-- A SKIPPED / data-unavailable report with attempted acquisition steps when no measurement artifact can be produced.
+- A result declaring the audit unavailable, with the attempted acquisition steps as its reason, when no measurement artifact can be produced.
 - Feature.json remediation entries only for findings supported by parsed artifacts and deduplicated against existing backlog items.

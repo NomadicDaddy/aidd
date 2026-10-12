@@ -198,19 +198,18 @@ function auditReportValidationReasons(structured: Record<string, unknown>): stri
 }
 
 // An agent that could not perform the audit says so instead of dressing the gap up as a report.
-// The claim carries no findings by definition, so only its reason is validated.
 function declaresUnavailable(structured: Record<string, unknown>): boolean {
 	return structured.auditStatus === 'unavailable';
 }
 
+// The claim needs its reason and nothing else. It may carry findings: a project that should be
+// measurable and has no way to produce the measurement has a defect worth filing, and such a
+// finding is held to the same shape as any other. No justification is asked for an empty list,
+// because nothing was inspected.
 function unavailableValidationReasons(structured: Record<string, unknown>): string[] {
-	const reasons: string[] = [];
+	const reasons = findingValidationReasons(structured);
 	if (stringValue(structured.unavailableReason) === undefined) {
 		reasons.push('auditStatus "unavailable" requires a non-empty unavailableReason');
-	}
-	const raw = structured.auditFindings ?? structured.findings;
-	if (raw !== undefined && !(Array.isArray(raw) && raw.length === 0)) {
-		reasons.push('auditStatus "unavailable" requires auditFindings to be empty');
 	}
 	return reasons;
 }

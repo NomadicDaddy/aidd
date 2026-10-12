@@ -15,6 +15,7 @@ import { persistAuditReports } from 'aidd-shared/modes/audit-persist';
 
 import { setAuditRunDriver } from '../run-driver.ts';
 import {
+	auditRunCompletion,
 	type AuditRunState,
 	createAuditRunState,
 	noWorkSummary,
@@ -23,8 +24,10 @@ import {
 	runProgress,
 } from './audit-run-state.ts';
 import { pendingAuditNames, selectedAuditName } from './audit-selection.ts';
+import { auditSessionFailureKind } from './audit-session-failure.ts';
 import {
 	auditFailureSummary,
+	auditInterruptedSummary,
 	auditResultSummary,
 	instrumentContractWarning,
 	settledAudits,
@@ -38,20 +41,32 @@ function sessionFailureReason(result: AgentRunResult): string | undefined {
 	return undefined;
 }
 
+// A session that failed on its own account is one attempt at its audit. One that ended for a
+// reason that is not the audit's (a stop, an interruption, a safety stop, a rate limit) is not
+// counted, so no audit is ever given up on because of it.
 async function failedSessionResult(
 	plan: RunPlan,
 	state: AuditRunState,
 	context: ModeContext,
 	auditName: string,
-	reason: string,
+	failure: { exitCode: number; reason: string },
 ): Promise<ModeResult> {
-	const attempt = recordFailedAttempt(state, auditName);
+	const { reason } = failure;
+	const attempt =
+		auditSessionFailureKind(failure.exitCode) === 'terminal'
+			? undefined
+			: recordFailedAttempt(state, auditName);
 	const progress = await runProgress(plan, state, context);
+	const auditSummary =
+		attempt === undefined
+			? auditInterruptedSummary(auditName, reason)
+			: auditFailureSummary(auditName, reason, attempt);
 	return {
 		artifacts: {
 			auditFindings: {},
 			auditName,
 			completedAudits: [],
+			...(attempt === undefined ? {} : { failedAttempt: attempt }),
 			failureReason: reason,
 			findingsCreated: 0,
 			findingsTotal: 0,
@@ -62,32 +77,44 @@ async function failedSessionResult(
 			perAuditReportPaths: {},
 			...progress.artifacts,
 		},
-		complete: false,
-		summary: `${auditFailureSummary(auditName, reason, attempt)}\n${progress.summary}`,
+		...progress.completion,
+		summary: `${auditSummary}\n${progress.summary}`,
 	};
 }
 
 // Settles the audit against the run: done, unable to run, or — when validation rejected the
-// report and nothing was written — one more failed attempt.
+// report and nothing was written — one more failed attempt, which is then returned.
 function settlePersistedAudit(
 	state: AuditRunState,
 	auditName: string,
 	persisted: AuditPersistResult,
-): string {
+): { failedAttempt?: number; summary: string } {
 	const { totals } = state;
 	totals.findingsCreated += persisted.totalCreated;
 	totals.findingsTotal += persisted.totalFindings;
 	const unavailable = persisted.unavailableAudits.find((audit) => audit.auditName === auditName);
 	if (unavailable !== undefined) {
 		totals.unavailable.push(unavailable);
-		return auditResultSummary(auditName, persisted, unavailable);
+		return { summary: auditResultSummary(auditName, persisted, unavailable) };
 	}
 	if (persisted.completedAudits.includes(auditName)) {
 		totals.completed.push(auditName);
-		return auditResultSummary(auditName, persisted, undefined);
+		return { summary: auditResultSummary(auditName, persisted, undefined) };
 	}
-	const attempt = recordFailedAttempt(state, auditName);
-	return auditFailureSummary(auditName, 'report rejected by validation', attempt);
+	const failedAttempt = recordFailedAttempt(state, auditName);
+	return {
+		failedAttempt,
+		summary: auditFailureSummary(auditName, 'report rejected by validation', failedAttempt),
+	};
+}
+
+// The finding counts the run record carries per audit. Audit scoring reads every name here as an
+// audit this run performed, so only an audit that produced real evidence is on it: one that
+// could not run is not credited with a performance, whatever findings it filed.
+function completedFindingTotals(persisted: AuditPersistResult): Record<string, number> {
+	return Object.fromEntries(
+		persisted.completedAudits.map((name) => [name, persisted.perAuditFindingTotals[name] ?? 0]),
+	);
 }
 
 async function persistedSessionResult(
@@ -97,32 +124,38 @@ async function persistedSessionResult(
 	auditName: string,
 	persisted: AuditPersistResult,
 ): Promise<ModeResult> {
-	const auditSummary = settlePersistedAudit(state, auditName, persisted);
+	const { failedAttempt, summary: auditSummary } = settlePersistedAudit(
+		state,
+		auditName,
+		persisted,
+	);
 	const progress = await runProgress(plan, state, context);
 	const warning = instrumentContractWarning(persisted);
-	const reportPath = persisted.perAuditReportPaths[auditName];
 	return {
 		artifacts: {
-			auditFindings: persisted.perAuditFindingTotals,
+			auditFindings: completedFindingTotals(persisted),
 			auditName,
 			completedAudits: persisted.completedAudits,
+			...(failedAttempt === undefined ? {} : { failedAttempt }),
 			findingIds: persisted.findingIds,
 			findingsCreated: persisted.totalCreated,
 			findingsTotal: persisted.totalFindings,
 			instrumentContractWarning: warning,
 			invalidAuditReports: persisted.invalid,
-			missingAudits: reportPath === undefined ? [auditName] : [],
+			// Missing means the session left its audit unsettled. An audit that could not run is
+			// settled even when no report was written for it because a real one was kept.
+			missingAudits: failedAttempt === undefined ? [] : [auditName],
 			...persisted.fileChanges,
 			perAuditFindingsCreated: persisted.perAuditFindingsCreated,
 			perAuditFindingTotals: persisted.perAuditFindingTotals,
 			perAuditReportPaths: persisted.perAuditReportPaths,
-			reportPath,
+			reportPath: persisted.perAuditReportPaths[auditName],
 			skippedLedgerLines: persisted.skippedLedgerLines,
 			suppressedDismissedCount: persisted.suppressedDismissedCount,
 			suppressedDuplicateCount: persisted.suppressedDuplicateCount,
 			...progress.artifacts,
 		},
-		complete: progress.remainingAudits.length === 0,
+		...progress.completion,
 		summary: [auditSummary, warning, progress.summary]
 			.filter((line): line is string => line !== undefined)
 			.join('\n'),
@@ -142,14 +175,17 @@ async function processAuditResult(
 				remainingAudits: [],
 				unavailableAudits: [...state.totals.unavailable],
 			},
-			complete: true,
+			...auditRunCompletion(state.totals, 0),
 			summary: noWorkSummary(state),
 		};
 	}
 	const auditName = selectedAuditName(plan, result.selectedWork);
-	const failure = sessionFailureReason(result);
-	if (failure !== undefined) {
-		return await failedSessionResult(plan, state, context, auditName, failure);
+	const reason = sessionFailureReason(result);
+	if (reason !== undefined) {
+		return await failedSessionResult(plan, state, context, auditName, {
+			exitCode: result.exitCode,
+			reason,
+		});
 	}
 	const persisted = await persistAuditReports({
 		...(context.findingLedgerStore ? { ledgerStore: context.findingLedgerStore } : {}),
@@ -199,8 +235,9 @@ async function buildAuditPromptPlan(
 ): Promise<PromptPlan> {
 	// The run record names the run's whole worklist — set once at the first session, not
 	// overwritten each session with whichever single audit that session happens to hold. It is
-	// the worklist and not everything `--audit-all` resolved: audit scoring reads every name here
-	// as an audit this run performed, so a fresh audit the run never touches must not be on it.
+	// the worklist and not everything `--audit-all` resolved: a fresh audit the run never touches
+	// did not drive it. Which of these audits the run actually performed is a separate record,
+	// the per-audit finding counts, and that is what audit scoring credits.
 	if (!state.driverRecorded) {
 		const requested = await requestedAudits(plan, state, context);
 		const worklist = await pendingAuditNames(plan, context, requested, new Set());

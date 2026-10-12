@@ -58,27 +58,22 @@ export async function classifyIterationOutcome(input: {
 		completedResultFeature !== undefined && exitCode === orchestratorExitCodes.aborted;
 	const completedAfterBackendInterruption =
 		completedAfterBackendIdle || completedAfterBackendAbort;
-	const completedAuditsArtifact = modeResult.artifacts?.completedAudits;
+	const missingAuditsArtifact = modeResult.artifacts?.missingAudits;
 	const invalidAuditReportsArtifact = modeResult.artifacts?.invalidAuditReports;
-	const perAuditReportPathsArtifact = modeResult.artifacts?.perAuditReportPaths;
-	const completedAuditsCount = Array.isArray(completedAuditsArtifact)
-		? completedAuditsArtifact.length
-		: 0;
-	const perAuditReportPathsCount =
-		typeof perAuditReportPathsArtifact === 'object' && perAuditReportPathsArtifact !== null
-			? Object.keys(perAuditReportPathsArtifact).length
-			: 0;
+	const sessionLeftAuditUnsettled =
+		Array.isArray(missingAuditsArtifact) && missingAuditsArtifact.length > 0;
 	const hasInvalidAuditReports =
 		Array.isArray(invalidAuditReportsArtifact) && invalidAuditReportsArtifact.length > 0;
-	// A recognized invalid report is not a missing artifact: audit mode parsed the result,
-	// rejected it before persistence, and left the audit in its retry queue. Preserve exit 0
-	// here so post-iteration can select that pending audit again. Truly absent/unrecognized
-	// output still takes missing_audit_artifacts below.
+	// Audit mode says which audit a session left unsettled; a written report is not the test,
+	// because an audit that could not run is settled even when a real report from the same day
+	// was kept and nothing was written. A recognized invalid report is not a missing artifact
+	// either: audit mode parsed the result, rejected it before persistence, and left the audit
+	// in its retry queue. Preserve exit 0 there so post-iteration can select that pending audit
+	// again. Truly absent/unrecognized output still takes missing_audit_artifacts below.
 	const missingAuditArtifacts =
 		plan.mode === 'audit' &&
 		exitCode === orchestratorExitCodes.success &&
-		completedAuditsCount === 0 &&
-		perAuditReportPathsCount === 0 &&
+		sessionLeftAuditUnsettled &&
 		!hasInvalidAuditReports;
 	// Whether the .aidd-artifact fallback below is consulted at all. Feature work must emit
 	// AIDD_RESULT, so .aidd writes alone never stand in for a marker there — and the warning
@@ -88,7 +83,7 @@ export async function classifyIterationOutcome(input: {
 	// verification and parked the selected feature as waiting_approval rather than claiming a
 	// completion it could not stand behind. The prompt's own result contract tells it not to emit
 	// AIDD_RESULT for blocked work, so the absent marker is compliance, not a missing result —
-	// exempt it the way completedAuditsArtifact exempts audit mode.
+	// exempt it the way a settled audit exempts an audit iteration.
 	const verificationBlockedParked =
 		typeof modeResult.artifacts?.verificationBlockedParked === 'string';
 	const missingDirectiveResult =

@@ -33,6 +33,11 @@ export interface ModeResult {
 	// finalizes the run with this exit code and stop reason immediately after the iteration.
 	fatal?: { exitCode: number; stopReason?: StopReason };
 	summary: string;
+	// A mode that worked through everything it was given without all of it succeeding (audit mode
+	// gave up on an audit) names here how the run is recorded when this result is its last. Unlike
+	// `fatal` it never ends the run by itself: it only replaces the clean "completed" or "no work"
+	// classification at the point the run was ending anyway.
+	unsuccessfulEnding?: { exitCode: number; stopReason: StopReason };
 }
 
 export interface ModeSummary {

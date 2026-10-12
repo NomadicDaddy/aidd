@@ -16,6 +16,7 @@ import type {
 
 import { type createModeHandler } from '../../modes/factory.ts';
 import { writeRunSummary } from './artifacts.ts';
+import { auditSessionFailureAbsorbed } from './audit-session-absorption.ts';
 import { buildFeatureBlockingContext } from './blocking-context.ts';
 import { determineRunContinuation } from './continuation.ts';
 import { featureRecoveryTarget } from './feature-scope.ts';
@@ -175,6 +176,13 @@ export async function handlePostIteration(input: {
 
 	const completed = await mode.isComplete(context, finalize.modeResult);
 	const continuation = determineRunContinuation({
+		auditSessionFailureAbsorbed: auditSessionFailureAbsorbed({
+			details: finalize.details,
+			events,
+			modeResult: finalize.modeResult,
+			plan,
+			recordedExitCode: finalize.recordedExitCode,
+		}),
 		backendExitCode: exitCode,
 		completed,
 		completedAfterBackendInterruption: finalize.completedAfterBackendInterruption,
@@ -190,6 +198,7 @@ export async function handlePostIteration(input: {
 		plan,
 		recoveredActiveVerification: finalize.recoveredActiveVerification,
 		stopRequestedAfterRun,
+		unsuccessfulEnding: finalize.modeResult.unsuccessfulEnding,
 	});
 	if (continuation.kind === 'continue') {
 		consecutiveAborts = continuation.consecutiveAborts;

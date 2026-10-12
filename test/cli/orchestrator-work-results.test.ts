@@ -28,6 +28,53 @@ const { cleanup, makeStore } = createOrchestratorTestContext('work-results');
 
 afterAll(cleanup);
 
+const securityReport: AgentEvent[] = [
+	{
+		type: 'assistant_text',
+		chunk: 'AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[],"noFindingsJustification":"Inspected src/**/*.ts with rg for hardcoded token literals; every match was test fixture data, so nothing qualified.","reportMarkdown":"# SECURITY Audit Report"}\n',
+	},
+	{ type: 'done', exitCode: 0, filesModified: [] },
+];
+const deadCodeReport: AgentEvent[] = [
+	{
+		type: 'assistant_text',
+		chunk: 'AIDD_RESULT: {"auditName":"DEAD_CODE","auditFindings":[],"noFindingsJustification":"Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed each export is imported by production code.","reportMarkdown":"# DEAD_CODE Audit Report"}\n',
+	},
+	{ type: 'done', exitCode: 0, filesModified: [] },
+];
+
+interface AuditRunRecord {
+	auditFindings: Record<string, number>;
+	exitCode: number;
+	stopReason: string;
+	summary: string;
+}
+
+async function onlyRun(store: { metadataDir: string }): Promise<AuditRunRecord> {
+	const runs = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+		.trim()
+		.split(/\r?\n/)
+		.map((line) => JSON.parse(line) as AuditRunRecord);
+	expect(runs).toHaveLength(1);
+	const [run] = runs;
+	if (run === undefined) throw new Error('expected one run record');
+	return run;
+}
+
+function twoAuditPlan(projectDir: string) {
+	return resolveRunPlan(
+		parseArgs([
+			'--project-dir',
+			projectDir,
+			'--cli',
+			'native',
+			'--audit',
+			'SECURITY,DEAD_CODE',
+		]),
+		config,
+	);
+}
+
 describe('orchestrator work results', () => {
 	test(
 		'runs each requested audit in its own backend session',
@@ -144,15 +191,16 @@ describe('orchestrator work results', () => {
 
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
 
+			// Could-not-run is a legitimate outcome: the run still completes, its summary names
+			// the audit, and the run record credits only the audit that was performed.
 			expect(exitCode).toBe(orchestratorExitCodes.success);
 			expect(backend.calls).toBe(2);
-			const [run] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
-				.trim()
-				.split(/\r?\n/)
-				.map((line) => JSON.parse(line) as { summary: string });
-			expect(run?.summary).toContain(
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('completed');
+			expect(run.summary).toContain(
 				'audit run finished: 1 of 2 audit(s) done, 0 finding(s) (0 new); could not run: SECURITY',
 			);
+			expect(run.auditFindings).toEqual({ DEAD_CODE: 0 });
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
@@ -170,6 +218,7 @@ describe('orchestrator work results', () => {
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
 				[{ type: 'error', reason: 'provider' }],
+				deadCodeReport,
 			]);
 			const auditPlan = resolveRunPlan(
 				parseArgs([
@@ -186,16 +235,21 @@ describe('orchestrator work results', () => {
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
 
 			// The rejected audit stays queued and is selected again. The retry's provider error
-			// becomes the final result, and the rejected report never becomes freshness data.
-			expect(exitCode).toBe(orchestratorExitCodes.providerError);
-			expect(backend.calls).toBe(2);
+			// is its second failed attempt, so the run gives up on it and goes on to DEAD_CODE;
+			// the rejected report never becomes freshness data.
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(backend.calls).toBe(3);
 			expect(backend.inputs[1]?.text).toContain('{"auditName":"SECURITY"');
-			expect(await store.listAuditReports()).toEqual([]);
+			expect(backend.inputs[2]?.text).toContain('{"auditName":"DEAD_CODE"');
+			const reports = await store.listAuditReports();
+			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
+			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
 			const structured = JSON.parse(
 				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as { invalidAuditReports: unknown[]; missingAudits: string[] };
 			expect(structured.invalidAuditReports).toHaveLength(1);
 			expect(structured.missingAudits).toEqual(['SECURITY']);
+			expect((await onlyRun(store)).stopReason).toBe('partial_success_blocked');
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
@@ -252,11 +306,13 @@ describe('orchestrator work results', () => {
 			) as { abandonedAudits: string[]; invalidAuditReports: unknown[] };
 			expect(structured.invalidAuditReports).toHaveLength(1);
 			expect(structured.abandonedAudits).toEqual(['SECURITY']);
-			const [run] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
-				.trim()
-				.split(/\r?\n/)
-				.map((line) => JSON.parse(line) as { summary: string });
-			expect(run?.summary).toContain('gave up after 2 failed attempts: SECURITY');
+			// A run that gave up on an audit is not a clean completion: with another audit done
+			// it is a partial success, and the abandoned audit is not credited as performed.
+			const run = await onlyRun(store);
+			expect(run.summary).toContain('gave up after 2 failed attempts: SECURITY');
+			expect(run.stopReason).toBe('partial_success_blocked');
+			expect(run.exitCode).toBe(orchestratorExitCodes.success);
+			expect(run.auditFindings).toEqual({ DEAD_CODE: 0 });
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
@@ -289,7 +345,9 @@ describe('orchestrator work results', () => {
 
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
 
-			expect(exitCode).toBe(orchestratorExitCodes.providerError);
+			// The rejection and the provider error are the audit's two failed attempts. With its
+			// only audit given up on, the run performed nothing and ends as an error.
+			expect(exitCode).toBe(orchestratorExitCodes.generalError);
 			expect(backend.calls).toBe(2);
 			expect(await store.listAuditReports()).toEqual([]);
 			const structured = JSON.parse(
@@ -297,6 +355,11 @@ describe('orchestrator work results', () => {
 			) as { invalidAuditReports: unknown[]; missingAudits: string[] };
 			expect(structured.invalidAuditReports).toHaveLength(1);
 			expect(structured.missingAudits).toEqual(['SECURITY']);
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('exit_error');
+			expect(run.exitCode).toBe(orchestratorExitCodes.generalError);
+			expect(run.summary).toContain('gave up after 2 failed attempts: SECURITY');
+			expect(run.auditFindings).toEqual({});
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
@@ -314,26 +377,20 @@ describe('orchestrator work results', () => {
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
 				[{ type: 'error', reason: 'provider' }],
+				deadCodeReport,
 			]);
-			const auditPlan = resolveRunPlan(
-				parseArgs([
-					'--project-dir',
-					store.projectDir,
-					'--cli',
-					'native',
-					'--audit',
-					'SECURITY,DEAD_CODE',
-				]),
-				config,
-			);
+			const auditPlan = twoAuditPlan(store.projectDir);
 
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
 
 			// The malformed SECURITY report is rejected atomically (nothing persisted) and the
-			// audit re-queued; the retry here hits a provider error, which becomes the exit.
-			expect(exitCode).toBe(orchestratorExitCodes.providerError);
-			expect(backend.calls).toBe(2);
-			expect(await store.listAuditReports()).toEqual([]);
+			// audit re-queued; the retry hits a provider error, its second failed attempt, and
+			// the run goes on to DEAD_CODE.
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(backend.calls).toBe(3);
+			expect(backend.inputs[1]?.text).toContain('{"auditName":"SECURITY"');
+			const reports = await store.listAuditReports();
+			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
 			const structured = JSON.parse(
 				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as {
@@ -347,47 +404,187 @@ describe('orchestrator work results', () => {
 		slowOrchestratorTestTimeoutMs,
 	);
 
-	test('leaves the next audit pending when the run fails after the first', async () => {
-		const store = await makeStore('multi-audit-missing');
+	// A failed audit session is one attempt at that audit, not the end of the run: before this
+	// rule the first provider error ended the run and every later audit went unattempted.
+	test(
+		'gives up on an audit after two provider errors and runs the next one',
+		async () => {
+			const store = await makeStore('multi-audit-provider-error-first');
+			const providerError: AgentEvent[] = [{ type: 'error', reason: 'provider' }];
+			const backend = new SequencedBackend([providerError, providerError, deadCodeReport]);
+
+			const exitCode = await runOrchestrator(twoAuditPlan(store.projectDir), {
+				rootDir,
+				store,
+				backend,
+			});
+
+			expect(backend.calls).toBe(3);
+			expect(backend.inputs[0]?.text).toContain('{"auditName":"SECURITY"');
+			expect(backend.inputs[1]?.text).toContain('{"auditName":"SECURITY"');
+			expect(backend.inputs[2]?.text).toContain('{"auditName":"DEAD_CODE"');
+			const reports = await store.listAuditReports();
+			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
+			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
+			interface FailedIteration {
+				abandonedAudits: string[];
+				exitCode: number;
+				failedAttempt: number;
+				remainingAudits: string[];
+			}
+			const iteration = async (name: string) =>
+				JSON.parse(
+					await readFile(join(store.metadataDir, 'iterations', name), 'utf8'),
+				) as FailedIteration;
+			// Each failed session keeps its own exit code in its iteration record.
+			expect(await iteration('001.json')).toMatchObject({
+				abandonedAudits: [],
+				exitCode: orchestratorExitCodes.providerError,
+				failedAttempt: 1,
+				remainingAudits: ['SECURITY', 'DEAD_CODE'],
+			});
+			expect(await iteration('002.json')).toMatchObject({
+				abandonedAudits: ['SECURITY'],
+				exitCode: orchestratorExitCodes.providerError,
+				failedAttempt: 2,
+				remainingAudits: ['DEAD_CODE'],
+			});
+			// One audit done and one given up on: a partial success, not a completion.
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('partial_success_blocked');
+			expect(run.summary).toContain(
+				'audit run finished: 1 of 2 audit(s) done, 0 finding(s) (0 new); gave up after 2 failed attempts: SECURITY',
+			);
+			expect(run.auditFindings).toEqual({ DEAD_CODE: 0 });
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'gives up on the last audit after two provider errors and ends as a partial success',
+		async () => {
+			const store = await makeStore('multi-audit-provider-error-last');
+			const backend = new SequencedBackend([
+				securityReport,
+				[{ type: 'error', reason: 'provider' }],
+			]);
+
+			const exitCode = await runOrchestrator(twoAuditPlan(store.projectDir), {
+				rootDir,
+				store,
+				backend,
+			});
+
+			expect(backend.calls).toBe(3);
+			const reports = await store.listAuditReports();
+			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(true);
+			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(false);
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('partial_success_blocked');
+			expect(run.summary).toContain('gave up after 2 failed attempts: DEAD_CODE');
+			expect(run.auditFindings).toEqual({ SECURITY: 0 });
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'an agent that exits non-zero or returns nothing costs its audit an attempt, not the run',
+		async () => {
+			const store = await makeStore('multi-audit-ordinary-failures');
+			const backend = new SequencedBackend([
+				[{ type: 'done', exitCode: 1, filesModified: [] }],
+				[
+					{ type: 'assistant_text', chunk: 'I looked around and found nothing.\n' },
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				deadCodeReport,
+			]);
+
+			const exitCode = await runOrchestrator(twoAuditPlan(store.projectDir), {
+				rootDir,
+				store,
+				backend,
+			});
+
+			expect(backend.calls).toBe(3);
+			expect(backend.inputs[2]?.text).toContain('{"auditName":"DEAD_CODE"');
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('partial_success_blocked');
+			expect(run.summary).toContain('gave up after 2 failed attempts: SECURITY');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	// What is not the audit's failure still ends the run where it stands: nothing is retried and
+	// no audit is skipped past.
+	test('a cancelled audit session ends the run without trying the next audit', async () => {
+		const store = await makeStore('multi-audit-cancelled');
 		const backend = new SequencedBackend([
-			[
-				{
-					type: 'assistant_text',
-					chunk: 'AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[],"noFindingsJustification":"Inspected src/**/*.ts with rg for hardcoded token literals; every match was test fixture data, so nothing qualified.","reportMarkdown":"# SECURITY Audit Report"}\n',
-				},
-				{ type: 'done', exitCode: 0, filesModified: [] },
-			],
-			[{ type: 'error', reason: 'provider' }],
+			[{ type: 'error', reason: 'aborted' }],
+			deadCodeReport,
 		]);
-		const auditPlan = resolveRunPlan(
-			parseArgs([
-				'--project-dir',
-				store.projectDir,
-				'--cli',
-				'native',
-				'--audit',
-				'SECURITY,DEAD_CODE',
-			]),
-			config,
+
+		const exitCode = await runOrchestrator(twoAuditPlan(store.projectDir), {
+			rootDir,
+			store,
+			backend,
+		});
+
+		expect(exitCode).toBe(orchestratorExitCodes.aborted);
+		expect(backend.calls).toBe(1);
+		expect(await store.listAuditReports()).toEqual([]);
+		const iteration = JSON.parse(
+			await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
+		) as { abandonedAudits: string[]; remainingAudits: string[] };
+		expect(iteration).not.toHaveProperty('failedAttempt');
+		expect(iteration.abandonedAudits).toEqual([]);
+		expect(iteration.remainingAudits).toEqual(['SECURITY', 'DEAD_CODE']);
+		expect((await onlyRun(store)).stopReason).toBe('exit_error');
+	});
+
+	test('a stop request ends the run after a failed audit session', async () => {
+		const store = await makeStore('multi-audit-stop-requested');
+		const backend = new SequencedBackend(
+			[[{ type: 'error', reason: 'provider' }], deadCodeReport],
+			async () => {
+				await writeFile(join(store.metadataDir, '.stop'), '');
+			},
 		);
 
-		const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
+		await runOrchestrator(twoAuditPlan(store.projectDir), { rootDir, store, backend });
 
-		expect(exitCode).toBe(orchestratorExitCodes.providerError);
-		expect(backend.calls).toBe(2);
-		const reports = await store.listAuditReports();
-		expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(true);
-		expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(false);
-		const iterationJson = await readFile(
-			join(store.metadataDir, 'iterations', '001.json'),
-			'utf8',
-		);
-		const structured = JSON.parse(iterationJson) as {
-			completedAudits: string[];
-			remainingAudits: string[];
-		};
-		expect(structured.completedAudits).toEqual(['SECURITY']);
-		expect(structured.remainingAudits).toEqual(['DEAD_CODE']);
+		expect(backend.calls).toBe(1);
+		expect((await onlyRun(store)).stopReason).toBe('stop_requested');
+	});
+
+	test('a failure of the backend as a whole ends the run without trying the next audit', async () => {
+		for (const [name, meta] of [
+			['auth', { message: 'HTTP 401 Unauthorized: invalid x-api-key' }],
+			['quota', { message: 'You have insufficient quota for this request.' }],
+			['launch', { exitCode: 127, stderr: 'claude: command not found' }],
+		] as const) {
+			const store = await makeStore(`multi-audit-backend-wide-${name}`);
+			const backend = new SequencedBackend([
+				[{ meta, reason: 'provider', type: 'error' }],
+				deadCodeReport,
+			]);
+
+			const exitCode = await runOrchestrator(twoAuditPlan(store.projectDir), {
+				rootDir,
+				store,
+				backend,
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.providerError);
+			expect(backend.calls).toBe(1);
+			expect(await store.listAuditReports()).toEqual([]);
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('exit_error');
+			expect(run.exitCode).toBe(orchestratorExitCodes.providerError);
+		}
 	});
 
 	test('audit-mode iteration does not report historical completions as newly completed', async () => {

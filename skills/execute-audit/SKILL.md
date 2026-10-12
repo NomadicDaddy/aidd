@@ -66,7 +66,8 @@ Either form runs one audit per agent session, in order: named audits in the orde
 7. Review prior reports before launching. Audit mode automatically supplies up to three recent
    `.aidd/audit-reports/<AUDIT_NAME>-*.md` summaries to the auditor; also check
    `docs/audits/<AUDIT_NAME>_AUDIT_REPORT_*.md` read-only as a legacy fallback (do not write new
-   reports there). This matters because a same-day run replaces the current dated report.
+   reports there). This matters because a same-day run replaces the current dated report. The one
+   exception is a could-not-run result, which never replaces a real report written the same day.
 8. Classify repeated findings from aidd's persisted result:
     - an open fingerprint match is a pre-existing finding and is suppressed as a duplicate, not a
       regression;
@@ -76,7 +77,10 @@ Either form runs one audit per agent session, in order: named audits in the orde
 9. Report the audit names, report paths, total and newly created finding counts, validation result,
    suppressed duplicate/dismissal counts, recurrences, and remaining audits. Name separately any
    audit the run summary lists as `could not run` (its report records the reason and the audit
-   stays stale for a later run) or as given up on after two failed attempts. For a confirmed
+   stays stale for a later run; any finding it filed about a missing instrument is kept) or as
+   given up on after two failed attempts. A run that gave up on an audit does not end as
+   completed: it ends as a partial success when other audits finished, and as an error when none
+   did, so report that outcome and do not describe the run as clean. For a confirmed
    recurrence, recommend an appropriate automated prevention mechanism such as a lint rule, CI
    assertion, `smoke:qc` check, or targeted regression test.
 

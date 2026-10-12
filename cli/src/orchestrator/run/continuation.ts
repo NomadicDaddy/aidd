@@ -1,3 +1,4 @@
+import type { ModeResult } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { maxFlailIterations, maxFlailNudgeGrants } from 'aidd-shared/backends/flailing';
@@ -59,6 +60,10 @@ export function formatContinuableBackendInterruptionLimitSummary(
 }
 
 export function determineRunContinuation(input: {
+	/** An audit session failed on its own account and audit mode counted the attempt: the run
+	 * carries on to its next selection (or ends, with nothing left) instead of ending on the
+	 * session's exit code. See auditSessionFailureAbsorbed. */
+	auditSessionFailureAbsorbed?: boolean;
 	backendExitCode?: number;
 	completed: boolean;
 	completedAfterBackendInterruption: boolean;
@@ -74,6 +79,8 @@ export function determineRunContinuation(input: {
 	plan: RunPlan;
 	recoveredActiveVerification: boolean;
 	stopRequestedAfterRun: boolean;
+	/** How the mode asks a finished run to be recorded when not all of its work succeeded. */
+	unsuccessfulEnding?: ModeResult['unsuccessfulEnding'];
 }): RunContinuation {
 	const {
 		completed,
@@ -209,7 +216,11 @@ export function determineRunContinuation(input: {
 			summary: `${summaryPrefix}: ${displayedSummary}`,
 		};
 	}
-	if (exitCode !== orchestratorExitCodes.success && !completedAfterBackendInterruption) {
+	if (
+		exitCode !== orchestratorExitCodes.success &&
+		!completedAfterBackendInterruption &&
+		input.auditSessionFailureAbsorbed !== true
+	) {
 		return {
 			exitCode,
 			kind: 'final',
@@ -229,10 +240,10 @@ export function determineRunContinuation(input: {
 	}
 	if (completed) {
 		return {
-			exitCode: orchestratorExitCodes.success,
+			exitCode: input.unsuccessfulEnding?.exitCode ?? orchestratorExitCodes.success,
 			kind: 'final',
 			move: 'complete',
-			stopReason: 'completed',
+			stopReason: input.unsuccessfulEnding?.stopReason ?? 'completed',
 			summary: displayedSummary,
 		};
 	}

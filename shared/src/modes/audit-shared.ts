@@ -112,6 +112,11 @@ export interface InvalidAuditReport {
 /** An audit a run could not perform, with the reason recorded in its report. */
 export interface UnavailableAudit {
 	auditName: string;
+	/**
+	 * Set when a real report for this audit was already written the same day: that report was
+	 * left in place and no could-not-run report was written over it.
+	 */
+	keptReport?: string;
 	reason: string;
 }
 

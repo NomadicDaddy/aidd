@@ -132,18 +132,22 @@ export async function handleNoWorkIteration(input: {
 	const summary = await mode.summarize(context, modeResult);
 	console.log(summary.text);
 	move({ summary: summary.text, type: 'complete' });
+	// "Nothing left" is also where a run lands after giving up on some of its work, and that is
+	// not an empty backlog: the mode says how such a run is recorded.
+	const ending = modeResult.unsuccessfulEnding;
+	const exitCode = ending?.exitCode ?? orchestratorExitCodes.success;
 	await writeRunSummary(
 		deps,
 		plan,
 		acc,
-		noWorkStopReason(work),
-		orchestratorExitCodes.success,
+		ending?.stopReason ?? noWorkStopReason(work),
+		exitCode,
 		summary.text,
 	);
 	if (plan.noWorkBackoffMs > 0) {
 		await sleep(plan.noWorkBackoffMs);
 	}
-	return orchestratorExitCodes.success;
+	return exitCode;
 }
 
 // A roadmap-gate block is a configuration problem the operator must fix, not an empty

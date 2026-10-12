@@ -1,5 +1,7 @@
-import type { ModeContext } from 'aidd-shared/modes/types';
+import type { ModeContext, ModeResult } from 'aidd-shared/modes/types';
 import type { RunPlan } from 'aidd-shared/plan/types';
+
+import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 
 import { auditNames, pendingAuditNames } from './audit-selection.ts';
 import {
@@ -48,11 +50,38 @@ export async function requestedAudits(
 }
 
 /**
+ * Whether the run is finished, and how it ends when it gave up on an audit. A run that abandoned
+ * an audit did not do what it was asked, so it must not be recorded as a clean completion: with
+ * other audits done it is a partial success, and with none done it is an error. Audits that could
+ * not run do not change the ending; that outcome is legitimate and the summary names them.
+ * @param totals What the run has settled so far.
+ * @param remainingCount Audits still pending.
+ * @returns The completion fields of the mode result.
+ */
+export function auditRunCompletion(
+	totals: AuditRunTotals,
+	remainingCount: number,
+): Pick<ModeResult, 'complete' | 'unsuccessfulEnding'> {
+	if (remainingCount > 0) return { complete: false };
+	if (totals.abandoned.length === 0) return { complete: true };
+	return {
+		complete: true,
+		unsuccessfulEnding:
+			totals.completed.length > 0
+				? {
+						exitCode: orchestratorExitCodes.success,
+						stopReason: 'partial_success_blocked',
+					}
+				: { exitCode: orchestratorExitCodes.generalError, stopReason: 'exit_error' },
+	};
+}
+
+/**
  * Where the run stands after the audit just processed.
  * @param plan The run plan carrying the audit selection.
  * @param state The run's progress so far.
  * @param context The mode context naming the project.
- * @returns The run-level artifacts and summary line, and the audits still to attempt.
+ * @returns The run-level artifacts and summary line, and whether the run is finished.
  */
 export async function runProgress(plan: RunPlan, state: AuditRunState, context: ModeContext) {
 	const requested = await requestedAudits(plan, state, context);
@@ -69,7 +98,7 @@ export async function runProgress(plan: RunPlan, state: AuditRunState, context: 
 			requestedAudits: requested,
 			unavailableAudits: [...state.totals.unavailable],
 		},
-		remainingAudits,
+		completion: auditRunCompletion(state.totals, remainingAudits.length),
 		summary: auditRunSummary(state.totals, remainingAudits.length),
 	};
 }

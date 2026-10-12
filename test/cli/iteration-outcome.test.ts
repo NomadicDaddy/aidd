@@ -450,7 +450,11 @@ describe('classifyIterationOutcome', () => {
 			exitCode: 0,
 			iterationCommits: [],
 			modeResult: {
-				artifacts: { completedAudits: [], perAuditReportPaths: {} },
+				artifacts: {
+					completedAudits: [],
+					missingAudits: ['SECURITY'],
+					perAuditReportPaths: {},
+				},
 				complete: true,
 				summary: 'audit finished',
 			},
@@ -464,6 +468,38 @@ describe('classifyIterationOutcome', () => {
 		expect(result.missingAuditArtifacts).toBe(true);
 		expect(result.missingAiddResult).toBe(false);
 		expect(result.recordedExitCode).toBe(73);
+	});
+
+	// A could-not-run result that kept the day's real report writes nothing, and its audit is
+	// settled all the same: no report path is not a missing artifact.
+	test('a settled could-not-run audit with no report written is not a missing artifact', async () => {
+		const projectDir = await makeProjectDir('audit-unavailable-kept');
+
+		const result = await classifyIterationOutcome({
+			completedResultFeature: undefined,
+			completionFinalizedBeforeBackendExit: false,
+			events: [],
+			exitCode: 0,
+			iterationCommits: [],
+			modeResult: {
+				artifacts: {
+					completedAudits: [],
+					missingAudits: [],
+					perAuditReportPaths: {},
+					unavailableAudits: [{ auditName: 'SECURITY', reason: 'no fixture' }],
+				},
+				complete: true,
+				summary: 'audit SECURITY could not run',
+			},
+			plan: { ...basePlan, mode: 'audit' as const, projectDir },
+			startedAtMs: Date.now(),
+			structuredResult: { auditStatus: 'unavailable', unavailableReason: 'no fixture' },
+			work: { description: 'SECURITY audit', id: 'SECURITY', kind: 'generic' as const },
+		});
+
+		expect(result.missingAuditArtifacts).toBe(false);
+		expect(result.missingAiddResult).toBe(false);
+		expect(result.recordedExitCode).toBe(0);
 	});
 
 	test('recognized invalid audit reports remain retryable without persisted artifacts', async () => {

@@ -1413,13 +1413,13 @@ EVIDENCE CONTRACT — the result must prove the audit actually ran:
 - A result returning empty `auditFindings` without genuine justification is rejected and the audit remains pending — no report from it is persisted, so it cannot count as fresh audit evidence. Do the investigation before reporting zero.
 - aidd validates every finding entry's shape. An entry that is not an object, or lacks a title, spec, recognized severity, or at least one affected file, causes the ENTIRE report to be rejected and the audit to remain pending for retry. Its `Verified:` evidence must be non-empty and cite a `path:line`, a scoped grep/search result, or a measured artifact and its value. No findings or report from a rejected result are persisted.
 
-COULD-NOT-RUN — when the audit cannot be performed at all (for example: no Lighthouse artifact exists and none can be produced; a required fixture could not be written; the audit definition is missing), say so instead of writing a report that says SKIPPED or INCOMPLETE:
+COULD-NOT-RUN — when the audit cannot be performed at all (for example: no Lighthouse artifact exists and none can be produced; a required fixture could not be written; the audit definition is missing), declare that in the result instead of returning an ordinary result whose report says SKIPPED or INCOMPLETE:
 
 ```text
 AIDD_RESULT: {"auditName":"SECURITY","auditStatus":"unavailable","unavailableReason":"No Lighthouse artifact exists under logs/ and no browser is installed to produce one.","auditFindings":[]}
 ```
 
-`unavailableReason` is required and must say concretely what was missing; `auditFindings` must be empty. aidd records the audit as could-not-run with that reason, does not retry it in this run, and leaves it stale so a later run performs it. Use this only when the audit genuinely cannot run — never to skip an audit that can be performed, and never fabricate findings or an empty report to satisfy the contract.
+`unavailableReason` is required and must say concretely what was missing. `auditFindings` is normally empty. The one finding that belongs in a could-not-run result is the missing instrument itself, and only when that is a defect of this project: a project that should be measurable has no way to produce the measurement. File it as a High finding under the evidence contract above and aidd keeps it. When the target simply has nothing for this audit to measure, file nothing. A `reportMarkdown` is optional here; if you include one it records what you attempted and carries no score, issue counts, or recommendations. aidd records the audit as could-not-run with that reason, does not retry it in this run, and leaves it stale so a later run performs it. Use this only when the audit genuinely cannot run — never to skip an audit that can be performed, and never fabricate findings or an empty report to satisfy the contract.
 
 This is an unattended run. Do not ask interactive questions.
 

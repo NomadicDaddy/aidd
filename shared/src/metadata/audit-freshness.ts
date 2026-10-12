@@ -22,6 +22,7 @@ import {
 	buildAuditReportMetadata,
 	parseAuditReportMetadata,
 	prependAuditReportMetadata,
+	reportOpensWithMarker,
 	thresholds,
 } from './audit-freshness/metadata.ts';
 
@@ -39,6 +40,7 @@ export {
 	type AuditStaleReason,
 	parseAuditReportMetadata,
 	prependAuditReportMetadata,
+	reportOpensWithMarker,
 } from './audit-freshness/metadata.ts';
 
 interface AuditReportSnapshot {
@@ -49,7 +51,7 @@ interface AuditReportSnapshot {
 
 interface AuditFreshnessOptions {
 	context?: AuditFreshnessContext;
-	/** A report whose content carries any of these markers is not evidence and is passed over. */
+	/** A report that opens with any of these markers is not evidence and is passed over. */
 	excludedReportMarkers?: readonly string[];
 	now?: Date;
 }
@@ -177,7 +179,7 @@ async function latestAuditReport(
 		} catch {
 			continue;
 		}
-		if (excludedReportMarkers.some((marker) => content.includes(marker))) continue;
+		if (reportOpensWithMarker(content, excludedReportMarkers)) continue;
 		return {
 			content,
 			mtimeMs: candidate.mtimeMs,

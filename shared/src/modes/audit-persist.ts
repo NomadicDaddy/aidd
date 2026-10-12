@@ -1,6 +1,5 @@
 import type { AiddStore } from '../metadata/store.ts';
 import type {
-	AuditReportInput,
 	InvalidAuditReport,
 	NormalizedAuditFinding,
 	UnavailableAudit,
@@ -18,9 +17,13 @@ import {
 	snapshotRoadmap,
 } from './audit-file-changes.ts';
 import { disambiguateFeatureId, normalizeFinding } from './audit-findings.ts';
-import { enforceInstrumentBackedScore, withheldScoreValue } from './audit-instruments.ts';
+import { enforceInstrumentBackedScore } from './audit-instruments.ts';
 import { structuredAuditReports, structuredFindings, structuredReport } from './audit-parsing.ts';
-import { simulationMarker, unavailableMarker } from './audit-shared.ts';
+import {
+	finalReportContent,
+	sameDayEvidenceReport,
+	unavailableReasonFor,
+} from './audit-unavailable.ts';
 
 export interface AuditPersistInput {
 	ledgerStore?: AiddStore;
@@ -47,6 +50,7 @@ export interface AuditPersistResult {
 	invalid: InvalidAuditReport[];
 	perAuditFindingsCreated: Record<string, number>;
 	perAuditFindingTotals: Record<string, number>;
+	/** The report each audit wrote. An audit whose could-not-run result was not written has none. */
 	perAuditReportPaths: Record<string, string>;
 	/** Ledger lines that could not be parsed and were ignored for this persist. */
 	skippedLedgerLines: number;
@@ -54,45 +58,12 @@ export interface AuditPersistResult {
 	suppressedDuplicateCount: number;
 	totalCreated: number;
 	totalFindings: number;
-	/** Audits whose report was written carrying the could-not-run marker, so they stay stale. */
+	/**
+	 * Audits that could not be performed. Each has a report carrying the could-not-run marker,
+	 * so it stays stale, unless a real report from the same day was kept in its place.
+	 */
 	unavailableAudits: UnavailableAudit[];
 	unmeasuredScoresWithheld: number;
-}
-
-const withheldScoreReason =
-	'the report declared a numeric score with no validated instruments[] entry, so nothing measured it';
-
-const selfDeclaredSkipReason = `the report states \`${withheldScoreValue}\`, so by its own account the audit was not performed`;
-
-// An audit produced no usable evidence when the agent said it could not run, when a measurement
-// audit printed a score that had to be withheld, or when the report itself carries the skipped
-// status the methodology prescribes for an audit with no working instrument. The last case is
-// read from the text and not trusted to the agent's `auditStatus`: a report that says it was
-// skipped must never be what makes its audit current.
-function unavailableReasonFor(
-	report: AuditReportInput,
-	scoreWithheld: boolean,
-	reportMarkdown: string,
-): string | undefined {
-	if (report.unavailableReason !== undefined) {
-		return report.unavailableReason.replace(/\s+/gu, ' ');
-	}
-	if (scoreWithheld) return withheldScoreReason;
-	return reportMarkdown.includes(withheldScoreValue) ? selfDeclaredSkipReason : undefined;
-}
-
-// The marker is what keeps a could-not-run report from counting as fresh; the reason line is
-// there for the person who opens the file to find out why the audit is still stale.
-function finalReportContent(
-	reportMarkdown: string,
-	simulated: boolean,
-	unavailableReason: string | undefined,
-): string {
-	const body =
-		unavailableReason === undefined
-			? reportMarkdown
-			: `${unavailableMarker}\n> **Audit could not run:** ${unavailableReason}\n\n${reportMarkdown}`;
-	return simulated ? `${simulationMarker}\n${body}` : body;
 }
 
 /**
@@ -235,27 +206,37 @@ export async function persistAuditReports(input: AuditPersistInput): Promise<Aud
 			simulated,
 			unavailableReason,
 		);
-		const reportPath = await recordAuditReportWrite(
-			fileChanges,
-			projectDir,
-			report.auditName,
-			(timestamp) =>
-				store.writeAuditReport(
-					report.auditName,
-					finalReport,
-					timestamp,
-					createdFindingReferences,
-				),
-		);
+		// A could-not-run result never replaces real evidence written earlier the same day.
+		const keptReport =
+			unavailableReason === undefined
+				? undefined
+				: await sameDayEvidenceReport(projectDir, report.auditName);
+		if (keptReport === undefined) {
+			perAuditReportPaths[report.auditName] = await recordAuditReportWrite(
+				fileChanges,
+				projectDir,
+				report.auditName,
+				(timestamp) =>
+					store.writeAuditReport(
+						report.auditName,
+						finalReport,
+						timestamp,
+						createdFindingReferences,
+					),
+			);
+		}
 
 		if (unavailableReason === undefined) {
 			completedAudits.push(report.auditName);
 		} else {
-			unavailableAudits.push({ auditName: report.auditName, reason: unavailableReason });
+			unavailableAudits.push({
+				auditName: report.auditName,
+				...(keptReport === undefined ? {} : { keptReport }),
+				reason: unavailableReason,
+			});
 		}
 		perAuditFindingTotals[report.auditName] = findings.length;
 		perAuditFindingsCreated[report.auditName] = created;
-		perAuditReportPaths[report.auditName] = reportPath;
 		totalFindings += findings.length;
 		totalCreated += created;
 	}

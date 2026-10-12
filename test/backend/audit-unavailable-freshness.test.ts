@@ -58,6 +58,33 @@ describe('could-not-run reports on panel surfaces', () => {
 		}
 	});
 
+	// The marker says what a report is only on the leading lines the writer puts it on. A real
+	// report that quotes it (an audit of aidd itself can) is evidence here as it is for the CLI.
+	test('a real report that quotes the marker in its body still reads fresh', async () => {
+		const projectDir = await testTempDir('aidd-panel-quoted-marker-');
+		try {
+			await new FileAiddStore(projectDir).writeAuditReport(
+				'SECURITY',
+				`# SECURITY\n\nThe writer prefixes a could-not-run report with:\n\n${unavailableMarker}\n`,
+			);
+			const context = createAuditFreshnessContext();
+
+			expect((await auditReportFreshness(projectDir, 'SECURITY', context)).status).toBe(
+				'fresh',
+			);
+			const { entry } = await classifyAuditEntry(
+				'SECURITY',
+				projectDir,
+				new Set(),
+				null,
+				context,
+			);
+			expect(entry.freshness).toBe('fresh');
+		} finally {
+			await removeTempTree(projectDir);
+		}
+	});
+
 	// Pinned, not endorsed: the panel has always counted a simulated report, unlike the CLI's
 	// audit selection. This change leaves that as it was.
 	test('a simulated report still counts on panel surfaces', async () => {

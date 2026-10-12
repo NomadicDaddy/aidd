@@ -15,7 +15,7 @@ export interface AuditRunTotals {
 	completed: string[];
 	findingsCreated: number;
 	findingsTotal: number;
-	/** Audits that could not be performed; each has a marked report and stays stale. */
+	/** Audits that could not be performed; none of them was made current by this run. */
 	unavailable: UnavailableAudit[];
 }
 
@@ -66,6 +66,25 @@ export function auditFailureSummary(auditName: string, reason: string, attempt: 
 	return `audit ${auditName} did not complete (${reason}); no report written; failed attempt ${attempt} of ${maxAuditAttempts}`;
 }
 
+/**
+ * The line for a session that ended for a reason that was not the audit's own: a stop, an
+ * interruption, a safety stop, or a rate limit. No attempt is counted, so the audit is still
+ * pending if the run goes on.
+ * @param auditName The audit the session was given.
+ * @param reason Why the session did not count.
+ * @returns The per-audit summary line.
+ */
+export function auditInterruptedSummary(auditName: string, reason: string): string {
+	return `audit ${auditName} did not complete (${reason}); no report written; not counted as a failed attempt at the audit`;
+}
+
+// What became of the report of an audit that could not run.
+function unavailableReportNote(unavailable: UnavailableAudit): string {
+	return unavailable.keptReport === undefined
+		? 'its report records why and the audit stays stale'
+		: 'the report already written for it today is real evidence and was kept, so no could-not-run report was written';
+}
+
 // A torn or hand-edited ledger line is skipped rather than fatal; say so, because a skipped
 // resolution can re-create a finding that was already dismissed.
 function persistNotes(persisted: AuditPersistResult): string {
@@ -81,7 +100,7 @@ function persistNotes(persisted: AuditPersistResult): string {
 
 /**
  * The line for an audit whose result was persisted — as real evidence, or as a could-not-run
- * report that leaves the audit stale.
+ * result that does not make the audit current.
  * @param auditName The audit the session was given.
  * @param persisted What persisting its result wrote.
  * @param unavailable Set when the audit could not be performed.
@@ -99,7 +118,7 @@ export function auditResultSummary(
 	const headline =
 		unavailable === undefined
 			? `audit ${auditName} finished with ${findings}`
-			: `audit ${auditName} could not run (${unavailable.reason}); its report records why and the audit stays stale; ${findings} recorded`;
+			: `audit ${auditName} could not run (${unavailable.reason}); ${unavailableReportNote(unavailable)}; ${findings} recorded`;
 	return `${headline}${persistNotes(persisted)}`;
 }
 

@@ -236,6 +236,35 @@ describe('project evidence collection', () => {
 		expect(evidence.unattributedAuditRuns).toBe(2);
 	});
 
+	// The driver names the run's worklist; the breakdown names the audits it performed. An audit
+	// the run gave up on, or that could not run, is on the first and not the second.
+	test('does not credit an audit the run abandoned or could not run', async () => {
+		const projectDir = await makeProject('evidence-unperformed');
+		await Bun.write(
+			join(projectDir, '.aidd', 'runs.jsonl'),
+			[
+				JSON.stringify(
+					auditRun(
+						'DEAD_CODE+LIGHTHOUSE+SECURITY',
+						{ SECURITY: 2 },
+						'partial_success_blocked',
+					),
+				),
+				JSON.stringify(auditRun('DEAD_CODE+LIGHTHOUSE', {}, 'exit_error')),
+			].join('\n'),
+		);
+
+		const evidence = await collectProjectEvidence(projectDir);
+		// The audit the partial run did perform is credited as in a completed run.
+		expect(evidence.completedRunsWithFindings.get('SECURITY')).toBe(1);
+		expect(evidence.incompleteAuditRuns.has('SECURITY')).toBe(false);
+		for (const unperformed of ['DEAD_CODE', 'LIGHTHOUSE']) {
+			expect(evidence.completedRunsWithFindings.has(unperformed)).toBe(false);
+			expect(evidence.incompleteAuditRuns.has(unperformed)).toBe(false);
+		}
+		expect(evidence.unattributedAuditRuns).toBe(0);
+	});
+
 	test('a ledger holding only suppressions still reads the audit feature directories', async () => {
 		const projectDir = await makeProject('suppression-only-ledger');
 		await writeFeature(projectDir, 'audit-security-open', {

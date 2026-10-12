@@ -89,7 +89,11 @@ This is the rule the 2026-07-18 reports broke. When an instrument fails Phase 0,
 
 ### No validated instrument means no score
 
-A measurement audit that clears zero instruments produces a report marked `SKIPPED / data-unavailable` carrying the Phase 0 records and the High finding - and **no** numeric score, no issue counts, and no remediation recommendations. This is enforced mechanically at report-write time for `PERFORMANCE`, `LIGHTHOUSE`, and `BUILD_OUTPUT`: a score declared without at least one structurally valid instrument record with `verified: true` is stripped and replaced with `SKIPPED / data-unavailable`, and the run summary carries a warning. The report writer validates the record's required fields and recognized `kind`; it cannot independently rerun the instrument or authenticate the evidence path. Phase 0's present, wired, and faithful assertions remain the auditor's responsibility, and setting `verified: true` without performing them invalidates the audit. Do not treat the enforcement as the rule - emit and verify the records.
+A measurement audit that clears zero instruments cannot be performed. Declare that in the structured result: `auditStatus: "unavailable"`, with an `unavailableReason` naming the instruments that failed Phase 0 and why. A report, if you write one, carries the Phase 0 records and the status line `**Status:** SKIPPED / data-unavailable` - and **no** numeric score, no issue counts, and no remediation recommendations. The audit stays stale, so a later run performs it.
+
+File the High finding in that same result only when the missing instrument is a defect of this project: a project that should be measurable has no way to produce the measurement. When the target has nothing for the audit to measure, file nothing. Such a target should not have the audit applied at all, and its project profile or an audit override is where that is settled, not a finding.
+
+The score rule is enforced mechanically at report-write time for `PERFORMANCE`, `LIGHTHOUSE`, and `BUILD_OUTPUT`: a score declared without at least one structurally valid instrument record with `verified: true` is stripped and replaced with `SKIPPED / data-unavailable`, and the run summary carries a warning. The report writer validates the record's required fields and recognized `kind`; it cannot independently rerun the instrument or authenticate the evidence path. Phase 0's present, wired, and faithful assertions remain the auditor's responsibility, and setting `verified: true` without performing them invalidates the audit. Do not treat the enforcement as the rule - emit and verify the records.
 
 **Worked example (the 2026-07-18 failure).** The report stated: _"No logs/crawltest.json or frontend/dist/stats.html present; scored code-level only, no lab metrics fabricated."_ It then printed `84/100` with `0/0/0/0`. The first clause is a correct Phase 0 observation; the second sentence is the defect. Under this rule the same run produces:
 
@@ -103,7 +107,7 @@ A measurement audit that clears zero instruments produces a report marked `SKIPP
 >
 > **Status:** `SKIPPED / data-unavailable`. **Finding (High):** no working frontend measurement instrument exists in this target; the PERFORMANCE framework's Phase 1 and Phase 4 cannot be executed here.
 
-That target's PERFORMANCE audit ran seven times between 2026-05-26 and 2026-07-18 with none of those instruments ever present. Under this rule the first of those seven runs files the finding, instead of the seventh producing a score.
+That target's PERFORMANCE audit ran seven times between 2026-05-26 and 2026-07-18 with none of those instruments ever present. Under this rule the first of those seven runs declares the audit unavailable and files the finding, instead of the seventh producing a score. The finding belongs there because a served frontend with no way to measure it is a defect of the target.
 
 ## 1. Read the Enforcing Implementation - Cite `file:line`
 

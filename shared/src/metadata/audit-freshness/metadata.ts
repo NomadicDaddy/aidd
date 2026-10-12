@@ -144,6 +144,31 @@ function parseFindingReferences(value: unknown): AuditReportFindingReference[] |
 	return findings;
 }
 
+const aiddCommentLinePattern = /^<!--\s*aidd:.*-->$/;
+
+/**
+ * Whether a report file opens with one of the given markers. A report's own kind is declared only
+ * by the aidd comment lines at the very top of the file: the freshness header, then whatever
+ * marker the writer put ahead of the report text. The same text further down is the report
+ * quoting a marker, which an audit of aidd itself can do, and says nothing about the report.
+ * Every reader that passes over marked reports asks this one question, so they cannot disagree.
+ * @param content The report file's content.
+ * @param markers The marker lines to look for.
+ * @returns True when a leading aidd comment line is exactly one of the markers.
+ */
+export function reportOpensWithMarker(content: string, markers: readonly string[]): boolean {
+	let lineStart = 0;
+	while (lineStart < content.length) {
+		const lineEnd = content.indexOf('\n', lineStart);
+		const line = content.slice(lineStart, lineEnd === -1 ? content.length : lineEnd).trim();
+		if (!aiddCommentLinePattern.test(line)) return false;
+		if (markers.includes(line)) return true;
+		if (lineEnd === -1) return false;
+		lineStart = lineEnd + 1;
+	}
+	return false;
+}
+
 function stripAuditReportMetadata(content: string): string {
 	const pattern = new RegExp(
 		`^<!--\\s*${AUDIT_FRESHNESS_METADATA_PREFIX}\\s+[^]*?\\s*-->\\r?\\n?`,

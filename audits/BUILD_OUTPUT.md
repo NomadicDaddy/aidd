@@ -89,7 +89,7 @@ Where a target **does** ship a purpose-built gate — the template's `check:crit
 
 A wired gate that printed `[CACHED]` has not run either, in this session. A cached step replays an earlier pass recorded against the same declared inputs; it is evidence about the build that existed then. Before crediting a cached artifact gate, read what its cache key hashes: a step that inspects the build output must hash the output itself, not only the sources that produced it, or a stale, partial or hand-edited `dist` sits behind a valid entry. Then measure the build you produced for this audit by running the check's own script against it, which does not consult the gate's cache. Do not regenerate a budget file to obtain a reading.
 
-**If the production build cannot be produced at audit time, this audit is `SKIPPED / data-unavailable` with a High finding.** Do not substitute a dev build; a dev server emits unhashed, unminified, unsplit output and every check below is meaningless against it.
+**If the production build cannot be produced at audit time, this audit cannot be performed: declare `auditStatus: "unavailable"` in the result, with an `unavailableReason` that says why the build could not be produced.** File a High finding in that result only when that is a defect of this project (it is meant to build and does not); file none when the target has no production build to inspect. Do not substitute a dev build; a dev server emits unhashed, unminified, unsplit output and every check below is meaningless against it.
 
 ## Phase 1: Establish the Delivery Topology
 

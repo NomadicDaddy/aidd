@@ -431,7 +431,13 @@ describe('prompt compiler', () => {
 			'AIDD_RESULT: {"auditName":"LIGHTHOUSE","auditStatus":"unavailable","unavailableReason":',
 		);
 		expect(compiled.text).toContain(
-			'instead of writing a report that says SKIPPED or INCOMPLETE',
+			'instead of returning an ordinary result whose report says SKIPPED or INCOMPLETE',
+		);
+		// The definitions tell an audit with no instrument to file a High finding, so the
+		// contract must not forbid one in the same result.
+		expect(compiled.text).not.toContain('`auditFindings` must be empty');
+		expect(compiled.text).toContain(
+			'only when that is a defect of this project: a project that should be measurable has no way to produce the measurement',
 		);
 		expect(compiled.text).toContain('MEASUREMENT CONTRACT');
 		expect(compiled.text).toContain('Anti-placeholder rule');

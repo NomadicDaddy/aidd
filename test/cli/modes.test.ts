@@ -2494,7 +2494,166 @@ describe('mode handlers', () => {
 		const silent = await mode.processResult(context, { ...failed, exitCode: 0 });
 		expect(silent.summary).toContain('no AIDD_RESULT structured output emitted');
 		expect(silent.artifacts?.abandonedAudits).toEqual(['SECURITY']);
+		expect(silent.artifacts?.failedAttempt).toBe(2);
 		expect((await mode.selectWork(context)).id).toBe('DEAD_CODE');
+	});
+
+	// A stop, an interruption, a safety stop, and a rate limit are not the audit's failure. If
+	// they counted, two rate-limit waits would have the run give up on an audit nothing ran.
+	test('audit mode does not count a session that ended for a reason that is not the audit', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-uncounted-session');
+		const context = { projectDir, store };
+		const mode = createModeHandler(plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']));
+		const work = await mode.selectWork(context);
+		const failed = { events: [], filesModified: [], selectedWork: work, transcript: '' };
+
+		for (const exitCode of [74, 124, 75, 78, 130]) {
+			const result = await mode.processResult(context, { ...failed, exitCode });
+			expect(result.summary).toStartWith(
+				`audit SECURITY did not complete (agent exited ${exitCode}); no report written; not counted as a failed attempt at the audit`,
+			);
+			expect(result.complete).toBe(false);
+			expect(result.artifacts).not.toHaveProperty('failedAttempt');
+			expect(result.artifacts).toMatchObject({
+				abandonedAudits: [],
+				missingAudits: ['SECURITY'],
+				remainingAudits: ['SECURITY', 'DEAD_CODE'],
+			});
+		}
+		expect((await mode.selectWork(context)).id).toBe('SECURITY');
+		// A timeout and a provider error are the session's own failure and do count.
+		const timedOut = await mode.processResult(context, { ...failed, exitCode: 71 });
+		expect(timedOut.artifacts?.failedAttempt).toBe(1);
+		const providerError = await mode.processResult(context, { ...failed, exitCode: 72 });
+		expect(providerError.artifacts?.abandonedAudits).toEqual(['SECURITY']);
+	});
+
+	// Giving up on an audit is not a clean completion, whichever session the run ends on.
+	test('audit mode names an unsuccessful ending once it has given up on an audit', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-unsuccessful-ending');
+		const context = { projectDir, store };
+		const mode = createModeHandler(plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']));
+		const fail = async () => {
+			const work = await mode.selectWork(context);
+			return await mode.processResult(context, {
+				events: [],
+				exitCode: 1,
+				filesModified: [],
+				selectedWork: work,
+				transcript: '',
+			});
+		};
+
+		await fail();
+		const gaveUpOnFirst = await fail();
+		// Audits remain, so the run is not ending yet and nothing is declared.
+		expect(gaveUpOnFirst.complete).toBe(false);
+		expect(gaveUpOnFirst.unsuccessfulEnding).toBeUndefined();
+		await fail();
+		const gaveUpOnAll = await fail();
+		expect(gaveUpOnAll.complete).toBe(true);
+		expect(gaveUpOnAll.unsuccessfulEnding).toEqual({ exitCode: 1, stopReason: 'exit_error' });
+		// The same ending is carried by the no-work result a later selection produces.
+		const noWork = await mode.selectWork(context);
+		expect(noWork.kind).toBe('none');
+		const afterTheEnd = await mode.processResult(context, {
+			events: [],
+			exitCode: 0,
+			filesModified: [],
+			selectedWork: noWork,
+			skipped: true,
+			transcript: '',
+		});
+		expect(afterTheEnd.unsuccessfulEnding).toEqual({ exitCode: 1, stopReason: 'exit_error' });
+		expect(afterTheEnd.summary).toContain(
+			'gave up after 2 failed attempts: SECURITY, DEAD_CODE',
+		);
+	});
+
+	// One report file per audit per day: a could-not-run result after a real one must not
+	// replace it, and the audit still settles as could-not-run and not as a failed attempt.
+	test('audit mode keeps the real report of the day when a later session cannot run', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-unavailable-same-day');
+		const context = { projectDir, store };
+		await store.writeAuditReport('SECURITY', '# SECURITY real report');
+		const mode = createModeHandler(plan(projectDir, ['--audit', 'SECURITY']));
+		const work = await mode.selectWork(context);
+
+		const result = await mode.processResult(context, {
+			events: [],
+			exitCode: 0,
+			filesModified: [],
+			selectedWork: work,
+			structuredResult: {
+				auditName: 'SECURITY',
+				auditStatus: 'unavailable',
+				unavailableReason: 'The fixture directory could not be written.',
+			},
+			transcript: '',
+		});
+
+		const reports = await store.listAuditReports();
+		expect(reports).toHaveLength(1);
+		const report = await store.readAuditReport(reports[0] ?? '');
+		expect(report).toContain('# SECURITY real report');
+		expect(report).not.toContain(unavailableMarker);
+		expect(result.complete).toBe(true);
+		expect(result.unsuccessfulEnding).toBeUndefined();
+		expect(result.summary).toStartWith(
+			'audit SECURITY could not run (The fixture directory could not be written.); the report already written for it today is real evidence and was kept, so no could-not-run report was written',
+		);
+		expect(result.summary).toContain('could not run: SECURITY');
+		expect(result.artifacts).not.toHaveProperty('failedAttempt');
+		expect(result.artifacts).toMatchObject({
+			abandonedAudits: [],
+			auditFindings: {},
+			completedAudits: [],
+			missingAudits: [],
+			modeFilesCreated: [],
+			modeFilesEdited: [],
+			perAuditReportPaths: {},
+			remainingAudits: [],
+		});
+		expect(result.artifacts?.unavailableAudits).toHaveLength(1);
+	});
+
+	test('audit mode leaves a could-not-run audit off the per-audit finding counts', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-unavailable-counts');
+		const context = { projectDir, store };
+		const mode = createModeHandler(plan(projectDir, ['--audit', 'LIGHTHOUSE']));
+		const work = await mode.selectWork(context);
+
+		const result = await mode.processResult(context, {
+			events: [],
+			exitCode: 0,
+			filesModified: [],
+			selectedWork: work,
+			structuredResult: {
+				auditFindings: [
+					{
+						affectedFiles: ['package.json'],
+						description:
+							'Verified: package.json:1 - no script produces a Lighthouse artifact.',
+						severity: 'High',
+						spec: 'Add a script that produces logs/lighthouse.json.',
+						title: 'No working Lighthouse instrument exists',
+					},
+				],
+				auditName: 'LIGHTHOUSE',
+				auditStatus: 'unavailable',
+				unavailableReason: 'No script in package.json produces a Lighthouse artifact.',
+			},
+			transcript: '',
+		});
+
+		// The finding is kept and counted for the run; the audit is not credited as performed.
+		expect(result.artifacts).toMatchObject({
+			auditFindings: {},
+			findingsCreated: 1,
+			invalidAuditReports: [],
+			perAuditFindingTotals: { LIGHTHOUSE: 1 },
+		});
+		expect(result.summary).toContain('1 finding(s) recorded');
 	});
 
 	test('audit mode rejects a result naming an audit the session was not given', async () => {

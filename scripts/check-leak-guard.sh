@@ -193,6 +193,17 @@ code=0
 (cd "$guard_repo" && LEAK_GUARD_PATTERNS="$tmp/patterns-broken" LEAK_GUARD_ALLOW_NO_PRIVATE=1 bash .githooks/leak-guard.sh) 2>"$tmp/stderr" || code=$?
 [ "$code" = 0 ] || fail 'the per-commit override did not allow a commit past an invalid private pattern'
 
+# 15. A refusal for a private key names only the file that holds one. A second staged file that
+# merely shows the header, the shape a key takes, is not what was refused, and listing it would
+# send whoever cleans up to the wrong file.
+printf '%s\n' "$pem_header" >"$guard_repo/shape.txt"
+git -C "$guard_repo" add shape.txt
+[ "$(run_guard "$synthetic" "$(printf '%s\n%s' "$pem_header" "$b64_run")")" = 1 ] || fail 'a key beside a bare header was not blocked'
+grep -q 'staged.txt: 1 key(s), private key material' "$tmp/stderr" || fail 'a key refusal did not name the file holding the key'
+if grep -q 'shape.txt' "$tmp/stderr"; then fail 'a key refusal named a file that only shows a bare header'; fi
+git -C "$guard_repo" rm -q --cached shape.txt
+rm -f "$guard_repo/shape.txt"
+
 # 12. A public site may publish a sibling's name once the repo's staged leak-guard-publishes clears
 # it, and the guard says it did. The file is read from the index, so an unstaged edit clears nothing.
 publishes="$guard_repo/.githooks/leak-guard-publishes"

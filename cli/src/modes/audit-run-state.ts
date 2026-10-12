@@ -62,7 +62,7 @@ export async function requestedAudits(
  * other audits done it is a partial success, and with none done it is an error. Audits that could
  * not run do not change the ending; that outcome is legitimate and the summary names them. A run
  * that stopped itself after consecutive failed sessions is finished whatever is still pending,
- * and ends the same two ways.
+ * and always ends as an error.
  * @param totals What the run has settled so far.
  * @param remainingCount Audits still pending.
  * @returns The completion fields of the mode result.

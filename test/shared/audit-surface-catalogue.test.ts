@@ -107,6 +107,25 @@ describe('surface audits in the shipped catalogue', () => {
 		for (const audit of SURFACE_AUDITS) expect(after).toContain(audit);
 	});
 
+	// A mobile app keeps its store in an embedded database declared one directory down, with its
+	// schema and migrations written in TypeScript: no SQL file, no migrations directory, and a
+	// root manifest that declares nothing. Only the catalogue's package list can see it.
+	test('a mobile app with an embedded database keeps the database audits', async () => {
+		const dir = await fixture('aidd-fixture-mobile-', {
+			'frontend/package.json': { dependencies: { 'expo-sqlite': '16.0.0' } },
+			'frontend/src/db/migrations.ts': 'export const migrations = [];\n',
+			'frontend/src/db/schema.ts': 'export const schema = {};\n',
+			'package.json': {},
+		});
+		const after = await filterApplicableAuditNames(
+			repoRoot,
+			dir,
+			await discoverAuditNames(repoRoot),
+		);
+		expect(after).toContain('DATABASE');
+		expect(after).toContain('SCHEMA_CONSTRAINTS');
+	});
+
 	test('the catalogue requires a surface of exactly those five audits', async () => {
 		const mapping = await loadAuditProfileMapping(repoRoot);
 		expect(mapping.requiresSurface).toEqual({

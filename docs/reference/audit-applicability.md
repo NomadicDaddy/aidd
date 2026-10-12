@@ -199,15 +199,22 @@ A surface is present when either kind of evidence is found, and the detector
   workspace, or a `package.json` up to two directories down. These are the same manifests
   `requiresPackages` reads. Evidence reads `declares react in frontend/package.json`.
 - **A file in the project's tree.** For `web-frontend`, markup source: an `.html`, `.astro`, `.vue`,
-  `.svelte`, `.tsx` or `.jsx` file. For `database`, a schema the project owns: a directory named
-  `migrations` or `drizzle` that holds `.sql` files, or a `schema.prisma` file. Evidence reads
-  `index.html under public/`.
+  `.svelte`, `.tsx` or `.jsx` file. For `database`, something the project owns: a `schema.prisma`
+  file, a database file (`.db`, `.sqlite`, `.sqlite3`), or a `.sql` script. A project can keep its
+  database with no driver package at all and its SQL outside any directory named for migrations,
+  so neither is required. Evidence reads `index.html under public/`.
 
 The file scan runs only for a surface no manifest settled. It is breadth-first from the project
-root, reads at most four directories down and at most 5,000 directory entries, and never enters
-`node_modules`, `vendor`, `dist`, `build`, `out`, `coverage`, `test`, `tests`, `__tests__`,
-`fixtures`, `docs`, `examples`, `scripts`, `config`, or any directory whose name starts with a dot.
-A scan that runs out reads the surface as absent.
+root with no depth limit, reads at most 5,000 directory entries, and never enters `node_modules`,
+`vendor`, `dist`, `build`, `out`, `coverage`, `test`, `tests`, `__tests__`, `fixtures`, `docs`,
+`examples`, `scripts`, `config`, or any directory whose name starts with a dot.
+
+Only a scan that finished can say a surface is absent. One that reached its entry limit, or met a
+directory it could not read, has ruled nothing out: each surface it was still looking for counts
+as present, with evidence such as `file scan incomplete: it stopped at its limit of 5000 entries`
+or `file scan incomplete: backend/ could not be read`. An audit that runs and finds nothing costs
+a session; one withheld on an unfinished search is silently never run. So adding unrelated files,
+moving source deeper or losing access to part of a tree can add an audit and can never remove one.
 
 Known limits, all handled by a per-project override:
 

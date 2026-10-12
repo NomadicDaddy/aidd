@@ -136,20 +136,47 @@ describe('web-frontend detection from markup source', () => {
 		}
 	});
 
-	test('the scan reads four directories down and no further', async () => {
-		expect(await surfaces({ 'a/b/c/d/page.html': '' })).toEqual({
-			'web-frontend': 'page.html under a/b/c/d/',
+	// Moving real source deeper must not be able to remove an audit, so there is no depth limit.
+	test('the scan reads as deep as the source goes', async () => {
+		expect(await surfaces({ 'a/b/c/d/e/f/g/page.html': '' })).toEqual({
+			'web-frontend': 'page.html under a/b/c/d/e/f/g/',
 		});
-		expect(await surfaces({ 'a/b/c/d/e/page.html': '' })).toEqual({});
 	});
 
-	test('the scan gives up once it has examined its budget of entries', async () => {
+	// Only a scan that finished can say a surface is absent.
+	test('a project that cannot be read at all has nothing ruled out', async () => {
+		const missing = join(await project({}), 'not-there');
+		const unread = 'file scan incomplete: the project root could not be read';
+		expect(
+			Object.fromEntries((await readProjectAuditEvidence(missing, mapping)).surfaces),
+		).toEqual({ database: unread, 'web-frontend': unread });
+	});
+
+	// A scan that ran out has ruled nothing out. Reading that as "absent" withholds an audit on an
+	// unfinished search, so each surface still being looked for counts as present and says why.
+	test('a scan that spends its budget counts what it was still looking for as present', async () => {
 		const dir = await project({ 'wide/site/index.html': '<!doctype html>' });
 		for (let index = 0; index < 5000; index++) {
 			await writeFile(join(dir, 'wide', `note-${index}.txt`), '');
 		}
 		// `wide/` alone spends the budget, so `wide/site/` is never read.
-		expect((await readProjectAuditEvidence(dir, mapping)).surfaces.size).toBe(0);
+		const stopped = 'file scan incomplete: it stopped at its limit of 5000 entries';
+		expect(Object.fromEntries((await readProjectAuditEvidence(dir, mapping)).surfaces)).toEqual(
+			{ database: stopped, 'web-frontend': stopped },
+		);
+	});
+
+	test('a surface found before the budget ran out keeps its own evidence', async () => {
+		const dir = await project({ 'index.html': '<!doctype html>' });
+		for (let index = 0; index < 5000; index++) {
+			await writeFile(join(dir, `note-${index}.txt`), '');
+		}
+		expect(Object.fromEntries((await readProjectAuditEvidence(dir, mapping)).surfaces)).toEqual(
+			{
+				database: 'file scan incomplete: it stopped at its limit of 5000 entries',
+				'web-frontend': 'index.html at the project root',
+			},
+		);
 	});
 });
 
@@ -166,9 +193,22 @@ describe('database detection from schema evidence', () => {
 		});
 	});
 
-	test('a migrations directory with no SQL, and SQL outside one, do not count', async () => {
+	test('a migrations directory with no SQL in it does not count', async () => {
 		expect(await surfaces({ 'src/migrations/0001_init.ts': '' })).toEqual({});
-		expect(await surfaces({ 'src/queries/report.sql': '' })).toEqual({});
+	});
+
+	// A project can keep its database with no driver package and its SQL nowhere near a
+	// directory named for migrations: a database file under data/ and an init script under api/.
+	test('a database file or a SQL script counts wherever the scan reaches', async () => {
+		expect(await surfaces({ 'data/app.db': '' })).toEqual({
+			database: 'app.db under data/',
+		});
+		expect(await surfaces({ 'data/app.sqlite3': '' })).toEqual({
+			database: 'app.sqlite3 under data/',
+		});
+		expect(await surfaces({ 'api/debug/init.sql': '' })).toEqual({
+			database: 'init.sql under api/debug/',
+		});
 	});
 
 	test('opening a database with the built-in driver is not owning one', async () => {

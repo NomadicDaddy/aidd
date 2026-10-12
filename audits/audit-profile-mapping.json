@@ -180,11 +180,16 @@
 	"surfaces": {
 		"database": {
 			"packages": [
+				"@electric-sql/pglite",
 				"@libsql/client",
+				"@nozbe/watermelondb",
+				"@op-engineering/op-sqlite",
 				"@prisma/client",
 				"better-sqlite3",
 				"convex",
+				"dexie",
 				"drizzle-orm",
+				"expo-sqlite",
 				"ioredis",
 				"knex",
 				"kysely",
@@ -195,8 +200,11 @@
 				"pg",
 				"postgres",
 				"prisma",
+				"react-native-sqlite-storage",
+				"realm",
 				"redis",
 				"sequelize",
+				"sql.js",
 				"sqlite3",
 				"tedious",
 				"typeorm"

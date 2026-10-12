@@ -1,7 +1,7 @@
 import type { Dirent } from 'node:fs';
 
 import { readdir } from 'node:fs/promises';
-import { basename, join } from 'node:path';
+import { join } from 'node:path';
 
 import type { AuditProfileMapping, AuditSurface, ProjectAuditEvidence } from '../index.ts';
 
@@ -10,18 +10,18 @@ import { projectDependencySources } from './project-packages.ts';
 type SurfaceCatalogue = NonNullable<AuditProfileMapping['surfaces']>;
 
 /**
- * The file scan is breadth-first from the project root and stops at whichever comes first:
- * directories more than MAX_DEPTH levels below the root, or MAX_ENTRIES directory entries
- * examined. Four levels reaches `apps/web/src/pages`, the deepest place a hand-written layout
- * keeps markup or migrations; anything deeper is generated or vendored. Five thousand entries is
- * several times what a large source tree holds within that depth, and bounds the work on a tree
- * that is not one, so choosing audits for a fleet never waits on a single huge checkout.
- * Breadth-first matters with a budget: evidence sits near the root, and it is read before the
- * budget can be spent deep in one branch. A scan that runs out reads the surface as absent, which
- * withholds an audit instead of applying one that cannot measure, and a project it gets wrong
- * marks the audit `required` in its overrides.
+ * The file scan is breadth-first from the project root, with no depth limit, and reads the whole
+ * tree it is allowed into unless it examines MAX_ENTRIES directory entries first. The budget is
+ * there so choosing audits for a fleet never waits on one huge checkout; breadth-first matters
+ * with a budget, because evidence sits near the root and is read before the budget can be spent
+ * deep in one branch.
+ *
+ * Only a scan that finished can say a surface is absent. One that ran out of budget, or met a
+ * directory it could not read, has ruled nothing out: every surface it was still looking for
+ * counts as present, and its evidence says why the search was incomplete. An audit that runs and
+ * finds nothing costs a session, while one withheld on an unfinished search is silently never
+ * run, and growing a tree or losing access to part of it must not be able to remove an audit.
  */
-const MAX_DEPTH = 4;
 const MAX_ENTRIES = 5000;
 
 /**
@@ -48,7 +48,7 @@ const skippedDirs = new Set([
 ]);
 
 const markupExtensions = ['.astro', '.html', '.jsx', '.svelte', '.tsx', '.vue'];
-const migrationDirs = new Set(['drizzle', 'migrations']);
+const databaseFileExtensions = ['.db', '.sqlite', '.sqlite3'];
 
 function isWalkable(entry: Dirent): boolean {
 	return (
@@ -74,18 +74,22 @@ function markupFile(entries: Dirent[]): string | undefined {
 	return firstFile(entries, (name) => markupExtensions.some((ext) => name.endsWith(ext)));
 }
 
-// A database is evidenced by a schema the project owns: SQL migrations or a Prisma schema. An
-// import of `bun:sqlite` (or any other built-in driver) is deliberately not evidence, because a
-// tool may open another program's database read-only and own no schema at all.
-function schemaFile(entries: Dirent[], dir: string): string | undefined {
-	const prisma = firstFile(entries, (name) => name === 'schema.prisma');
-	if (prisma !== undefined) return prisma;
-	if (!migrationDirs.has(basename(dir).toLowerCase())) return undefined;
-	return firstFile(entries, (name) => name.endsWith('.sql'));
+// A database is evidenced by something the project owns: a Prisma schema, a database file, or a
+// SQL script, wherever the scan reaches. A project can keep its database with no driver package
+// at all (a built-in driver, or another runtime entirely) and its SQL outside any directory named
+// for migrations, so neither is required. An import of `bun:sqlite` (or any other built-in
+// driver) alone is deliberately not evidence, because a tool may open another program's database
+// read-only and own nothing.
+function databaseFile(entries: Dirent[]): string | undefined {
+	return (
+		firstFile(entries, (name) => name === 'schema.prisma') ??
+		firstFile(entries, (name) => databaseFileExtensions.some((ext) => name.endsWith(ext))) ??
+		firstFile(entries, (name) => name.endsWith('.sql'))
+	);
 }
 
-const fileEvidence: Record<AuditSurface, (entries: Dirent[], dir: string) => string | undefined> = {
-	database: schemaFile,
+const fileEvidence: Record<AuditSurface, (entries: Dirent[]) => string | undefined> = {
+	database: databaseFile,
 	'web-frontend': markupFile,
 };
 
@@ -98,17 +102,18 @@ function recordFileEvidence(
 	for (let index = 0; index < wanted.length; index++) {
 		const surface = wanted[index]!;
 		if (found.has(surface)) continue;
-		const file = fileEvidence[surface](entries, dir);
+		const file = fileEvidence[surface](entries);
 		if (file === undefined) continue;
 		found.set(surface, dir === '' ? `${file} at the project root` : `${file} under ${dir}/`);
 	}
 }
 
-async function listDirectory(path: string): Promise<Dirent[]> {
+// Undefined when the directory could not be read, which is not the same as an empty one.
+async function listDirectory(path: string): Promise<Dirent[] | undefined> {
 	try {
 		return await readdir(path, { withFileTypes: true });
 	} catch {
-		return [];
+		return undefined;
 	}
 }
 
@@ -126,19 +131,57 @@ async function scanForFileEvidence(
 	wanted: readonly AuditSurface[],
 	found: Map<AuditSurface, string>,
 ): Promise<void> {
-	let level = [''];
-	let budget = MAX_ENTRIES;
-	for (let depth = 0; depth <= MAX_DEPTH; depth++) {
-		const next: string[] = [];
-		for (let index = 0; index < level.length; index++) {
-			const dir = level[index]!;
-			const entries = await listDirectory(join(projectDir, dir));
-			budget -= entries.length;
-			recordFileEvidence(dir, entries, wanted, found);
-			if (wanted.every((surface) => found.has(surface)) || budget <= 0) return;
-			next.push(...childDirectories(dir, entries));
-		}
-		level = next;
+	const scan: FileScan = {
+		budget: MAX_ENTRIES,
+		found,
+		incomplete: undefined,
+		queue: [''],
+		wanted,
+	};
+	for (let index = 0; index < scan.queue.length; index++) {
+		const stop = await scanDirectory(projectDir, scan.queue[index]!, scan);
+		if (stop) break;
+	}
+	// Marks only what is still missing, so a scan that found everything marks nothing.
+	if (scan.incomplete !== undefined) markUnfinished(wanted, found, scan.incomplete);
+}
+
+interface FileScan {
+	budget: number;
+	found: Map<AuditSurface, string>;
+	/** Why the scan cannot say a surface is absent, once something has stopped it finishing. */
+	incomplete: string | undefined;
+	queue: string[];
+	wanted: readonly AuditSurface[];
+}
+
+// Reads one directory into the scan. Returns true when the scan should stop: every surface has
+// been found, or the budget is spent.
+async function scanDirectory(projectDir: string, dir: string, scan: FileScan): Promise<boolean> {
+	const entries = await listDirectory(join(projectDir, dir));
+	if (entries === undefined) {
+		scan.incomplete ??= `${dir === '' ? 'the project root' : `${dir}/`} could not be read`;
+		return false;
+	}
+	scan.budget -= entries.length;
+	recordFileEvidence(dir, entries, scan.wanted, scan.found);
+	if (scan.wanted.every((surface) => scan.found.has(surface))) return true;
+	if (scan.budget <= 0) {
+		scan.incomplete ??= `it stopped at its limit of ${MAX_ENTRIES} entries`;
+		return true;
+	}
+	scan.queue.push(...childDirectories(dir, entries));
+	return false;
+}
+
+function markUnfinished(
+	wanted: readonly AuditSurface[],
+	found: Map<AuditSurface, string>,
+	why: string,
+): void {
+	for (let index = 0; index < wanted.length; index++) {
+		const surface = wanted[index]!;
+		if (!found.has(surface)) found.set(surface, `file scan incomplete: ${why}`);
 	}
 }
 

@@ -140,16 +140,51 @@ else
 		printf '%s\n' "$pattern"
 	done)"
 	if [ -n "$active" ]; then
-		local_hits="$(printf '%s\n' "$added" | grep -nEi -f <(printf '%s\n' "$active") || true)"
+		# grep exits 1 for no match and 2 when it cannot use a pattern. A pattern it cannot compile
+		# is kept above on purpose, so that it stops the commit here: swallowing the error would
+		# report no hits and leave the whole private tier silently off.
+		grep_status=0
+		local_hits="$(printf '%s\n' "$added" | grep -nEi -f <(printf '%s\n' "$active"))" || grep_status=$?
+		if [ "$grep_status" -gt 1 ]; then
+			local_hits=''
+			tier2_off 'a private pattern is not a valid expression, so none could be applied'
+		fi
 	fi
 fi
 
-hits="$(printf '%s\n%s\n%s\n%s\n' "$secret_hits" "$pem_hits" "$path_hits" "$local_hits" | sed '/^$/d')"
-if [ -n "$hits" ]; then
+# Says which staged files hold matching additions and how many lines, for one class of pattern.
+# It never prints a matching line: the guard has just refused that text, and echoing it would copy
+# the secret into the terminal and into whatever log captures the hook's output. This runs only
+# when something was found, so an ordinary commit does not pay for the per-file pass.
+count_class() {
+	case "$1" in
+	secret) grep -cEi -e "$secret_pattern" ;;
+	pem) grep -cEi -e "$pem_header_pattern" -e "$pem_body_pattern" ;;
+	path) grep -cE -e "$path_pattern" ;;
+	# The patterns are handed over afresh for each file: a process substitution is read once.
+	private) grep -cEi -f <(printf '%s\n' "$active") ;;
+	esac
+}
+report_class() {
+	local class="$1" label="$2" file count
+	while IFS= read -r -d '' file; do
+		count="$(git diff --cached --unified=0 --no-color -- "$file" | grep -E '^\+' | grep -vE '^\+\+\+' | count_class "$class" || true)"
+		if [ "${count:-0}" -gt 0 ]; then
+			printf '  %s: %s line(s), %s\n' "$file" "$count" "$label" >&2
+		fi
+	done < <(git diff --cached --name-only -z --diff-filter=ACMR -- . ':(exclude).githooks/leak-guard.sh')
+}
+
+if [ -n "$secret_hits$pem_hits$path_hits$local_hits" ]; then
 	echo "" >&2
 	echo "x re-leak guard: staged changes contain forbidden private/secret patterns:" >&2
-	printf '%s\n' "$hits" | head -20 >&2
+	if [ -n "$secret_hits" ]; then report_class secret 'secret format'; fi
+	if [ -n "$pem_hits" ]; then report_class pem 'private key material'; fi
+	if [ -n "$path_hits" ]; then report_class path 'home-directory path'; fi
+	if [ -n "$local_hits" ]; then report_class private 'private name'; fi
 	echo "" >&2
+	echo "  The matching lines are not shown, so a refused secret is not copied into this output." >&2
+	echo "  See them with: git diff --cached -- <file>" >&2
 	echo "  Scrub these before committing. A confirmed false positive is the user's" >&2
 	echo "  call to make, not a reason to skip the hook." >&2
 	exit 1

@@ -3,9 +3,10 @@ import { default as FolderX } from 'lucide-react/dist/esm/icons/folder-x';
 import type { DashboardProjectSummary } from '../../api/types.ts';
 
 import { FilePath } from '../../components/shared/FilePath.tsx';
+import { MilestoneChip } from '../../components/shared/MilestoneChip.tsx';
 import { Badge, StatusDot } from '../../components/ui/badge.tsx';
 import { percent } from '../../lib/formatters.ts';
-import { artifactTone, milestoneBadgeTone } from '../../lib/projectPresentation.ts';
+import { artifactTone } from '../../lib/projectPresentation.ts';
 import { toneSolid, toneText } from '../../lib/tones.ts';
 import { getHealthTone, healthBandLabel } from './dashboard-shared.ts';
 
@@ -88,12 +89,11 @@ export function ProjectHealthRow({ project }: { project: DashboardProjectSummary
 			{visibleMilestones.length > 0 ? (
 				<div className="mt-2 flex flex-wrap gap-1">
 					{visibleMilestones.map((milestone) => (
-						<Badge key={milestone.name} tone={milestoneBadgeTone(milestone)}>
-							<span className="font-medium">{milestone.name}</span>
-							<span className="ml-1 tabular-nums">
-								{milestone.completed}/{milestone.total}
-							</span>
-						</Badge>
+						<MilestoneChip
+							key={milestone.name}
+							milestone={milestone}
+							name={milestone.name}
+						/>
 					))}
 					{hiddenMilestones > 0 ? (
 						<Badge tone="neutral">+{hiddenMilestones}</Badge>

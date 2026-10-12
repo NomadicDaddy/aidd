@@ -7,10 +7,11 @@ import type { PortStatusEntry, ProjectGitStatusSummary, ProjectSummary } from '.
 
 import { FilePath } from '../../components/shared/FilePath.tsx';
 import { MaturityRing } from '../../components/shared/MaturityRing.tsx';
+import { MilestoneChip } from '../../components/shared/MilestoneChip.tsx';
 import { Badge } from '../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../components/ui/card.tsx';
 import { formatRelativeAge, percent } from '../../lib/formatters.ts';
-import { artifactTone, milestoneBadgeTone } from '../../lib/projectPresentation.ts';
+import { artifactTone } from '../../lib/projectPresentation.ts';
 import { toneText } from '../../lib/tones.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { microLabelClass } from '../../lib/typography.ts';
@@ -179,14 +180,7 @@ export function ProjectCard({
 							{visibleMilestones.map((name) => {
 								const ms = milestones[name];
 								if (!ms) return null;
-								return (
-									<Badge key={name} tone={milestoneBadgeTone(ms)}>
-										<span className="font-medium">{name}</span>
-										<span className="ml-1 tabular-nums">
-											{ms.completed}/{ms.total}
-										</span>
-									</Badge>
-								);
+								return <MilestoneChip key={name} milestone={ms} name={name} />;
 							})}
 							{hiddenMilestones > 0 ? (
 								<Badge tone="neutral">+{hiddenMilestones}</Badge>

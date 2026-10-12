@@ -99,7 +99,14 @@ const projectEntry = t.Object({
 	id: t.String(),
 	maturity: maturityBadge,
 	milestoneCount: t.Number(),
-	milestones: t.Array(t.Object({ completed: t.Number(), name: t.String(), total: t.Number() })),
+	milestones: t.Array(
+		t.Object({
+			completed: t.Number(),
+			deferred: t.Number(),
+			name: t.String(),
+			total: t.Number(),
+		}),
+	),
 	name: t.String(),
 	orphaned: t.Boolean(),
 	path: t.String(),

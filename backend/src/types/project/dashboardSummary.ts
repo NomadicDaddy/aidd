@@ -30,6 +30,8 @@ export interface DashboardPortStatusDto {
 /** One milestone chip: name plus its completion counts. */
 export interface DashboardMilestoneChipDto {
 	completed: number;
+	/** Members the owner has set aside: out of `total`, printed beside the fraction. */
+	deferred: number;
 	name: string;
 	total: number;
 }

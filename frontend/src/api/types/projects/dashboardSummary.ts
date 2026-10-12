@@ -16,6 +16,8 @@ import type { PortStatusEntry } from './operations.ts';
 
 export interface DashboardMilestoneChip {
 	completed: number;
+	/** Members the owner has set aside: out of `total`, printed beside the fraction. */
+	deferred: number;
 	name: string;
 	total: number;
 }

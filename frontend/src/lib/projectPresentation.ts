@@ -31,8 +31,17 @@ export const artifactTone: Record<ProjectSummary['artifactHealth'], BadgeTone> =
  * Only a finished milestone gets a colour; progress is already carried by the `3/5` each chip
  * prints, and hue between neighbours is not legible at 11px.
  */
-export function milestoneBadgeTone(
-	ms: Pick<ProjectMilestoneSummary, 'completed' | 'total'>,
-): BadgeTone {
+// What a compact milestone chip prints after the name. Deferred members are out of the fraction, so
+// the chip names them: without it a milestone whose whole scope is set aside reads `0/0`.
+export function milestoneChipProgress(ms: ProjectMilestoneSummary): {
+	deferred: null | string;
+	fraction: null | string;
+} {
+	if (ms.deferred === 0) return { deferred: null, fraction: `${ms.completed}/${ms.total}` };
+	if (ms.total === 0) return { deferred: `${ms.deferred} deferred`, fraction: null };
+	return { deferred: `+${ms.deferred} deferred`, fraction: `${ms.completed}/${ms.total}` };
+}
+
+export function milestoneBadgeTone(ms: ProjectMilestoneSummary): BadgeTone {
 	return ms.total > 0 && ms.completed === ms.total ? 'emerald' : 'neutral';
 }

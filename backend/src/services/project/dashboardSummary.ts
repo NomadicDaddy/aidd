@@ -36,7 +36,7 @@ function milestoneChips(project: ProjectSummaryDto): DashboardMilestoneChipDto[]
 	for (const name of roadmap.milestoneOrder.slice(0, MILESTONE_CHIPS)) {
 		const milestone = roadmap.milestones[name];
 		if (!milestone) continue;
-		chips.push({ completed: milestone.completed, name, total: milestone.total });
+		chips.push({ ...milestone, name });
 	}
 	return chips;
 }

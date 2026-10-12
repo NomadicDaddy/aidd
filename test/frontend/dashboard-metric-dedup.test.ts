@@ -3,7 +3,10 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { orphanedLastCardIndex } from '../../frontend/src/pages/dashboard/dashboard-shared.ts';
-import { milestoneBadgeTone } from '../../frontend/src/lib/projectPresentation.ts';
+import {
+	milestoneBadgeTone,
+	milestoneChipProgress,
+} from '../../frontend/src/lib/projectPresentation.ts';
 import { DASHBOARD_CARD_IDS } from '../../frontend/src/stores/dashboardStore.ts';
 
 const frontendSource = join(process.cwd(), 'frontend', 'src');
@@ -83,12 +86,28 @@ describe('machine values are not printed in the body face', () => {
 
 describe('milestone chips differ by presence of colour, not by two adjacent greens', () => {
 	test('only a complete milestone is toned', () => {
-		expect(milestoneBadgeTone({ completed: 5, total: 5 })).toBe('emerald');
-		expect(milestoneBadgeTone({ completed: 3, total: 5 })).toBe('neutral');
-		expect(milestoneBadgeTone({ completed: 0, total: 5 })).toBe('neutral');
-		// An empty milestone is not vacuously complete. One holding only set-aside records is
-		// the same case: they are out of `total`.
-		expect(milestoneBadgeTone({ completed: 0, total: 0 })).toBe('neutral');
+		expect(milestoneBadgeTone({ completed: 5, deferred: 0, total: 5 })).toBe('emerald');
+		expect(milestoneBadgeTone({ completed: 3, deferred: 0, total: 5 })).toBe('neutral');
+		expect(milestoneBadgeTone({ completed: 0, deferred: 0, total: 5 })).toBe('neutral');
+		// An empty milestone is not vacuously complete, and neither is one holding only
+		// set-aside records: they are out of `total`.
+		expect(milestoneBadgeTone({ completed: 0, deferred: 0, total: 0 })).toBe('neutral');
+		expect(milestoneBadgeTone({ completed: 0, deferred: 2, total: 0 })).toBe('neutral');
+	});
+
+	test('a chip names its deferred members and never prints 0/0 for an all-deferred milestone', () => {
+		expect(milestoneChipProgress({ completed: 3, deferred: 0, total: 5 })).toEqual({
+			deferred: null,
+			fraction: '3/5',
+		});
+		expect(milestoneChipProgress({ completed: 3, deferred: 2, total: 5 })).toEqual({
+			deferred: '+2 deferred',
+			fraction: '3/5',
+		});
+		expect(milestoneChipProgress({ completed: 0, deferred: 2, total: 0 })).toEqual({
+			deferred: '2 deferred',
+			fraction: null,
+		});
 	});
 });
 

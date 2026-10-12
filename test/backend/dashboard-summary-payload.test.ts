@@ -71,6 +71,13 @@ describe('dashboard summary payload', () => {
 		const project = summary.projects[0];
 
 		expect(project?.milestones).toHaveLength(3);
+		// The chip carries the deferred count beside its fraction, and nothing else of the summary.
+		expect(project?.milestones[1]).toEqual({
+			completed: 3,
+			deferred: 2,
+			name: 'v1.1',
+			total: 9,
+		});
 		expect(project?.milestoneCount).toBe(5);
 		expect(project?.hiddenMilestoneCount).toBe(2);
 		expect(project?.artifactCounts).toEqual({ fresh: 7, missing: 1, stale: 2 });

@@ -74,10 +74,13 @@ export function auditRunCompletion(
 	const stopped = totals.stoppedAfterFailures !== undefined;
 	if (remainingCount > 0 && !stopped) return { complete: false };
 	if (totals.abandoned.length === 0 && !stopped) return { complete: true };
+	// A run stopped by failures in a row never attempted the rest of its worklist, so it is an
+	// error whatever it completed first. A dead backend recognised by its error text already ends
+	// non-zero; the same condition recognised by count must not end as a success.
 	return {
 		complete: true,
 		unsuccessfulEnding:
-			totals.completed.length > 0
+			totals.completed.length > 0 && !stopped
 				? {
 						exitCode: orchestratorExitCodes.success,
 						stopReason: 'partial_success_blocked',

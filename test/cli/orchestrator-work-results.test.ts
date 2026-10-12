@@ -709,7 +709,7 @@ describe('orchestrator work results', () => {
 	);
 
 	test(
-		'a run stopped by consecutive failures after an audit was done ends as a partial success',
+		'a run stopped by consecutive failures ends as an error even after an audit was done',
 		async () => {
 			const store = await makeStore('multi-audit-consecutive-failures-partial');
 			const backend = new SequencedBackend([securityReport, providerError]);
@@ -719,10 +719,10 @@ describe('orchestrator work results', () => {
 				{ rootDir, store, backend },
 			);
 
-			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(exitCode).toBe(orchestratorExitCodes.generalError);
 			expect(backend.calls).toBe(5);
 			const run = await onlyRun(store);
-			expect(run.stopReason).toBe('partial_success_blocked');
+			expect(run.stopReason).toBe('exit_error');
 			expect(run.summary).toContain(
 				'audit run stopped: 1 of 4 audit(s) done, 0 finding(s) (0 new); gave up after 2 failed attempts: DEAD_CODE, LOGIC; 1 remain; stopped because 4 audit sessions in a row failed',
 			);

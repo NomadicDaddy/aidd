@@ -110,9 +110,11 @@ A run that gave up on at least one audit did not do what it was asked and does n
 which the panel shows as a partial success. If none was done, it ends as `exit_error` with exit
 code 1. The summary names the audits it gave up on in both cases.
 
-A run stopped by consecutive failed sessions ends the same two ways: `partial_success_blocked`
-with exit code 0 when at least one audit was done, `exit_error` with exit code 1 when none was.
-Its summary says so in plain words:
+A run stopped by consecutive failed sessions always ends as `exit_error` with exit code 1, even
+when an audit was done first. The rest of its worklist was never attempted, and a dead backend
+recognised by its error text already ends non-zero, so the same condition recognised by count
+must not read as a success to a pipeline that only looks at the exit code. Its summary says so in
+plain words:
 
 ```text
 audit run stopped: 0 of 3 audit(s) done, 0 finding(s) (0 new); gave up after 2 failed attempts: SECURITY, DEAD_CODE; 1 remain; stopped because 4 audit sessions in a row failed across different audits; the backend is the likely cause

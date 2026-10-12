@@ -75,8 +75,9 @@ behavior clearly enough for reconstruction.
 ## Phase 4: Inventory Feature JSONs
 
 Read every `.aidd/features/*/feature.json` regardless of status. The current status vocabulary is
-`backlog`, `in_progress`, `waiting_approval`, and `completed`; `completed` is the only completion
-status, and a completed record is verified when `passes` is `true`.
+`backlog`, `in_progress`, `waiting_approval`, `completed`, and `deferred`; `completed` is the only
+completion status, and a completed record is verified when `passes` is `true`. `deferred` is scope
+the owner has set aside: report it as deferred, and never set or clear it.
 
 For each feature JSON, record:
 

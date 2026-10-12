@@ -37,6 +37,9 @@ export async function claimSelectedFeatureForIteration(
 	// already filters waiting_approval (selectNextFeature), so this is unreachable today; it is here
 	// so a future selection change cannot quietly turn a park back into open work.
 	if (feature.status === 'waiting_approval') return { featureId: work.id, vanished: false };
+	// Deferred is the owner's decision, and selection filters it the same way. Claiming one must
+	// not turn it back into open work either.
+	if (feature.status === 'deferred') return { featureId: work.id, vanished: false };
 	await store.writeFeature({
 		...feature,
 		passes: false,
@@ -50,14 +53,14 @@ export async function captureFeatureCompletionSnapshot(
 	store: AiddStore,
 ): Promise<FeatureCompletionSnapshot> {
 	const completed = new Map<string, boolean>();
+	const status = new Map<string, string | undefined>();
 	const features = await store.listFeatures({ includeAudit: true });
 	for (const feature of features) {
-		completed.set(
-			feature.directory ?? feature.id,
-			feature.status === 'completed' && feature.passes === true,
-		);
+		const directory = feature.directory ?? feature.id;
+		completed.set(directory, feature.status === 'completed' && feature.passes === true);
+		status.set(directory, feature.status);
 	}
-	return { completed, unreadable: await store.listFeatureReadFailures() };
+	return { completed, status, unreadable: await store.listFeatureReadFailures() };
 }
 
 export async function auditFeatureScope(

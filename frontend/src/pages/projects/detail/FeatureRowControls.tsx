@@ -12,6 +12,7 @@ import { controlFocusClass, quietSelectClass, selectClass } from '../../../lib/f
 import { toneBadge } from '../../../lib/tones.ts';
 import {
 	BacklogFeatureActions,
+	DeferredFeatureActions,
 	InProgressFeatureActions,
 	InvalidStatusFeatureActions,
 	ReadOnlyFeatureActions,
@@ -255,19 +256,20 @@ export function FeatureActions({
 			/>
 		);
 	}
+	const statusOnlyProps: InvalidStatusFeatureActionsProps = {
+		disabled,
+		feature,
+		onSelect,
+		onStatusChange,
+		showStatusControl,
+		status,
+	};
+	if (status === 'deferred') return <DeferredFeatureActions {...statusOnlyProps} />;
 	if (
 		typeof feature.status === 'string' &&
 		!FEATURE_STATUS_OPTIONS.some((option) => option === feature.status)
 	) {
-		const invalidStatusProps: InvalidStatusFeatureActionsProps = {
-			disabled,
-			feature,
-			onSelect,
-			onStatusChange,
-			showStatusControl,
-			status,
-		};
-		return <InvalidStatusFeatureActions {...invalidStatusProps} />;
+		return <InvalidStatusFeatureActions {...statusOnlyProps} />;
 	}
 	if (status === 'in_progress') return <InProgressFeatureActions {...inProgressProps} />;
 	if (status === 'waiting_approval') {
@@ -279,6 +281,7 @@ export function FeatureActions({
 			onDecisionChange,
 			onDelete,
 			onSelect,
+			onStatusChange,
 		};
 		return <WaitingApprovalFeatureActions {...waitingApprovalProps} />;
 	}

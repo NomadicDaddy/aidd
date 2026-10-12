@@ -63,9 +63,10 @@ The goal is to ensure every fix, audit finding, and remediation spec is represen
 
 3. **Filter to actionable items**: Only process remediation/audit features with
    `"status": "completed"` and `"passes": true`. The current status contract has exactly
-   `backlog`, `in_progress`, `waiting_approval`, and `completed`; `verified`, `pending`, `running`,
-   and `failed` are invalid values, not compatibility aliases. Leave every non-completed or
-   non-passing record alone because it represents unfinished work.
+   `backlog`, `in_progress`, `waiting_approval`, `completed`, and `deferred`; `verified`,
+   `pending`, `running`, and `failed` are invalid values, not compatibility aliases. Leave every
+   non-completed or non-passing record alone because it represents unfinished work, and never set
+   or clear `deferred`: it marks scope the owner has set aside.
 
 4. **Report discovery summary**:
     - Total features found

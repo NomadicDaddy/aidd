@@ -2,6 +2,7 @@ import type { Feature } from 'aidd-shared/metadata/features';
 import type { Roadmap } from 'aidd-shared/metadata/roadmap';
 import type { FileAiddStore } from 'aidd-shared/metadata/store';
 
+import { isFeatureOutstanding } from 'aidd-shared/metadata/features';
 import { orderedMilestoneNames } from 'aidd-shared/metadata/roadmap';
 
 import type { ProjectReportKind } from '../../types.ts';
@@ -27,10 +28,7 @@ function currentRoadmapMilestone(roadmap: Roadmap, features: Feature[]): null | 
 			const directory = feature.directory ?? feature.id;
 			return roadmap.features[directory]?.milestone === milestone;
 		});
-		if (
-			milestoneFeatures.length > 0 &&
-			milestoneFeatures.some((feature) => feature.passes !== true)
-		) {
+		if (milestoneFeatures.length > 0 && milestoneFeatures.some(isFeatureOutstanding)) {
 			return milestone;
 		}
 	}

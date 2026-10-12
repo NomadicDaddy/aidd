@@ -152,7 +152,7 @@ describe('feature record deleted mid-iteration', () => {
 			},
 			completedFeatures: [FEATURE_ID],
 			parkedAt: new Date().toISOString(),
-			snapshotBefore: { completed: new Map(), unreadable: [] },
+			snapshotBefore: { completed: new Map(), status: new Map(), unreadable: [] },
 			store,
 		});
 		await applySimulatedFeatureCompletion({

@@ -9,12 +9,15 @@ import {
 } from './types.ts';
 
 // The full canonical status vocabulary. 'completed' is the only completion status —
-// strays like 'done' or 'verified' are invalid data, never aliases.
+// strays like 'done' or 'verified' are invalid data, never aliases. 'deferred' is recorded scope
+// the owner has set aside: kept, never selected, not waiting on anyone, and set or cleared only by
+// a person (see isFeatureDeferred).
 export const FEATURE_STATUSES = [
 	'backlog',
 	'in_progress',
 	'completed',
 	'waiting_approval',
+	'deferred',
 ] as const;
 
 export type FeatureStatus = (typeof FEATURE_STATUSES)[number];

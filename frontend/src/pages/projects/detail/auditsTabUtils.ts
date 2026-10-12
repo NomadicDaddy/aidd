@@ -43,6 +43,7 @@ export function activeAuditFindings(
 		(feature) =>
 			feature.passes !== true &&
 			feature.status !== 'completed' &&
+			feature.status !== 'deferred' &&
 			auditSource(feature) === normalized,
 	);
 }

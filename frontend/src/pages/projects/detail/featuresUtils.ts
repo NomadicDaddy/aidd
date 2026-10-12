@@ -27,6 +27,7 @@ export const FEATURE_STATUS_OPTIONS = [
 	'in_progress',
 	'waiting_approval',
 	'completed',
+	'deferred',
 ] as const;
 
 export type FeatureStatusFilter = 'all' | 'incomplete' | (typeof FEATURE_STATUS_OPTIONS)[number];
@@ -198,7 +199,7 @@ export function featureMatchesFilters(
 	const status = stringValue(feature, 'status') || 'unknown';
 	if (
 		filters.statusFilter === 'incomplete' &&
-		(status === 'completed' || feature.passes === true)
+		(status === 'completed' || status === 'deferred' || feature.passes === true)
 	)
 		return false;
 	if (

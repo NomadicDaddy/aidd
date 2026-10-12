@@ -42,6 +42,9 @@ export function statusTone(status: string): 'amber' | 'emerald' | 'neutral' | 'r
 	if (normalized === 'completed') return 'emerald';
 	if (normalized === 'in_progress') return 'teal';
 	if (normalized === 'waiting_approval') return 'amber';
-	if (normalized === 'backlog' || normalized === 'unknown') return 'neutral';
+	// Deferred is set aside, not wrong and not waiting on anyone, so it carries no signal colour.
+	if (normalized === 'backlog' || normalized === 'deferred' || normalized === 'unknown') {
+		return 'neutral';
+	}
 	return 'red';
 }

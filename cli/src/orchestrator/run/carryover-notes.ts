@@ -92,6 +92,27 @@ export function invalidFeatureMetadataNote(
 // finish, write its completion, and find nothing there. This is the loudest aidd can be about a
 // cross-run destruction it cannot undo — the deletion has already happened, and the bytes are
 // gitignored in most projects, so there is nothing to restore from.
+// `deferred` is the owner's decision. The guard has already put the records back; the note is so
+// the next iteration does not try the same edit again.
+export function deferredStatusRestoredNote(
+	restorations: readonly { featureId: string; found: string; restored: string }[],
+): string {
+	const lines = restorations.map(
+		(item) =>
+			`  - \`.aidd/features/${item.featureId}/feature.json\` — was left \`${item.found}\`, restored to \`${item.restored}\``,
+	);
+	return (
+		'**A feature record was moved into or out of `deferred` during the last iteration, and aidd ' +
+		'has put it back.** `deferred` marks scope the owner has set aside. Only a person sets or ' +
+		'clears it:\n\n' +
+		`${lines.join('\n')}\n\n` +
+		'- Do not set `"status": "deferred"` on any record, and do not change a deferred record to ' +
+		'another status.\n' +
+		'- Do not work on a deferred record. If the selected work depends on one, say so in your ' +
+		'summary and stop; that is a decision for the owner.'
+	);
+}
+
 export function destroyedLeasedFeaturesNote(
 	leases: readonly { featureId: string; runId: string }[],
 ): string {

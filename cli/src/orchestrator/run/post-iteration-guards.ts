@@ -24,6 +24,7 @@ import {
 	scopeOverrunNote,
 } from './carryover-notes.ts';
 import { attemptCompletionMarkerRecovery } from './completion-recovery.ts';
+import { pushDeferredRestorations } from './deferred-guard.ts';
 import { buildWallClockTimeoutSummary } from './run-ending.ts';
 
 // The post-iteration checks that run before the continuation state machine gets a say: wall-clock
@@ -186,6 +187,8 @@ export async function endRunIfIterationGuardTripped(input: {
 	await pushFeatureContractIssues(acc, deps);
 
 	await pushDestroyedLeasedFeatures(acc, deps, plan, featureSnapshotBefore);
+
+	await pushDeferredRestorations(acc, deps, featureSnapshotBefore);
 
 	pushRejectedAuditReports(acc, finalize);
 

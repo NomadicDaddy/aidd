@@ -20,7 +20,8 @@ export class ProjectNotFoundError extends HttpError {
 	}
 }
 
-export type ProjectFeatureStatus = 'backlog' | 'completed' | 'in_progress' | 'waiting_approval';
+export type ProjectFeatureStatus =
+	'backlog' | 'completed' | 'deferred' | 'in_progress' | 'waiting_approval';
 
 export interface FeatureApprovalInput {
 	decision: null | string;
@@ -54,6 +55,7 @@ export interface ProjectMoveResult {
 export const PROJECT_FEATURE_STATUSES = new Set<ProjectFeatureStatus>([
 	'backlog',
 	'completed',
+	'deferred',
 	'in_progress',
 	'waiting_approval',
 ]);

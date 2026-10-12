@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import type { Feature } from '../metadata/features.ts';
 import type { FindingLedgerEvent } from '../metadata/findings-ledger.ts';
 
+import { isFeatureOutstanding } from '../metadata/features.ts';
 import {
 	arrayOfStrings,
 	type AuditFindingInput,
@@ -101,9 +102,9 @@ export function findingFingerprint(
 	return `f1-${createHash('sha256').update(canonical).digest('hex')}`;
 }
 
-/** A finding record still awaiting remediation: neither passing nor marked completed. */
+/** A finding record still awaiting remediation: not passing, not completed, not set aside. */
 function isOpenFinding(feature: Feature): boolean {
-	return feature.passes !== true && feature.status !== 'completed';
+	return isFeatureOutstanding(feature) && feature.status !== 'completed';
 }
 
 function matchingFeature(

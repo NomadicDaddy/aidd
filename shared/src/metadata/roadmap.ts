@@ -2,6 +2,7 @@ import { z } from 'zod/v4';
 
 import type { Feature } from './features.ts';
 
+import { isFeatureOutstanding } from './features/query.ts';
 import { printJson } from './json-format.ts';
 
 export const roadmapMilestoneSchema = z
@@ -165,7 +166,9 @@ function firstIncompleteMilestone(
 		const milestoneFeatures = features.filter(
 			(feature) => roadmap.features[feature.directory ?? feature.id]?.milestone === milestone,
 		);
-		if (milestoneFeatures.some((feature) => feature.passes !== true)) return milestone;
+		// A deferred record is not work, so it cannot hold its milestone open: a milestone whose
+		// only unfinished records are deferred is done as far as the gate is concerned.
+		if (milestoneFeatures.some(isFeatureOutstanding)) return milestone;
 	}
 	return null;
 }

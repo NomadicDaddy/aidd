@@ -34,7 +34,7 @@ summarize-iterations <app> [--since <YYYY-MM-DD>|--run <run-id>]
    do not contain enough evidence.
 4. Cross-check current feature state in `.aidd/features/*/feature.json` and relevant entries in
    `.aidd/CHANGELOG.md`. Keep run outcomes (completed, failed, stopped, or parked) distinct from
-   feature state (`backlog`, `in_progress`, `completed`, or `waiting_approval`).
+   feature state (`backlog`, `in_progress`, `completed`, `waiting_approval`, or `deferred`).
 5. If a structured sidecar is absent but a raw log exists, inspect the raw log directly and state
    the evidence gap. `--extract-batch` reads existing JSON sidecars; it does not reconstruct them
    from raw logs.

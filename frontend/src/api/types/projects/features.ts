@@ -5,6 +5,8 @@ import {
 
 export interface FeatureStats {
 	closed: number;
+	/** Records the owner has set aside; in `total` and in no other count. */
+	deferred: number;
 	dependencyBlocked: number;
 	failing: number;
 	open: number;
@@ -35,7 +37,8 @@ export interface FeatureStatusEntry {
 	updatedAt: null | string;
 }
 
-export type ProjectFeatureStatus = 'backlog' | 'completed' | 'in_progress' | 'waiting_approval';
+export type ProjectFeatureStatus =
+	'backlog' | 'completed' | 'deferred' | 'in_progress' | 'waiting_approval';
 
 export interface ProjectFeatureApproval {
 	approvedAt: string;

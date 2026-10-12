@@ -99,6 +99,7 @@ export const featureStatusBody = t.Object({
 	status: t.Union([
 		t.Literal('backlog'),
 		t.Literal('completed'),
+		t.Literal('deferred'),
 		t.Literal('in_progress'),
 		t.Literal('waiting_approval'),
 	]),

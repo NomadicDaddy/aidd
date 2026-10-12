@@ -61,6 +61,21 @@ Current valid statuses are:
 | `in_progress`      | Work already started; selected before normal backlog items.          |
 | `completed`        | Implemented and verified; should have `passes: true`.                |
 | `waiting_approval` | Blocked on a human decision; agents skip it during normal selection. |
+| `deferred`         | Recorded scope the owner has set aside. See below.                   |
+
+A `deferred` record is kept with its spec and its milestone, but it is not work:
+
+- A run never selects it, and a run that edits it into or out of `deferred` has the status put back
+  when the iteration ends. Only a person sets or clears it, from the Features tab or by editing the
+  record.
+- It is not counted as open, failing, dependency-blocked or waiting on approval. It has its own
+  count.
+- It does not hold its milestone open: the roadmap gate treats a milestone whose only unfinished
+  records are deferred as done.
+- A feature that depends on a deferred record stays dependency-blocked, because the dependency is
+  not complete.
+- From the Features tab, a backlog record or one waiting on approval can be deferred, and a deferred
+  record can only be returned to `backlog`.
 
 Validation rejects `passes: true` on any status other than `completed`. Completed audit findings and
 remediations with `passes: true` must also carry a non-empty `notes` resolution explaining how

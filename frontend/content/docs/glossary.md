@@ -26,7 +26,7 @@ Triumvirate
 ## Work tracking
 
 Feature
-: a unit of tracked work with a status (`backlog`, `in_progress`, `completed`, `waiting_approval`).
+: a unit of tracked work with a status (`backlog`, `in_progress`, `completed`, `waiting_approval`, or `deferred` for scope the owner has set aside).
 Audit finding
 : a feature produced by an audit, carrying its source and severity. Skipped by normal coding selection unless an audit-finding sweep is explicitly requested.
 Remediation

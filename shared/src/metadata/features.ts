@@ -12,6 +12,8 @@ export {
 	dependenciesAreSatisfied,
 	featureMatchesQuery,
 	isAuditFinding,
+	isFeatureDeferred,
+	isFeatureOutstanding,
 	isRemediationFeature,
 	selectFeatureCandidates,
 	selectNextFeature,

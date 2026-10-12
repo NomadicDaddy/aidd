@@ -20,7 +20,7 @@ export function featureActionTrack(rows: ProjectFeature[]): { column: string; ta
 	if (rows.some((feature) => ['backlog', 'waiting_approval'].includes(status(feature)))) {
 		return { column: 'w-80', table: 'min-w-[71rem] @min-[88rem]:min-w-[88rem]' };
 	}
-	if (rows.some((feature) => status(feature) === 'in_progress')) {
+	if (rows.some((feature) => ['deferred', 'in_progress'].includes(status(feature)))) {
 		return { column: 'w-64', table: 'min-w-[67rem] @min-[88rem]:min-w-[84rem]' };
 	}
 	return { column: 'w-36', table: 'min-w-[60rem] @min-[88rem]:min-w-[77rem]' };

@@ -58,3 +58,51 @@ describe('project feature status recovery', () => {
 		).rejects.toThrow('Only backlog or invalid-status features can be updated inline');
 	});
 });
+
+describe('deferring a feature from the panel', () => {
+	const id = 'feature-status-recovery';
+
+	test('a backlog feature can be deferred and stays not passing', async () => {
+		const { context, featurePath } = await contextWithFeature('backlog');
+
+		const updated = await updateFeatureStatus(context, 'project-id', id, 'deferred');
+
+		expect(updated).toMatchObject({ passes: false, status: 'deferred' });
+		const persisted = JSON.parse(await readFile(featurePath, 'utf8')) as { status: string };
+		expect(persisted.status).toBe('deferred');
+	});
+
+	test('a feature waiting on approval can be deferred, and nothing else', async () => {
+		const deferring = await contextWithFeature('waiting_approval');
+		expect(
+			await updateFeatureStatus(deferring.context, 'project-id', id, 'deferred'),
+		).toMatchObject({ status: 'deferred' });
+
+		const approving = await contextWithFeature('waiting_approval');
+		await expect(
+			updateFeatureStatus(approving.context, 'project-id', id, 'backlog'),
+		).rejects.toThrow('a feature waiting on approval can only be deferred');
+	});
+
+	test('a deferred feature returns to backlog and to nothing else', async () => {
+		const returning = await contextWithFeature('deferred');
+		expect(
+			await updateFeatureStatus(returning.context, 'project-id', id, 'backlog'),
+		).toMatchObject({ passes: false, status: 'backlog' });
+
+		for (const next of ['completed', 'in_progress', 'waiting_approval']) {
+			const { context } = await contextWithFeature('deferred');
+			await expect(updateFeatureStatus(context, 'project-id', id, next)).rejects.toThrow(
+				'A deferred feature can only be returned to backlog',
+			);
+		}
+	});
+
+	test('work already in progress cannot be deferred inline', async () => {
+		const { context } = await contextWithFeature('in_progress');
+
+		await expect(updateFeatureStatus(context, 'project-id', id, 'deferred')).rejects.toThrow(
+			'Only backlog or invalid-status features can be updated inline',
+		);
+	});
+});

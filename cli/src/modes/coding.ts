@@ -13,16 +13,14 @@ import {
 	explicitFeatureTarget,
 	featureQuery,
 	featureTargetBlockedByRoadmap,
-	featureWorkBreakdown,
 	invalidRoadmapNoWork,
 	milestoneTargetBlockedByRoadmap,
-	noWorkDescription,
-	noWorkSummary,
 	roadmapGateDetail,
 	roadmapNoWork,
 	roadmapScopedQuery,
 	type RoadmapScopedQuery,
 } from './coding/selection.ts';
+import { featureWorkBreakdown, noWorkDescription, noWorkSummary } from './coding/work-breakdown.ts';
 
 // When an iteration is skipped because selectWork returned no actionable work, that call has
 // already computed a *specific* reason (e.g. the requested feature is outside the active roadmap

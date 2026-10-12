@@ -1,7 +1,9 @@
 import { isDismissableFinding } from 'aidd-shared/contracts/finding-dispositions';
 import { default as Check } from 'lucide-react/dist/esm/icons/check';
+import { default as PauseCircle } from 'lucide-react/dist/esm/icons/circle-pause';
 import { default as ClipboardCheck } from 'lucide-react/dist/esm/icons/clipboard-check';
 import { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2';
+import { default as Undo2 } from 'lucide-react/dist/esm/icons/undo-2';
 
 import type { ProjectFeature, ProjectFeatureStatus } from '../../../api/types.ts';
 import type {
@@ -42,6 +44,7 @@ export interface WaitingApprovalFeatureActionsProps extends FeatureDetailsAction
 	onApprove: (feature: ProjectFeature, decisionRequired: boolean) => void;
 	onDecisionChange: (value: string) => void;
 	onDelete: (feature: ProjectFeature) => void;
+	onStatusChange: (feature: ProjectFeature, status: ProjectFeatureStatus) => void;
 }
 
 export function BacklogFeatureActions({
@@ -115,6 +118,34 @@ export function InvalidStatusFeatureActions({
 	);
 }
 
+/**
+ * A deferred record is scope the owner set aside. The one thing to do with it from a row is to
+ * bring it back, which returns it to backlog.
+ */
+export function DeferredFeatureActions({
+	disabled,
+	feature,
+	onSelect,
+	onStatusChange,
+}: InvalidStatusFeatureActionsProps) {
+	const id = feature.id || stringValue(feature, 'id');
+	return (
+		<FeatureActionGroup>
+			<FeatureDetailsButton feature={feature} onSelect={onSelect} />
+			<Button
+				aria-label={`Return ${id} to backlog`}
+				disabled={disabled}
+				onClick={() => onStatusChange(feature, 'backlog')}
+				size="compact"
+				title="Return to backlog"
+				variant="secondary">
+				<Undo2 className="h-4 w-4" />
+				Return to backlog
+			</Button>
+		</FeatureActionGroup>
+	);
+}
+
 export function InProgressFeatureActions(props: InProgressFeatureActionsProps) {
 	const { disabled, feature, inventory, launching, onLaunchRun, onSelect, runActive } = props;
 	return (
@@ -140,12 +171,24 @@ export function WaitingApprovalFeatureActions({
 	onDecisionChange,
 	onDelete,
 	onSelect,
+	onStatusChange,
 }: WaitingApprovalFeatureActionsProps) {
 	const id = feature.id || stringValue(feature, 'id');
 	const isFinding = isDismissableFinding(feature);
 	return (
 		<FeatureActionGroup>
 			<FeatureDetailsButton feature={feature} onSelect={onSelect} />
+			{/* Neither approve nor delete: keep the record and take it out of the queue. */}
+			<Button
+				aria-label={`Defer ${id}`}
+				disabled={disabled}
+				onClick={() => onStatusChange(feature, 'deferred')}
+				size="compact"
+				title="Defer: keep the record, stop asking for approval"
+				variant="ghost">
+				<PauseCircle className="h-4 w-4" />
+				Defer
+			</Button>
 			<Button
 				aria-label={`${isFinding ? 'Dismiss' : 'Delete'} ${id}`}
 				className={dangerRowActionClass}

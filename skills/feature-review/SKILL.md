@@ -151,7 +151,8 @@ For every backlog feature, run the following checks. Classify each issue found:
 
     In the Spernakit template repository itself there is no resident-leak question at all: the process records there are the template's own.
 
-- **Status value**: Must be one of `backlog`, `in_progress`, `completed`, `waiting_approval`
+- **Status value**: Must be one of `backlog`, `in_progress`, `completed`, `waiting_approval`,
+  `deferred`. `deferred` is the owner's decision to set scope aside; never set or clear it
 - **Priority**: Must be a number (1 = most urgent)
 - **Timestamps**: If present, must be valid ISO 8601 with timezone
 - **Dependencies**: Must be an array of strings

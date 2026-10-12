@@ -40,6 +40,20 @@ export function isFeatureComplete(feature: Feature): boolean {
 	return feature.status === 'completed' && feature.passes === true;
 }
 
+/**
+ * Scope the owner has set aside. The record, its spec and its milestone are kept, but it is not
+ * work: selection skips it, it is not counted as open or as waiting on approval, and it does not
+ * hold its milestone open. Only a person moves a record into or out of this status.
+ */
+export function isFeatureDeferred(feature: Feature): boolean {
+	return feature.status === 'deferred';
+}
+
+/** Work that still has to be done: not passing, and not set aside by the owner. */
+export function isFeatureOutstanding(feature: Feature): boolean {
+	return feature.passes !== true && !isFeatureDeferred(feature);
+}
+
 export function classifyFeatureStatusType(feature: Feature): FeatureStatusType {
 	if (isAuditFinding(feature)) return 'audit';
 	if (isRemediationFeature(feature)) return 'remediation';
@@ -67,17 +81,21 @@ export function summarizeFeatures(features: Feature[]): FeatureStats {
 		// Resolved within the array handed in, which every caller populates with the whole inventory.
 		// Mirrors the eligibility test in selectFeatureCandidates so the count matches what selection
 		// would actually skip.
+		deferred: features.filter(isFeatureDeferred).length,
 		dependencyBlocked: features.filter(
 			(feature) =>
-				feature.passes !== true &&
+				isFeatureOutstanding(feature) &&
 				feature.status !== 'waiting_approval' &&
 				!dependenciesAreSatisfied(feature, features),
 		).length,
 		failing: features.filter(
-			(feature) => !isFeatureComplete(feature) && feature.status !== 'waiting_approval',
+			(feature) =>
+				!isFeatureComplete(feature) &&
+				!isFeatureDeferred(feature) &&
+				feature.status !== 'waiting_approval',
 		).length,
 		open: features.filter(
-			(feature) => feature.status !== 'completed' && feature.passes !== true,
+			(feature) => feature.status !== 'completed' && isFeatureOutstanding(feature),
 		).length,
 		passing: features.filter(isFeatureComplete).length,
 		total: features.length,
@@ -114,6 +132,7 @@ export function selectFeatureCandidates(
 		.filter((feature) => feature.passes !== true)
 		.filter((feature) => feature.status !== 'completed')
 		.filter((feature) => feature.status !== 'waiting_approval')
+		.filter((feature) => !isFeatureDeferred(feature))
 		.filter((feature) => options.includeAudit || !isAuditFinding(feature))
 		.filter((feature) => dependenciesAreSatisfied(feature, allFeatures))
 		.sort((a, b) => {

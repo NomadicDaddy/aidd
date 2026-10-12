@@ -21,7 +21,7 @@ async function writeJson(path: string, value: unknown): Promise<void> {
 /** These cases exercise the contract/audit guards, which never consult the inventory; the
  * leased-feature deletion guard is covered on its own in leased-feature-protection.test.ts. */
 function emptySnapshot(): FeatureCompletionSnapshot {
-	return { completed: new Map(), unreadable: [] };
+	return { completed: new Map(), status: new Map(), unreadable: [] };
 }
 
 function accumulator(): RunAccumulator {

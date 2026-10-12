@@ -15,6 +15,7 @@ export function toWebFeatureStats(
 ): WebFeatureStats {
 	return {
 		closed: stats.closed,
+		deferred: stats.deferred,
 		dependencyBlocked: stats.dependencyBlocked,
 		failing: stats.failing,
 		open: stats.open,

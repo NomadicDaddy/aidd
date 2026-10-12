@@ -66,6 +66,9 @@ export interface FeatureStats {
 		total: number;
 	}[];
 	closed: number;
+	/** Records the owner has set aside. They are in `total` and in none of `open`, `failing`,
+	 * `dependencyBlocked` or `waitingApproval`. */
+	deferred: number;
 	/** Unfinished features that selection would otherwise be free to pick but cannot, because their own
 	 * dependencies are not all passing. Excludes `waiting_approval`, matching the eligibility test in
 	 * `selectFeatureCandidates`: those are held by approval rather than topology, and counting them

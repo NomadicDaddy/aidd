@@ -41,10 +41,26 @@ function assertProjectFeatureStatus(status: string): ProjectFeatureStatus {
 
 function updatePassStateForStatus(feature: Feature, status: ProjectFeatureStatus): Feature {
 	if (status === 'completed') return { ...feature, passes: true, status };
-	if (status === 'backlog' || status === 'in_progress' || status === 'waiting_approval') {
-		return { ...feature, passes: false, status };
+	return { ...feature, passes: false, status };
+}
+
+// Which inline status changes the panel may make. A backlog record, or one whose stored status is
+// not a status at all, may take any status. `deferred` is the owner setting scope aside: it can be
+// applied to a record that is waiting on approval as well, and a deferred record can only go back
+// to backlog, where the ordinary rules pick it up again.
+function assertInlineStatusChange(feature: Feature, next: ProjectFeatureStatus): void {
+	const current = feature.status;
+	if (current === 'backlog') return;
+	if (typeof current === 'string' && !isValidFeatureStatus(current)) return;
+	if (current === 'waiting_approval' && next === 'deferred') return;
+	if (current === 'deferred') {
+		if (next === 'backlog') return;
+		throw new HttpError('A deferred feature can only be returned to backlog', 409);
 	}
-	return { ...feature, status };
+	throw new HttpError(
+		'Only backlog or invalid-status features can be updated inline; a feature waiting on approval can only be deferred',
+		409,
+	);
 }
 
 function isMissingFileError(error: unknown): boolean {
@@ -143,12 +159,8 @@ export async function updateFeatureStatus(
 	const store = await ctx.storeForProject(projectId);
 	const directory = assertFeatureDirectory(featureDirectory);
 	const feature = await readFeatureForMutation(store, directory);
-	const hasInvalidPersistedStatus =
-		typeof feature.status === 'string' && !isValidFeatureStatus(feature.status);
-	if (feature.status !== 'backlog' && !hasInvalidPersistedStatus) {
-		throw new HttpError('Only backlog or invalid-status features can be updated inline', 409);
-	}
 	const status = assertProjectFeatureStatus(statusInput);
+	assertInlineStatusChange(feature, status);
 	const updatedFeature = updatePassStateForStatus(feature, status);
 	await store.writeFeature(updatedFeature);
 	recordDataMovement({

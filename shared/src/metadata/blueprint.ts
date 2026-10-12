@@ -4,7 +4,13 @@ import {
 	type BlueprintSetupContext,
 	describeBlueprintSetup,
 } from './blueprint-setup.ts';
-import { classifyFeatureStatusType, type Feature, selectNextFeature } from './features.ts';
+import {
+	classifyFeatureStatusType,
+	type Feature,
+	isFeatureDeferred,
+	isFeatureOutstanding,
+	selectNextFeature,
+} from './features.ts';
 import {
 	detectInitialPhase,
 	type InitialPhase,
@@ -91,7 +97,9 @@ export function evaluateBlueprintReadiness(
 			state: 'blocked',
 		};
 	}
-	if (productFeatures.every((feature) => feature.passes === true)) {
+	// Deferred records are scope the owner set aside, so they neither keep a blueprint from
+	// reading as complete nor count against the first-build shape checked below.
+	if (productFeatures.every((feature) => !isFeatureOutstanding(feature))) {
 		return { firstFeature: null, ready: false, reason: null, state: 'complete' };
 	}
 	if (
@@ -126,6 +134,7 @@ export function evaluateBlueprintReadiness(
 	}
 
 	for (const feature of productFeatures) {
+		if (isFeatureDeferred(feature)) continue;
 		const milestone = roadmap.features[featureDirectory(feature)]?.milestone;
 		const expectedStatus = milestone === 'MVP' ? 'backlog' : 'waiting_approval';
 		if (feature.passes !== false || feature.status !== expectedStatus) {

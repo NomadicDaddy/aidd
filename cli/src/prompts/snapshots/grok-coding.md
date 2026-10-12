@@ -1092,6 +1092,7 @@ blockers park.
 - Combine or consolidate tests
 - Reorder tests
 - Invent new status values (only use: `backlog`, `in_progress`, `completed`, `waiting_approval`)
+- Set or clear `"status": "deferred"`, or work on a deferred feature. It marks scope the owner has set aside; aidd restores any record you move into or out of it
 - Pick up features with `"status": "waiting_approval"`: they are blocked on a human decision
 - Set `"passes": true` on features you cannot or choose not to implement
 - Skip, cancel, or declare features "out of scope": all features must be implemented or set to `waiting_approval`

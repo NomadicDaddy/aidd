@@ -31,6 +31,9 @@ export function OverviewSummary({ project }: { project: ProjectDetail }) {
 					<>
 						{passing}/{total} passing · {project.featureStats.failing} failing ·{' '}
 						{project.featureStats.waitingApproval} waiting
+						{project.featureStats.deferred > 0
+							? ` · ${project.featureStats.deferred} deferred`
+							: null}
 					</>
 				}
 				footer={

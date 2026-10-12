@@ -108,6 +108,9 @@ export interface CommitDiffStat {
 export interface FeatureCompletionSnapshot {
 	/** Feature directory (or id) → whether it read as completed+passing at capture time. */
 	completed: Map<string, boolean>;
+	/** Feature directory (or id) → its status at capture time. The deferred guard restores a record
+	 * an agent moved into or out of `deferred`, and needs the status it had to put it back. */
+	status: Map<string, string | undefined>;
 	/** Records that exist on disk but would not parse, so they are absent from `completed`
 	 * entirely. Tracked separately because "unreadable" must never be scored as "not completed":
 	 * repairing such a file makes the feature reappear, which the scope audit would otherwise read

@@ -49,6 +49,7 @@ async function computeFor(
 		auditCatalogNames: [],
 		featureStats: {
 			closed: 0,
+			deferred: 0,
 			dependencyBlocked: 0,
 			failing: 0,
 			open: 0,

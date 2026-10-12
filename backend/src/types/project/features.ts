@@ -1,5 +1,7 @@
 export interface WebFeatureStats {
 	closed: number;
+	/** Records the owner has set aside; in `total` and in no other count. */
+	deferred: number;
 	dependencyBlocked: number;
 	failing: number;
 	open: number;

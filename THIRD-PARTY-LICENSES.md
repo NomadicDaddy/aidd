@@ -29,7 +29,7 @@ the repository material distributed outside the npm graph.
 | [drizzle-orm](https://www.npmjs.com/package/drizzle-orm)                             | 0.45.4  | Apache-2.0 |
 | [elysia](https://www.npmjs.com/package/elysia)                                       | 1.4.30  | MIT        |
 | [pino](https://www.npmjs.com/package/pino)                                           | 10.4.0  | MIT        |
-| [zod](https://www.npmjs.com/package/zod)                                             | 4.6.5   | MIT        |
+| [zod](https://www.npmjs.com/package/zod)                                             | 4.6.6   | MIT        |
 
 ## Frontend runtime dependencies
 

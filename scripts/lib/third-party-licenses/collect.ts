@@ -30,16 +30,18 @@ export interface GraphSummary {
 	uniqueVersions: number;
 }
 
+// Resolved the way the declaring workspace's own code resolves it: its node_modules first, then
+// the root. Two workspaces can declare different versions of one package, and the installer then
+// keeps one at the root and the other beside the workspace that asked for it. Looking at the
+// root first reported the root's version for every workspace, whichever one it had declared.
 async function resolveInstalled(
 	root: string,
-	workspaces: string[],
+	workspace: string,
 	name: string,
 ): Promise<null | Record<string, unknown>> {
 	const candidates = [
+		join(root, workspace, 'node_modules', name, 'package.json'),
 		join(root, 'node_modules', name, 'package.json'),
-		...workspaces.map((workspace) =>
-			join(root, workspace, 'node_modules', name, 'package.json'),
-		),
 	];
 	for (const candidate of candidates) {
 		const pkg = await readJson(candidate);
@@ -68,7 +70,7 @@ export async function collectDirectDependencies(
 			if (seen.has(key)) continue;
 			seen.add(key);
 
-			const installed = await resolveInstalled(root, workspaces, name);
+			const installed = await resolveInstalled(root, workspace, name);
 			if (!installed) {
 				unresolved.push(`${workspace || '.'}: ${name}`);
 				continue;

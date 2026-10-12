@@ -15,16 +15,17 @@ import { persistAuditReports } from 'aidd-shared/modes/audit-persist';
 
 import { setAuditRunDriver } from '../run-driver.ts';
 import {
-	auditRunCompletion,
 	type AuditRunState,
 	createAuditRunState,
+	noWorkResult,
 	noWorkSummary,
 	recordFailedAttempt,
+	recordFailedSession,
 	requestedAudits,
 	runProgress,
 } from './audit-run-state.ts';
 import { pendingAuditNames, selectedAuditName } from './audit-selection.ts';
-import { auditSessionFailureKind } from './audit-session-failure.ts';
+import { auditSessionFailureKind, isBackendWideFailure } from './audit-session-failure.ts';
 import {
 	auditFailureSummary,
 	auditInterruptedSummary,
@@ -41,21 +42,29 @@ function sessionFailureReason(result: AgentRunResult): string | undefined {
 	return undefined;
 }
 
-// A session that failed on its own account is one attempt at its audit. One that ended for a
-// reason that is not the audit's (a stop, an interruption, a safety stop, a rate limit) is not
+// Whether the failure is the audit's own. One that is not (a stop, an interruption, a safety
+// stop, a rate limit, a failure of the backend as a whole) is decided here, before anything is
 // counted, so no audit is ever given up on because of it.
+function isAuditsOwnFailure(result: AgentRunResult): boolean {
+	return (
+		auditSessionFailureKind(result.exitCode) !== 'terminal' &&
+		!isBackendWideFailure(result.events)
+	);
+}
+
+// A session that failed on its own account is one attempt at its audit, and one more in the
+// run's streak of failed sessions.
 async function failedSessionResult(
 	plan: RunPlan,
 	state: AuditRunState,
 	context: ModeContext,
 	auditName: string,
-	failure: { exitCode: number; reason: string },
+	failure: { reason: string; result: AgentRunResult },
 ): Promise<ModeResult> {
 	const { reason } = failure;
-	const attempt =
-		auditSessionFailureKind(failure.exitCode) === 'terminal'
-			? undefined
-			: recordFailedAttempt(state, auditName);
+	const attempt = isAuditsOwnFailure(failure.result)
+		? recordFailedSession(state, auditName)
+		: undefined;
 	const progress = await runProgress(plan, state, context);
 	const auditSummary =
 		attempt === undefined
@@ -83,13 +92,16 @@ async function failedSessionResult(
 }
 
 // Settles the audit against the run: done, unable to run, or — when validation rejected the
-// report and nothing was written — one more failed attempt, which is then returned.
+// report and nothing was written — one more failed attempt, which is then returned. Each of the
+// three is a session that returned a result, so the backend answered and the streak of sessions
+// that failed without one starts over.
 function settlePersistedAudit(
 	state: AuditRunState,
 	auditName: string,
 	persisted: AuditPersistResult,
 ): { failedAttempt?: number; summary: string } {
 	const { totals } = state;
+	state.failureStreak.length = 0;
 	totals.findingsCreated += persisted.totalCreated;
 	totals.findingsTotal += persisted.totalFindings;
 	const unavailable = persisted.unavailableAudits.find((audit) => audit.auditName === auditName);
@@ -169,23 +181,12 @@ async function processAuditResult(
 	result: AgentRunResult,
 ): Promise<ModeResult> {
 	if (result.skipped || result.selectedWork?.kind === 'none') {
-		return {
-			artifacts: {
-				abandonedAudits: [...state.totals.abandoned],
-				remainingAudits: [],
-				unavailableAudits: [...state.totals.unavailable],
-			},
-			...auditRunCompletion(state.totals, 0),
-			summary: noWorkSummary(state),
-		};
+		return await noWorkResult(plan, state, context);
 	}
 	const auditName = selectedAuditName(plan, result.selectedWork);
 	const reason = sessionFailureReason(result);
 	if (reason !== undefined) {
-		return await failedSessionResult(plan, state, context, auditName, {
-			exitCode: result.exitCode,
-			reason,
-		});
+		return await failedSessionResult(plan, state, context, auditName, { reason, result });
 	}
 	const persisted = await persistAuditReports({
 		...(context.findingLedgerStore ? { ledgerStore: context.findingLedgerStore } : {}),
@@ -205,12 +206,13 @@ async function selectAuditWork(
 	context: ModeContext,
 ): Promise<SelectedWork> {
 	const requested = await requestedAudits(plan, state, context);
-	const [auditName] = await pendingAuditNames(
-		plan,
-		context,
-		requested,
-		settledAudits(state.totals),
-	);
+	// A run that stopped itself hands out nothing more, whatever is still pending: the session
+	// that tripped the limit can be one the timeout policy retries, and that retry must not
+	// reach the next audit.
+	const [auditName] =
+		state.totals.stoppedAfterFailures === undefined
+			? await pendingAuditNames(plan, context, requested, settledAudits(state.totals))
+			: [];
 	if (auditName === undefined) {
 		return {
 			data: { audits: requested },

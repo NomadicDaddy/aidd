@@ -7,6 +7,16 @@ import type { UnavailableAudit } from 'aidd-shared/modes/audit-shared';
  */
 export const maxAuditAttempts = 2;
 
+/**
+ * How many sessions in a row may fail, across more than one audit, before the run stops. It is
+ * every attempt at two audits (4): one audit failing all of its attempts is that audit's
+ * problem and the ordinary give-up path, but a second audit doing the same straight after, with
+ * no session answering in between, points at the backend whatever its error text says. A lower
+ * limit would stop the run before the second audit had its retry; a higher one spends another
+ * audit's sessions on a backend that is not answering.
+ */
+export const maxConsecutiveFailedSessions = 2 * maxAuditAttempts;
+
 /** What a run has settled so far, across every audit session it has finished. */
 export interface AuditRunTotals {
 	/** Audits given up on after `maxAuditAttempts` failed sessions. */
@@ -15,6 +25,11 @@ export interface AuditRunTotals {
 	completed: string[];
 	findingsCreated: number;
 	findingsTotal: number;
+	/**
+	 * Set once the run has stopped itself because this many sessions in a row failed across
+	 * different audits. The audits it had not reached stay pending; they are not given up on.
+	 */
+	stoppedAfterFailures?: number;
 	/** Audits that could not be performed; none of them was made current by this run. */
 	unavailable: UnavailableAudit[];
 }
@@ -50,8 +65,22 @@ export function auditRunSummary(totals: AuditRunTotals, remainingCount: number):
 		);
 	}
 	if (remainingCount > 0) clauses.push(`${remainingCount} remain`);
-	const label = remainingCount > 0 ? 'audit run so far' : 'audit run finished';
-	return `${label}: ${clauses.join('; ')}`;
+	return `${runLabel(totals, remainingCount)}: ${[...clauses, ...stopClauses(totals, remainingCount)].join('; ')}`;
+}
+
+function runLabel(totals: AuditRunTotals, remainingCount: number): string {
+	if (remainingCount === 0) return 'audit run finished';
+	return totals.stoppedAfterFailures === undefined ? 'audit run so far' : 'audit run stopped';
+}
+
+// A run that tripped the consecutive-failure limit says so and names the likely cause. It only
+// reads as a stop when audits were left unattempted; with none left the run had finished anyway.
+function stopClauses(totals: AuditRunTotals, remainingCount: number): string[] {
+	if (totals.stoppedAfterFailures === undefined) return [];
+	const streak = `${totals.stoppedAfterFailures} audit sessions in a row failed across different audits`;
+	return [
+		`${remainingCount > 0 ? `stopped because ${streak}` : streak}; the backend is the likely cause`,
+	];
 }
 
 /**
@@ -68,8 +97,8 @@ export function auditFailureSummary(auditName: string, reason: string, attempt: 
 
 /**
  * The line for a session that ended for a reason that was not the audit's own: a stop, an
- * interruption, a safety stop, or a rate limit. No attempt is counted, so the audit is still
- * pending if the run goes on.
+ * interruption, a safety stop, a rate limit, or a failure of the backend as a whole. No attempt
+ * is counted, so the audit is still pending when the run ends or goes on.
  * @param auditName The audit the session was given.
  * @param reason Why the session did not count.
  * @returns The per-audit summary line.

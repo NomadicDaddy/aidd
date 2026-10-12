@@ -177,7 +177,6 @@ export async function handlePostIteration(input: {
 	const completed = await mode.isComplete(context, finalize.modeResult);
 	const continuation = determineRunContinuation({
 		auditSessionFailureAbsorbed: auditSessionFailureAbsorbed({
-			details: finalize.details,
 			events,
 			modeResult: finalize.modeResult,
 			plan,

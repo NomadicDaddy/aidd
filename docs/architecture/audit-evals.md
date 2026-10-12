@@ -107,3 +107,58 @@ neither raises recall.
    manifest must reach `minRuns`.
 4. Review the per-finding Run notes and the changed attestation.
 5. Run `bun run check:audit-evals`, then the normal quality gates.
+
+That is the route for anything that changes a measurement. Most edits to `audits/` change none,
+and the sections below say what each kind of edit needs.
+
+### What the hashes record
+
+The attestation holds two lists of hashes and one list of scores.
+
+- `auditDefinitions` has one line per runnable audit: the SHA-256 of its definition text after
+  newline normalization.
+- `auditFiles` has one line per file under `audits/`: the SHA-256 of the file's bytes. For a
+  definition stored with LF line endings, which the repository's attributes enforce, this is the
+  same value as its `auditDefinitions` line.
+- `audits` has one row per audit that has a planted-defect catalog: its averaged precision and
+  recall and the number of runs behind them.
+
+The two hash lists record which text was current when the attestation was written. They attest
+nothing measured, and the gate only compares them with the files on disk. The measured evidence is
+the `audits` rows; the gate's summary line says how many audits have one.
+
+A row names its audit by id. Neither the row nor the benchmark run records behind it carry the
+definition hash, so a score is tied to the definition it was measured against only by the
+attestation having been written in one piece by `bun run bench:audits`. Nothing in the gate checks
+that tie, which is why the rules below have to be followed by hand.
+
+### An audit with no measured score
+
+After editing the definition, update its two lines by hand: `auditDefinitions.<AUDIT>` and
+`auditFiles["<AUDIT>.md"]`, both to the new SHA-256 of `audits/<AUDIT>.md`. No measurement is
+attested for the audit, so the lines only say which text is current. Then run
+`bun run check:audit-evals`.
+
+### An audit with a measured score
+
+Never update either of its hashes by hand. Its definition changed, so the score in its row was
+measured against text that no longer exists, and a hand-updated hash would present that stale score
+as current. The gate cannot tell the difference: it passes. Only a new benchmark run may refresh
+the row and its hashes.
+
+The benchmark does not know the definition changed either. It resumes a replicate whose fixture
+and catalog hash match an earlier run, and that hash does not cover the audit definition. Before
+`bun run bench:audits`, remove that audit's earlier records from the ignored
+`evals/audits/results/runs.jsonl`, or the command re-attests the old runs under the new hash
+without measuring anything.
+
+### The methodology and other shared files
+
+`AUDIT_METHODOLOGY.md`, `SEVERITY_CLASSIFICATION.md`, and `audit-profile-mapping.json` are not
+runnable audits. Each is hash-checked as a file only, through its `auditFiles` line, and that line
+is updated by hand after an edit.
+
+This is a known limit. The methodology shapes every audit run, the measured audit's included, yet
+a score is associated only with that audit's own definition. Editing the methodology does not by
+itself make any score stale, and nothing asks for a new measurement. When a methodology change
+could move what the measured audit finds, run the benchmark again as for a measured definition.

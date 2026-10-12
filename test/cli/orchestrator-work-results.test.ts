@@ -61,6 +61,33 @@ async function onlyRun(store: { metadataDir: string }): Promise<AuditRunRecord> 
 	return run;
 }
 
+const providerError: AgentEvent[] = [{ type: 'error', reason: 'provider' }];
+const threeAudits = 'SECURITY,DEAD_CODE,LOGIC';
+
+function auditsPlan(projectDir: string, audits: string) {
+	return resolveRunPlan(
+		parseArgs(['--project-dir', projectDir, '--cli', 'native', '--audit', audits]),
+		config,
+	);
+}
+
+interface AuditSessionIteration {
+	abandonedAudits: string[];
+	exitCode: number;
+	failedAttempt?: number;
+	missingAudits: string[];
+	remainingAudits: string[];
+}
+
+async function auditIteration(
+	store: { metadataDir: string },
+	name: string,
+): Promise<AuditSessionIteration> {
+	return JSON.parse(
+		await readFile(join(store.metadataDir, 'iterations', name), 'utf8'),
+	) as AuditSessionIteration;
+}
+
 function twoAuditPlan(projectDir: string) {
 	return resolveRunPlan(
 		parseArgs([
@@ -410,7 +437,6 @@ describe('orchestrator work results', () => {
 		'gives up on an audit after two provider errors and runs the next one',
 		async () => {
 			const store = await makeStore('multi-audit-provider-error-first');
-			const providerError: AgentEvent[] = [{ type: 'error', reason: 'provider' }];
 			const backend = new SequencedBackend([providerError, providerError, deadCodeReport]);
 
 			const exitCode = await runOrchestrator(twoAuditPlan(store.projectDir), {
@@ -586,6 +612,213 @@ describe('orchestrator work results', () => {
 			expect(run.exitCode).toBe(orchestratorExitCodes.providerError);
 		}
 	});
+
+	// The failure that ends the run is the backend's, not the audit's: classifying it comes before
+	// counting it, so the audit's earlier failed attempt stays its only one and it is not given
+	// up on by a run that never got to retry it.
+	test(
+		'a backend-wide failure after an ordinary one ends the run without costing the audit an attempt',
+		async () => {
+			const store = await makeStore('multi-audit-ordinary-then-backend-wide');
+			const backend = new SequencedBackend([
+				providerError,
+				[
+					{
+						meta: { message: 'HTTP 401 Unauthorized: invalid x-api-key' },
+						reason: 'provider',
+						type: 'error',
+					},
+				],
+				deadCodeReport,
+			]);
+
+			const exitCode = await runOrchestrator(twoAuditPlan(store.projectDir), {
+				rootDir,
+				store,
+				backend,
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.providerError);
+			expect(backend.calls).toBe(2);
+			expect(backend.inputs[1]?.text).toContain('{"auditName":"SECURITY"');
+			const first = await auditIteration(store, '001.json');
+			expect(first).toMatchObject({ abandonedAudits: [], failedAttempt: 1 });
+			const second = await auditIteration(store, '002.json');
+			expect(second).not.toHaveProperty('failedAttempt');
+			expect(second).toMatchObject({
+				abandonedAudits: [],
+				exitCode: orchestratorExitCodes.providerError,
+				missingAudits: ['SECURITY'],
+				remainingAudits: ['SECURITY', 'DEAD_CODE'],
+			});
+			// The ended run reports the audit as still pending, never as given up on.
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('exit_error');
+			expect(run.exitCode).toBe(orchestratorExitCodes.providerError);
+			expect(run.summary).toContain('not counted as a failed attempt at the audit');
+			expect(run.summary).toContain(
+				'audit run so far: 0 of 2 audit(s) done, 0 finding(s) (0 new); 2 remain',
+			);
+			expect(run.summary).not.toContain('gave up');
+			expect(run.auditFindings).toEqual({});
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	// The net under the backend-wide classifier, which knows a backend failure only by its
+	// wording: sessions failing in a row across different audits end the run whatever they say.
+	test(
+		'four failed sessions in a row across two audits stop the run before the third audit',
+		async () => {
+			const store = await makeStore('multi-audit-consecutive-failures');
+			const backend = new SequencedBackend([
+				providerError,
+				providerError,
+				providerError,
+				providerError,
+				securityReport,
+			]);
+
+			const exitCode = await runOrchestrator(auditsPlan(store.projectDir, threeAudits), {
+				rootDir,
+				store,
+				backend,
+			});
+
+			// No audit was done, so the run ends as an error; LOGIC was never attempted and is
+			// pending, not given up on.
+			expect(exitCode).toBe(orchestratorExitCodes.generalError);
+			expect(backend.calls).toBe(4);
+			expect(backend.inputs[2]?.text).toContain('{"auditName":"DEAD_CODE"');
+			expect(backend.inputs[3]?.text).toContain('{"auditName":"DEAD_CODE"');
+			expect(await store.listAuditReports()).toEqual([]);
+			expect(await auditIteration(store, '004.json')).toMatchObject({
+				abandonedAudits: ['SECURITY', 'DEAD_CODE'],
+				exitCode: orchestratorExitCodes.providerError,
+				failedAttempt: 2,
+				remainingAudits: ['LOGIC'],
+			});
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('exit_error');
+			expect(run.exitCode).toBe(orchestratorExitCodes.generalError);
+			expect(run.summary).toContain(
+				'audit run stopped: 0 of 3 audit(s) done, 0 finding(s) (0 new); gave up after 2 failed attempts: SECURITY, DEAD_CODE; 1 remain; stopped because 4 audit sessions in a row failed across different audits; the backend is the likely cause',
+			);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'a run stopped by consecutive failures after an audit was done ends as a partial success',
+		async () => {
+			const store = await makeStore('multi-audit-consecutive-failures-partial');
+			const backend = new SequencedBackend([securityReport, providerError]);
+
+			const exitCode = await runOrchestrator(
+				auditsPlan(store.projectDir, `${threeAudits},TESTING`),
+				{ rootDir, store, backend },
+			);
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(backend.calls).toBe(5);
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('partial_success_blocked');
+			expect(run.summary).toContain(
+				'audit run stopped: 1 of 4 audit(s) done, 0 finding(s) (0 new); gave up after 2 failed attempts: DEAD_CODE, LOGIC; 1 remain; stopped because 4 audit sessions in a row failed',
+			);
+			expect(run.auditFindings).toEqual({ SECURITY: 0 });
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'an audit that completes between two failing audits resets the consecutive count',
+		async () => {
+			const store = await makeStore('multi-audit-consecutive-failures-reset');
+			const backend = new SequencedBackend([
+				providerError,
+				providerError,
+				deadCodeReport,
+				providerError,
+				providerError,
+			]);
+
+			const exitCode = await runOrchestrator(auditsPlan(store.projectDir, threeAudits), {
+				rootDir,
+				store,
+				backend,
+			});
+
+			// Every audit was attempted: two given up on by the ordinary path, one done.
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(backend.calls).toBe(5);
+			expect(backend.inputs[4]?.text).toContain('{"auditName":"LOGIC"');
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('partial_success_blocked');
+			expect(run.summary).toContain(
+				'audit run finished: 1 of 3 audit(s) done, 0 finding(s) (0 new); gave up after 2 failed attempts: SECURITY, LOGIC',
+			);
+			expect(run.summary).not.toContain('in a row');
+			expect(run.auditFindings).toEqual({ DEAD_CODE: 0 });
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'a single audit failing twice is given up on without tripping the consecutive limit',
+		async () => {
+			const store = await makeStore('single-audit-two-failures');
+			const backend = new SequencedBackend([providerError]);
+
+			const exitCode = await runOrchestrator(auditsPlan(store.projectDir, 'SECURITY'), {
+				rootDir,
+				store,
+				backend,
+			});
+
+			expect(exitCode).toBe(orchestratorExitCodes.generalError);
+			expect(backend.calls).toBe(2);
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('exit_error');
+			expect(run.summary).toContain(
+				'audit run finished: 0 of 1 audit(s) done, 0 finding(s) (0 new); gave up after 2 failed attempts: SECURITY',
+			);
+			expect(run.summary).not.toContain('in a row');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	// The session that trips the limit can be one the timeout policy retries instead of ending
+	// the run on. The retry must find nothing to select, or the run would go on to the audit it
+	// stopped short of.
+	test(
+		'a stopped run selects no further audit when the timeout policy retries its last session',
+		async () => {
+			const store = await makeStore('multi-audit-consecutive-failures-retried');
+			const transient: AgentEvent[] = [
+				{
+					meta: { message: 'HTTP 500 Internal Server Error' },
+					reason: 'provider',
+					type: 'error',
+				},
+			];
+			const backend = new SequencedBackend([transient]);
+			const auditPlan = auditsPlan(store.projectDir, threeAudits);
+			// Without the dedicated cap the timeout policy allows more retries than the limit.
+			auditPlan.stopPolicy.maxConsecutiveTimeoutRetries = 0;
+
+			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
+
+			expect(exitCode).toBe(orchestratorExitCodes.generalError);
+			expect(backend.calls).toBe(4);
+			const run = await onlyRun(store);
+			expect(run.stopReason).toBe('exit_error');
+			expect(run.summary).toContain(
+				'gave up after 2 failed attempts: SECURITY, DEAD_CODE; 1 remain; stopped because 4 audit sessions in a row failed across different audits; the backend is the likely cause',
+			);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
 
 	test('audit-mode iteration does not report historical completions as newly completed', async () => {
 		const store = await makeStore('audit-existing-completed-feature');

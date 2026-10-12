@@ -190,3 +190,18 @@ export function recordAgentError(acc: EventAccumulator, event: AgentErrorEvent):
 		type: fromProvider ? 'provider' : (classified ?? 'general'),
 	});
 }
+
+/**
+ * The provider error message a session's events add up to, by the same recorder and precedence
+ * the iteration details use. A caller that holds only the events (a mode, which is handed the
+ * session result before the details exist) reads the same message the details will carry.
+ * @param events The backend events of one session.
+ * @returns The message, or undefined when no provider error was recorded.
+ */
+export function providerErrorMessage(events: readonly AgentEvent[]): string | undefined {
+	const acc = createEventAccumulator();
+	for (const event of events) {
+		if (event.type === 'error') recordAgentError(acc, event);
+	}
+	return acc.providerError?.message;
+}

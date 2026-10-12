@@ -5,7 +5,10 @@ import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 
 import type { IterationDetails } from '../../cli/src/orchestrator/details.ts';
 
-import { auditSessionFailureKind } from '../../cli/src/modes/audit-session-failure.ts';
+import {
+	auditSessionFailureKind,
+	isBackendWideFailure,
+} from '../../cli/src/modes/audit-session-failure.ts';
 import { auditSessionFailureAbsorbed } from '../../cli/src/orchestrator/run/audit-session-absorption.ts';
 import { determineRunContinuation } from '../../cli/src/orchestrator/run/continuation.ts';
 
@@ -39,9 +42,13 @@ const countedAttempt: ModeResult = {
 	summary: 'audit SECURITY did not complete',
 };
 
+// The session events a provider error with this message arrives as.
+function providerErrorSaying(message: string): AgentEvent[] {
+	return [{ meta: { message }, reason: 'provider', type: 'error' }];
+}
+
 function absorption(overrides: Partial<AbsorptionInput>): AbsorptionInput {
 	return {
-		details: providerFailure,
 		events: [],
 		modeResult: countedAttempt,
 		plan: auditPlan,
@@ -142,39 +149,91 @@ describe('auditSessionFailureAbsorbed', () => {
 	});
 
 	test('never absorbs a failure of the backend as a whole', () => {
-		for (const message of [
-			'HTTP 401 Unauthorized',
-			'authentication_error',
-			'invalid x-api-key',
-			'Invalid API key. Please run claude login',
-			'Not logged in',
-			'OAuth token has expired',
-			'You have insufficient quota for this request.',
-			'Your credit balance is too low to access the API',
-			'You have hit your usage limit',
-			'HTTP 429 Too Many Requests',
-			'spawn codex ENOENT',
-			'claude: command not found',
-		]) {
-			const details = providerFailureSaying(message);
-			expect(`${message}: ${auditSessionFailureAbsorbed(absorption({ details }))}`).toBe(
-				`${message}: false`,
-			);
-		}
+		const events = providerErrorSaying('HTTP 401 Unauthorized');
+		expect(auditSessionFailureAbsorbed(absorption({ events }))).toBe(false);
 		const couldNotLaunch: AgentEvent[] = [{ reason: 'spawn', type: 'error' }];
 		expect(auditSessionFailureAbsorbed(absorption({ events: couldNotLaunch }))).toBe(false);
 	});
 
 	test('absorbs a provider error that is about the request and not the backend', () => {
-		for (const message of [
-			'HTTP 500 Internal Server Error',
-			'The model returned an empty response',
-			'max turns reached: 40',
-			'context length exceeded',
-		]) {
-			const details = providerFailureSaying(message);
-			expect(auditSessionFailureAbsorbed(absorption({ details }))).toBe(true);
-		}
+		const events = providerErrorSaying('HTTP 500 Internal Server Error');
+		expect(auditSessionFailureAbsorbed(absorption({ events }))).toBe(true);
+	});
+});
+
+// The one classifier audit mode and the orchestrator both ask. Each row is a message as the
+// provider error carries it; the label says which alternative of the pattern it exercises.
+describe('isBackendWideFailure', () => {
+	const backendWide: [alternative: string, message: string][] = [
+		['HTTP 401', 'HTTP 401 Unauthorized'],
+		['HTTP 402', 'HTTP 402 from the provider'],
+		['HTTP 403', 'request failed: HTTP 403'],
+		['status and reason', 'Error: 403 Forbidden'],
+		['unauthorized', 'Unauthorised: the request was refused'],
+		['authentication_error', '{"type":"error","error":{"type":"authentication_error"}}'],
+		['authentication failed', 'Authentication failed for the configured provider'],
+		['authentication required', 'authentication required'],
+		['failed to authenticate', 'Failed to authenticate with the API'],
+		['not authenticated', 'You are not authenticated'],
+		['not logged in', 'Not logged in'],
+		['login required', 'Login required to continue'],
+		['please log in', 'Please log in and try again'],
+		['please run login', 'Invalid API key. Please run claude login'],
+		['invalid key', 'invalid x-api-key'],
+		['missing credentials', 'Missing credentials for provider'],
+		['expired token', 'expired token'],
+		['token has expired', 'OAuth token has expired'],
+		['key not set', 'API key is not set'],
+		['insufficient quota', 'You have insufficient quota for this request.'],
+		['insufficient credits', 'Insufficient credits'],
+		['credit balance', 'Your credit balance is too low to access the API'],
+		['payment required', '402 Payment Required'],
+		['spawn error text', 'spawn codex ENOENT'],
+		['spawn permission text', 'Error: spawn /usr/local/bin/claude EACCES'],
+		['command not found', 'claude: command not found'],
+		[
+			'not recognized',
+			"'codex' is not recognized as an internal or external command, operable program or batch file.",
+		],
+		['failed to launch', 'Failed to launch the backend process'],
+		['rate limit text', 'You have hit your usage limit'],
+		['rate limit status', 'HTTP 429 Too Many Requests'],
+	];
+
+	test.each(backendWide)('%s is a failure of the backend as a whole', (_alternative, message) => {
+		expect(isBackendWideFailure(providerErrorSaying(message))).toBe(true);
+	});
+
+	// The three terms that were too broad: each of these is an agent's or the audited project's
+	// own text, and none of them says anything about the backend.
+	const notBackendWide: [term: string, message: string][] = [
+		['bare authentication', 'TypeError in authentication module: user is undefined'],
+		['bare authentication', 'the authentication flow has no rate limiting test'],
+		['bare billing', 'billing service tests failed: 3 of 40'],
+		['bare ENOENT', "ENOENT: no such file or directory, open 'coverage/lcov.info'"],
+		['bare EACCES', "EACCES: permission denied, mkdir '/var/reports'"],
+		['request error', 'HTTP 500 Internal Server Error'],
+		['empty response', 'The model returned an empty response'],
+		['turn limit', 'max turns reached: 40'],
+		['context limit', 'context length exceeded'],
+	];
+
+	test.each(notBackendWide)('%s is not a failure of the backend', (_term, message) => {
+		expect(isBackendWideFailure(providerErrorSaying(message))).toBe(false);
+	});
+
+	test('a backend that could not be launched is backend-wide whatever its text says', () => {
+		expect(isBackendWideFailure([{ reason: 'spawn', type: 'error' }])).toBe(true);
+		expect(isBackendWideFailure([])).toBe(false);
+	});
+
+	// A parser-recognized advisory is not an error of the session, so its wording decides nothing.
+	test('a nonfatal advisory never classifies the session', () => {
+		const advisory: AgentEvent[] = [
+			{ fatal: false, meta: { message: 'HTTP 401' }, reason: 'provider', type: 'error' },
+			{ fatal: false, reason: 'spawn', type: 'error' },
+		];
+		expect(isBackendWideFailure(advisory)).toBe(false);
 	});
 });
 

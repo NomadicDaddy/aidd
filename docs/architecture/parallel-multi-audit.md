@@ -37,7 +37,10 @@ first, the same audit is selected again; after the second, the audit is given up
 moves to the next one.
 
 Some failures are not the audit's and are never counted as attempts, so no audit is given up on
-because of them. They end the run, or are handled by the gate that already owns them:
+because of them. They end the run, or are handled by the gate that already owns them. Whose
+failure it was is decided before anything is counted: an audit whose first session failed on its
+own account and whose second hit a refused credential has one failed attempt, not two, and the run
+that ends there reports it as still pending.
 
 | Session outcome                                                                         | Counted as an attempt | What the run does                                                    |
 | --------------------------------------------------------------------------------------- | --------------------- | -------------------------------------------------------------------- |
@@ -46,7 +49,7 @@ because of them. They end the run, or are handled by the gate that already owns 
 | No structured result or no report (73)                                                  | yes                   | continues with the next selection                                    |
 | Report rejected by validation (exit 0)                                                  | yes                   | continues with the next selection                                    |
 | Idle timeout (71)                                                                       | yes                   | follows the timeout policy: retried up to its limit, otherwise ends  |
-| Provider error (72) naming credentials, quota or credit, or a backend that cannot start | not applicable        | ends                                                                 |
+| Provider error (72) naming credentials, quota or credit, or a backend that cannot start | no                    | ends                                                                 |
 | Stop requested                                                                          | no                    | ends as stopped                                                      |
 | Aborted or interrupted (124), or an exit code of 128 and above                          | no                    | ends, unless the abort tolerance allows another try                  |
 | Rate limited (74)                                                                       | no                    | waits and retries the same audit, or ends when the wait is too long  |
@@ -59,6 +62,44 @@ The timeout policy still bounds a backend that has stopped answering: consecutiv
 and transient provider errors end the run at the configured retry limit, whichever audits they
 fell on.
 
+### What counts as a failure of the backend as a whole
+
+One classifier decides it, and both audit mode (before it counts an attempt) and the run loop
+(before it carries on past a failure) ask that same classifier. A failed session is backend-wide
+when any of these holds:
+
+- the backend process could not be started at all;
+- the provider error reads as a rate limit or an exhausted usage limit;
+- the provider error names a refused or missing credential: HTTP 401, 402 or 403, `unauthorized`,
+  `authentication_error`, `authentication failed` or `required`, `failed to authenticate`, not
+  logged in or a request to log in, or an API key, credential or token that is invalid, missing,
+  expired or revoked;
+- the provider error names exhausted quota or credit: insufficient quota, credits, balance or
+  funds, `credit balance`, or `payment required`;
+- the provider error says the backend CLI could not be launched: `spawn <program> ENOENT` or
+  `EACCES`, `command not found`, `not recognized as an internal or external command`, or
+  `failed to spawn`, `launch` or `start`.
+
+The wording is deliberately narrow. A bare mention of authentication, billing, or a missing file
+is not on the list, because the project being audited has authentication code, billing code, and
+missing files of its own, and an agent's error text can quote any of them.
+
+### Consecutive failed sessions
+
+A backend failure worded in a way the classifier does not know looks like an ordinary failed
+session, and on its own would cost every remaining audit two sessions. A count catches it instead.
+The run tracks the sessions that failed in a row without returning a result. Any session that
+returns a result resets the count to zero: an audit done, an audit that could not run, or a report
+rejected by validation, since in each case the backend answered. When four sessions in a row have
+failed and they were not all the same audit, the run stops.
+
+Four is every attempt at two audits. One audit failing both of its attempts is that audit's own
+problem and is given up on in the ordinary way; it never stops the run by itself. A second audit
+doing the same straight afterwards points at the backend.
+
+A run stopped this way selects nothing further. The audits it had not reached stay pending: they
+are not given up on, and `remainingAudits` lists them.
+
 ### How the run ends
 
 A run that settled every audit as done or could not run ends as `completed`. Audits that could not
@@ -68,6 +109,14 @@ A run that gave up on at least one audit did not do what it was asked and does n
 `completed`. If at least one audit was done, it ends as `partial_success_blocked` with exit code 0,
 which the panel shows as a partial success. If none was done, it ends as `exit_error` with exit
 code 1. The summary names the audits it gave up on in both cases.
+
+A run stopped by consecutive failed sessions ends the same two ways: `partial_success_blocked`
+with exit code 0 when at least one audit was done, `exit_error` with exit code 1 when none was.
+Its summary says so in plain words:
+
+```text
+audit run stopped: 0 of 3 audit(s) done, 0 finding(s) (0 new); gave up after 2 failed attempts: SECURITY, DEAD_CODE; 1 remain; stopped because 4 audit sessions in a row failed across different audits; the backend is the likely cause
+```
 
 ## Agent Contract
 

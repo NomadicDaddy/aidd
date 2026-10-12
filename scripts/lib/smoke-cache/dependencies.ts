@@ -97,6 +97,33 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'shared/package.json',
 	],
 	...CHECK_STEP_DEPENDENCIES,
+	// The gate hands ESLint the four source directories, and eslint.config.js selects
+	// `**/*.{ts,tsx,js,jsx}`, so the inputs are every file of those extensions under them. The
+	// ESLint and TypeScript configurations, the package manifests and the lockfile are inputs too:
+	// a config change that brings ignored source into the scan, or a parser upgrade, moves the
+	// count without touching a source file. check-function-size.test.ts holds this entry to what
+	// the gate measures.
+	'check:function-size': [
+		'backend/package.json',
+		'backend/src/**/*.{ts,tsx,js,jsx}',
+		'backend/tsconfig*.json',
+		'bun.lock',
+		'cli/package.json',
+		'cli/src/**/*.{ts,tsx,js,jsx}',
+		'cli/tsconfig*.json',
+		'eslint.config.js',
+		'frontend/eslint.config.js',
+		'frontend/package.json',
+		'frontend/src/**/*.{ts,tsx,js,jsx}',
+		'frontend/tsconfig*.json',
+		'package.json',
+		'scripts/check-function-size.ts',
+		'scripts/function-size-baseline.json',
+		'shared/package.json',
+		'shared/src/**/*.{ts,tsx,js,jsx}',
+		'shared/tsconfig*.json',
+		'tsconfig*.json',
+	],
 	'format:check': ['.prettierignore', '.prettierrc', 'package.json', 'bun.lock'],
 	lint: LINT_DEPENDENCIES,
 	// The fast gate's ESLint-cached stand-in for lint (see FAST_STEP_OVERRIDES). Same dependency

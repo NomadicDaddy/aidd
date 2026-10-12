@@ -33,6 +33,13 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 		name: 'check:max-lines',
 	},
 	{
+		command: ['bun', 'run', 'check:function-size'],
+		description:
+			'No change adds functions over complexity 7 or over 40 lines beyond the committed baseline',
+		label: 'check:function-size',
+		name: 'check:function-size',
+	},
+	{
 		command: ['bun', 'run', 'check:script-targets'],
 		description: 'Every package.json script resolves to a real file and a defined task',
 		label: 'check:script-targets',

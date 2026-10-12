@@ -449,6 +449,7 @@ describe('smoke cache', () => {
 		expect(parseSmokeQcArgs(['--cache-status']).cacheStatus).toBe(true);
 		expect(SMOKE_QC_STEPS.map((step) => step.label)).toEqual([
 			'check:max-lines',
+			'check:function-size',
 			'check:script-targets',
 			'check:smoke-docs',
 			'check:fresh-release',

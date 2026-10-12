@@ -1,0 +1,10 @@
+{
+	"complexity": {
+		"over": 854,
+		"threshold": 7
+	},
+	"lines": {
+		"over": 741,
+		"threshold": 40
+	}
+}

@@ -103,6 +103,7 @@
 		"check:licenses": "bun run check:license-core && bun scripts/generate-third-party-licenses.ts --check",
 		"check:media-provenance": "bun scripts/check-media-provenance.ts",
 		"check:max-lines": "bun scripts/check-max-lines.ts",
+		"check:function-size": "bun scripts/check-function-size.ts",
 		"check:no-inline-references": "bun scripts/check-no-inline-references.ts",
 		"check:scaffold": "bun scripts/check-scaffold.ts",
 		"check:version-parity": "bun scripts/release-notes.ts --check",

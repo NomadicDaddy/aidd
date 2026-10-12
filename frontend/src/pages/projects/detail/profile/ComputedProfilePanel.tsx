@@ -5,7 +5,7 @@ import { OverflowScroller } from '../../../../components/shared/OverflowScroller
 import { Badge, StatusDot } from '../../../../components/ui/badge.tsx';
 import { Card, CardHeader } from '../../../../components/ui/card.tsx';
 import { useViewportFill } from '../../../../hooks/useViewportFill.ts';
-import { effectTone } from '../../../../lib/auditPresentation.ts';
+import { auditApplicabilityNote, effectTone } from '../../../../lib/auditPresentation.ts';
 import { cn } from '../../../../lib/cn.ts';
 import { toneText } from '../../../../lib/tones.ts';
 import { getProfilePosture } from '../../profile/profile-helpers.ts';
@@ -127,27 +127,44 @@ export function ApplicableAuditsCard() {
 					<div className="grid gap-1 @min-[40rem]/audits:grid-cols-2">
 						{audits.map((audit) => {
 							const changed = changedAuditNames.has(audit.name);
+							const note = auditApplicabilityNote(audit);
 							return (
 								// The chip trails the name at a fixed distance rather than being pushed
 								// to the far edge. Distributed, a 161px name and a 63px badge left a
 								// measured 505px between them on a 737px row, 42 rows deep, so the list
 								// read as two unrelated columns instead of 42 pairs.
 								<div
-									className="flex items-start gap-2 rounded px-1 py-0.5 hover:bg-muted"
+									className="rounded px-1 py-0.5 hover:bg-muted"
 									key={audit.name}>
-									{changed ? <StatusDot tone="amber" /> : null}
-									<span
-										className={cn(
-											'max-w-full min-w-0 font-mono text-sm font-medium [overflow-wrap:anywhere]',
-											audit.applies
-												? 'text-foreground'
-												: 'text-muted-foreground line-through',
-										)}>
-										{audit.name}
-									</span>
-									<Badge className="shrink-0" tone={effectTone[audit.effect]}>
-										{audit.effect}
-									</Badge>
+									<div className="flex items-start gap-2">
+										{changed ? <StatusDot tone="amber" /> : null}
+										<span
+											className={cn(
+												'max-w-full min-w-0 font-mono text-sm font-medium [overflow-wrap:anywhere]',
+												audit.applies
+													? 'text-foreground'
+													: 'text-muted-foreground line-through',
+											)}>
+											{audit.name}
+										</span>
+										<Badge className="shrink-0" tone={effectTone[audit.effect]}>
+											{audit.effect}
+										</Badge>
+									</div>
+									{note === null ? null : (
+										<p
+											className={cn(
+												'flex items-start gap-1.5 text-xs [overflow-wrap:anywhere]',
+												note.tone === 'amber'
+													? toneText.amber
+													: 'text-muted-foreground',
+											)}>
+											{note.tone === 'amber' ? (
+												<StatusDot className="mt-1" tone="amber" />
+											) : null}
+											{note.text}
+										</p>
+									)}
 								</div>
 							);
 						})}

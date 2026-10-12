@@ -1,3 +1,4 @@
+import type { ProfilePreviewAudit } from '../api/projectProfiles.ts';
 import type {
 	AuditChangePotential,
 	AuditChangePotentialBand,
@@ -18,6 +19,28 @@ export const effectTone: Record<AuditEffect, 'neutral'> = {
 	excluded: 'neutral',
 	required: 'neutral',
 };
+
+// The line under an audit's name in the profile preview: why it is off, or what detection saw of
+// the surface it measures. Amber is for one case only, an audit that applies because detection
+// could not finish, and the flag decides it, never the wording of the evidence. An audit a lead
+// required over an absent surface is a decision already carried by its `required` chip, so its line
+// stays muted and only records what detection saw.
+export function auditApplicabilityNote(
+	audit: ProfilePreviewAudit,
+): { text: string; tone: 'amber' | 'muted' } | null {
+	if (!audit.applies) {
+		return audit.reason === undefined ? null : { text: audit.reason, tone: 'muted' };
+	}
+	const surface = audit.surface;
+	if (surface === undefined) return null;
+	const label = surface.name.replaceAll('-', ' ');
+	const evidence = surface.evidence === undefined ? '' : `: ${surface.evidence}`;
+	if (surface.undecided) {
+		return { text: `Applies because detection could not finish${evidence}`, tone: 'amber' };
+	}
+	if (surface.present) return { text: `${label} found${evidence}`, tone: 'muted' };
+	return { text: `Required by override; no ${label} detected`, tone: 'muted' };
+}
 
 export const overrideEffects: { label: string; value: 'default' | AuditOverrideEffect }[] = [
 	{ label: 'Default', value: 'default' },

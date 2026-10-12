@@ -1,3 +1,5 @@
+import type { ProjectAuditEvidence } from 'aidd-shared';
+
 import {
 	isLowExposureLocalProfile,
 	normalizeProjectAssuranceProfileInput,
@@ -39,9 +41,32 @@ export interface ProfilePreview {
 		name: string;
 		/** Why the audit does not apply, when the project lacks what the audit measures. */
 		reason?: string;
+		/**
+		 * For an audit that requires a surface: which one, whether the project has it, and the
+		 * evidence in words. `undecided` means the file scan did not finish, so the audit applies
+		 * because nothing ruled the surface out and not because it was found; a screen tells that
+		 * apart from this flag and never from the wording of `evidence`.
+		 */
+		surface?: { evidence?: string; name: string; present: boolean; undecided: boolean };
 	}[];
 	isLowExposureLocal: boolean;
 	requiresFullHardening: boolean;
+}
+
+function requiredSurface(
+	mapping: ProfilePreviewBase['mapping'],
+	evidence: ProjectAuditEvidence,
+	auditName: string,
+): ProfilePreview['audits'][number]['surface'] {
+	const name = mapping.requiresSurface?.[auditName];
+	if (name === undefined) return undefined;
+	const text = evidence.surfaces.get(name);
+	return {
+		...(text === undefined ? {} : { evidence: text }),
+		name,
+		present: text !== undefined,
+		undecided: evidence.undecidedSurfaces?.has(name) === true,
+	};
 }
 
 async function loadPreviewBase(rootDir: string): Promise<ProfilePreviewBase> {
@@ -72,11 +97,13 @@ async function previewOneProjectProfile(
 				base.mapping,
 				overrides,
 			);
+			const surface = requiredSurface(base.mapping, evidence, name);
 			return {
 				applies: cell.applies,
 				effect: cell.effect,
 				name,
 				...(cell.reason === undefined ? {} : { reason: cell.reason }),
+				...(surface === undefined ? {} : { surface }),
 			};
 		})
 		.sort((left, right) => left.name.localeCompare(right.name));

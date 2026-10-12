@@ -22,6 +22,12 @@ export interface ProfilePreviewAudit {
 	name: string;
 	/** Why the audit does not apply, when the project lacks what the audit measures. */
 	reason?: string;
+	/**
+	 * For an audit that requires a surface: which one, whether the project has it, and the
+	 * evidence in words. `undecided` means detection did not finish, so the audit applies because
+	 * nothing ruled the surface out and not because it was found.
+	 */
+	surface?: { evidence?: string; name: string; present: boolean; undecided: boolean };
 }
 
 /** Live (unsaved) recomputation of a profile's posture + audit applicability. */

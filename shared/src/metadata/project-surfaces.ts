@@ -83,9 +83,15 @@ function markupFile(entries: Dirent[]): string | undefined {
 function databaseFile(entries: Dirent[]): string | undefined {
 	return (
 		firstFile(entries, (name) => name === 'schema.prisma') ??
-		firstFile(entries, (name) => databaseFileExtensions.some((ext) => name.endsWith(ext))) ??
+		firstFile(entries, isDatabaseFileName) ??
 		firstFile(entries, (name) => name.endsWith('.sql'))
 	);
+}
+
+// `Thumbs.db` is the thumbnail cache Windows leaves in a folder of images. It ends in `.db` and
+// is nobody's database.
+function isDatabaseFileName(name: string): boolean {
+	return name !== 'thumbs.db' && databaseFileExtensions.some((ext) => name.endsWith(ext));
 }
 
 const fileEvidence: Record<AuditSurface, (entries: Dirent[]) => string | undefined> = {
@@ -130,7 +136,7 @@ async function scanForFileEvidence(
 	projectDir: string,
 	wanted: readonly AuditSurface[],
 	found: Map<AuditSurface, string>,
-): Promise<void> {
+): Promise<Set<AuditSurface>> {
 	const scan: FileScan = {
 		budget: MAX_ENTRIES,
 		found,
@@ -143,7 +149,8 @@ async function scanForFileEvidence(
 		if (stop) break;
 	}
 	// Marks only what is still missing, so a scan that found everything marks nothing.
-	if (scan.incomplete !== undefined) markUnfinished(wanted, found, scan.incomplete);
+	if (scan.incomplete === undefined) return new Set();
+	return markUnfinished(wanted, found, scan.incomplete);
 }
 
 interface FileScan {
@@ -178,11 +185,22 @@ function markUnfinished(
 	wanted: readonly AuditSurface[],
 	found: Map<AuditSurface, string>,
 	why: string,
-): void {
+): Set<AuditSurface> {
+	const undecided = new Set<AuditSurface>();
 	for (let index = 0; index < wanted.length; index++) {
 		const surface = wanted[index]!;
-		if (!found.has(surface)) found.set(surface, `file scan incomplete: ${why}`);
+		if (found.has(surface)) continue;
+		found.set(surface, `file scan incomplete: ${why}`);
+		undecided.add(surface);
 	}
+	return undecided;
+}
+
+/** The surfaces a project counts as having, and which of those the scan could not decide. */
+export interface DetectedSurfaces {
+	surfaces: Map<AuditSurface, string>;
+	/** Counted as present only because the file scan did not finish; not evidence of the thing. */
+	undecided: Set<AuditSurface>;
 }
 
 /**
@@ -192,13 +210,13 @@ function markUnfinished(
  * @param projectDir The project to examine.
  * @param catalogue The catalogue's surface definitions, naming the packages that evidence each.
  * @param declared The project's declared packages, each with the manifest that declares it.
- * @returns The surfaces present, mapped to a short statement of why.
+ * @returns The surfaces present, each with a short statement of why, and which were undecided.
  */
 export async function detectProjectSurfaces(
 	projectDir: string,
 	catalogue: SurfaceCatalogue,
 	declared: ReadonlyMap<string, string>,
-): Promise<Map<AuditSurface, string>> {
+): Promise<DetectedSurfaces> {
 	const wanted = Object.keys(catalogue) as AuditSurface[];
 	const found = new Map<AuditSurface, string>();
 	for (let index = 0; index < wanted.length; index++) {
@@ -206,8 +224,11 @@ export async function detectProjectSurfaces(
 		const name = catalogue[surface]?.packages.find((candidate) => declared.has(candidate));
 		if (name !== undefined) found.set(surface, `declares ${name} in ${declared.get(name)}`);
 	}
-	if (found.size < wanted.length) await scanForFileEvidence(projectDir, wanted, found);
-	return found;
+	const undecided =
+		found.size < wanted.length
+			? await scanForFileEvidence(projectDir, wanted, found)
+			: new Set<AuditSurface>();
+	return { surfaces: found, undecided };
 }
 
 /**
@@ -220,8 +241,10 @@ export async function readProjectAuditEvidence(
 	mapping: AuditProfileMapping,
 ): Promise<ProjectAuditEvidence> {
 	const declared = await projectDependencySources(projectDir);
+	const detected = await detectProjectSurfaces(projectDir, mapping.surfaces ?? {}, declared);
 	return {
 		packages: new Set(declared.keys()),
-		surfaces: await detectProjectSurfaces(projectDir, mapping.surfaces ?? {}, declared),
+		surfaces: detected.surfaces,
+		undecidedSurfaces: detected.undecided,
 	};
 }

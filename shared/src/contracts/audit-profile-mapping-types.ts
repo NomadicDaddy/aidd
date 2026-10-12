@@ -47,6 +47,12 @@ export interface AuditSurfaceDefinition {
 export interface ProjectAuditEvidence {
 	packages: ReadonlySet<string>;
 	surfaces: ReadonlyMap<AuditSurface, string>;
+	/**
+	 * Surfaces counted as present only because the file scan did not finish. Their audits apply,
+	 * since nothing ruled them out, but that is not the same as the thing having been found, and a
+	 * screen showing applicability says so.
+	 */
+	undecidedSurfaces?: ReadonlySet<AuditSurface>;
 }
 
 export const auditWildcard = '*';

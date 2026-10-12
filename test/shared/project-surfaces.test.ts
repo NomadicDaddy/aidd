@@ -211,6 +211,10 @@ describe('database detection from schema evidence', () => {
 		});
 	});
 
+	test("Windows' thumbnail cache is not a database", async () => {
+		expect(await surfaces({ 'assets/Thumbs.db': '' })).toEqual({});
+	});
+
 	test('opening a database with the built-in driver is not owning one', async () => {
 		expect(
 			await surfaces({

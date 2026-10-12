@@ -121,8 +121,11 @@ describe('project profile preview', () => {
 				effect: 'disabled',
 				name: 'LIGHTHOUSE',
 				reason: 'requires a web frontend; none detected',
+				surface: { name: 'web-frontend', present: false, undecided: false },
 			});
 			expect(effectOf(bare, 'DATABASE')?.reason).toBe('requires a database; none detected');
+			// An audit that requires no surface carries no surface field at all.
+			expect(effectOf(bare, 'SECURITY')?.surface).toBeUndefined();
 
 			await mkdir(join(projectDir, 'public'), { recursive: true });
 			await writeFile(join(projectDir, 'public', 'index.html'), '<!doctype html>\n');
@@ -135,6 +138,36 @@ describe('project profile preview', () => {
 				applies: true,
 				effect: 'default',
 				name: 'LIGHTHOUSE',
+				surface: {
+					evidence: 'index.html under public/',
+					name: 'web-frontend',
+					present: true,
+					undecided: false,
+				},
+			});
+
+			// A tree too large to finish scanning: the database audits apply because nothing
+			// ruled a database out, and the preview says detection did not finish in a field a
+			// screen can read without matching on the wording.
+			await mkdir(join(projectDir, 'wide'), { recursive: true });
+			for (let index = 0; index < 5000; index++) {
+				await writeFile(join(projectDir, 'wide', `note-${index}.txt`), '');
+			}
+			const large = await createProjectProfilePreview(
+				contextFor(projectDir),
+				'p1',
+				fullHardening,
+			);
+			expect(effectOf(large, 'DATABASE')).toEqual({
+				applies: true,
+				effect: 'default',
+				name: 'DATABASE',
+				surface: {
+					evidence: 'file scan incomplete: it stopped at its limit of 5000 entries',
+					name: 'database',
+					present: true,
+					undecided: true,
+				},
 			});
 		} finally {
 			await removeTempTree(projectDir);

@@ -165,10 +165,10 @@ export async function classifyIterationOutcome(input: {
 	}
 	const findingsContractWarning =
 		plan.mode === 'audit' ? modeResult.artifacts?.findingsContractWarning : undefined;
-	// An audit batch that writes multiple reports but emits zero structured findings has
-	// dropped the findings contract (report prose without populating auditFindings). Treat it
-	// as a run failure rather than a clean completion so the result reads as exit_error and the
-	// pipeline/operator is forced to look, instead of trusting an empty-but-green audit pass.
+	// An audit result flagged with a findings-contract warning wrote report prose without
+	// populating auditFindings. Treat it as a run failure rather than a clean completion so the
+	// result reads as exit_error and the pipeline/operator is forced to look, instead of trusting
+	// an empty-but-green audit pass.
 	const findingsContractDropped =
 		typeof findingsContractWarning === 'string' && exitCode === orchestratorExitCodes.success;
 	if (typeof findingsContractWarning === 'string') {

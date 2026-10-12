@@ -16,6 +16,6 @@ test.each([
 
 test('audit loader still reads the shipped catalog', async () => {
 	const definition = await loadAuditPromptDefinition(process.cwd(), 'SECURITY');
-	expect(definition.name).toBe('SECURITY');
+	expect(definition.nameLower).toBe('security');
 	expect(definition.body.length).toBeGreaterThan(100);
 });

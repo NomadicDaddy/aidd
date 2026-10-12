@@ -1,12 +1,13 @@
 import {
 	type AuditFreshnessContext,
 	createAuditFreshnessContext,
-	evaluateAuditReportFreshness,
 } from 'aidd-shared/metadata/audit-freshness';
 import { discoverProjectAuditNames } from 'aidd-shared/modes/audit-shared';
 
 import type { ProjectArtifactCheckSummary } from '../../../types.ts';
 import type { DirectorAuditHealth } from './types.ts';
+
+import { auditReportFreshness } from '../../audit/auditReportFreshness.ts';
 
 export async function checkAuditHealth(
 	catalogDir: string,
@@ -25,7 +26,7 @@ export async function checkAuditHealth(
 	const missing: string[] = [];
 	const stale: DirectorAuditHealth['stale'] = [];
 	for (const auditName of auditNames) {
-		const freshness = await evaluateAuditReportFreshness(projectDir, auditName, { context });
+		const freshness = await auditReportFreshness(projectDir, auditName, context);
 		if (freshness.status === 'missing') {
 			missing.push(auditName);
 			continue;

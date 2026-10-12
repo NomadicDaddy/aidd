@@ -51,17 +51,6 @@ export function stringVariable(plan: PromptPlan, key: string): string | undefine
 	return typeof value === 'string' ? value : undefined;
 }
 
-export function stringArrayVariable(plan: PromptPlan, key: string): string[] {
-	const value = plan.variables[key];
-	return Array.isArray(value)
-		? value.filter((item): item is string => typeof item === 'string' && item.trim() !== '')
-		: [];
-}
-
-export function booleanVariable(plan: PromptPlan, key: string): boolean {
-	return plan.variables[key] === true;
-}
-
 export function numberVariable(plan: PromptPlan, key: string, fallback: number): number {
 	const value = plan.variables[key];
 	return typeof value === 'number' ? value : fallback;

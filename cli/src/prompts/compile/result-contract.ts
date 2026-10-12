@@ -1,6 +1,6 @@
 import type { PromptPlan } from 'aidd-shared/plan/types';
 
-import { booleanVariable, stringVariable } from './shared.ts';
+import { stringVariable } from './shared.ts';
 
 const liveVerificationGate = `Live-verification gate: when the selected feature's acceptance criteria call for runtime or live verification (drive the flow in the browser, hit the endpoint, render the page), "could not verify" means NOT done. If that verification is blocked or impossible — environment wedged, server unreachable, browser unavailable — do not report status completed with passes true; unit tests plus stated intent do not satisfy a criterion that requires driving the runtime surface. Instead set the feature to "waiting_approval" with "passes": false, record the blockage and the exact manual verification steps in /.aidd/CHANGELOG.md as the decision context, and report the blocker. aidd rejects a completed/passes:true result whose own response admits its live verification was blocked or skipped, and parks the feature as waiting_approval.`;
 
@@ -21,6 +21,39 @@ const measurementContract = `MEASUREMENT CONTRACT — a PERFORMANCE, LIGHTHOUSE,
 // as "no AIDD_RESULT emitted". State the rule explicitly so the marker is either the complete
 // object or absent — never an abbreviation.
 const antiPlaceholderClause = `\nAnti-placeholder rule: the AIDD_RESULT value must be the COMPLETE, valid JSON object with the real contents for this run. Never substitute a placeholder, shorthand, or abbreviation where the JSON belongs — not \`{ ... }\`, \`{ … }\`, an ellipsis, or a prose summary. The marker is parsed as brace-balanced JSON, so a placeholder body fails to parse and discards the entire run's work. If the payload is large, emit it in full anyway; if you cannot emit valid JSON, omit the marker entirely rather than emit a malformed one.`;
+
+// One agent session audits one thing, so there is one audit contract: a single result object
+// that names its audit. The name is required so a recovered or misrouted result can never be
+// attributed to an audit the session was not given.
+function compileAuditResultContract(auditName: string): string {
+	return `## aidd RESULT CONTRACT
+
+After completing the audit, include exactly one final result marker in your assistant response:
+
+\`\`\`text
+AIDD_RESULT: {"auditName":"${auditName}","auditFindings":[{"title":"Brief issue title","description":"Verified: path:line - evidence","spec":"Concrete remediation steps","severity":"High","affectedFiles":["path/to/file.ts"]}],"reportMarkdown":"# ${auditName} Audit Report\\n\\nSummary..."}
+\`\`\`
+
+This session covers exactly one audit. \`auditName\` is required and must be exactly \`${auditName}\`; a result naming any other audit is rejected. Only include verified findings. Do not include speculative, stale, duplicate, or unverifiable findings. Severity must be one of Critical, High, Medium, or Low.
+
+EVIDENCE CONTRACT — the result must prove the audit actually ran:
+- If \`auditFindings\` is non-empty, each finding's \`description\` must carry a \`Verified:\` line citing a \`path:line\`, a scoped search and its result, or a measured artifact and its value (\`measured src/lib/archive-lock.ts at 297 lines\`), per the audit workflow verification gate. Size, count, and duration findings have no single line to point at — use the measurement form for those rather than inventing a line number.
+- If \`auditFindings\` is empty, the result MUST include a \`noFindingsJustification\` string of at least one full sentence naming the specific files, globs, or commands you inspected for this audit **and what came back** — a named scope with no stated result reads as an assertion, not evidence. For example: \`"noFindingsJustification":"Inspected backend/src/routes/*.ts and frontend/src/pages/* with rg for unreferenced exports; every match is registered in create-api-app.ts or routes.tsx, so nothing qualified."\` Boilerplate such as "no issues", "looks clean", or "code is fine" is not acceptable — cite concrete, audit-specific evidence.
+- A result returning empty \`auditFindings\` without genuine justification is rejected and the audit remains pending — no report from it is persisted, so it cannot count as fresh audit evidence. Do the investigation before reporting zero.
+- aidd validates every finding entry's shape. An entry that is not an object, or lacks a title, spec, recognized severity, or at least one affected file, causes the ENTIRE report to be rejected and the audit to remain pending for retry. Its \`Verified:\` evidence must be non-empty and cite a \`path:line\`, a scoped grep/search result, or a measured artifact and its value. No findings or report from a rejected result are persisted.
+
+COULD-NOT-RUN — when the audit cannot be performed at all (for example: no Lighthouse artifact exists and none can be produced; a required fixture could not be written; the audit definition is missing), say so instead of writing a report that says SKIPPED or INCOMPLETE:
+
+\`\`\`text
+AIDD_RESULT: {"auditName":"${auditName}","auditStatus":"unavailable","unavailableReason":"No Lighthouse artifact exists under logs/ and no browser is installed to produce one.","auditFindings":[]}
+\`\`\`
+
+\`unavailableReason\` is required and must say concretely what was missing; \`auditFindings\` must be empty. aidd records the audit as could-not-run with that reason, does not retry it in this run, and leaves it stale so a later run performs it. Use this only when the audit genuinely cannot run — never to skip an audit that can be performed, and never fabricate findings or an empty report to satisfy the contract.
+
+This is an unattended run. Do not ask interactive questions.
+
+${measurementContract}`;
+}
 
 export function compileResultContract(plan: PromptPlan): string {
 	const modeContract = compileModeResultContract(plan);
@@ -72,42 +105,7 @@ Only emit this marker after the requested TODO work is complete. Do not emit it 
 `;
 	}
 	if (plan.mode === 'audit') {
-		if (booleanVariable(plan, 'auditBatchMode')) {
-			return `## aidd RESULT CONTRACT
-
-After completing every selected audit in this batch, include exactly one final result marker in your assistant response:
-
-\`\`\`text
-AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","auditFindings":[{"title":"Brief issue title","description":"Verified: path:line - evidence","spec":"Concrete remediation steps","severity":"High","affectedFiles":["path/to/file.ts"]}],"reportMarkdown":"# SECURITY Audit Report\\n\\nSummary..."},{"auditName":"DEAD_CODE","auditFindings":[],"noFindingsJustification":"Inspected backend/src/routes/*.ts and frontend/src/pages/* with rg for unreferenced exports; every match is registered in create-api-app.ts or routes.tsx, so nothing qualified.","reportMarkdown":"# DEAD_CODE Audit Report\\n\\nSummary..."}]}
-\`\`\`
-
-Return exactly one \`auditReports[]\` entry for each selected audit name. Each entry's \`auditName\` must exactly match one of the selected audit names. Only include verified findings. Do not include speculative, stale, duplicate, or unverifiable findings. Severity must be one of Critical, High, Medium, or Low.
-
-EVIDENCE CONTRACT — every entry must prove its own audit actually ran:
-- If \`auditFindings\` is non-empty, each finding's \`description\` must carry a \`Verified:\` line citing a \`path:line\`, a scoped search and its result, or a measured artifact and its value (\`measured src/lib/archive-lock.ts at 297 lines\`), per the audit workflow verification gate. Size, count, and duration findings have no single line to point at — use the measurement form for those rather than inventing a line number.
-- If \`auditFindings\` is empty, the entry MUST include a \`noFindingsJustification\` string of at least one full sentence naming the specific files, globs, or commands you inspected for THIS audit **and what came back** — a named scope with no stated result reads as an assertion, not evidence. Boilerplate such as "no issues", "looks clean", or "code is fine" is not acceptable — cite concrete, audit-specific evidence.
-- Any entry returning empty \`auditFindings\` without genuine per-audit justification is rejected and remains pending — no report from it is persisted, so it cannot count as fresh audit evidence. A real finding in a sibling report does not excuse an unjustified empty one. Do the per-audit investigation before reporting zero.
-- aidd validates every finding entry's shape. An entry that is not an object, or lacks a title, spec, recognized severity, or at least one affected file, causes that ENTIRE audit's report to be rejected and remain pending for retry. Its \`Verified:\` evidence must be non-empty and cite a \`path:line\`, a scoped grep/search result, or a measured artifact and its value. No findings or report from a rejected entry are persisted.
-
-This is an unattended run. Do not ask interactive questions. If an audit cannot proceed (unreadable workspace, missing audit definition, environment failure), report the blocker in your normal response and do NOT emit AIDD_RESULT — never fabricate findings or an empty report to satisfy the contract.
-
-${measurementContract}`;
-		}
-		return `## aidd RESULT CONTRACT
-
-After completing the audit, include exactly one final result marker in your assistant response:
-
-\`\`\`text
-AIDD_RESULT: {"auditFindings":[{"title":"Brief issue title","description":"Verified: path:line - evidence","spec":"Concrete remediation steps","severity":"High","affectedFiles":["path/to/file.ts"]}],"reportMarkdown":"# AUDIT_NAME Audit Report\\n\\nSummary..."}
-\`\`\`
-
-Only include verified findings. Do not include speculative, stale, duplicate, or unverifiable findings. Severity must be one of Critical, High, Medium, or Low. Every \`Verified:\` line must be non-empty and cite a \`path:line\`, a scoped grep/search result, or a measured artifact and its value (\`measured src/lib/archive-lock.ts at 297 lines\` — use this for size, count, and duration findings rather than inventing a line number). If \`auditFindings\` is empty, include a \`noFindingsJustification\` string of at least one full sentence naming the specific files, globs, or commands you inspected and what came back — boilerplate such as "no issues" or "looks clean" is not acceptable. An unjustified empty report is rejected and remains pending; it is not persisted as fresh audit evidence.
-
-aidd validates every finding entry's shape. An entry that is not an object, or lacks a title, spec, \`Verified:\` description, recognized severity, or at least one affected file, causes the whole report to be rejected and the audit re-run — nothing from it is persisted.
-
-This is an unattended run. Do not ask interactive questions. If the audit cannot proceed (unreadable workspace, missing audit definition, environment failure), report the blocker in your normal response and do NOT emit AIDD_RESULT — never fabricate findings or an empty report to satisfy the contract.
-
-${measurementContract}`;
+		return compileAuditResultContract(stringVariable(plan, 'auditName') ?? 'AUDIT_NAME');
 	}
 	if (plan.mode === 'interview') {
 		return `## aidd RESULT CONTRACT

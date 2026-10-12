@@ -9,7 +9,7 @@ export async function recordAuditRunStart(
 	source: 'scheduled' | 'web',
 	auditNames: readonly string[],
 ): Promise<void> {
-	// The same ordering the CLI records as driverId, so the two identify a batch identically.
+	// The same ordering the CLI records as driverId, so the two name a run's audits identically.
 	const resourceName = auditRunDriverId(auditNames);
 	await telemetry?.recordStart({
 		backend: run.backend,

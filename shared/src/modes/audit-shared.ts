@@ -7,6 +7,13 @@ import { filterApplicableAuditNames } from '../metadata/project-profile.ts';
 
 export const simulationMarker = '<!-- aidd:simulated -->';
 
+/**
+ * Prefixes the report of an audit that could not be performed. The report is kept so the reason
+ * is on disk, but it is not audit evidence: every freshness reader excludes it, so the audit
+ * stays stale until a run actually performs it.
+ */
+export const unavailableMarker = '<!-- aidd:audit-unavailable -->';
+
 export function isReferenceAudit(body: string): boolean {
 	return /type:\s*['"]reference['"]/.test(body);
 }
@@ -93,11 +100,18 @@ export interface AuditInstrument {
 export interface AuditReportInput {
 	auditName: string;
 	structured: Record<string, unknown>;
+	/** Set when the agent declared it could not perform the audit; the reason it gave. */
+	unavailableReason?: string;
 }
 
 export interface InvalidAuditReport {
 	auditName?: string;
-	index: number;
+	reason: string;
+}
+
+/** An audit a run could not perform, with the reason recorded in its report. */
+export interface UnavailableAudit {
+	auditName: string;
 	reason: string;
 }
 

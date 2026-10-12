@@ -12,7 +12,7 @@ export function renderAuditFindingsSection(variables: AuditFindingsSectionVariab
 
 Do not create the feature directory or write \`feature.json\` yourself. aidd converts each accepted structured finding into a \`feature.json\` file, assigns it to the project roadmap when \`roadmap.json\` is present, and writes the audit report.
 
-**Zero findings is a claim that must be earned, not a default.** If this audit produced no findings, your \`AIDD_RESULT\` entry must still carry a \`noFindingsJustification\` naming the specific files, patterns, or commands you actually inspected for this audit and why nothing qualified. Report prose with an empty findings array and no concrete per-audit evidence is a dropped contract: in a multi-audit batch where every audit comes back empty this way, aidd records the whole run as a failure rather than a clean pass. Investigate first, then report.
+**Zero findings is a claim that must be earned, not a default.** If this audit produced no findings, your \`AIDD_RESULT\` must still carry a \`noFindingsJustification\` naming the specific files, patterns, or commands you actually inspected for this audit and why nothing qualified. Report prose with an empty findings array and no concrete evidence is a dropped contract: aidd rejects the result, persists nothing from it, and the audit stays pending. Investigate first, then report.
 
 **Issue IDs:** aidd generates each finding's id and directory as \`audit-${auditNameLower}-{unix_timestamp}-{descriptive-slug}\` (with a numeric suffix on collisions); you do not emit ids. Because ids are assigned only AFTER your report is parsed, never link or guess \`feature.json\` paths anywhere in the report — reference findings by title and affected files instead.
 

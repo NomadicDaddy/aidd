@@ -167,7 +167,7 @@ function auditRun(
 		driverId,
 		driverKind: 'audit',
 		stopReason,
-		summary: 'audit batch finished',
+		summary: 'audit run finished',
 	};
 }
 

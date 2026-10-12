@@ -109,7 +109,7 @@ describe('reconcileInvocationFromRun', () => {
 		expect(inv?.durationMs).toBe(4_000);
 	});
 
-	test('copies the driver hash onto the run row and refines a named audit batch', async () => {
+	test('copies the driver hash onto the run row and refines a run of named audits', async () => {
 		await seedRun({
 			id: 'run_audit',
 			status: 'completed',

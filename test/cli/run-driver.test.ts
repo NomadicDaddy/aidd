@@ -79,7 +79,7 @@ describe('run driver provenance', () => {
 		expect(runDriverForPlan({ prompt: {} } as RunPlan, undefined, {})).toBeUndefined();
 	});
 
-	test('sorts batch audit names by code point and hashes the set of definition hashes', async () => {
+	test('sorts a run of several audits by code point and hashes the set of definition hashes', async () => {
 		const rootDir = await testTempDir('aidd-run-driver-audit-');
 		const plan = {} as RunPlan;
 		try {

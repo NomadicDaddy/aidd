@@ -565,7 +565,7 @@ For each candidate finding, perform ALL of the following checks BEFORE including
 
 Do not create the feature directory or write `feature.json` yourself. aidd converts each accepted structured finding into a `feature.json` file, assigns it to the project roadmap when `roadmap.json` is present, and writes the audit report.
 
-**Zero findings is a claim that must be earned, not a default.** If this audit produced no findings, your `AIDD_RESULT` entry must still carry a `noFindingsJustification` naming the specific files, patterns, or commands you actually inspected for this audit and why nothing qualified. Report prose with an empty findings array and no concrete per-audit evidence is a dropped contract: in a multi-audit batch where every audit comes back empty this way, aidd records the whole run as a failure rather than a clean pass. Investigate first, then report.
+**Zero findings is a claim that must be earned, not a default.** If this audit produced no findings, your `AIDD_RESULT` must still carry a `noFindingsJustification` naming the specific files, patterns, or commands you actually inspected for this audit and why nothing qualified. Report prose with an empty findings array and no concrete evidence is a dropped contract: aidd rejects the result, persists nothing from it, and the audit stays pending. Investigate first, then report.
 
 **Issue IDs:** aidd generates each finding's id and directory as `audit-security-{unix_timestamp}-{descriptive-slug}` (with a numeric suffix on collisions); you do not emit ids. Because ids are assigned only AFTER your report is parsed, never link or guess `feature.json` paths anywhere in the report — reference findings by title and affected files instead.
 
@@ -1435,14 +1435,27 @@ Begin by running Step 0 now.
 After completing the audit, include exactly one final result marker in your assistant response:
 
 ```text
-AIDD_RESULT: {"auditFindings":[{"title":"Brief issue title","description":"Verified: path:line - evidence","spec":"Concrete remediation steps","severity":"High","affectedFiles":["path/to/file.ts"]}],"reportMarkdown":"# AUDIT_NAME Audit Report\n\nSummary..."}
+AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[{"title":"Brief issue title","description":"Verified: path:line - evidence","spec":"Concrete remediation steps","severity":"High","affectedFiles":["path/to/file.ts"]}],"reportMarkdown":"# SECURITY Audit Report\n\nSummary..."}
 ```
 
-Only include verified findings. Do not include speculative, stale, duplicate, or unverifiable findings. Severity must be one of Critical, High, Medium, or Low. Every `Verified:` line must be non-empty and cite a `path:line`, a scoped grep/search result, or a measured artifact and its value (`measured src/lib/archive-lock.ts at 297 lines` — use this for size, count, and duration findings rather than inventing a line number). If `auditFindings` is empty, include a `noFindingsJustification` string of at least one full sentence naming the specific files, globs, or commands you inspected and what came back — boilerplate such as "no issues" or "looks clean" is not acceptable. An unjustified empty report is rejected and remains pending; it is not persisted as fresh audit evidence.
+This session covers exactly one audit. `auditName` is required and must be exactly `SECURITY`; a result naming any other audit is rejected. Only include verified findings. Do not include speculative, stale, duplicate, or unverifiable findings. Severity must be one of Critical, High, Medium, or Low.
 
-aidd validates every finding entry's shape. An entry that is not an object, or lacks a title, spec, `Verified:` description, recognized severity, or at least one affected file, causes the whole report to be rejected and the audit re-run — nothing from it is persisted.
+EVIDENCE CONTRACT — the result must prove the audit actually ran:
 
-This is an unattended run. Do not ask interactive questions. If the audit cannot proceed (unreadable workspace, missing audit definition, environment failure), report the blocker in your normal response and do NOT emit AIDD_RESULT — never fabricate findings or an empty report to satisfy the contract.
+- If `auditFindings` is non-empty, each finding's `description` must carry a `Verified:` line citing a `path:line`, a scoped search and its result, or a measured artifact and its value (`measured src/lib/archive-lock.ts at 297 lines`), per the audit workflow verification gate. Size, count, and duration findings have no single line to point at — use the measurement form for those rather than inventing a line number.
+- If `auditFindings` is empty, the result MUST include a `noFindingsJustification` string of at least one full sentence naming the specific files, globs, or commands you inspected for this audit **and what came back** — a named scope with no stated result reads as an assertion, not evidence. For example: `"noFindingsJustification":"Inspected backend/src/routes/*.ts and frontend/src/pages/* with rg for unreferenced exports; every match is registered in create-api-app.ts or routes.tsx, so nothing qualified."` Boilerplate such as "no issues", "looks clean", or "code is fine" is not acceptable — cite concrete, audit-specific evidence.
+- A result returning empty `auditFindings` without genuine justification is rejected and the audit remains pending — no report from it is persisted, so it cannot count as fresh audit evidence. Do the investigation before reporting zero.
+- aidd validates every finding entry's shape. An entry that is not an object, or lacks a title, spec, recognized severity, or at least one affected file, causes the ENTIRE report to be rejected and the audit to remain pending for retry. Its `Verified:` evidence must be non-empty and cite a `path:line`, a scoped grep/search result, or a measured artifact and its value. No findings or report from a rejected result are persisted.
+
+COULD-NOT-RUN — when the audit cannot be performed at all (for example: no Lighthouse artifact exists and none can be produced; a required fixture could not be written; the audit definition is missing), say so instead of writing a report that says SKIPPED or INCOMPLETE:
+
+```text
+AIDD_RESULT: {"auditName":"SECURITY","auditStatus":"unavailable","unavailableReason":"No Lighthouse artifact exists under logs/ and no browser is installed to produce one.","auditFindings":[]}
+```
+
+`unavailableReason` is required and must say concretely what was missing; `auditFindings` must be empty. aidd records the audit as could-not-run with that reason, does not retry it in this run, and leaves it stale so a later run performs it. Use this only when the audit genuinely cannot run — never to skip an audit that can be performed, and never fabricate findings or an empty report to satisfy the contract.
+
+This is an unattended run. Do not ask interactive questions.
 
 MEASUREMENT CONTRACT — a PERFORMANCE, LIGHTHOUSE, or BUILD_OUTPUT report must declare what produced its numbers:
 

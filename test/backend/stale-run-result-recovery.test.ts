@@ -70,33 +70,31 @@ function agentMessageLine(result: unknown): string {
 	})}\n`;
 }
 
+// The run was launched for two audits, so the result's own auditName is what attributes it.
 const auditPayload = {
-	auditReports: [
+	auditFindings: [
 		{
-			auditFindings: [
-				{
-					affectedFiles: ['backend/src/services/run/heartbeatTransitions.ts'],
-					description:
-						'The reaper discarded a parsed result.\nVerified: read backend/src/services/run/heartbeatTransitions.ts:195 and found the payload unused.',
-					severity: 'High',
-					spec: 'Persist the recovered audit payload instead of dropping it.',
-					title: 'Stale reaper drops a recovered audit payload',
-				},
-			],
-			auditName: 'RECOVERY',
-			reportMarkdown: '# RECOVERY Audit Report\n\nOne finding.',
+			affectedFiles: ['backend/src/services/run/heartbeatTransitions.ts'],
+			description:
+				'The reaper discarded a parsed result.\nVerified: read backend/src/services/run/heartbeatTransitions.ts:195 and found the payload unused.',
+			severity: 'High',
+			spec: 'Persist the recovered audit payload instead of dropping it.',
+			title: 'Stale reaper drops a recovered audit payload',
 		},
 	],
+	auditName: 'RECOVERY',
+	reportMarkdown: '# RECOVERY Audit Report\n\nOne finding.',
 };
 
 // A dead audit run whose log holds the payload above, with a `running` row to reap.
 async function seedAuditRun(
 	projectDir: string,
 	db: ReturnType<typeof makeDb>['db'],
+	payload: Record<string, unknown> = auditPayload,
 ): Promise<CliActiveRunRecord> {
 	await mkdir(join(projectDir, '.aidd', 'active-runs'), { recursive: true });
 	const logPath = join(projectDir, 'run.log');
-	await writeFile(logPath, agentMessageLine(auditPayload));
+	await writeFile(logPath, agentMessageLine(payload));
 	const record = makeRecord(projectDir, logPath, {
 		commandArgs: ['bun', 'cli/src/index.ts', '--audit', 'RECOVERY,OTHER'],
 		mode: 'audit',
@@ -167,7 +165,7 @@ describe('stale run result recovery', () => {
 			});
 			// A result line wider than the starting window can be lost twice over: the window
 			// cannot hold it, and the fragment it does hold is dropped as a partial line. This is
-			// exactly the batch-audit case, where the whole run's product rides on one line.
+			// exactly the audit case, where the whole session's product rides on one line.
 			const wideResult = agentMessageLine({
 				passes: true,
 				status: 'completed',
@@ -253,9 +251,9 @@ describe('stale run result recovery', () => {
 		}
 	});
 
-	// Regression: a batch audit spent half an hour producing every report, emitted them all in
-	// one final message, and lost the lot because the CLI process died in the seconds before it
-	// could write them. The payload fully determines the artifacts, so the reaper writes them.
+	// Regression: an audit session spent half an hour producing its report, emitted it in one
+	// final message, and lost it because the CLI process died in the seconds before it could
+	// write it. The payload fully determines the artifacts, so the reaper writes them.
 	test('replays a recovered audit payload into reports and finding features', async () => {
 		const projectDir = await testTempDir('aidd-stale-audit-');
 		const { commands, db, sqlite } = makeDb();
@@ -315,6 +313,76 @@ describe('stale run result recovery', () => {
 			const row = (await db.select().from(runs).where(eq(runs.id, record.id)))[0];
 			expect(row).toMatchObject({ status: 'failed', stopReason: 'heartbeat_stale' });
 			expect(row?.summary).toContain('recovered 1 audit report(s) and 1 new finding(s)');
+		} finally {
+			sqlite.close();
+			await removeTempTree(projectDir);
+		}
+	});
+
+	// The run was launched for two audits and the log does not say which one the dead session
+	// held. An unlabelled result, or one naming an audit outside the launch, cannot be attributed
+	// and must not be written under a guessed name.
+	test.each([
+		['an unlabelled result', { auditFindings: auditPayload.auditFindings }],
+		['a result naming an unrequested audit', { ...auditPayload, auditName: 'INVENTED' }],
+	])('writes nothing for %s', async (_label, payload) => {
+		const projectDir = await testTempDir('aidd-stale-audit-unattributed-');
+		const { commands, db, sqlite } = makeDb();
+		try {
+			const record = await seedAuditRun(projectDir, db, payload);
+			await markStale(
+				{
+					commands,
+					db,
+					hub: new WebSocketHub(),
+					tailWatchers: new Map(),
+					telemetry: new TelemetryService({ commands, db }),
+				},
+				record,
+			);
+
+			expect(
+				await readdir(join(projectDir, '.aidd', 'audit-reports')).catch(() => null),
+			).toBe(null);
+			expect(await readdir(join(projectDir, '.aidd', 'features')).catch(() => null)).toBe(
+				null,
+			);
+		} finally {
+			sqlite.close();
+			await removeTempTree(projectDir);
+		}
+	});
+
+	test('replays a recovered could-not-run result as a marked report, not as an audit', async () => {
+		const projectDir = await testTempDir('aidd-stale-audit-unavailable-');
+		const { commands, db, sqlite } = makeDb();
+		try {
+			const record = await seedAuditRun(projectDir, db, {
+				auditName: 'RECOVERY',
+				auditStatus: 'unavailable',
+				unavailableReason: 'The fixture directory could not be written.',
+			});
+			await markStale(
+				{
+					commands,
+					db,
+					hub: new WebSocketHub(),
+					tailWatchers: new Map(),
+					telemetry: new TelemetryService({ commands, db }),
+				},
+				record,
+			);
+
+			const reportsDir = join(projectDir, '.aidd', 'audit-reports');
+			const reports = await readdir(reportsDir);
+			expect(reports).toHaveLength(1);
+			const report = await readFile(join(reportsDir, reports[0] ?? ''), 'utf8');
+			expect(report).toContain('<!-- aidd:audit-unavailable -->');
+			expect(report).toContain('The fixture directory could not be written.');
+			const row = (await db.select().from(runs).where(eq(runs.id, record.id)))[0];
+			expect(row?.summary).toContain(
+				'recovered 0 audit report(s) and 0 new finding(s) from the run log, could not run: RECOVERY',
+			);
 		} finally {
 			sqlite.close();
 			await removeTempTree(projectDir);

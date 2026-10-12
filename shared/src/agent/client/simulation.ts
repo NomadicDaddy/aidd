@@ -81,7 +81,7 @@ function simulationResultFromPrompt(prompt: string): string | undefined {
 	if (prompt.includes('AIDD_RESULT: {"todoCompleted":true}')) {
 		return '{"todoCompleted":true}';
 	}
-	if (prompt.includes('AIDD_RESULT: {"auditFindings"')) {
+	if (prompt.includes('AIDD_RESULT: {"auditName"')) {
 		return '{"auditFindings":[],"reportMarkdown":"# SECURITY Audit Report\\n\\nNo findings supplied."}';
 	}
 	if (prompt.includes('AIDD_RESULT: {"responseMarkdown"')) {

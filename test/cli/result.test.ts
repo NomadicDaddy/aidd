@@ -126,7 +126,7 @@ describe('malformed result marker detection', () => {
 	test('does not flag a truncated (unbalanced) marker', () => {
 		expect(
 			extractMalformedResultMarker(
-				'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","reportMarkdown":"# SECURITY',
+				'AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[{"title":"x"}],"reportMarkdown":"# SECURITY',
 			),
 		).toBe(false);
 	});

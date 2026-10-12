@@ -75,7 +75,7 @@ export function parseAiddRunDriver(value: Record<string, unknown>): AiddRunDrive
 	};
 }
 
-/** Batch identity: the audit names in code point order joined by `+`; empty when none was named. */
+/** Audit-run identity: the requested audit names in code point order joined by `+`; empty when none was named. */
 export function auditRunDriverId(auditNames: readonly string[]): string {
 	return [...auditNames].sort(compareCodepoints).join('+');
 }
@@ -96,9 +96,10 @@ export interface AuditRunDriverResolution {
 
 /**
  * The driver for an audit run: id from auditRunDriverId, hash from the audit definitions under
- * `<rootDir>/audits`. One audit hashes to its own definition so the value can be looked up in the
- * attestation directly; a batch hashes the set of (name, definition hash) pairs, so two batches
- * share a hash exactly when they ran the same audits at the same definitions.
+ * `<rootDir>/audits`. A run asked for one audit hashes to that audit's definition so the value
+ * can be looked up in the attestation directly; a run asked for several — which it works through
+ * one audit per session — hashes the set of (name, definition hash) pairs, so two runs share a
+ * hash exactly when they were asked for the same audits at the same definitions.
  */
 export async function resolveAuditRunDriver(
 	rootDir: string,

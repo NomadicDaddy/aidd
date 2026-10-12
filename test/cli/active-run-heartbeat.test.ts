@@ -216,7 +216,7 @@ describe('CLI active-run heartbeat', () => {
 		});
 		await heartbeat.observer.onAgentEvent?.({
 			type: 'assistant_text',
-			chunk: 'Audit complete. AIDD_RESULT: {"auditReports":[]}',
+			chunk: 'Audit complete. AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[]}',
 		});
 		await heartbeat.observer.onAgentEvent?.({ type: 'done', exitCode: 0, filesModified: [] });
 		await heartbeat.dispose();
@@ -227,7 +227,7 @@ describe('CLI active-run heartbeat', () => {
 		expect(log).toContain('AIDD_RESULT: { … }');
 		expect(log).toContain('[done] exit 0');
 		// The giant raw payload must never reach the console log.
-		expect(log).not.toContain('"auditReports":[]');
+		expect(log).not.toContain('"auditFindings":[]');
 	});
 
 	test('streams native assistant deltas into the run-log without doubling the final text', async () => {

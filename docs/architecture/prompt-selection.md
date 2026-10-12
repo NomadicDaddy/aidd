@@ -95,14 +95,16 @@ blocked outcome. An explicitly documented scoped replacement may satisfy the req
 but its source, omissions, and evidence limits must be disclosed. It does not certify that the
 upstream skill executed.
 
-Audit mode expects audit result JSON (`auditFindings[]` plus `reportMarkdown`). Batched audit mode
-expects `auditReports[]`, one entry per selected audit name.
+Audit mode expects one audit result object per session: `auditName`, `auditFindings[]`, and
+`reportMarkdown`, or `auditStatus: "unavailable"` with an `unavailableReason` when the audit cannot
+be performed.
 
 Explicit `--audit NAME[,NAME]` selects the named audits immediately, even when matching audit
 reports already exist. `--audit-all` discovers the audit catalog, drops audits that do not apply to
 the project profile, ranks the rest by change potential, and then selects only those whose latest
 report is missing or stale — a report goes stale on age or on enough code churn since it was
-written, so an existing report does not by itself exclude an audit.
+written, so an existing report does not by itself exclude an audit. Either form runs one audit per
+agent session, in order. An audit that cannot run is recorded as could-not-run and stays stale.
 
 Director mode writes the configured director output JSON instead of feature metadata. When
 `--director-context PATH` is provided, the director prompt reads that extra profile/chat

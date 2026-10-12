@@ -1,8 +1,5 @@
 import { type ProjectAssuranceProfile } from 'aidd-shared';
-import {
-	type AuditFreshnessContext,
-	evaluateAuditReportFreshness,
-} from 'aidd-shared/metadata/audit-freshness';
+import { type AuditFreshnessContext } from 'aidd-shared/metadata/audit-freshness';
 import {
 	MATURITY_SKIP_FILE,
 	MATURITY_STALE_DAYS,
@@ -21,6 +18,7 @@ import type {
 	WebFeatureStats,
 } from '../../types.ts';
 
+import { auditReportFreshness } from '../audit/auditReportFreshness.ts';
 import { readJsonOrNull, statOrNull } from '../fsHelpers.ts';
 
 const STALE_MS = MATURITY_STALE_DAYS * 86_400_000;
@@ -255,9 +253,7 @@ export async function classifyAuditEntry(
 ): Promise<AuditClassification> {
 	const slug = `audit:${auditName}`;
 	const skipped = skip.has(slug) || skip.has(auditName);
-	const reportFreshness = await evaluateAuditReportFreshness(projectDir, auditName, {
-		context: freshnessContext,
-	});
+	const reportFreshness = await auditReportFreshness(projectDir, auditName, freshnessContext);
 	const freshness: MaturityAuditEntryDto['freshness'] = reportFreshness.status;
 	const status: MaturityArtifactStatus = skipped
 		? 'skipped'

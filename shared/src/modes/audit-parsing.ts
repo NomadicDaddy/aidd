@@ -197,73 +197,81 @@ function auditReportValidationReasons(structured: Record<string, unknown>): stri
 	return reasons;
 }
 
-export function hasStructuredAuditOutput(
-	structured: Record<string, unknown> | undefined,
-	auditBatchMode: boolean,
-): boolean {
+// An agent that could not perform the audit says so instead of dressing the gap up as a report.
+// The claim carries no findings by definition, so only its reason is validated.
+function declaresUnavailable(structured: Record<string, unknown>): boolean {
+	return structured.auditStatus === 'unavailable';
+}
+
+function unavailableValidationReasons(structured: Record<string, unknown>): string[] {
+	const reasons: string[] = [];
+	if (stringValue(structured.unavailableReason) === undefined) {
+		reasons.push('auditStatus "unavailable" requires a non-empty unavailableReason');
+	}
+	const raw = structured.auditFindings ?? structured.findings;
+	if (raw !== undefined && !(Array.isArray(raw) && raw.length === 0)) {
+		reasons.push('auditStatus "unavailable" requires auditFindings to be empty');
+	}
+	return reasons;
+}
+
+export function hasStructuredAuditOutput(structured: Record<string, unknown> | undefined): boolean {
 	if (structured === undefined) return false;
-	if (Array.isArray(structured.auditReports)) return true;
-	return !auditBatchMode && ('auditFindings' in structured || 'findings' in structured);
+	return (
+		'auditFindings' in structured || 'findings' in structured || declaresUnavailable(structured)
+	);
+}
+
+// One session audits one thing, so a result names exactly one audit. The name it declares is
+// untrusted: it is honoured only when it is one the caller selected. A result that declares no
+// name is attributable only when a single audit could own it.
+function attributedAuditName(
+	structured: Record<string, unknown>,
+	selectedAudits: readonly string[],
+): InvalidAuditReport | string {
+	if (structured.auditName === undefined) {
+		const [only] = selectedAudits;
+		if (only !== undefined && selectedAudits.length === 1) return only;
+		return {
+			reason: `missing auditName: the result cannot be attributed to one of ${selectedAudits.length} selected audits`,
+		};
+	}
+	const declared = stringValue(structured.auditName);
+	if (declared !== undefined && selectedAudits.includes(declared)) return declared;
+	return {
+		...(declared === undefined ? {} : { auditName: declared }),
+		reason: 'auditName was not selected',
+	};
 }
 
 export function structuredAuditReports(
 	structured: Record<string, unknown> | undefined,
-	selectedAudits: string[],
+	selectedAudits: readonly string[],
 ): { invalid: InvalidAuditReport[]; reports: AuditReportInput[] } {
 	if (!structured) return { invalid: [], reports: [] };
-	const rawReports = structured.auditReports;
-	if (!Array.isArray(rawReports)) {
-		const auditName = selectedAudits[0] ?? 'AUDIT';
-		const reasons = auditReportValidationReasons(structured);
-		if (reasons.length > 0) {
+	const auditName = attributedAuditName(structured, selectedAudits);
+	if (typeof auditName !== 'string') return { invalid: [auditName], reports: [] };
+	if (declaresUnavailable(structured)) {
+		const reasons = unavailableValidationReasons(structured);
+		const unavailableReason = stringValue(structured.unavailableReason);
+		if (reasons.length > 0 || unavailableReason === undefined) {
 			return {
 				invalid: [
-					{ auditName, index: 0, reason: `invalid auditFindings: ${reasons.join('; ')}` },
+					{ auditName, reason: `invalid unavailable result: ${reasons.join('; ')}` },
 				],
 				reports: [],
 			};
 		}
+		return { invalid: [], reports: [{ auditName, structured, unavailableReason }] };
+	}
+	const reasons = auditReportValidationReasons(structured);
+	if (reasons.length > 0) {
 		return {
-			invalid: [],
-			reports: [{ auditName, structured }],
+			invalid: [{ auditName, reason: `invalid auditFindings: ${reasons.join('; ')}` }],
+			reports: [],
 		};
 	}
-	const selected = new Set(selectedAudits);
-	const seen = new Set<string>();
-	const invalid: InvalidAuditReport[] = [];
-	const reports: AuditReportInput[] = [];
-	for (const [index, rawReport] of rawReports.entries()) {
-		if (typeof rawReport !== 'object' || rawReport === null) {
-			invalid.push({ index, reason: 'report entry is not an object' });
-			continue;
-		}
-		const record = rawReport as Record<string, unknown>;
-		const auditName = stringValue(record.auditName);
-		if (!auditName) {
-			invalid.push({ index, reason: 'missing auditName' });
-			continue;
-		}
-		if (!selected.has(auditName)) {
-			invalid.push({ auditName, index, reason: 'auditName was not selected' });
-			continue;
-		}
-		if (seen.has(auditName)) {
-			invalid.push({ auditName, index, reason: 'duplicate auditName' });
-			continue;
-		}
-		const reasons = auditReportValidationReasons(record);
-		if (reasons.length > 0) {
-			invalid.push({
-				auditName,
-				index,
-				reason: `invalid auditFindings: ${reasons.join('; ')}`,
-			});
-			continue;
-		}
-		seen.add(auditName);
-		reports.push({ auditName, structured: record });
-	}
-	return { invalid, reports };
+	return { invalid: [], reports: [{ auditName, structured }] };
 }
 
 export function structuredReport(

@@ -19,27 +19,19 @@ import {
 	explicitProjectProfileError,
 	filterApplicableAuditNames,
 } from 'aidd-shared/metadata/project-profile';
-import { discoverAuditNames, simulationMarker } from 'aidd-shared/modes/audit-shared';
+import {
+	discoverAuditNames,
+	simulationMarker,
+	unavailableMarker,
+} from 'aidd-shared/modes/audit-shared';
 
-export function explicitAuditNames(plan: RunPlan): string[] {
-	return plan.audit?.names ?? [];
+// The one audit an agent session was given: selected work is always a single audit, and its
+// id is that audit's name.
+export function selectedAuditName(plan: RunPlan, work: SelectedWork | undefined): string {
+	return work?.id && work.id !== 'no-work' ? work.id : currentAuditName(plan);
 }
 
-export function selectedAuditNames(plan: RunPlan, work: SelectedWork | undefined): string[] {
-	const batch = currentBatch(work?.data);
-	if (batch.length > 0) return batch;
-	if (work?.id && work.id !== 'audit-batch' && work.id !== 'no-work') return [work.id];
-	return [currentAuditName(plan)];
-}
-
-function currentBatch(data: unknown): string[] {
-	if (typeof data !== 'object' || data === null) return [];
-	const currentBatchValue = (data as { currentBatch?: unknown }).currentBatch;
-	if (!Array.isArray(currentBatchValue)) return [];
-	return currentBatchValue.filter((item): item is string => typeof item === 'string');
-}
-
-export function currentAuditName(plan: RunPlan): string {
+function currentAuditName(plan: RunPlan): string {
 	return plan.audit?.current ?? plan.audit?.names[0] ?? 'AUDIT';
 }
 
@@ -76,7 +68,7 @@ async function warnOnRejectedProfile(projectDir: string): Promise<void> {
 }
 
 // Ranks `--audit-all` discovery output descending by change-potential score. Explicit
-// `--audit X,Y` selection bypasses this ranker — see `auditNamesForSelection`. Evidence
+// `--audit X,Y` selection bypasses this ranker — see `pendingAuditNames`. Evidence
 // is gathered from the current project plus every project under `context.scoringRoots`,
 // each project once: the scorer reads the whole configured fleet, not only the project being run.
 async function rankAuditsByChangePotential(
@@ -103,42 +95,43 @@ async function collectAllProjectEvidence(context: ModeContext): Promise<ProjectA
 	return await Promise.all([...unique].map((dir) => collectProjectEvidence(dir)));
 }
 
-export async function auditNamesForSelection(
+/**
+ * The audits a run still has to attempt, in the order it will attempt them — the head of this
+ * list is the one audit the next agent session is given.
+ *
+ * Explicit `--audit X,Y` names are taken as given and in the order given: naming an audit asks
+ * for it to run whatever the age of its report. `--audit-all` takes only the audits whose
+ * evidence is stale, in ranked order. Either way an audit the run has already settled — done,
+ * unable to run, or given up on — is never offered again, which is what stops a run from
+ * re-selecting an audit that will not come good.
+ * @param plan The run plan carrying the audit selection flags.
+ * @param context The mode context naming the project whose reports are read.
+ * @param requested Every audit the run was asked for, as `auditNames` resolved it.
+ * @param settled The audits this run is finished with.
+ * @returns The pending audit names, next first.
+ */
+export async function pendingAuditNames(
 	plan: RunPlan,
 	context: ModeContext,
-	explicitRetryAudits: string[] | undefined,
+	requested: readonly string[],
+	settled: ReadonlySet<string>,
 ): Promise<string[]> {
-	const explicitNames = explicitAuditNames(plan);
-	if (explicitRetryAudits !== undefined) return explicitRetryAudits;
-	if (explicitNames.length > 0) return explicitNames;
-	return await remainingAuditNames(plan, context);
+	const namedExplicitly = (plan.audit?.names ?? []).length > 0;
+	const candidates = namedExplicitly
+		? requested
+		: await staleAuditNames(context.projectDir, requested);
+	return candidates.filter((name) => !settled.has(name));
 }
 
-export async function remainingAfterResult(
-	plan: RunPlan,
-	context: ModeContext,
-	selectedAudits: string[],
-	completedAudits: string[],
-	batchIncomplete: boolean,
-): Promise<string[]> {
-	const explicitNames = explicitAuditNames(plan);
-	if (explicitNames.length > 0) {
-		const missingAudits = selectedAudits.filter((name) => !completedAudits.includes(name));
-		return missingAudits.length > 0 || !batchIncomplete ? missingAudits : selectedAudits;
-	}
-	return (await remainingAuditNames(plan, context)).filter(
-		(name) => !completedAudits.includes(name),
-	);
-}
-
-async function remainingAuditNames(plan: RunPlan, context: ModeContext): Promise<string[]> {
-	const names = await auditNames(plan, context);
+// A simulated report and a could-not-run report are both on disk without being audit evidence,
+// so neither makes its audit fresh.
+async function staleAuditNames(projectDir: string, names: readonly string[]): Promise<string[]> {
 	const freshnessContext = createAuditFreshnessContext();
 	const results = await Promise.all(
 		names.map(async (name) => ({
-			freshness: await evaluateAuditReportFreshness(context.projectDir, name, {
+			freshness: await evaluateAuditReportFreshness(projectDir, name, {
 				context: freshnessContext,
-				excludedReportMarker: simulationMarker,
+				excludedReportMarkers: [simulationMarker, unavailableMarker],
 			}),
 			name,
 		})),

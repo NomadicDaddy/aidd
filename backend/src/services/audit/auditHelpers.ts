@@ -8,7 +8,6 @@ import {
 import {
 	type AuditFreshnessContext,
 	createAuditFreshnessContext,
-	evaluateAuditReportFreshness,
 } from 'aidd-shared/metadata/audit-freshness';
 import { loadAuditProfileOverrides } from 'aidd-shared/metadata/audit-profile-mapping';
 import {
@@ -27,6 +26,7 @@ import type { AuditDefinitionDto } from './auditTypes.ts';
 
 import { HttpError } from '../errors.ts';
 import { mapSettledWithConcurrency } from '../project/listings/shared.ts';
+import { auditReportFreshness } from './auditReportFreshness.ts';
 
 /**
  * Projects examined at once inside one audit's summary. The catalog already runs every audit in
@@ -200,7 +200,7 @@ async function computeReportHealth(
 			context = createAuditFreshnessContext();
 			freshnessContexts.set(project.path, context);
 		}
-		const freshness = await evaluateAuditReportFreshness(project.path, name, { context });
+		const freshness = await auditReportFreshness(project.path, name, context);
 		return freshness.status;
 	});
 	for (const status of statuses) {

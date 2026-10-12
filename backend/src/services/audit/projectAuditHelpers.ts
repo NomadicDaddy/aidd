@@ -4,10 +4,7 @@ import {
 	isAuditApplicableToProject,
 	normalizeAuditProfileOverrides,
 } from 'aidd-shared';
-import {
-	createAuditFreshnessContext,
-	evaluateAuditReportFreshness,
-} from 'aidd-shared/metadata/audit-freshness';
+import { createAuditFreshnessContext } from 'aidd-shared/metadata/audit-freshness';
 import {
 	auditProfileOverridesPath,
 	loadAuditProfileMapping,
@@ -26,6 +23,7 @@ import { pathIsInside } from '../../paths.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { HttpError } from '../errors.ts';
 import { normalizeAuditName, scoreAuditCatalog } from './auditHelpers.ts';
+import { auditReportFreshness } from './auditReportFreshness.ts';
 
 export async function saveProjectAuditOverridesImpl(
 	projectId: string,
@@ -122,9 +120,7 @@ export async function listProjectAuditsImpl(
 		let freshReport = false;
 		let staleReport = false;
 		let missingReport = false;
-		const freshness = await evaluateAuditReportFreshness(projectDir, normalized, {
-			context: freshnessContext,
-		});
+		const freshness = await auditReportFreshness(projectDir, normalized, freshnessContext);
 		if (freshness.status === 'missing') {
 			missingReport = true;
 		} else if (freshness.status === 'stale') {

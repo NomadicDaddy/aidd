@@ -24,7 +24,7 @@ import { type AppUrlStatus, renderLaunchContext } from './compile/launch-context
 import { type LeasedFeatureNotice, renderLeasedFeatures } from './compile/leased-features.ts';
 import { renderCodingPriorContext } from './compile/prior-context.ts';
 import { compileResultContract } from './compile/result-contract.ts';
-import { readFragment, stringArrayVariable, stringVariable } from './compile/shared.ts';
+import { readFragment, stringVariable } from './compile/shared.ts';
 
 export interface PromptCompilerOptions {
 	/** Set when this project gitignores `.aidd/`, so the launch context can say the metadata is
@@ -63,16 +63,9 @@ async function loadProjectContextIfEnabled(
 ): Promise<ProjectContextDigest | undefined> {
 	if (options.includeProjectContext === false) return undefined;
 	if (!options.projectDir) return undefined;
-	const auditNames = resolveAuditNamesFromPlan(plan);
-	return loadProjectContext(options.projectDir, auditNames.length > 0 ? { auditNames } : {});
-}
-
-function resolveAuditNamesFromPlan(plan: PromptPlan): string[] {
-	if (plan.mode !== 'audit') return [];
-	const list = stringArrayVariable(plan, 'auditNames');
-	if (list.length > 0) return list;
-	const single = stringVariable(plan, 'auditName');
-	return single ? [single] : [];
+	// An audit session covers one audit, so only that audit's earlier reports are prior context.
+	const auditName = plan.mode === 'audit' ? stringVariable(plan, 'auditName') : undefined;
+	return loadProjectContext(options.projectDir, auditName ? { auditNames: [auditName] } : {});
 }
 
 async function compileBasePrompt(

@@ -2124,7 +2124,7 @@ describe('web run launcher', () => {
 		const workspace = await testTempDir('aidd-web-run-');
 		const rootDir = await makeLauncherRoot(
 			heartbeatTerminator({
-				summary: 'audit batch finished 32/32 audit(s) with 0 finding(s)',
+				summary: 'audit run finished: 32 of 32 audit(s) done, 0 finding(s) (0 new)',
 			}),
 		);
 		const dataDir = join(workspace, 'data');
@@ -2145,11 +2145,11 @@ describe('web run launcher', () => {
 					(value) => value.status === 'completed',
 				);
 				expect(completed.summary).toBe(
-					'audit batch finished 32/32 audit(s) with 0 finding(s)',
+					'audit run finished: 32 of 32 audit(s) done, 0 finding(s) (0 new)',
 				);
 				const listed = await service.listRuns();
 				expect(listed[0]!.summary).toBe(
-					'audit batch finished 32/32 audit(s) with 0 finding(s)',
+					'audit run finished: 32 of 32 audit(s) done, 0 finding(s) (0 new)',
 				);
 			} finally {
 				service.markDisposed();

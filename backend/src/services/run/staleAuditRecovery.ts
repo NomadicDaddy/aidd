@@ -21,7 +21,7 @@ export interface StaleAuditRecovery {
 	findingsCreated: number;
 	findingsTotal: number;
 	invalidReports: number;
-	/** Sentence for the run summary, e.g. "recovered 43 audit report(s) and 20 new finding(s)". */
+	/** Sentence for the run summary, e.g. "recovered 1 audit report(s) and 3 new finding(s)". */
 	note: string;
 }
 
@@ -60,22 +60,17 @@ function auditLaunchArgs(commandArgs: null | string[]): AuditLaunchArgs {
 }
 
 function declaredAuditNames(structured: Record<string, unknown>): string[] {
-	const reports = structured.auditReports;
-	if (!Array.isArray(reports)) return [];
-	return reports
-		.map((report) =>
-			typeof report === 'object' && report !== null
-				? (report as { auditName?: unknown }).auditName
-				: undefined,
-		)
-		.filter((name): name is string => typeof name === 'string' && name.length > 0);
+	const name = structured.auditName;
+	return typeof name === 'string' && name.length > 0 ? [name] : [];
 }
 
 /**
- * structuredAuditReports rejects any report whose name was not requested, so recovery has to
+ * structuredAuditReports rejects a report whose name was not requested, so recovery has to
  * reconstruct the selection the run was launched with: the explicit --audit list, or the
- * project's own audit set behind --audit-all. A recipe-launched run can carry neither, and the
- * only remaining hint is the name each report claims — which is untrusted, so it is admitted
+ * project's own audit set behind --audit-all. The run works through that selection one audit per
+ * session and the record does not say which one it died on, so the whole selection is offered and
+ * the result's own `auditName` picks among it. A recipe-launched run can carry neither flag, and
+ * the only remaining hint is the name the report claims — which is untrusted, so it is admitted
  * strictly as a filter over `.aidd/audits/`. The payload may pick from the project's catalog; it
  * can never introduce a name that catalog does not already define.
  * @param record The dead run whose launch arguments name the requested audits.
@@ -97,12 +92,13 @@ async function auditSelection(
 /**
  * Replay a recovered AIDD_RESULT from a dead audit run into real artifacts.
  *
- * A batch audit can spend half an hour and tens of millions of tokens producing every report,
- * emit them all in one final message, and then lose the whole payload because the CLI process
- * died in the seconds between emitting the result and writing it out. The reports and findings
- * are fully determined by that payload, so the reaper writes them rather than discarding work
- * that already happened — through the same validation the CLI applies, so an invented or
- * malformed report is dropped here exactly as it would have been there. The run row itself stays
+ * An audit session can spend half an hour and millions of tokens producing its report, emit it
+ * in one final message, and then lose the payload because the CLI process died in the seconds
+ * between emitting the result and writing it out. The report and findings are fully determined
+ * by that payload, so the reaper writes them rather than discarding work that already happened —
+ * through the same validation the CLI applies, so an invented or malformed report is dropped here
+ * exactly as it would have been there. Only the session the run died in is recoverable: every
+ * earlier audit of the run was persisted when its own session ended. The run row itself stays
  * failed: the process really did die, and the rest of its finalization never ran.
  * @param record The dead run being reaped.
  * @param evidence The result recovered from its run log, with the surrounding transcript.
@@ -114,7 +110,7 @@ export async function recoverStaleAuditArtifacts(
 ): Promise<StaleAuditRecovery | undefined> {
 	if (record.mode !== 'audit') return undefined;
 	const launch = await auditSelection(record, evidence.result);
-	if (!hasStructuredAuditOutput(evidence.result, launch.names.length > 1)) return undefined;
+	if (!hasStructuredAuditOutput(evidence.result)) return undefined;
 	try {
 		const persisted = await persistAuditReports({
 			projectDir: record.projectPath,
@@ -124,9 +120,14 @@ export async function recoverStaleAuditArtifacts(
 			store: new FileAiddStore(record.projectPath),
 			structured: evidence.result,
 		});
-		if (persisted.completedAudits.length === 0) return undefined;
+		const unavailable = persisted.unavailableAudits.map((audit) => audit.auditName);
+		if (persisted.completedAudits.length === 0 && unavailable.length === 0) return undefined;
 		const invalidReports = persisted.invalid.length;
 		const invalidSuffix = invalidReports > 0 ? `, ${invalidReports} invalid report(s)` : '';
+		// A could-not-run report is on disk but is not audit evidence; say which audit it was so
+		// the note never reads as a recovered audit.
+		const unavailableSuffix =
+			unavailable.length > 0 ? `, could not run: ${unavailable.join(', ')}` : '';
 		const skippedSuffix =
 			persisted.skippedLedgerLines > 0
 				? `, ${persisted.skippedLedgerLines} malformed findings-ledger line(s) skipped`
@@ -136,7 +137,7 @@ export async function recoverStaleAuditArtifacts(
 			findingsCreated: persisted.totalCreated,
 			findingsTotal: persisted.totalFindings,
 			invalidReports,
-			note: `recovered ${persisted.completedAudits.length} audit report(s) and ${persisted.totalCreated} new finding(s) from the run log${invalidSuffix}${skippedSuffix}`,
+			note: `recovered ${persisted.completedAudits.length} audit report(s) and ${persisted.totalCreated} new finding(s) from the run log${unavailableSuffix}${invalidSuffix}${skippedSuffix}`,
 		};
 	} catch (err) {
 		webLogger.warn(

@@ -72,9 +72,9 @@ describe('Native loop heuristics', () => {
 
 	test('treats a parseable AIDD_RESULT block as complete despite incomplete-looking prose', () => {
 		const content =
-			'Now I have comprehensive evidence. Let me produce the final result with all reports.\n' +
-			'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","auditFindings":[],' +
-			'"reportMarkdown":"# SECURITY\\n\\n## 6-9. Remaining Categories\\n\\nContinue with review. Still need to verify nothing."}]}';
+			'Now I have comprehensive evidence. Let me produce the final result with the report.\n' +
+			'AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[],' +
+			'"reportMarkdown":"# SECURITY\\n\\n## 6-9. Remaining Categories\\n\\nContinue with review. Still need to verify nothing."}';
 
 		const result = evaluateTextOnlyResponse(content, initialHeuristicState());
 
@@ -83,8 +83,8 @@ describe('Native loop heuristics', () => {
 
 	test('does not flag a result that contains hallucination-trigger phrasing in report markdown', () => {
 		const content =
-			'AIDD_RESULT: {"auditReports":[{"auditName":"DOCUMENTATION","auditFindings":[],' +
-			'"reportMarkdown":"# DOCUMENTATION\\n\\nGenerated audit report covering created audit report references."}]}';
+			'AIDD_RESULT: {"auditName":"DOCUMENTATION","auditFindings":[],' +
+			'"reportMarkdown":"# DOCUMENTATION\\n\\nGenerated audit report covering created audit report references."}';
 
 		const result = evaluateTextOnlyResponse(content, initialHeuristicState());
 
@@ -94,7 +94,7 @@ describe('Native loop heuristics', () => {
 	test('still nudges when the AIDD_RESULT payload is truncated (braces unbalanced)', () => {
 		const content =
 			'I need to finish writing the report.\n' +
-			'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","reportMarkdown":"# SECURITY';
+			'AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[{"title":"x"}],"reportMarkdown":"# SECURITY';
 
 		const result = evaluateTextOnlyResponse(content, initialHeuristicState());
 

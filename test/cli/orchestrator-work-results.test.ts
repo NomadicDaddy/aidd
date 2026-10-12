@@ -30,14 +30,21 @@ afterAll(cleanup);
 
 describe('orchestrator work results', () => {
 	test(
-		'runs multiple requested audits in one batched backend call',
+		'runs each requested audit in its own backend session',
 		async () => {
 			const store = await makeStore('multi-audit');
 			const backend = new SequencedBackend([
 				[
 					{
 						type: 'assistant_text',
-						chunk: 'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","auditFindings":[],"noFindingsJustification":"Inspected src/**/*.ts with rg for hardcoded token literals; every match was test fixture data, so nothing qualified.","reportMarkdown":"# SECURITY Audit Report"},{"auditName":"DEAD_CODE","auditFindings":[],"noFindingsJustification":"Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed each export is imported by production code.","reportMarkdown":"# DEAD_CODE Audit Report"}]}\n',
+						chunk: 'AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[],"noFindingsJustification":"Inspected src/**/*.ts with rg for hardcoded token literals; every match was test fixture data, so nothing qualified.","reportMarkdown":"# SECURITY Audit Report"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"auditName":"DEAD_CODE","auditFindings":[],"noFindingsJustification":"Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed each export is imported by production code.","reportMarkdown":"# DEAD_CODE Audit Report"}\n',
 					},
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
@@ -57,45 +64,108 @@ describe('orchestrator work results', () => {
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
 
 			expect(exitCode).toBe(orchestratorExitCodes.success);
-			expect(backend.calls).toBe(1);
+			// Two audits, two sessions, each prompted for exactly one of them.
+			expect(backend.calls).toBe(2);
+			expect(backend.inputs[0]?.text).toContain('{"auditName":"SECURITY"');
+			expect(backend.inputs[0]?.text).not.toContain('{"auditName":"DEAD_CODE"');
+			expect(backend.inputs[1]?.text).toContain('{"auditName":"DEAD_CODE"');
+			expect(backend.inputs[1]?.text).not.toContain('{"auditName":"SECURITY"');
 			const reports = await store.listAuditReports();
 			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(true);
 			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
-			const iterationJson = await readFile(
-				join(store.metadataDir, 'iterations', '001.json'),
-				'utf8',
-			);
-			const structured = JSON.parse(iterationJson) as {
-				auditBatchMode: boolean;
-				auditBatchParallelInstruction: boolean;
+			interface AuditIteration {
 				completedAudits: string[];
 				findingsContractDropped?: boolean;
 				missingAudits: string[];
 				outcome: { status: string };
 				perAuditFindingTotals: Record<string, number>;
-				selectedAuditBatch: string[];
-			};
-			expect(structured.auditBatchMode).toBe(true);
-			expect(structured.auditBatchParallelInstruction).toBe(true);
-			expect(structured.completedAudits).toEqual(['SECURITY', 'DEAD_CODE']);
-			expect(structured.findingsContractDropped).toBeUndefined();
-			expect(structured.missingAudits).toEqual([]);
-			expect(structured.outcome.status).toBe('success');
-			expect(structured.perAuditFindingTotals).toEqual({ DEAD_CODE: 0, SECURITY: 0 });
-			expect(structured.selectedAuditBatch).toEqual(['SECURITY', 'DEAD_CODE']);
+				remainingAudits: string[];
+			}
+			const iteration = async (name: string) =>
+				JSON.parse(
+					await readFile(join(store.metadataDir, 'iterations', name), 'utf8'),
+				) as AuditIteration;
+			const first = await iteration('001.json');
+			expect(first).not.toHaveProperty('auditBatchMode');
+			expect(first).not.toHaveProperty('selectedAuditBatch');
+			expect(first.completedAudits).toEqual(['SECURITY']);
+			expect(first.findingsContractDropped).toBeUndefined();
+			expect(first.missingAudits).toEqual([]);
+			expect(first.outcome.status).toBe('success');
+			expect(first.perAuditFindingTotals).toEqual({ SECURITY: 0 });
+			expect(first.remainingAudits).toEqual(['DEAD_CODE']);
+			const second = await iteration('002.json');
+			expect(second.completedAudits).toEqual(['DEAD_CODE']);
+			expect(second.remainingAudits).toEqual([]);
+
+			// The run record describes the whole run: both audits drove it, and its summary is
+			// the run-level line rather than the last session's audit alone.
+			const [run] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { driverId: string; summary: string });
+			expect(run?.driverId).toBe('DEAD_CODE+SECURITY');
+			expect(run?.summary).toContain('audit run finished: 2 of 2 audit(s) done');
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
-		'rejects a batched audit whose empty reports lack justification without persisting them',
+		'records a could-not-run audit once and moves on without retrying it',
+		async () => {
+			const store = await makeStore('multi-audit-unavailable');
+			const backend = new SequencedBackend([
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"auditName":"SECURITY","auditStatus":"unavailable","unavailableReason":"The fixture directory could not be written.","auditFindings":[]}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"auditName":"DEAD_CODE","auditFindings":[],"noFindingsJustification":"Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed each export is imported by production code.","reportMarkdown":"# DEAD_CODE Audit Report"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+			]);
+			const auditPlan = resolveRunPlan(
+				parseArgs([
+					'--project-dir',
+					store.projectDir,
+					'--cli',
+					'native',
+					'--audit',
+					'SECURITY,DEAD_CODE',
+				]),
+				config,
+			);
+
+			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
+
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(backend.calls).toBe(2);
+			const [run] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(run?.summary).toContain(
+				'audit run finished: 1 of 2 audit(s) done, 0 finding(s) (0 new); could not run: SECURITY',
+			);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'rejects an audit whose empty report lacks justification without persisting it',
 		async () => {
 			const store = await makeStore('multi-audit-empty');
 			const backend = new SequencedBackend([
 				[
 					{
 						type: 'assistant_text',
-						chunk: 'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","auditFindings":[],"reportMarkdown":"# SECURITY Audit Report"},{"auditName":"DEAD_CODE","auditFindings":[],"reportMarkdown":"# DEAD_CODE Audit Report"}]}\n',
+						chunk: 'AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[],"reportMarkdown":"# SECURITY Audit Report"}\n',
 					},
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
@@ -115,60 +185,78 @@ describe('orchestrator work results', () => {
 
 			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
 
-			// Both invalid reports remain queued. The retry's provider error becomes the final
-			// result, while neither rejected report can become freshness data.
+			// The rejected audit stays queued and is selected again. The retry's provider error
+			// becomes the final result, and the rejected report never becomes freshness data.
 			expect(exitCode).toBe(orchestratorExitCodes.providerError);
 			expect(backend.calls).toBe(2);
-			const reports = await store.listAuditReports();
-			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
-			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(false);
-			const structured = JSON.parse(
-				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
-			) as { invalidAuditReports: unknown[]; missingAudits: string[] };
-			expect(structured.invalidAuditReports).toHaveLength(2);
-			expect(structured.missingAudits).toEqual(['SECURITY', 'DEAD_CODE']);
-		},
-		slowOrchestratorTestTimeoutMs,
-	);
-
-	test(
-		'fails a batched audit with boilerplate zero-finding justification',
-		async () => {
-			const store = await makeStore('multi-audit-boilerplate-empty');
-			const backend = new SequencedBackend([
-				[
-					{
-						type: 'assistant_text',
-						chunk: 'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","auditFindings":[],"noFindingsJustification":"No issues found.","reportMarkdown":"# SECURITY Audit Report"},{"auditName":"DEAD_CODE","auditFindings":[],"noFindingsJustification":"Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed each export is imported by production code.","reportMarkdown":"# DEAD_CODE Audit Report"}]}\n',
-					},
-					{ type: 'done', exitCode: 0, filesModified: [] },
-				],
-				[{ type: 'error', reason: 'provider' }],
-			]);
-			const auditPlan = resolveRunPlan(
-				parseArgs([
-					'--project-dir',
-					store.projectDir,
-					'--cli',
-					'native',
-					'--audit',
-					'SECURITY,DEAD_CODE',
-				]),
-				config,
-			);
-
-			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
-
-			expect(exitCode).toBe(orchestratorExitCodes.providerError);
-			expect(backend.calls).toBe(2);
-			const reports = await store.listAuditReports();
-			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
-			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
+			expect(backend.inputs[1]?.text).toContain('{"auditName":"SECURITY"');
+			expect(await store.listAuditReports()).toEqual([]);
 			const structured = JSON.parse(
 				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as { invalidAuditReports: unknown[]; missingAudits: string[] };
 			expect(structured.invalidAuditReports).toHaveLength(1);
 			expect(structured.missingAudits).toEqual(['SECURITY']);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'gives up on an audit rejected twice and still runs the next one',
+		async () => {
+			const store = await makeStore('multi-audit-boilerplate-empty');
+			const boilerplate: AgentEvent[] = [
+				{
+					type: 'assistant_text',
+					chunk: 'AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[],"noFindingsJustification":"No issues found.","reportMarkdown":"# SECURITY Audit Report"}\n',
+				},
+				{ type: 'done', exitCode: 0, filesModified: [] },
+			];
+			const backend = new SequencedBackend([
+				boilerplate,
+				boilerplate,
+				[
+					{
+						type: 'assistant_text',
+						chunk: 'AIDD_RESULT: {"auditName":"DEAD_CODE","auditFindings":[],"noFindingsJustification":"Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed each export is imported by production code.","reportMarkdown":"# DEAD_CODE Audit Report"}\n',
+					},
+					{ type: 'done', exitCode: 0, filesModified: [] },
+				],
+			]);
+			const auditPlan = resolveRunPlan(
+				parseArgs([
+					'--project-dir',
+					store.projectDir,
+					'--cli',
+					'native',
+					'--audit',
+					'SECURITY,DEAD_CODE',
+				]),
+				config,
+			);
+
+			const exitCode = await runOrchestrator(auditPlan, { rootDir, store, backend });
+
+			// Two sessions for SECURITY, then the run stops re-selecting it and DEAD_CODE runs.
+			expect(exitCode).toBe(orchestratorExitCodes.success);
+			expect(backend.calls).toBe(3);
+			expect(backend.inputs[2]?.text).toContain('{"auditName":"DEAD_CODE"');
+			// The repair note belongs to the retry of the rejected audit, never to the audit
+			// that follows once the run has given up on it.
+			expect(backend.inputs[1]?.text).toContain('rejected and were NOT');
+			expect(backend.inputs[2]?.text).not.toContain('rejected and were NOT');
+			const reports = await store.listAuditReports();
+			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
+			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
+			const structured = JSON.parse(
+				await readFile(join(store.metadataDir, 'iterations', '002.json'), 'utf8'),
+			) as { abandonedAudits: string[]; invalidAuditReports: unknown[] };
+			expect(structured.invalidAuditReports).toHaveLength(1);
+			expect(structured.abandonedAudits).toEqual(['SECURITY']);
+			const [run] = (await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8'))
+				.trim()
+				.split(/\r?\n/)
+				.map((line) => JSON.parse(line) as { summary: string });
+			expect(run?.summary).toContain('gave up after 2 failed attempts: SECURITY');
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
@@ -214,14 +302,14 @@ describe('orchestrator work results', () => {
 	);
 
 	test(
-		'records missing result when a batched report carries malformed findings',
+		'rejects a report that carries malformed findings and re-selects its audit',
 		async () => {
-			const store = await makeStore('batch-malformed-findings');
+			const store = await makeStore('malformed-findings');
 			const backend = new SequencedBackend([
 				[
 					{
 						type: 'assistant_text',
-						chunk: 'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","auditFindings":[null],"reportMarkdown":"# SECURITY Audit Report"},{"auditName":"DEAD_CODE","auditFindings":[],"noFindingsJustification":"Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed each export is imported by production code.","reportMarkdown":"# DEAD_CODE Audit Report"}]}\n',
+						chunk: 'AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[null],"reportMarkdown":"# SECURITY Audit Report"}\n',
 					},
 					{ type: 'done', exitCode: 0, filesModified: [] },
 				],
@@ -245,9 +333,7 @@ describe('orchestrator work results', () => {
 			// audit re-queued; the retry here hits a provider error, which becomes the exit.
 			expect(exitCode).toBe(orchestratorExitCodes.providerError);
 			expect(backend.calls).toBe(2);
-			const reports = await store.listAuditReports();
-			expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
-			expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
+			expect(await store.listAuditReports()).toEqual([]);
 			const structured = JSON.parse(
 				await readFile(join(store.metadataDir, 'iterations', '001.json'), 'utf8'),
 			) as {
@@ -261,13 +347,13 @@ describe('orchestrator work results', () => {
 		slowOrchestratorTestTimeoutMs,
 	);
 
-	test('does not mark omitted batched audits complete', async () => {
+	test('leaves the next audit pending when the run fails after the first', async () => {
 		const store = await makeStore('multi-audit-missing');
 		const backend = new SequencedBackend([
 			[
 				{
 					type: 'assistant_text',
-					chunk: 'AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","auditFindings":[],"noFindingsJustification":"Inspected src/**/*.ts with rg for hardcoded token literals; every match was test fixture data, so nothing qualified.","reportMarkdown":"# SECURITY Audit Report"}]}\n',
+					chunk: 'AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[],"noFindingsJustification":"Inspected src/**/*.ts with rg for hardcoded token literals; every match was test fixture data, so nothing qualified.","reportMarkdown":"# SECURITY Audit Report"}\n',
 				},
 				{ type: 'done', exitCode: 0, filesModified: [] },
 			],
@@ -298,10 +384,10 @@ describe('orchestrator work results', () => {
 		);
 		const structured = JSON.parse(iterationJson) as {
 			completedAudits: string[];
-			missingAudits: string[];
+			remainingAudits: string[];
 		};
 		expect(structured.completedAudits).toEqual(['SECURITY']);
-		expect(structured.missingAudits).toEqual(['DEAD_CODE']);
+		expect(structured.remainingAudits).toEqual(['DEAD_CODE']);
 	});
 
 	test('audit-mode iteration does not report historical completions as newly completed', async () => {

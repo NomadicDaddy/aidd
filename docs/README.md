@@ -50,7 +50,7 @@ there, on the Docs page. Their source is `frontend/content/docs/`.
 | [compatibility.md](./architecture/compatibility.md)               | Stable public runtime surfaces, configuration contract, and gates.                                    |
 | [prompt-compiler.md](./architecture/prompt-compiler.md)           | Prompt compiler inputs, assembly order, and snapshot keys.                                            |
 | [prompt-selection.md](./architecture/prompt-selection.md)         | How modes, filters, roles, and backends shape prompts.                                                |
-| [parallel-multi-audit.md](./architecture/parallel-multi-audit.md) | Batched audit behavior and result contract.                                                           |
+| [parallel-multi-audit.md](./architecture/parallel-multi-audit.md) | Multi-audit runs: one audit per session, and the result contract.                                     |
 | [benchmark-harness.md](./architecture/benchmark-harness.md)       | CLI-only benchmark runner, fixtures, outputs, and commands.                                           |
 | [audit-evals.md](./architecture/audit-evals.md)                   | Planted-defect audit scoring, precision/recall floors, and attestation gate.                          |
 | [websocket-events.md](./architecture/websocket-events.md)         | WebSocket event contract: events, triggers, payloads, and frontend query invalidations.               |

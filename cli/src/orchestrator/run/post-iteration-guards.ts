@@ -108,13 +108,21 @@ async function pushDestroyedLeasedFeatures(
 	acc.pendingCarryoverNotes.push(destroyedLeasedFeaturesNote(destroyed));
 }
 
+// Whether the audit this iteration held is still pending. Audit mode gives up on an audit after
+// repeated failed attempts, and the next session then holds a different audit.
+function auditStillPending(artifacts: Record<string, unknown> | undefined): boolean {
+	const remaining = artifacts?.remainingAudits;
+	return Array.isArray(remaining) && remaining.includes(artifacts?.auditName);
+}
+
 // Audit mode rejects a report whole rather than persisting a partial one, and leaves the audit
 // pending so the next iteration re-selects it. Hand the agent the rejection reasons so that retry
 // is informed rather than a re-roll of the same report.
 function pushRejectedAuditReports(acc: RunAccumulator, finalize: FinalizeIterationResult): void {
 	// Fail-soft like the contract check above: reading an optional artifact must never be what
 	// ends an otherwise good iteration, and non-audit modes carry no such artifact at all.
-	const invalid = finalize.modeResult?.artifacts?.invalidAuditReports;
+	const artifacts = finalize.modeResult?.artifacts;
+	const invalid = artifacts?.invalidAuditReports;
 	if (!Array.isArray(invalid) || invalid.length === 0) return;
 	const reports = invalid.filter(
 		(report): report is { auditName?: string; reason: string } =>
@@ -128,6 +136,10 @@ function pushRejectedAuditReports(acc: RunAccumulator, finalize: FinalizeIterati
 			`[audit-mode] report rejected and not persisted: ${report.auditName ?? 'unnamed'} — ${report.reason}`,
 		);
 	}
+	// The note tells the next session its audit was re-selected and how to fix the report. Once
+	// the run has given up on that audit, the next session holds a different one and the note
+	// would instruct it to repair a report it never wrote.
+	if (!auditStillPending(artifacts)) return;
 	acc.pendingCarryoverNotes.push(rejectedAuditReportsNote(reports));
 }
 

@@ -3,11 +3,13 @@ import { mkdir, readFile, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'aidd-shared/args/index';
 import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
+import { evaluateAuditReportFreshness } from 'aidd-shared/metadata/audit-freshness';
 import {
 	featureDependencyTopologySchema,
 	featureNeighborhoodSchema,
 } from 'aidd-shared/metadata/features';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
+import { unavailableMarker } from 'aidd-shared/modes/audit-shared';
 import { hasParkedWorkMarker, parkedWorkMarker } from 'aidd-shared/runs/outcome';
 import { createModeHandler } from '../../cli/src/modes/factory.ts';
 import { detectBlockedVerificationAdmission } from '../../cli/src/modes/coding/verification.ts';
@@ -2113,61 +2115,48 @@ describe('mode handlers', () => {
 		]);
 	});
 
-	test('audit mode batches multiple remaining audit names', async () => {
-		const { projectDir, store } = await makeProject('audit-batch-selection');
+	test('audit mode hands each session one audit when several are named', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-selection');
 		const auditPlan = plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']);
 		const mode = createModeHandler(auditPlan);
 		const work = await mode.selectWork({ projectDir, store });
 		const promptPlan = await mode.buildPromptPlan({ projectDir, store }, work);
 
-		expect(work.id).toBe('audit-batch');
-		expect(work.description).toBe('Run 2 audits: SECURITY, DEAD_CODE');
-		expect(work.data).toMatchObject({
-			current: 'SECURITY',
-			currentBatch: ['SECURITY', 'DEAD_CODE'],
-		});
+		expect(work.id).toBe('SECURITY');
+		expect(work.description).toBe('Run SECURITY audit');
+		expect(work.data).toMatchObject({ current: 'SECURITY' });
+		expect(work.data).not.toHaveProperty('currentBatch');
 		expect(promptPlan.variables.auditName).toBe('SECURITY');
-		expect(promptPlan.variables.auditNames).toEqual(['SECURITY', 'DEAD_CODE']);
-		expect(promptPlan.variables.auditBatchMode).toBe(true);
+		expect(promptPlan.variables).not.toHaveProperty('auditNames');
+		expect(promptPlan.variables).not.toHaveProperty('auditBatchMode');
 	});
 
-	test('audit mode creates reports and findings from batched structured result', async () => {
-		const { projectDir, store } = await makeProject('audit-batch-result');
+	test('audit mode persists one audit per result and reports the run across sessions', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-result');
 		const auditPlan = plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']);
 		const mode = createModeHandler(auditPlan);
-		const work = await mode.selectWork({ projectDir, store });
+		const securityWork = await mode.selectWork({ projectDir, store });
 
-		const result = await mode.processResult(
+		const first = await mode.processResult(
 			{ projectDir, store },
 			{
 				events: [],
 				exitCode: 0,
 				filesModified: [],
 				transcript: '',
-				selectedWork: work,
+				selectedWork: securityWork,
 				structuredResult: {
-					auditReports: [
+					auditName: 'SECURITY',
+					auditFindings: [
 						{
-							auditName: 'SECURITY',
-							auditFindings: [
-								{
-									title: 'Missing auth guard',
-									description: 'Verified: src/routes.ts:12 - guard missing',
-									spec: 'Add requireAuth to POST /items.',
-									severity: 'High',
-									affectedFiles: ['src/routes.ts'],
-								},
-							],
-							reportMarkdown: '# SECURITY Audit Report\n\nOne finding.',
-						},
-						{
-							auditName: 'DEAD_CODE',
-							auditFindings: [],
-							noFindingsJustification:
-								'Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed every match is imported by production code.',
-							reportMarkdown: '# DEAD_CODE Audit Report\n\nNo findings.',
+							title: 'Missing auth guard',
+							description: 'Verified: src/routes.ts:12 - guard missing',
+							spec: 'Add requireAuth to POST /items.',
+							severity: 'High',
+							affectedFiles: ['src/routes.ts'],
 						},
 					],
+					reportMarkdown: '# SECURITY Audit Report\n\nOne finding.',
 				},
 			},
 		);
@@ -2176,22 +2165,26 @@ describe('mode handlers', () => {
 		const securityFinding = features.find((feature) =>
 			feature.id.startsWith('audit-security-'),
 		);
-		const reports = await store.listAuditReports();
 
-		expect(result.complete).toBe(true);
-		expect(result.summary).toContain('audit batch finished 2/2 audit(s)');
-		expect(result.artifacts).toMatchObject({
-			auditBatchMode: true,
-			auditBatchParallelInstruction: true,
-			completedAudits: ['SECURITY', 'DEAD_CODE'],
+		expect(first.complete).toBe(false);
+		expect(first.summary).toStartWith('audit SECURITY finished with 1 finding(s)');
+		expect(first.summary).toContain(
+			'audit run so far: 1 of 2 audit(s) done, 1 finding(s) (1 new); 1 remain',
+		);
+		expect(first.artifacts).toMatchObject({
+			auditName: 'SECURITY',
+			completedAudits: ['SECURITY'],
 			findingsCreated: 1,
 			findingsTotal: 1,
 			missingAudits: [],
-			perAuditFindingTotals: { DEAD_CODE: 0, SECURITY: 1 },
-			perAuditFindingsCreated: { DEAD_CODE: 0, SECURITY: 1 },
-			selectedAuditBatch: ['SECURITY', 'DEAD_CODE'],
+			perAuditFindingTotals: { SECURITY: 1 },
+			perAuditFindingsCreated: { SECURITY: 1 },
+			remainingAudits: ['DEAD_CODE'],
+			requestedAudits: ['SECURITY', 'DEAD_CODE'],
 		});
-		expect(result.artifacts?.modeFilesCreated).toEqual(
+		expect(first.artifacts).not.toHaveProperty('auditBatchMode');
+		expect(first.artifacts).not.toHaveProperty('selectedAuditBatch');
+		expect(first.artifacts?.modeFilesCreated).toEqual(
 			expect.arrayContaining([
 				join(projectDir, '.aidd', 'features', securityFinding?.id ?? '', 'feature.json'),
 			]),
@@ -2201,12 +2194,62 @@ describe('mode handlers', () => {
 			auditSeverity: 'High',
 			title: 'Missing auth guard',
 		});
+
+		const deadCodeWork = await mode.selectWork({ projectDir, store });
+		expect(deadCodeWork.id).toBe('DEAD_CODE');
+		const second = await mode.processResult(
+			{ projectDir, store },
+			{
+				events: [],
+				exitCode: 0,
+				filesModified: [],
+				transcript: '',
+				selectedWork: deadCodeWork,
+				structuredResult: {
+					auditName: 'DEAD_CODE',
+					auditFindings: [],
+					noFindingsJustification:
+						'Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed every match is imported by production code.',
+					reportMarkdown: '# DEAD_CODE Audit Report\n\nNo findings.',
+				},
+			},
+		);
+
+		const reports = await store.listAuditReports();
+		expect(second.complete).toBe(true);
+		expect(second.summary).toContain(
+			'audit run finished: 2 of 2 audit(s) done, 1 finding(s) (1 new)',
+		);
+		expect(second.artifacts).toMatchObject({
+			completedAudits: ['DEAD_CODE'],
+			remainingAudits: [],
+		});
 		expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(true);
 		expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(true);
+
+		// The run's last word describes the whole run, not the fixed "nothing to do" line.
+		const noWork = await mode.selectWork({ projectDir, store });
+		expect(noWork).toMatchObject({ id: 'no-work', kind: 'none' });
+		const finalResult = await mode.processResult(
+			{ projectDir, store },
+			{
+				events: [],
+				exitCode: 0,
+				filesModified: [],
+				selectedWork: noWork,
+				skipped: true,
+				transcript: '',
+			},
+		);
+		expect(finalResult.summary).toBe(
+			'audit run finished: 2 of 2 audit(s) done, 1 finding(s) (1 new)',
+		);
 	});
 
-	test('audit mode rejects a batch whose empty reports lack evidence', async () => {
-		const { projectDir, store } = await makeProject('audit-batch-no-findings');
+	// One session, one audit: a result carrying an array of reports is not audit output at all,
+	// so nothing in it can be persisted on the strength of a single session.
+	test('audit mode does not accept a result carrying several reports', async () => {
+		const { projectDir, store } = await makeProject('audit-multi-report-result');
 		const auditPlan = plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']);
 		const mode = createModeHandler(auditPlan);
 		const work = await mode.selectWork({ projectDir, store });
@@ -2224,33 +2267,29 @@ describe('mode handlers', () => {
 						{
 							auditName: 'SECURITY',
 							auditFindings: [],
-							reportMarkdown:
-								'# SECURITY Audit Report\n\nM1: prose finding never structured.',
+							noFindingsJustification:
+								'Inspected src/routes.ts and confirmed every route declares an input schema.',
+							reportMarkdown: '# SECURITY Audit Report',
 						},
 						{
 							auditName: 'DEAD_CODE',
 							auditFindings: [],
-							reportMarkdown:
-								'# DEAD_CODE Audit Report\n\nL1: prose finding never structured.',
+							noFindingsJustification:
+								'Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed every match is imported by production code.',
+							reportMarkdown: '# DEAD_CODE Audit Report',
 						},
 					],
 				},
 			},
 		);
 
-		const features = await store.listFeatures({ includeAudit: true });
-		const reports = await store.listAuditReports();
-
-		// Invalid zero-finding claims must not become fresh audit evidence.
-		expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(false);
-		expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(false);
-		expect(features.filter((feature) => feature.auditSource !== undefined)).toHaveLength(0);
+		expect(await store.listAuditReports()).toEqual([]);
 		expect(result.complete).toBe(false);
-		expect(result.artifacts?.findingsCreated).toBe(0);
-		expect(result.artifacts?.findingsTotal).toBe(0);
+		expect(result.summary).toStartWith(
+			'audit SECURITY did not complete (no AIDD_RESULT structured output emitted); no report written',
+		);
 		expect(result.artifacts?.completedAudits).toEqual([]);
-		expect(result.artifacts?.missingAudits).toEqual(['SECURITY', 'DEAD_CODE']);
-		expect(result.artifacts?.invalidAuditReports).toHaveLength(2);
+		expect(result.artifacts?.missingAudits).toEqual(['SECURITY']);
 	});
 
 	test('audit mode rejects a single unjustified zero-finding report', async () => {
@@ -2280,52 +2319,52 @@ describe('mode handlers', () => {
 		expect(await store.listAuditReports()).toEqual([]);
 	});
 
-	test('audit mode rejects an unjustified sibling without discarding a valid report', async () => {
-		const { projectDir, store } = await makeProject('audit-batch-mixed-unjustified');
+	test('audit mode rejects an unjustified report without discarding an earlier valid one', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-mixed-unjustified');
 		const auditPlan = plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']);
 		const mode = createModeHandler(auditPlan);
-		const work = await mode.selectWork({ projectDir, store });
+		const context = { projectDir, store };
 
-		const result = await mode.processResult(
-			{ projectDir, store },
-			{
-				events: [],
-				exitCode: 0,
-				filesModified: [],
-				transcript: '',
-				selectedWork: work,
-				structuredResult: {
-					auditReports: [
-						{
-							auditName: 'SECURITY',
-							auditFindings: [
-								{
-									title: 'Missing auth guard',
-									description: 'Verified: src/routes.ts:12 - guard missing',
-									spec: 'Add requireAuth to POST /items.',
-									severity: 'High',
-									affectedFiles: ['src/routes.ts'],
-								},
-							],
-							reportMarkdown: '# SECURITY Audit Report\n\nOne finding.',
-						},
-						{
-							auditName: 'DEAD_CODE',
-							auditFindings: [],
-							reportMarkdown: '# DEAD_CODE Audit Report\n\nLooks clean to me.',
-						},
-					],
-				},
+		await mode.processResult(context, {
+			events: [],
+			exitCode: 0,
+			filesModified: [],
+			transcript: '',
+			selectedWork: await mode.selectWork(context),
+			structuredResult: {
+				auditName: 'SECURITY',
+				auditFindings: [
+					{
+						title: 'Missing auth guard',
+						description: 'Verified: src/routes.ts:12 - guard missing',
+						spec: 'Add requireAuth to POST /items.',
+						severity: 'High',
+						affectedFiles: ['src/routes.ts'],
+					},
+				],
+				reportMarkdown: '# SECURITY Audit Report\n\nOne finding.',
 			},
-		);
+		});
+		const result = await mode.processResult(context, {
+			events: [],
+			exitCode: 0,
+			filesModified: [],
+			transcript: '',
+			selectedWork: await mode.selectWork(context),
+			structuredResult: {
+				auditName: 'DEAD_CODE',
+				auditFindings: [],
+				reportMarkdown: '# DEAD_CODE Audit Report\n\nLooks clean to me.',
+			},
+		});
 
-		// One real finding elsewhere in the batch must not immunize the
-		// unjustified empty sibling report.
-		expect(result.artifacts?.findingsCreated).toBe(1);
+		// A real finding from an earlier session must not immunize the unjustified empty
+		// report that followed it.
 		expect(result.complete).toBe(false);
-		expect(result.artifacts?.completedAudits).toEqual(['SECURITY']);
+		expect(result.artifacts?.completedAudits).toEqual([]);
 		expect(result.artifacts?.missingAudits).toEqual(['DEAD_CODE']);
 		expect(result.artifacts?.invalidAuditReports).toHaveLength(1);
+		expect(result.artifacts?.remainingAudits).toEqual(['DEAD_CODE']);
 		const reports = await store.listAuditReports();
 		expect(reports.some((report) => report.startsWith('SECURITY-'))).toBe(true);
 		expect(reports.some((report) => report.startsWith('DEAD_CODE-'))).toBe(false);
@@ -2357,52 +2396,109 @@ describe('mode handlers', () => {
 		expect(await store.listAuditReports()).toEqual([]);
 	});
 
-	test('audit mode marks batched result incomplete when a selected audit is omitted', async () => {
-		const { projectDir, store } = await makeProject('audit-batch-missing');
-		const auditPlan = plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']);
-		const mode = createModeHandler(auditPlan);
-		const work = await mode.selectWork({ projectDir, store });
-
-		const result = await mode.processResult(
-			{ projectDir, store },
-			{
+	test('audit mode works through named audits in order and never selects more than one', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-order');
+		const context = { projectDir, store };
+		const ordered = createModeHandler(
+			plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE,LOGIC']),
+		);
+		const selected: string[] = [];
+		for (let session = 0; session < 3; session++) {
+			const work = await ordered.selectWork(context);
+			selected.push(work.id);
+			await ordered.processResult(context, {
 				events: [],
 				exitCode: 0,
 				filesModified: [],
 				transcript: '',
 				selectedWork: work,
 				structuredResult: {
-					auditReports: [
-						{
-							auditName: 'SECURITY',
-							auditFindings: [],
-							noFindingsJustification:
-								'Inspected src/routes.ts and confirmed every route declares an input schema.',
-							reportMarkdown: '# SECURITY Audit Report',
-						},
-					],
+					auditName: work.id,
+					auditFindings: [],
+					noFindingsJustification:
+						'Inspected src/routes.ts and confirmed every route declares an input schema.',
+					reportMarkdown: `# ${work.id} Audit Report`,
 				},
-			},
-		);
+			});
+		}
+		expect(selected).toEqual(['SECURITY', 'DEAD_CODE', 'LOGIC']);
+		expect((await ordered.selectWork(context)).id).toBe('no-work');
 
-		expect(result.complete).toBe(false);
-		expect(result.summary).toContain('missing: DEAD_CODE');
-		expect(result.artifacts).toMatchObject({
-			completedAudits: ['SECURITY'],
-			missingAudits: ['DEAD_CODE'],
-			selectedAuditBatch: ['SECURITY', 'DEAD_CODE'],
-		});
-
-		const retryWork = await mode.selectWork({ projectDir, store });
-		expect(retryWork.id).toBe('DEAD_CODE');
-		expect(retryWork.data).toMatchObject({
-			current: 'DEAD_CODE',
-			currentBatch: ['DEAD_CODE'],
-		});
+		// Forty audits is the run that prompted this: one session was handed all of them.
+		const names = Array.from({ length: 40 }, (_, index) => `AUDIT_${index + 1}`);
+		const many = createModeHandler(plan(projectDir, ['--audit', names.join(',')]));
+		const work = await many.selectWork(context);
+		const promptPlan = await many.buildPromptPlan(context, work);
+		expect(work.id).toBe('AUDIT_1');
+		expect(work.description).toBe('Run AUDIT_1 audit');
+		expect(work.data).toMatchObject({ current: 'AUDIT_1' });
+		expect(promptPlan.variables.auditName).toBe('AUDIT_1');
+		expect(JSON.stringify(promptPlan.variables)).not.toContain('AUDIT_2');
 	});
 
-	test('audit mode records invalid batched report entries', async () => {
-		const { projectDir, store } = await makeProject('audit-batch-invalid');
+	test('audit mode gives up on an audit rejected twice and moves on to the next', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-give-up');
+		const context = { projectDir, store };
+		const mode = createModeHandler(plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']));
+		const rejected = async () => {
+			const work = await mode.selectWork(context);
+			expect(work.id).toBe('SECURITY');
+			return await mode.processResult(context, {
+				events: [],
+				exitCode: 0,
+				filesModified: [],
+				transcript: '',
+				selectedWork: work,
+				structuredResult: {
+					auditName: 'SECURITY',
+					auditFindings: [],
+					noFindingsJustification: 'No issues found.',
+					reportMarkdown: '# SECURITY Audit Report',
+				},
+			});
+		};
+
+		const first = await rejected();
+		expect(first.summary).toStartWith(
+			'audit SECURITY did not complete (report rejected by validation); no report written; failed attempt 1 of 2',
+		);
+		expect(first.artifacts).toMatchObject({
+			abandonedAudits: [],
+			remainingAudits: ['SECURITY', 'DEAD_CODE'],
+		});
+
+		const second = await rejected();
+		expect(second.complete).toBe(false);
+		expect(second.summary).toContain('failed attempt 2 of 2');
+		expect(second.summary).toContain('gave up after 2 failed attempts: SECURITY');
+		expect(second.artifacts).toMatchObject({
+			abandonedAudits: ['SECURITY'],
+			missingAudits: ['SECURITY'],
+			remainingAudits: ['DEAD_CODE'],
+		});
+		expect(await store.listAuditReports()).toEqual([]);
+		expect((await mode.selectWork(context)).id).toBe('DEAD_CODE');
+	});
+
+	test('audit mode counts a failed session against the audit', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-failed-session');
+		const context = { projectDir, store };
+		const mode = createModeHandler(plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']));
+		const work = await mode.selectWork(context);
+		const failed = { events: [], filesModified: [], selectedWork: work, transcript: '' };
+
+		const exited = await mode.processResult(context, { ...failed, exitCode: 1 });
+		expect(exited.summary).toStartWith(
+			'audit SECURITY did not complete (agent exited 1); no report written; failed attempt 1 of 2',
+		);
+		const silent = await mode.processResult(context, { ...failed, exitCode: 0 });
+		expect(silent.summary).toContain('no AIDD_RESULT structured output emitted');
+		expect(silent.artifacts?.abandonedAudits).toEqual(['SECURITY']);
+		expect((await mode.selectWork(context)).id).toBe('DEAD_CODE');
+	});
+
+	test('audit mode rejects a result naming an audit the session was not given', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-wrong-name');
 		const auditPlan = plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']);
 		const mode = createModeHandler(auditPlan);
 		const work = await mode.selectWork({ projectDir, store });
@@ -2416,33 +2512,104 @@ describe('mode handlers', () => {
 				transcript: '',
 				selectedWork: work,
 				structuredResult: {
-					auditReports: [
-						{
-							auditName: 'SECURITY',
-							auditFindings: [],
-							noFindingsJustification:
-								'Inspected src/routes.ts and confirmed every route declares an input schema.',
-							reportMarkdown: '# SECURITY Audit Report',
-						},
-						{
-							auditName: 'UNKNOWN',
-							auditFindings: [],
-							reportMarkdown: '# UNKNOWN Audit Report',
-						},
-					],
+					auditName: 'DEAD_CODE',
+					auditFindings: [],
+					noFindingsJustification:
+						'Ran rg for unreferenced exports in cli/src/**/*.ts and confirmed every match is imported by production code.',
+					reportMarkdown: '# DEAD_CODE Audit Report',
 				},
 			},
 		);
 
+		// DEAD_CODE is one of the run's audits, but it is not the one this session held.
 		expect(result.complete).toBe(false);
-		expect(result.summary).toContain('1 invalid report entry');
 		expect(result.artifacts?.invalidAuditReports).toEqual([
-			{ auditName: 'UNKNOWN', index: 1, reason: 'auditName was not selected' },
+			{ auditName: 'DEAD_CODE', reason: 'auditName was not selected' },
 		]);
+		expect(await store.listAuditReports()).toEqual([]);
+		expect((await mode.selectWork({ projectDir, store })).id).toBe('SECURITY');
 	});
 
-	test('audit mode rejects a batched report whose finding entry is null without crashing', async () => {
-		const { projectDir, store } = await makeProject('audit-batch-null-finding');
+	test('audit mode records an audit that could not run and leaves it stale', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-unavailable');
+		const context = { projectDir, store };
+		const mode = createModeHandler(plan(projectDir, ['--audit', 'LIGHTHOUSE,SECURITY']));
+		const work = await mode.selectWork(context);
+
+		const result = await mode.processResult(context, {
+			events: [],
+			exitCode: 0,
+			filesModified: [],
+			transcript: '',
+			selectedWork: work,
+			structuredResult: {
+				auditName: 'LIGHTHOUSE',
+				auditStatus: 'unavailable',
+				unavailableReason: 'No Lighthouse artifact exists under logs/.',
+			},
+		});
+
+		const [reportName] = await store.listAuditReports();
+		const report = await store.readAuditReport(reportName ?? '');
+		expect(report).toContain(unavailableMarker);
+		expect(report).toContain('No Lighthouse artifact exists under logs/.');
+		const freshness = await evaluateAuditReportFreshness(projectDir, 'LIGHTHOUSE', {
+			excludedReportMarkers: [unavailableMarker],
+		});
+		expect(freshness.status).toBe('missing');
+
+		expect(result.complete).toBe(false);
+		expect(result.summary).toStartWith(
+			'audit LIGHTHOUSE could not run (No Lighthouse artifact exists under logs/.)',
+		);
+		expect(result.summary).toContain(
+			'audit run so far: 0 of 2 audit(s) done, 0 finding(s) (0 new); could not run: LIGHTHOUSE; 1 remain',
+		);
+		expect(result.artifacts).toMatchObject({
+			completedAudits: [],
+			invalidAuditReports: [],
+			missingAudits: [],
+			remainingAudits: ['SECURITY'],
+			unavailableAudits: [
+				{ auditName: 'LIGHTHOUSE', reason: 'No Lighthouse artifact exists under logs/.' },
+			],
+		});
+		// Settled for this run: the next session gets the next audit, not a retry.
+		expect((await mode.selectWork(context)).id).toBe('SECURITY');
+	});
+
+	test('audit mode keeps a could-not-run audit selectable by a later audit-all run', async () => {
+		const { projectDir, store } = await makeProject('audit-all-unavailable-stays-stale');
+		await writeFullHardeningProfile(projectDir);
+		const repoRoot = join(projectDir, 'repo-root');
+		await mkdir(join(repoRoot, 'audits'), { recursive: true });
+		await writeFile(join(repoRoot, 'audits', 'SECURITY.md'), '# Security\n');
+		const context = { projectDir, rootDir: repoRoot, store };
+
+		const firstRun = createModeHandler(plan(projectDir, ['--audit-all']));
+		const work = await firstRun.selectWork(context);
+		const result = await firstRun.processResult(context, {
+			events: [],
+			exitCode: 0,
+			filesModified: [],
+			transcript: '',
+			selectedWork: work,
+			structuredResult: {
+				auditName: 'SECURITY',
+				auditStatus: 'unavailable',
+				unavailableReason: 'The fixture directory could not be written.',
+			},
+		});
+
+		expect(result.complete).toBe(true);
+		expect((await firstRun.selectWork(context)).id).toBe('no-work');
+		// A new run starts with nothing settled, and the marked report is not evidence.
+		const laterRun = createModeHandler(plan(projectDir, ['--audit-all']));
+		expect((await laterRun.selectWork(context)).id).toBe('SECURITY');
+	});
+
+	test('audit mode rejects a report whose finding entry is null without crashing', async () => {
+		const { projectDir, store } = await makeProject('audit-serial-null-finding');
 		const auditPlan = plan(projectDir, ['--audit', 'SECURITY,DEAD_CODE']);
 		const mode = createModeHandler(auditPlan);
 		const work = await mode.selectWork({ projectDir, store });
@@ -2456,26 +2623,9 @@ describe('mode handlers', () => {
 				transcript: '',
 				selectedWork: work,
 				structuredResult: {
-					auditReports: [
-						{
-							auditName: 'SECURITY',
-							auditFindings: [null],
-							reportMarkdown: '# SECURITY Audit Report',
-						},
-						{
-							auditName: 'DEAD_CODE',
-							auditFindings: [
-								{
-									title: 'Dead helper',
-									description: 'Verified: src/util.ts:8 - unreferenced export',
-									spec: 'Delete the unused helper.',
-									severity: 'Low',
-									affectedFiles: ['src/util.ts'],
-								},
-							],
-							reportMarkdown: '# DEAD_CODE Audit Report\n\nOne finding.',
-						},
-					],
+					auditName: 'SECURITY',
+					auditFindings: [null],
+					reportMarkdown: '# SECURITY Audit Report',
 				},
 			},
 		);
@@ -2486,13 +2636,12 @@ describe('mode handlers', () => {
 		expect(result.artifacts?.invalidAuditReports).toEqual([
 			{
 				auditName: 'SECURITY',
-				index: 0,
 				reason: expect.stringContaining('auditFindings[0]: not an object'),
 			},
 		]);
-		// The invalid SECURITY report persisted nothing; the valid sibling still landed.
+		// The invalid SECURITY report persisted nothing.
 		expect(features.some((feature) => feature.auditSource === 'SECURITY')).toBe(false);
-		expect(features.some((feature) => feature.auditSource === 'DEAD_CODE')).toBe(true);
+		expect(await store.listAuditReports()).toEqual([]);
 	});
 
 	test('audit mode rejects a report whose finding is an empty object instead of fabricating one', async () => {
@@ -2631,25 +2780,20 @@ describe('mode handlers', () => {
 		const work = await mode.selectWork({ projectDir, store });
 		const promptPlan = await mode.buildPromptPlan({ projectDir, store }, work);
 
-		expect(work.id).toBe('audit-batch');
-		expect(work.description).toBe('Run 2 audits: SECURITY, DEAD_CODE');
-		expect(work.data).toMatchObject({
-			current: 'SECURITY',
-			currentBatch: ['SECURITY', 'DEAD_CODE'],
-		});
+		// SECURITY already has a report; naming it explicitly still asks for it to run.
+		expect(work.id).toBe('SECURITY');
+		expect(work.description).toBe('Run SECURITY audit');
+		expect(work.data).toMatchObject({ current: 'SECURITY' });
 		expect(promptPlan.variables.auditName).toBe('SECURITY');
-		expect(promptPlan.variables.auditNames).toEqual(['SECURITY', 'DEAD_CODE']);
 
 		await store.writeAuditReport(
 			'DEAD_CODE',
 			'# DEAD_CODE done',
 			new Date('2026-05-04T00:00:00Z'),
 		);
+		// A report appearing on disk does not settle a named audit; only this run doing it does.
 		const rerun = await mode.selectWork({ projectDir, store });
-		expect(rerun.id).toBe('audit-batch');
-		expect(rerun.data).toMatchObject({
-			currentBatch: ['SECURITY', 'DEAD_CODE'],
-		});
+		expect(rerun.id).toBe('SECURITY');
 	});
 
 	test('audit mode discovers audit-all queue from non-reference audit files', async () => {
@@ -2665,10 +2809,9 @@ describe('mode handlers', () => {
 		const context = { projectDir, rootDir: repoRoot, store };
 		const first = await mode.selectWork(context);
 
-		expect(first.id).toBe('audit-batch');
-		expect(first.data).toMatchObject({
-			currentBatch: ['PERFORMANCE', 'SECURITY'],
-		});
+		// The reference-type DEAD_CODE definition is never queued; the first stale audit is.
+		expect(first.id).toBe('PERFORMANCE');
+		expect(first.data).toMatchObject({ current: 'PERFORMANCE' });
 
 		await store.writeAuditReport('PERFORMANCE', '# PERFORMANCE done', new Date());
 		const second = await mode.selectWork(context);

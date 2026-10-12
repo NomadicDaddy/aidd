@@ -98,43 +98,57 @@ describe('post-iteration feature contract check', () => {
 		expect(acc.pendingCarryoverNotes).toEqual([]);
 	});
 
-	// Audit mode leaves a rejected report's audit pending for retry. Without the reasons the
-	// retry is a blind re-roll of the same report, which is what maxIterations was buying before.
-	test('hands the next iteration the reasons its audit reports were rejected', async () => {
+	async function runGuardWithRejectedAudit(remainingAudits: string[]) {
 		const acc = accumulator();
-		const withRejections = {
+		const withRejection = {
 			...finalize(),
 			modeResult: {
 				artifacts: {
+					auditName: 'REFACTOR',
 					invalidAuditReports: [
 						{
 							auditName: 'REFACTOR',
-							index: 0,
 							reason: 'invalid auditFindings: no justification',
 						},
 					],
+					remainingAudits,
 				},
 			},
 		} as unknown as FinalizeIterationResult;
-
 		const exit = await endRunIfIterationGuardTripped({
 			acc,
 			deps: {
 				store: new FileAiddStore(await healthyProject('aidd-audit-rejected-')),
 			} as unknown as OrchestratorDeps,
 			featureSnapshotBefore: emptySnapshot(),
-			finalize: withRejections,
+			finalize: withRejection,
 			move: () => undefined,
 			plan: {} as never,
 			wallClockTimedOut: false,
 			work: { kind: 'directive' } as never,
 		});
+		return { acc, exit };
+	}
+
+	// Audit mode leaves a rejected report's audit pending for retry. Without the reasons the
+	// retry is a blind re-roll of the same report, which is what maxIterations was buying before.
+	test('hands the next iteration the reasons its audit report was rejected', async () => {
+		const { acc, exit } = await runGuardWithRejectedAudit(['REFACTOR', 'SECURITY']);
 
 		// Advisory, like the contract check: the agent is the one who can fix the report.
 		expect(exit).toBeUndefined();
 		expect(acc.pendingCarryoverNotes).toHaveLength(1);
 		expect(acc.pendingCarryoverNotes[0]).toContain('REFACTOR');
 		expect(acc.pendingCarryoverNotes[0]).toContain('no justification');
+	});
+
+	// Once the run has given up on the audit, the next session holds a different one. Telling it
+	// to repair REFACTOR's report would misdirect an agent that never wrote it.
+	test('raises no repair note once the rejected audit is no longer pending', async () => {
+		const { acc, exit } = await runGuardWithRejectedAudit(['SECURITY']);
+
+		expect(exit).toBeUndefined();
+		expect(acc.pendingCarryoverNotes).toEqual([]);
 	});
 
 	// Metadata bookkeeping must never be what ends an otherwise good iteration.

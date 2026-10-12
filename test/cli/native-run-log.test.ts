@@ -15,7 +15,7 @@ describe('renderNativeRunLogLine', () => {
 	test('collapses a large AIDD_RESULT payload to a compact note', () => {
 		const event: AgentEvent = {
 			type: 'assistant_text',
-			chunk: 'Done. AIDD_RESULT: {"auditReports":[{"auditName":"SECURITY","reportMarkdown":"# big"}]}',
+			chunk: 'Done. AIDD_RESULT: {"auditName":"SECURITY","auditFindings":[],"reportMarkdown":"# big"}',
 		};
 		expect(renderNativeRunLogLine(event)).toBe('Done.\nAIDD_RESULT: { … }\n');
 	});

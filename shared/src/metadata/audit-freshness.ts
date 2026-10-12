@@ -49,7 +49,8 @@ interface AuditReportSnapshot {
 
 interface AuditFreshnessOptions {
 	context?: AuditFreshnessContext;
-	excludedReportMarker?: string;
+	/** A report whose content carries any of these markers is not evidence and is passed over. */
+	excludedReportMarkers?: readonly string[];
 	now?: Date;
 }
 
@@ -63,7 +64,7 @@ export async function evaluateAuditReportFreshness(
 	const latest = await latestAuditReport(
 		projectDir,
 		auditName,
-		options.excludedReportMarker,
+		options.excludedReportMarkers ?? [],
 		context,
 	);
 	if (!latest) {
@@ -142,13 +143,13 @@ async function readReportDirEntries(
 // Only the newest surviving report is ever returned, so stat the candidates first and read
 // exactly the one that wins. Reading every historical report of every audit up front cost
 // ~116 ms per request on a 335-file report directory to discard all but 39 of the bodies.
-// When an excludedReportMarker is set the marker can only be seen in the content, so walk
-// newest-first and read until one passes — the same result, and still one read in the
-// common case where the newest report is not excluded.
+// An excluded marker can only be seen in the content, so walk newest-first and read until one
+// passes — the same result, and still one read in the common case where the newest report is
+// not excluded.
 async function latestAuditReport(
 	projectDir: string,
 	auditName: string,
-	excludedReportMarker?: string,
+	excludedReportMarkers: readonly string[],
 	context?: AuditFreshnessContext,
 ): Promise<AuditReportSnapshot | null> {
 	const reportDir = auditReportsDir(projectDir);
@@ -176,7 +177,7 @@ async function latestAuditReport(
 		} catch {
 			continue;
 		}
-		if (excludedReportMarker && content.includes(excludedReportMarker)) continue;
+		if (excludedReportMarkers.some((marker) => content.includes(marker))) continue;
 		return {
 			content,
 			mtimeMs: candidate.mtimeMs,

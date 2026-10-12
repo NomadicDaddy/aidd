@@ -9,22 +9,14 @@ export interface AuditPromptBodyVariables {
 	auditGuidelines: string;
 	auditName: string;
 	auditNameLower: string;
-	parallelGuidance: string;
 	priorContext?: ProjectContextDigest;
 }
 
 export function renderAuditPromptBody(variables: AuditPromptBodyVariables): string {
-	const {
-		auditCategory,
-		auditGuidelines,
-		auditName,
-		auditNameLower,
-		parallelGuidance,
-		priorContext,
-	} = variables;
+	const { auditCategory, auditGuidelines, auditName, auditNameLower, priorContext } = variables;
 
 	return [
-		renderAuditIntroSection(parallelGuidance, priorContext),
+		renderAuditIntroSection(priorContext),
 		renderAuditFindingsSection({ auditCategory, auditName, auditNameLower }),
 		renderAuditClosingSection(auditGuidelines),
 	].join('\n\n');

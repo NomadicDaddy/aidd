@@ -159,7 +159,6 @@ export function resolveRunPlan(args: ParsedArgs, config: ResolvedConfig): RunPla
 		phase,
 		variables: {
 			auditName: args.auditNames[0],
-			auditNames: args.auditNames,
 			director: args.directorMode,
 			directorContextPath: args.directorContextPath,
 			directorOutputPath: args.directorOutputPath,

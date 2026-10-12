@@ -27,6 +27,9 @@ execute-audit <app> --audit-all
 - `--audit-all` - Run missing or stale audits from the profile-applicable set. aidd ranks that set
   by change potential; it does not run in filename order.
 
+Either form runs one audit per agent session, in order: named audits in the order given,
+`--audit-all` highest-ranked first. No session is given more than one audit.
+
 ## Workflow
 
 1. Resolve the app to an existing local directory. Do not require a pre-existing `.aidd/`: audit
@@ -71,7 +74,9 @@ execute-audit <app> --audit-all
       recurrence, recorded in `.aidd/findings-ledger.jsonl` and in the new feature's notes;
     - a finding previously dismissed as a false positive remains suppressed.
 9. Report the audit names, report paths, total and newly created finding counts, validation result,
-   suppressed duplicate/dismissal counts, recurrences, and remaining audits. For a confirmed
+   suppressed duplicate/dismissal counts, recurrences, and remaining audits. Name separately any
+   audit the run summary lists as `could not run` (its report records the reason and the audit
+   stays stale for a later run) or as given up on after two failed attempts. For a confirmed
    recurrence, recommend an appropriate automated prevention mechanism such as a lint rule, CI
    assertion, `smoke:qc` check, or targeted regression test.
 

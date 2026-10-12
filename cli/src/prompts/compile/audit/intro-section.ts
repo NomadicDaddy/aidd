@@ -4,10 +4,7 @@ import { renderAuditPriorContext } from '../prior-context.ts';
 
 const escapedBacktick = '\\`';
 
-export function renderAuditIntroSection(
-	parallelGuidance: string,
-	priorContext?: ProjectContextDigest,
-): string {
+export function renderAuditIntroSection(priorContext?: ProjectContextDigest): string {
 	return `## YOUR ROLE - AUDIT AGENT
 
 You are in AUDIT mode performing a comprehensive codebase audit.
@@ -20,8 +17,6 @@ You are in AUDIT mode performing a comprehensive codebase audit.
 4. **Do NOT fix issues directly** - only document them as findings for later resolution
 5. **Generate audit report markdown inside \`AIDD_RESULT\`**
 6. **Be thorough and systematic** - cover all areas specified in the audit
-
-${parallelGuidance}
 
 ### QUICK REFERENCES
 

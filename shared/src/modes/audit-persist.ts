@@ -1,5 +1,10 @@
 import type { AiddStore } from '../metadata/store.ts';
-import type { InvalidAuditReport, NormalizedAuditFinding } from './audit-shared.ts';
+import type {
+	AuditReportInput,
+	InvalidAuditReport,
+	NormalizedAuditFinding,
+	UnavailableAudit,
+} from './audit-shared.ts';
 
 import { templateRepoVersion } from '../metadata/template-ownership.ts';
 import {
@@ -13,17 +18,21 @@ import {
 	snapshotRoadmap,
 } from './audit-file-changes.ts';
 import { disambiguateFeatureId, normalizeFinding } from './audit-findings.ts';
-import { enforceInstrumentBackedScore } from './audit-instruments.ts';
+import { enforceInstrumentBackedScore, withheldScoreValue } from './audit-instruments.ts';
 import { structuredAuditReports, structuredFindings, structuredReport } from './audit-parsing.ts';
-import { simulationMarker } from './audit-shared.ts';
+import { simulationMarker, unavailableMarker } from './audit-shared.ts';
 
 export interface AuditPersistInput {
 	ledgerStore?: AiddStore;
 	projectDir: string;
 	/** The run writing these reports; absent only for callers with no run identity. */
 	runId?: string;
-	/** The audit batch the run was launched with; only used to name a single unlabelled report. */
-	selectedAudits: string[];
+	/**
+	 * The audits this result may belong to. The CLI passes the one audit the session was given;
+	 * crash recovery passes every audit the dead run could have been on. The result's own
+	 * `auditName` picks among them, and a result naming none of them is rejected.
+	 */
+	selectedAudits: readonly string[];
 	/** Prefixes every report with the simulation banner when the launch explicitly selected it. */
 	simulated: boolean;
 	store: AiddStore;
@@ -31,6 +40,7 @@ export interface AuditPersistInput {
 }
 
 export interface AuditPersistResult {
+	/** Audits that produced a report counting as evidence; a could-not-run audit is not one. */
 	completedAudits: string[];
 	fileChanges: ModeFileChanges;
 	findingIds: string[];
@@ -44,7 +54,45 @@ export interface AuditPersistResult {
 	suppressedDuplicateCount: number;
 	totalCreated: number;
 	totalFindings: number;
+	/** Audits whose report was written carrying the could-not-run marker, so they stay stale. */
+	unavailableAudits: UnavailableAudit[];
 	unmeasuredScoresWithheld: number;
+}
+
+const withheldScoreReason =
+	'the report declared a numeric score with no validated instruments[] entry, so nothing measured it';
+
+const selfDeclaredSkipReason = `the report states \`${withheldScoreValue}\`, so by its own account the audit was not performed`;
+
+// An audit produced no usable evidence when the agent said it could not run, when a measurement
+// audit printed a score that had to be withheld, or when the report itself carries the skipped
+// status the methodology prescribes for an audit with no working instrument. The last case is
+// read from the text and not trusted to the agent's `auditStatus`: a report that says it was
+// skipped must never be what makes its audit current.
+function unavailableReasonFor(
+	report: AuditReportInput,
+	scoreWithheld: boolean,
+	reportMarkdown: string,
+): string | undefined {
+	if (report.unavailableReason !== undefined) {
+		return report.unavailableReason.replace(/\s+/gu, ' ');
+	}
+	if (scoreWithheld) return withheldScoreReason;
+	return reportMarkdown.includes(withheldScoreValue) ? selfDeclaredSkipReason : undefined;
+}
+
+// The marker is what keeps a could-not-run report from counting as fresh; the reason line is
+// there for the person who opens the file to find out why the audit is still stale.
+function finalReportContent(
+	reportMarkdown: string,
+	simulated: boolean,
+	unavailableReason: string | undefined,
+): string {
+	const body =
+		unavailableReason === undefined
+			? reportMarkdown
+			: `${unavailableMarker}\n> **Audit could not run:** ${unavailableReason}\n\n${reportMarkdown}`;
+	return simulated ? `${simulationMarker}\n${body}` : body;
 }
 
 /**
@@ -65,6 +113,7 @@ export async function persistAuditReports(input: AuditPersistInput): Promise<Aud
 	const perAuditFindingTotals: Record<string, number> = {};
 	const perAuditFindingsCreated: Record<string, number> = {};
 	const perAuditReportPaths: Record<string, string> = {};
+	const unavailableAudits: UnavailableAudit[] = [];
 	let totalFindings = 0;
 	let totalCreated = 0;
 	let suppressedDismissedCount = 0;
@@ -180,9 +229,12 @@ export async function persistAuditReports(input: AuditPersistInput): Promise<Aud
 			reportMarkdown,
 		);
 		if (enforced.withheld) unmeasuredScoresWithheld++;
-		const finalReport = simulated
-			? `${simulationMarker}\n${enforced.reportMarkdown}`
-			: enforced.reportMarkdown;
+		const unavailableReason = unavailableReasonFor(report, enforced.withheld, reportMarkdown);
+		const finalReport = finalReportContent(
+			enforced.reportMarkdown,
+			simulated,
+			unavailableReason,
+		);
 		const reportPath = await recordAuditReportWrite(
 			fileChanges,
 			projectDir,
@@ -196,7 +248,11 @@ export async function persistAuditReports(input: AuditPersistInput): Promise<Aud
 				),
 		);
 
-		completedAudits.push(report.auditName);
+		if (unavailableReason === undefined) {
+			completedAudits.push(report.auditName);
+		} else {
+			unavailableAudits.push({ auditName: report.auditName, reason: unavailableReason });
+		}
 		perAuditFindingTotals[report.auditName] = findings.length;
 		perAuditFindingsCreated[report.auditName] = created;
 		perAuditReportPaths[report.auditName] = reportPath;
@@ -221,6 +277,7 @@ export async function persistAuditReports(input: AuditPersistInput): Promise<Aud
 		suppressedDuplicateCount,
 		totalCreated,
 		totalFindings,
+		unavailableAudits,
 		unmeasuredScoresWithheld,
 	};
 }

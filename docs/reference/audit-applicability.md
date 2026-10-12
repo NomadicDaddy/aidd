@@ -224,9 +224,10 @@ Known limits, all handled by a per-project override:
   open another program's database read-only and own no schema.
 - Only `package.json` manifests are read. A project in another ecosystem is detected by its files
   alone.
-- A tree with more than 5,000 directory entries outside the skipped directories never finishes its
-  scan, so it gets every surface audit that no manifest settled, each time, until its lead excludes
-  them. The audit profile preview marks these surfaces as undecided.
+- A tree large enough to exhaust the scan's 5,000 entries keeps every surface still unresolved at
+  that point applicable, each time, until its lead excludes those audits. A surface a manifest or a
+  file settled before the limit keeps its own evidence; only the unresolved ones are marked
+  undecided in the audit profile preview.
 
 ## Matrix UI
 

@@ -6,6 +6,7 @@ import { orphanedLastCardIndex } from '../../frontend/src/pages/dashboard/dashbo
 import {
 	milestoneBadgeTone,
 	milestoneChipProgress,
+	milestoneRowProgress,
 } from '../../frontend/src/lib/projectPresentation.ts';
 import { DASHBOARD_CARD_IDS } from '../../frontend/src/stores/dashboardStore.ts';
 
@@ -107,6 +108,21 @@ describe('milestone chips differ by presence of colour, not by two adjacent gree
 		expect(milestoneChipProgress({ completed: 0, deferred: 2, total: 0 })).toEqual({
 			deferred: '2 deferred',
 			fraction: null,
+		});
+	});
+
+	test('a roadmap row never prints 0/0 for an all-deferred milestone either', () => {
+		expect(milestoneRowProgress({ completed: 3, deferred: 0, total: 5 })).toEqual({
+			spoken: '3/5 complete',
+			text: '3/5',
+		});
+		expect(milestoneRowProgress({ completed: 3, deferred: 2, total: 5 })).toEqual({
+			spoken: '3/5 complete, 2 deferred',
+			text: '3/5 · 2 deferred',
+		});
+		expect(milestoneRowProgress({ completed: 0, deferred: 2, total: 0 })).toEqual({
+			spoken: '2 deferred',
+			text: '2 deferred',
 		});
 	});
 });

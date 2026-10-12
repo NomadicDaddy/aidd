@@ -12,7 +12,7 @@ import { RelativeAge } from '../../../components/shared/RelativeAge.tsx';
 import { Badge } from '../../../components/ui/badge.tsx';
 import { Card, CardHeader, cardHeaderLinkClass } from '../../../components/ui/card.tsx';
 import { formatCount, formatRatio, formatRelativeAge } from '../../../lib/formatters.ts';
-import { bucketLabels } from '../../../lib/projectPresentation.ts';
+import { bucketLabels, milestoneRowProgress } from '../../../lib/projectPresentation.ts';
 import { touchTargetRowClass, touchTargetTextClass } from '../../../lib/touchTarget.ts';
 import { formatAppVersion, formatTemplateVersion } from '../projects-list-shared.ts';
 import { ProjectStackDisplay } from '../ProjectStackDisplay.tsx';
@@ -64,9 +64,10 @@ export function RoadmapMilestones({ roadmap }: { roadmap: null | ProjectRoadmapS
 				const item = roadmap.milestones[name];
 				if (!item) return null;
 				const isCurrent = roadmap.currentMilestone === name;
+				const progress = milestoneRowProgress(item);
 				return (
 					<Link
-						aria-label={`Milestone ${name}: ${formatRatio(item.completed, item.total)} complete. View matching features.`}
+						aria-label={`Milestone ${name}: ${progress.spoken}. View matching features.`}
 						className={`group flex items-center justify-between gap-2 rounded-sm focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${touchTargetRowClass}`}
 						key={name}
 						to={projectDetailTabSearch('features', { featureMilestone: name })}>
@@ -80,8 +81,7 @@ export function RoadmapMilestones({ roadmap }: { roadmap: null | ProjectRoadmapS
 							) : null}
 						</div>
 						<span className="font-mono text-xs text-muted-foreground">
-							{formatRatio(item.completed, item.total)}
-							{item.deferred > 0 ? ` · ${item.deferred} deferred` : null}
+							{progress.text}
 						</span>
 					</Link>
 				);

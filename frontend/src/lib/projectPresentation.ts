@@ -42,6 +42,19 @@ export function milestoneChipProgress(ms: ProjectMilestoneSummary): {
 	return { deferred: `+${ms.deferred} deferred`, fraction: `${ms.completed}/${ms.total}` };
 }
 
+// The same fact for a roadmap row, which has room for plain words: `3/5 · 2 deferred`, and the
+// deferred count alone when nothing is left in scope. `spoken` is the row's accessible wording.
+export function milestoneRowProgress(ms: ProjectMilestoneSummary): {
+	spoken: string;
+	text: string;
+} {
+	const fraction = `${ms.completed}/${ms.total}`;
+	const deferred = `${ms.deferred} deferred`;
+	if (ms.deferred === 0) return { spoken: `${fraction} complete`, text: fraction };
+	if (ms.total === 0) return { spoken: deferred, text: deferred };
+	return { spoken: `${fraction} complete, ${deferred}`, text: `${fraction} · ${deferred}` };
+}
+
 export function milestoneBadgeTone(ms: ProjectMilestoneSummary): BadgeTone {
 	return ms.total > 0 && ms.completed === ms.total ? 'emerald' : 'neutral';
 }

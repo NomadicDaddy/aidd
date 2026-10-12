@@ -9,7 +9,7 @@ import {
 	loadAuditProfileOverrides,
 } from 'aidd-shared/metadata/audit-profile-mapping';
 import { MATURITY_INVOCATIONS, MATURITY_STAGES } from 'aidd-shared/metadata/maturity';
-import { projectDependencyNames } from 'aidd-shared/metadata/project-packages';
+import { readProjectAuditEvidence } from 'aidd-shared/metadata/project-surfaces';
 
 import type {
 	MaturityArtifactDto,
@@ -157,11 +157,11 @@ export async function computeMaturity(input: MaturityComputeInput): Promise<Matu
 	for (const stageDef of MATURITY_STAGES) {
 		const artifacts: MaturityArtifactDto[] = [];
 		if (stageDef.id === 'audited') {
-			const packages = await projectDependencyNames(input.projectDir);
+			const evidence = await readProjectAuditEvidence(input.projectDir, auditProfileMapping);
 			const applicable = input.auditCatalogNames.filter((name) =>
 				isAuditApplicableToProject(
 					input.profile,
-					packages,
+					evidence,
 					name,
 					auditProfileMapping,
 					auditProfileOverrides,

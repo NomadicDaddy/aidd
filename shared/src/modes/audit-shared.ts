@@ -7,12 +7,8 @@ import { filterApplicableAuditNames } from '../metadata/project-profile.ts';
 
 export const simulationMarker = '<!-- aidd:simulated -->';
 
-/**
- * Prefixes the report of an audit that could not be performed. The report is kept so the reason
- * is on disk, but it is not audit evidence: every freshness reader excludes it, so the audit
- * stays stale until a run actually performs it.
- */
-export const unavailableMarker = '<!-- aidd:audit-unavailable -->';
+// Defined with the freshness readers, which recognise it and cannot import the modes.
+export { unavailableMarker } from '../metadata/audit-freshness/unavailable.ts';
 
 export function isReferenceAudit(body: string): boolean {
 	return /type:\s*['"]reference['"]/.test(body);

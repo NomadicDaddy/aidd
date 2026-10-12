@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import type { AuditReportInput } from './audit-shared.ts';
 
-import { auditReportPath, reportOpensWithMarker } from '../metadata/audit-freshness.ts';
+import { auditReportPath, reportIsNotEvidence } from '../metadata/audit-freshness.ts';
 import { declaresSkippedStatus, withheldScoreValue } from './audit-instruments.ts';
 import { simulationMarker, unavailableMarker } from './audit-shared.ts';
 
@@ -61,7 +61,8 @@ export function finalReportContent(
  * The report already written for this audit today, when it is real evidence. Reports are one
  * file per audit per day, so writing a could-not-run result would replace it: the real text
  * would be gone and the audit would read as never performed. A same-day report that is itself
- * marked could-not-run or simulated is not evidence and may be replaced.
+ * marked could-not-run or simulated, or that declares itself skipped, is not evidence and may be
+ * replaced.
  * @param projectDir The project whose reports are read.
  * @param auditName The audit about to be reported as could-not-run.
  * @returns The path of the real report to leave in place, or undefined when there is none.
@@ -73,7 +74,5 @@ export async function sameDayEvidenceReport(
 	const path = auditReportPath(projectDir, auditName, new Date());
 	const existing = await readFile(path, 'utf8').catch(() => undefined);
 	if (existing === undefined) return undefined;
-	return reportOpensWithMarker(existing, [simulationMarker, unavailableMarker])
-		? undefined
-		: path;
+	return reportIsNotEvidence(existing, [simulationMarker, unavailableMarker]) ? undefined : path;
 }

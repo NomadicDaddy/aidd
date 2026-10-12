@@ -17,9 +17,9 @@ import { writeFileAtomic } from '../lib/atomicWrite.ts';
 import { loadAuditProfileMapping, loadAuditProfileOverrides } from './audit-profile-mapping.ts';
 import { printJson } from './json-format.ts';
 import { metadataPath } from './paths.ts';
-import { projectDependencyNames } from './project-packages.ts';
 import { readProjectPackage } from './project-stack-evidence.ts';
 import { detectProjectStack } from './project-stack.ts';
+import { readProjectAuditEvidence } from './project-surfaces.ts';
 
 const projectProfileFileName = 'project-profile.json';
 
@@ -79,9 +79,9 @@ export async function filterApplicableAuditNames(
 	const profile = await readProjectAssuranceProfile(projectDir);
 	const mapping = await loadAuditProfileMapping(catalogDir);
 	const overrides = await loadAuditProfileOverrides(projectDir);
-	const packages = await projectDependencyNames(projectDir);
+	const evidence = await readProjectAuditEvidence(projectDir, mapping);
 	return auditNames.filter((auditName) =>
-		isAuditApplicableToProject(profile, packages, auditName, mapping, overrides),
+		isAuditApplicableToProject(profile, evidence, auditName, mapping, overrides),
 	);
 }
 

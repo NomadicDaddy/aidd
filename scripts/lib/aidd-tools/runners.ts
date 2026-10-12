@@ -150,6 +150,22 @@ async function ensureChangelog(argv: string[]): Promise<number> {
 	return 0;
 }
 
+// The two blocks that gate an audit on what a project is built from are keyed by audit name, and
+// a name no audit carries would gate nothing without a word.
+function unknownGatedAudits(mapping: AuditProfileMapping, knownAudits: Set<string>): string[] {
+	const blocks = {
+		requiresPackages: mapping.requiresPackages,
+		requiresSurface: mapping.requiresSurface,
+	};
+	const errors: string[] = [];
+	for (const [block, table] of Object.entries(blocks)) {
+		for (const audit of Object.keys(table ?? {})) {
+			if (!knownAudits.has(audit)) errors.push(`${block} references unknown audit: ${audit}`);
+		}
+	}
+	return errors;
+}
+
 async function runValidateAuditProfileMapping(argv: string[]): Promise<number> {
 	if (argv.length > 0) {
 		throw new Error(`Unknown audit:profile-mapping option(s): ${argv.join(' ')}`);
@@ -179,11 +195,7 @@ async function runValidateAuditProfileMapping(argv: string[]): Promise<number> {
 			}
 		}
 	}
-	for (const audit of Object.keys(mapping.requiresPackages ?? {})) {
-		if (!knownAudits.has(audit)) {
-			errors.push(`requiresPackages references unknown audit: ${audit}`);
-		}
-	}
+	errors.push(...unknownGatedAudits(mapping, knownAudits));
 
 	const ruleIds = mapping.rules.map((rule) => rule.id);
 	const duplicateRuleIds = ruleIds.filter((id, index) => ruleIds.indexOf(id) !== index);

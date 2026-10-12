@@ -32,7 +32,9 @@ function applies(
 	packages: ReadonlySet<string> = noPackages,
 	overrides: AuditProfileOverrides | null = null,
 ): boolean {
-	return isAuditApplicableToProject(profile, packages, audit, mapping, overrides);
+	// No audit these rules name requires a surface, so none is detected here.
+	const evidence = { packages, surfaces: new Map() };
+	return isAuditApplicableToProject(profile, evidence, audit, mapping, overrides);
 }
 
 const AGENT = ['AGENT_TOOL_SANDBOX', 'GIT_DESTRUCTIVE_SAFETY', 'ORCHESTRATOR_CONCURRENCY'];

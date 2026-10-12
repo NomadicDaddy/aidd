@@ -106,6 +106,41 @@ describe('project profile preview', () => {
 		}
 	});
 
+	// The preview answers what a run would do, so it reads the project's tree as a run does: a
+	// profile that allows an audit does not give it to a project with nothing for it to measure.
+	test('an audit the profile allows does not apply without its surface, and says why', async () => {
+		const projectDir = await makeProject();
+		try {
+			const bare = await createProjectProfilePreview(
+				contextFor(projectDir),
+				'p1',
+				fullHardening,
+			);
+			expect(effectOf(bare, 'LIGHTHOUSE')).toEqual({
+				applies: false,
+				effect: 'disabled',
+				name: 'LIGHTHOUSE',
+				reason: 'requires a web frontend; none detected',
+			});
+			expect(effectOf(bare, 'DATABASE')?.reason).toBe('requires a database; none detected');
+
+			await mkdir(join(projectDir, 'public'), { recursive: true });
+			await writeFile(join(projectDir, 'public', 'index.html'), '<!doctype html>\n');
+			const served = await createProjectProfilePreview(
+				contextFor(projectDir),
+				'p1',
+				fullHardening,
+			);
+			expect(effectOf(served, 'LIGHTHOUSE')).toEqual({
+				applies: true,
+				effect: 'default',
+				name: 'LIGHTHOUSE',
+			});
+		} finally {
+			await removeTempTree(projectDir);
+		}
+	});
+
 	test('a project override changes the named audit and nothing else, and the saved profile is untouched', async () => {
 		const projectDir = await makeProject();
 		try {

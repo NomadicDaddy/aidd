@@ -1,5 +1,5 @@
 import { readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
 import { projectPackageManifestPaths, readProjectPackage } from './project-stack-evidence.ts';
 
@@ -34,17 +34,19 @@ function dependencyKeys(value: unknown): string[] {
 }
 
 /**
- * Every package a project's own manifests depend on, for package-scoped audit applicability. Reads
- * the root manifest and its declared workspaces, plus any manifest up to two directories down: a
- * React frontend kept in `frontend/` without a workspaces entry still counts, where the stack
- * detector alone would miss it.
+ * Every package a project's own manifests depend on, each with the manifest that first declares
+ * it, for package-scoped and surface-scoped audit applicability. Reads the root manifest and its
+ * declared workspaces, plus any manifest up to two directories down: a React frontend kept in
+ * `frontend/` without a workspaces entry still counts, where the stack detector alone would miss
+ * it. The manifest path is relative to the project and is there so a decision can name its
+ * evidence.
  */
-export async function projectDependencyNames(projectDir: string): Promise<Set<string>> {
+export async function projectDependencySources(projectDir: string): Promise<Map<string, string>> {
 	const paths = await projectPackageManifestPaths(projectDir);
 	const nested: string[] = [];
 	await nestedManifestPaths(projectDir, 0, nested);
 	const all = new Set([...paths, ...nested]);
-	const names = new Set<string>();
+	const sources = new Map<string, string>();
 	for (const path of all) {
 		const manifest = await readProjectPackage(path);
 		if (!manifest) continue;
@@ -52,7 +54,11 @@ export async function projectDependencyNames(projectDir: string): Promise<Set<st
 			...dependencyKeys(manifest.dependencies),
 			...dependencyKeys(manifest.devDependencies),
 		];
-		for (let index = 0; index < keys.length; index++) names.add(keys[index]!);
+		const manifestPath = relative(projectDir, path).replace(/\\/g, '/');
+		for (let index = 0; index < keys.length; index++) {
+			const name = keys[index]!;
+			if (!sources.has(name)) sources.set(name, manifestPath);
+		}
 	}
-	return names;
+	return sources;
 }

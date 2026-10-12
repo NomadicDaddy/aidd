@@ -2,17 +2,20 @@ import {
 	isLowExposureLocalProfile,
 	normalizeProjectAssuranceProfileInput,
 	requiresFullHardening,
-	resolveAuditEffect,
+	resolveProjectAuditEffect,
 } from 'aidd-shared';
 import {
 	loadAuditProfileMapping,
 	loadAuditProfileOverrides,
 } from 'aidd-shared/metadata/audit-profile-mapping';
+import { readProjectAuditEvidence } from 'aidd-shared/metadata/project-surfaces';
 import { discoverAuditNames } from 'aidd-shared/modes/audit-shared';
 
 // Audit applicability for a candidate (unsaved) assurance profile: what the Profile tab shows
 // while the operator edits, through the same resolvers the Director and the maturity stage use,
-// honouring the project's own audit overrides. A service, not a route: it imports no Elysia and
+// honouring the project's own audit overrides and what its tree is built from: an audit the
+// candidate profile allows still does not apply to a project with no web frontend to load, and
+// the preview must say what a run would do. A service, not a route: it imports no Elysia and
 // needs only the catalog root and a way to resolve a project id to its directory.
 export interface ProfilePreviewDeps {
 	resolveProject: (projectId: string) => Promise<string>;
@@ -32,8 +35,10 @@ interface ProfilePreviewBase {
 export interface ProfilePreview {
 	audits: {
 		applies: boolean;
-		effect: ReturnType<typeof resolveAuditEffect>['effect'];
+		effect: ReturnType<typeof resolveProjectAuditEffect>['effect'];
 		name: string;
+		/** Why the audit does not apply, when the project lacks what the audit measures. */
+		reason?: string;
 	}[];
 	isLowExposureLocal: boolean;
 	requiresFullHardening: boolean;
@@ -54,11 +59,25 @@ async function previewOneProjectProfile(
 ): Promise<ProfilePreview> {
 	const profile = normalizeProjectAssuranceProfileInput(request.profile);
 	const projectDir = await deps.resolveProject(request.projectId);
-	const overrides = await loadAuditProfileOverrides(projectDir);
+	const [overrides, evidence] = await Promise.all([
+		loadAuditProfileOverrides(projectDir),
+		readProjectAuditEvidence(projectDir, base.mapping),
+	]);
 	const audits = base.auditNames
 		.map((name) => {
-			const cell = resolveAuditEffect(profile, name, base.mapping, overrides);
-			return { applies: cell.applies, effect: cell.effect, name };
+			const cell = resolveProjectAuditEffect(
+				profile,
+				evidence,
+				name,
+				base.mapping,
+				overrides,
+			);
+			return {
+				applies: cell.applies,
+				effect: cell.effect,
+				name,
+				...(cell.reason === undefined ? {} : { reason: cell.reason }),
+			};
 		})
 		.sort((left, right) => left.name.localeCompare(right.name));
 	return {

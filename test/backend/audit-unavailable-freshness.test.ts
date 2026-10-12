@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test';
-import { createAuditFreshnessContext } from 'aidd-shared/metadata/audit-freshness';
+import {
+	createAuditFreshnessContext,
+	evaluateAuditReportFreshness,
+} from 'aidd-shared/metadata/audit-freshness';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { simulationMarker, unavailableMarker } from 'aidd-shared/modes/audit-shared';
 
@@ -80,6 +83,86 @@ describe('could-not-run reports on panel surfaces', () => {
 				context,
 			);
 			expect(entry.freshness).toBe('fresh');
+		} finally {
+			await removeTempTree(projectDir);
+		}
+	});
+
+	// Reports written before the could-not-run marker existed carry no marker. One whose own
+	// status line says the audit was skipped is still not evidence, for the panel and for the
+	// CLI's audit selection alike.
+	test('an unmarked report that declares itself skipped is not evidence', async () => {
+		const projectDir = await testTempDir('aidd-panel-unmarked-skip-');
+		const skipped = '# LIGHTHOUSE\n\n**Status:** SKIPPED / data-unavailable\n\nNo artifact.\n';
+		try {
+			const store = new FileAiddStore(projectDir);
+			await store.writeAuditReport('LIGHTHOUSE', skipped);
+			const context = createAuditFreshnessContext();
+			expect((await auditReportFreshness(projectDir, 'LIGHTHOUSE', context)).status).toBe(
+				'missing',
+			);
+			const selection = await evaluateAuditReportFreshness(projectDir, 'LIGHTHOUSE', {
+				excludedReportMarkers: [simulationMarker, unavailableMarker],
+			});
+			expect(selection.status).toBe('missing');
+			// A reader that does not pass over could-not-run reports is not asked to judge this
+			// one either.
+			const unfiltered = await evaluateAuditReportFreshness(projectDir, 'LIGHTHOUSE', {
+				excludedReportMarkers: [simulationMarker],
+			});
+			expect(unfiltered.status).toBe('fresh');
+		} finally {
+			await removeTempTree(projectDir);
+		}
+	});
+
+	test('the last real report shows through an unmarked skipped one', async () => {
+		const projectDir = await testTempDir('aidd-panel-unmarked-skip-behind-');
+		try {
+			const store = new FileAiddStore(projectDir);
+			const earlier = new Date(Date.now() - 2 * 86_400_000);
+			await store.writeAuditReport(
+				'LIGHTHOUSE',
+				'# LIGHTHOUSE\n\n**Status:** MEASURED\n',
+				earlier,
+			);
+			await store.writeAuditReport(
+				'LIGHTHOUSE',
+				'# LIGHTHOUSE\n\n> **Status:** `SKIPPED / data-unavailable`\n',
+			);
+			const freshness = await auditReportFreshness(
+				projectDir,
+				'LIGHTHOUSE',
+				createAuditFreshnessContext(),
+			);
+			expect(freshness.status).toBe('fresh');
+			expect(freshness.report).toBe(`LIGHTHOUSE-${earlier.toISOString().slice(0, 10)}.md`);
+		} finally {
+			await removeTempTree(projectDir);
+		}
+	});
+
+	test('a measured report that names a skipped sub-metric still reads fresh', async () => {
+		const projectDir = await testTempDir('aidd-panel-skipped-submetric-');
+		try {
+			await new FileAiddStore(projectDir).writeAuditReport(
+				'LIGHTHOUSE',
+				[
+					'# LIGHTHOUSE',
+					'',
+					'**Status:** MEASURED',
+					'**Mobile Status:** SKIPPED / data-unavailable',
+					'| Field INP | SKIPPED / data-unavailable |',
+					'The earlier run said **Status:** SKIPPED / data-unavailable; this one measured.',
+					'',
+				].join('\n'),
+			);
+			const freshness = await auditReportFreshness(
+				projectDir,
+				'LIGHTHOUSE',
+				createAuditFreshnessContext(),
+			);
+			expect(freshness.status).toBe('fresh');
 		} finally {
 			await removeTempTree(projectDir);
 		}

@@ -6,9 +6,12 @@ import {
 	isAuditApplicableToProject,
 	normalizeAuditProfileMapping,
 } from '../../shared/src/contracts/audit-profile-mapping.ts';
-import type { AuditProfileOverrides } from '../../shared/src/contracts/audit-profile-mapping-types.ts';
+import type {
+	AuditProfileOverrides,
+	ProjectAuditEvidence,
+} from '../../shared/src/contracts/audit-profile-mapping-types.ts';
 import type { ProjectAssuranceProfile } from '../../shared/src/contracts/project-profile.ts';
-import { projectDependencyNames } from '../../shared/src/metadata/project-packages.ts';
+import { projectDependencySources } from '../../shared/src/metadata/project-packages.ts';
 import { filterApplicableAuditNames } from '../../shared/src/metadata/project-profile.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from '../backend/_helpers/remove-temp-tree.ts';
@@ -44,6 +47,11 @@ const profile = {
 	updatedAt: '2026-01-01T00:00:00.000Z',
 } as ProjectAssuranceProfile;
 
+// A project that declares these packages; no audit under test here requires a surface.
+function declares(...names: string[]): ProjectAuditEvidence {
+	return { packages: new Set(names), surfaces: new Map() };
+}
+
 async function project(files: Record<string, unknown>): Promise<string> {
 	const root = await testTempDir('aidd-audit-packages-');
 	roots.push(root);
@@ -62,27 +70,22 @@ afterEach(async () => {
 describe('package-scoped audit applicability', () => {
 	test('an audit that requires a package applies only where a manifest depends on it', () => {
 		expect(
-			isAuditApplicableToProject(
-				profile,
-				new Set(['react']),
-				'REACT_BEST_PRACTICES',
-				mapping,
-			),
+			isAuditApplicableToProject(profile, declares('react'), 'REACT_BEST_PRACTICES', mapping),
 		).toBe(true);
 		expect(
 			isAuditApplicableToProject(
 				profile,
-				new Set(['elysia']),
+				declares('elysia'),
 				'REACT_BEST_PRACTICES',
 				mapping,
 			),
 		).toBe(false);
 		// Audit names are matched case-insensitively, as rule audit names are.
 		expect(
-			isAuditApplicableToProject(profile, new Set(), 'react_best_practices', mapping),
+			isAuditApplicableToProject(profile, declares(), 'react_best_practices', mapping),
 		).toBe(false);
 		// An audit with no package requirement is unaffected.
-		expect(isAuditApplicableToProject(profile, new Set(), 'SECURITY', mapping)).toBe(true);
+		expect(isAuditApplicableToProject(profile, declares(), 'SECURITY', mapping)).toBe(true);
 	});
 
 	test('an explicit required override beats a missing package', () => {
@@ -95,7 +98,7 @@ describe('package-scoped audit applicability', () => {
 		expect(
 			isAuditApplicableToProject(
 				profile,
-				new Set(),
+				declares(),
 				'REACT_BEST_PRACTICES',
 				mapping,
 				overrides,
@@ -105,7 +108,7 @@ describe('package-scoped audit applicability', () => {
 
 	test('a profile rule that disables an audit still wins when the package is present', () => {
 		const toy = { ...profile, criticality: 'toy' } as ProjectAssuranceProfile;
-		expect(isAuditApplicableToProject(toy, new Set(['react']), 'LIGHTHOUSE', mapping)).toBe(
+		expect(isAuditApplicableToProject(toy, declares('react'), 'LIGHTHOUSE', mapping)).toBe(
 			false,
 		);
 	});
@@ -127,8 +130,9 @@ describe('package-scoped audit applicability', () => {
 			'package.json': { devDependencies: { typescript: '6.0.3' } },
 			'vendor/a/b/c/package.json': { dependencies: { vue: '3.0.0' } },
 		});
-		const names = await projectDependencyNames(dir);
-		expect(names.has('react')).toBe(true);
+		const names = await projectDependencySources(dir);
+		// Each package is recorded with the manifest that declares it.
+		expect(names.get('react')).toBe('frontend/package.json');
 		expect(names.has('typescript')).toBe(true);
 		// node_modules and trees deeper than two levels are not the project's own code.
 		expect(names.has('convex')).toBe(false);

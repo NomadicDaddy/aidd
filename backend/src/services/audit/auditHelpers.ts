@@ -4,6 +4,7 @@ import {
 	isAuditApplicableToProject,
 	type ProjectAssuranceBucket,
 	projectAssuranceBuckets,
+	type ProjectAuditEvidence,
 } from 'aidd-shared';
 import {
 	type AuditFreshnessContext,
@@ -18,8 +19,8 @@ import {
 	loadAuditPriorities,
 	scoreAudit,
 } from 'aidd-shared/metadata/audit-scoring';
-import { projectDependencyNames } from 'aidd-shared/metadata/project-packages';
 import { readProjectAssuranceProfile } from 'aidd-shared/metadata/project-profile';
+import { readProjectAuditEvidence } from 'aidd-shared/metadata/project-surfaces';
 import { stat } from 'node:fs/promises';
 
 import type { AuditDefinitionDto } from './auditTypes.ts';
@@ -64,8 +65,8 @@ export function normalizeAuditNames(names: string[]): string[] {
 }
 
 export interface ProjectProfileEntry {
+	evidence: ProjectAuditEvidence;
 	overrides: Awaited<ReturnType<typeof loadAuditProfileOverrides>>;
-	packages: Set<string>;
 	profile: Awaited<ReturnType<typeof readProjectAssuranceProfile>>;
 }
 
@@ -76,22 +77,28 @@ export interface ProjectProfileEntry {
 // and a cache filled only on completion missed for all of them (1,240 loads for 54 projects).
 export type ProjectProfileCache = Map<string, Promise<ProjectProfileEntry>>;
 
-async function loadProfileEntry(projectPath: string): Promise<ProjectProfileEntry> {
-	const [profile, overrides, packages] = await Promise.all([
+async function loadProfileEntry(
+	projectPath: string,
+	mapping: AuditProfileMapping,
+): Promise<ProjectProfileEntry> {
+	const [profile, overrides, evidence] = await Promise.all([
 		readProjectAssuranceProfile(projectPath),
 		loadAuditProfileOverrides(projectPath),
-		projectDependencyNames(projectPath),
+		readProjectAuditEvidence(projectPath, mapping),
 	]);
-	return { overrides, packages, profile };
+	return { evidence, overrides, profile };
 }
 
+// The cache lives for one listing, which loads the mapping once, so keying on the project alone
+// is enough: every caller in that listing passes the same mapping.
 function resolveProfileEntry(
 	cache: ProjectProfileCache,
 	projectPath: string,
+	mapping: AuditProfileMapping,
 ): Promise<ProjectProfileEntry> {
 	let entry = cache.get(projectPath);
 	if (!entry) {
-		entry = loadProfileEntry(projectPath);
+		entry = loadProfileEntry(projectPath, mapping);
 		cache.set(projectPath, entry);
 	}
 	return entry;
@@ -155,11 +162,12 @@ async function computeApplicability(
 		if (applies) applicableBucketCount++;
 	}
 	const applicable = await forEachProject(projects, async (project) => {
-		const { overrides, packages, profile } = await resolveProfileEntry(
+		const { evidence, overrides, profile } = await resolveProfileEntry(
 			profileCache,
 			project.path,
+			mapping,
 		);
-		return isAuditApplicableToProject(profile, packages, name, mapping, overrides);
+		return isAuditApplicableToProject(profile, evidence, name, mapping, overrides);
 	});
 	const applicableProjectCount = applicable.filter(Boolean).length;
 	return {
@@ -188,11 +196,12 @@ async function computeReportHealth(
 		// Equivalent to filterApplicableAuditNames(rootDir, project.path, [name]) but using
 		// the shared profile/overrides cache and the already-loaded mapping instead of
 		// re-reading all three from disk for every audit × project.
-		const { overrides, packages, profile } = await resolveProfileEntry(
+		const { evidence, overrides, profile } = await resolveProfileEntry(
 			profileCache,
 			project.path,
+			mapping,
 		);
-		if (!isAuditApplicableToProject(profile, packages, name, mapping, overrides)) return null;
+		if (!isAuditApplicableToProject(profile, evidence, name, mapping, overrides)) return null;
 		// The context map is shared by every audit of the listing; the lookup and the insert are
 		// synchronous, so two audits reaching one project still share one context.
 		let context = freshnessContexts.get(project.path);

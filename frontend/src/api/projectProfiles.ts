@@ -20,6 +20,8 @@ export interface ProfilePreviewAudit {
 	applies: boolean;
 	effect: 'default' | 'disabled' | 'excluded' | 'required';
 	name: string;
+	/** Why the audit does not apply, when the project lacks what the audit measures. */
+	reason?: string;
 }
 
 /** Live (unsaved) recomputation of a profile's posture + audit applicability. */

@@ -11,8 +11,8 @@ import {
 	loadAuditProfileOverrides,
 	writeAuditProfileOverrides,
 } from 'aidd-shared/metadata/audit-profile-mapping';
-import { projectDependencyNames } from 'aidd-shared/metadata/project-packages';
 import { readProjectAssuranceProfile } from 'aidd-shared/metadata/project-profile';
+import { readProjectAuditEvidence } from 'aidd-shared/metadata/project-surfaces';
 import { discoverAuditNames } from 'aidd-shared/modes/audit-shared';
 import { stat } from 'node:fs/promises';
 import { basename } from 'node:path';
@@ -83,12 +83,12 @@ export async function listProjectAuditsImpl(
 	resolveScoringRoots: () => string[],
 ): Promise<ProjectAuditsDto> {
 	const projectDir = await resolveProject(projectId);
-	const [auditNames, mapping, profile, overrides, packages] = await Promise.all([
+	const mapping = await loadAuditProfileMapping(rootDir);
+	const [auditNames, profile, overrides, evidence] = await Promise.all([
 		discoverAuditNames(rootDir),
-		loadAuditProfileMapping(rootDir),
 		readProjectAssuranceProfile(projectDir),
 		loadAuditProfileOverrides(projectDir),
-		projectDependencyNames(projectDir),
+		readProjectAuditEvidence(projectDir, mapping),
 	]);
 	const matrixRows = buildApplicabilityMatrix(auditNames, mapping);
 	const matrixIndex = new Map(matrixRows.map((row) => [row.auditName.toUpperCase(), row]));
@@ -112,7 +112,7 @@ export async function listProjectAuditsImpl(
 				: null;
 		const enabled = isAuditApplicableToProject(
 			profile,
-			packages,
+			evidence,
 			normalized,
 			mapping,
 			overrides,

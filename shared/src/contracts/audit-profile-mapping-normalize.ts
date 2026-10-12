@@ -23,6 +23,9 @@ import {
 	type AuditProfileMatch,
 	type AuditProfileOverrides,
 	type AuditProfileRule,
+	type AuditSurface,
+	type AuditSurfaceDefinition,
+	auditSurfaceValues,
 } from './audit-profile-mapping-types.ts';
 
 function ensureObject(value: unknown, label: string): Record<string, unknown> {
@@ -164,6 +167,70 @@ export function normalizeAuditProfileMapping(value: unknown): AuditProfileMappin
 	if (typeof raw.$schema === 'string') result.$schema = raw.$schema;
 	if (raw.requiresPackages !== undefined) {
 		result.requiresPackages = normalizeRequiresPackages(raw.requiresPackages);
+	}
+	normalizeSurfaceBlocks(raw, result);
+	return result;
+}
+
+const auditSurfaceSet = new Set<string>(auditSurfaceValues);
+
+function isAuditSurface(value: unknown): value is AuditSurface {
+	return typeof value === 'string' && auditSurfaceSet.has(value);
+}
+
+function normalizeSurfaceBlocks(raw: Record<string, unknown>, result: AuditProfileMapping): void {
+	if (raw.surfaces !== undefined) result.surfaces = normalizeSurfaces(raw.surfaces);
+	if (raw.requiresSurface !== undefined) {
+		result.requiresSurface = normalizeRequiresSurface(
+			raw.requiresSurface,
+			result.surfaces ?? {},
+		);
+	}
+}
+
+function normalizeSurfaces(value: unknown): Partial<Record<AuditSurface, AuditSurfaceDefinition>> {
+	const table = ensureObject(value, 'Audit profile mapping surfaces');
+	const result: Partial<Record<AuditSurface, AuditSurfaceDefinition>> = {};
+	for (const [name, definition] of Object.entries(table)) {
+		if (!isAuditSurface(name)) {
+			throw new Error(
+				`surfaces.${name} is not a known surface; expected one of: ${auditSurfaceValues.join(', ')}`,
+			);
+		}
+		const packages = ensureStringArray(
+			ensureObject(definition, `surfaces.${name}`).packages,
+			`surfaces.${name}.packages`,
+		);
+		// An empty list would leave the surface decided by file evidence alone, with nothing in the
+		// catalogue saying so.
+		if (packages.length === 0) {
+			throw new Error(`surfaces.${name}.packages must name at least one package.`);
+		}
+		result[name] = { packages };
+	}
+	return result;
+}
+
+function normalizeRequiresSurface(
+	value: unknown,
+	surfaces: Partial<Record<AuditSurface, AuditSurfaceDefinition>>,
+): Record<string, AuditSurface> {
+	const table = ensureObject(value, 'Audit profile mapping requiresSurface');
+	const result: Record<string, AuditSurface> = {};
+	for (const [auditName, surface] of Object.entries(table)) {
+		if (!isAuditSurface(surface)) {
+			throw new Error(
+				`requiresSurface.${auditName} must be one of: ${auditSurfaceValues.join(', ')}`,
+			);
+		}
+		// A surface nothing defines could never be detected by a declared package, so the audit
+		// would quietly depend on file evidence the catalogue does not mention.
+		if (surfaces[surface] === undefined) {
+			throw new Error(
+				`requiresSurface.${auditName} names ${surface}, which surfaces does not define.`,
+			);
+		}
+		result[auditName.toUpperCase()] = surface;
 	}
 	return result;
 }

@@ -209,8 +209,10 @@ Profiles drive two distinct downstream behaviors:
    `audits/audit-profile-mapping.json` and per-project `<project>/.aidd/audit-profile-overrides.json`
    together resolve each `(profile, audit)` pair to one of `default | disabled | required |
 excluded`. The resolver is shared between `filterApplicableAuditNames`, the director's audit
-   discovery, and Stage 6 maturity. See [`audit-applicability.md`](./audit-applicability.md) for
-   the file format, precedence ladder, and matrix UI.
+   discovery, and Stage 6 maturity. The profile is not the whole answer for one project: an audit
+   the mapping ties to a package or to a surface (a web frontend, a database) applies only where
+   the project's tree has it. See [`audit-applicability.md`](./audit-applicability.md) for the file
+   format, precedence ladder, surface detection, and matrix UI.
 2. **Risk-level posture** is still expressed as code-side predicates against the profile shape:
    `requiresFullHardening(profile)` (public, regulated, cloud-deployed, financially/security-
    integrated, or business-critical) and `isLowExposureLocalProfile(profile)` (small local tools).

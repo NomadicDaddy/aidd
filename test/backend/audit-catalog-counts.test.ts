@@ -8,8 +8,8 @@ import {
 	loadAuditProfileMapping,
 	loadAuditProfileOverrides,
 } from 'aidd-shared/metadata/audit-profile-mapping';
-import { projectDependencyNames } from 'aidd-shared/metadata/project-packages';
 import { readProjectAssuranceProfile } from 'aidd-shared/metadata/project-profile';
+import { readProjectAuditEvidence } from 'aidd-shared/metadata/project-surfaces';
 
 import { definitionSummary } from '../../backend/src/services/audit/auditHelpers.ts';
 import { testTempDir } from '../_helpers/temp.ts';
@@ -103,12 +103,12 @@ describe('audit catalog counts under bounded project concurrency', () => {
 			let applicable = 0;
 			const health = { fresh: 0, missing: 0, stale: 0 };
 			for (const project of projects) {
-				const [profile, overrides, packages] = await Promise.all([
+				const [profile, overrides, evidence] = await Promise.all([
 					readProjectAssuranceProfile(project.path),
 					loadAuditProfileOverrides(project.path),
-					projectDependencyNames(project.path),
+					readProjectAuditEvidence(project.path, mapping),
 				]);
-				if (!isAuditApplicableToProject(profile, packages, name, mapping, overrides))
+				if (!isAuditApplicableToProject(profile, evidence, name, mapping, overrides))
 					continue;
 				applicable += 1;
 				const freshness = await evaluateAuditReportFreshness(project.path, name);

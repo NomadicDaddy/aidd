@@ -22,7 +22,7 @@ import {
 	buildAuditReportMetadata,
 	parseAuditReportMetadata,
 	prependAuditReportMetadata,
-	reportOpensWithMarker,
+	reportIsNotEvidence,
 	thresholds,
 } from './audit-freshness/metadata.ts';
 
@@ -40,6 +40,7 @@ export {
 	type AuditStaleReason,
 	parseAuditReportMetadata,
 	prependAuditReportMetadata,
+	reportIsNotEvidence,
 	reportOpensWithMarker,
 } from './audit-freshness/metadata.ts';
 
@@ -51,7 +52,11 @@ interface AuditReportSnapshot {
 
 interface AuditFreshnessOptions {
 	context?: AuditFreshnessContext;
-	/** A report that opens with any of these markers is not evidence and is passed over. */
+	/**
+	 * A report that opens with any of these markers is not evidence and is passed over. Naming
+	 * the could-not-run marker also passes over an unmarked report whose status line says the
+	 * audit was skipped.
+	 */
 	excludedReportMarkers?: readonly string[];
 	now?: Date;
 }
@@ -145,9 +150,9 @@ async function readReportDirEntries(
 // Only the newest surviving report is ever returned, so stat the candidates first and read
 // exactly the one that wins. Reading every historical report of every audit up front cost
 // ~116 ms per request on a 335-file report directory to discard all but 39 of the bodies.
-// An excluded marker can only be seen in the content, so walk newest-first and read until one
-// passes — the same result, and still one read in the common case where the newest report is
-// not excluded.
+// Whether a report is excluded can only be seen in the content, so walk newest-first and read
+// until one passes — the same result, and still one read in the common case where the newest
+// report is not excluded.
 async function latestAuditReport(
 	projectDir: string,
 	auditName: string,
@@ -179,7 +184,7 @@ async function latestAuditReport(
 		} catch {
 			continue;
 		}
-		if (reportOpensWithMarker(content, excludedReportMarkers)) continue;
+		if (reportIsNotEvidence(content, excludedReportMarkers)) continue;
 		return {
 			content,
 			mtimeMs: candidate.mtimeMs,

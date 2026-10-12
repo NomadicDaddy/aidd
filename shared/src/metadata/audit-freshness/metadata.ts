@@ -2,6 +2,7 @@ import { join } from 'node:path';
 
 import { METADATA_DIR } from '../paths.ts';
 import { createAuditFreshnessContext, currentGitHead } from './git.ts';
+import { declaresSkippedStatus, unavailableMarker } from './unavailable.ts';
 
 export const AUDIT_FRESHNESS_METADATA_PREFIX = 'aidd:audit-report-meta';
 export const AUDIT_STALE_THRESHOLD_DAYS = 30;
@@ -167,6 +168,23 @@ export function reportOpensWithMarker(content: string, markers: readonly string[
 		lineStart = lineEnd + 1;
 	}
 	return false;
+}
+
+/**
+ * Whether a report on disk is something other than audit evidence, for a reader passing over the
+ * given markers. A report is excluded when it opens with one of them. A reader that passes over
+ * could-not-run reports also passes over a report whose own status line says the audit was
+ * skipped: reports written before the could-not-run marker existed carry no marker, and a report
+ * that says nothing measured the project must not be what makes its audit current. Only the
+ * status line counts, so a measured report that names the same phrase against one sub-metric it
+ * could not collect is still evidence.
+ * @param content The report file's content.
+ * @param markers The markers the reader passes over.
+ * @returns True when the reader must pass this report over.
+ */
+export function reportIsNotEvidence(content: string, markers: readonly string[]): boolean {
+	if (reportOpensWithMarker(content, markers)) return true;
+	return markers.includes(unavailableMarker) && declaresSkippedStatus(content);
 }
 
 function stripAuditReportMetadata(content: string): string {

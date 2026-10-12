@@ -4,9 +4,13 @@ export {
 } from './audit-profile-mapping-normalize.ts';
 
 export {
+	isAuditApplicableToProject,
+	resolveProjectAuditEffect,
+} from './audit-profile-mapping-project.ts';
+
+export {
 	buildApplicabilityMatrix,
 	isAuditApplicableToProfile,
-	isAuditApplicableToProject,
 	isLowExposureLocalProfile,
 	requiresFullHardening,
 	resolveAuditEffect,
@@ -16,4 +20,6 @@ export type {
 	AuditApplicabilityRow,
 	AuditProfileMapping,
 	AuditProfileOverrides,
+	AuditSurface,
+	ProjectAuditEvidence,
 } from './audit-profile-mapping-types.ts';

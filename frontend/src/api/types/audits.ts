@@ -13,7 +13,13 @@ export type AuditAssuranceBucket =
 export type AuditEffect = 'default' | 'disabled' | 'excluded' | 'required';
 export type AuditOverrideEffect = 'disabled' | 'excluded' | 'required';
 export type AuditApplicabilitySource =
-	'default' | 'global-rule' | 'override-explicit' | 'override-rule';
+	| 'default'
+	| 'global-rule'
+	| 'missing-package'
+	| 'missing-surface'
+	| 'override-explicit'
+	| 'override-rule';
+type AuditSurface = 'database' | 'web-frontend';
 
 export interface AuditProfileMatch {
 	authMode?: string[];
@@ -34,7 +40,10 @@ export interface AuditProfileRule {
 
 export interface AuditProfileMapping {
 	$schema?: string;
+	requiresPackages?: Record<string, string[]>;
+	requiresSurface?: Record<string, AuditSurface>;
 	rules: AuditProfileRule[];
+	surfaces?: Partial<Record<AuditSurface, { packages: string[] }>>;
 	version: 1;
 }
 
@@ -50,6 +59,7 @@ export interface AuditApplicabilityCell {
 	applies: boolean;
 	conditional?: boolean;
 	effect: AuditEffect;
+	reason?: string;
 	ruleId?: string;
 	source: AuditApplicabilitySource;
 }

@@ -72,6 +72,11 @@ that publish a container image. Unknown facet keys and invalid enum values fail 
 `audits` is a list of audit names (upper-snake, matching the `.md` filename) or `["*"]` to mean
 "every audit in the catalog".
 
+Beside `rules` the file may carry three optional blocks that test for the thing an audit measures:
+`requiresPackages` (audit name to a list of packages), `requiresSurface` (audit name to a surface)
+and `surfaces` (surface to the packages that evidence it). They are described under
+[For a concrete project](#for-a-concrete-project).
+
 ### Per-project overrides: `<project>/.aidd/audit-profile-overrides.json`
 
 Optional. When present, layered on top of the global mapping:
@@ -135,6 +140,84 @@ The difference between `disabled` and `excluded` is intent, not behavior:
 `excluded` therefore beats `required` at the same layer (except the wildcard case above) so that a
 strong "no" cannot be silently overridden by a layered "yes".
 
+### For a concrete project
+
+A profile says how exposed a project is. It does not say what the project is built from, and some
+audits can only measure a particular thing: a React audit needs React, a Lighthouse audit needs a
+page to load, a schema audit needs a schema. So when the question is "does audit X apply to this
+project?", the resolver (`resolveProjectAuditEffect`) continues past the ladder above. The full
+order, where the first step that settles the question is final:
+
+1. An explicit per-project override, `overrides.audits[X]`. `required` applies; `disabled` and
+   `excluded` do not.
+2. A rule in the project's overrides (`excluded` over `required` over `disabled`).
+3. A rule in the global mapping, ranked the same way.
+4. `requiresPackages`. An audit listed there does not apply unless one of the project's manifests
+   declares one of its packages.
+5. `requiresSurface`. An audit listed there does not apply unless that surface was detected in the
+   project.
+6. Otherwise the audit applies.
+
+Steps 1 to 3 are the ladder above. Whatever effect they produce stands on its own, so steps 4 and 5
+are reached only by an audit nothing has ruled on. That is what makes the overrides file the escape
+hatch in both directions:
+
+- Detection says a surface is absent and it is wrong (a project that talks to a database through a
+  built-in driver, a frontend in a language no manifest describes): mark the audit `required`.
+- Detection says a surface is present and the audit still has nothing to measure (a page that
+  nothing serves, a terminal interface built with React): mark the audit `excluded` or `disabled`.
+
+A cell that step 4 or 5 decided carries `effect: disabled`, a `source` of `missing-package` or
+`missing-surface`, and a `reason` in words, for example `requires a web frontend; none detected`.
+The Profile tab's audit preview returns that `reason` with each audit it applies to.
+
+### Surfaces
+
+There are two surfaces, `web-frontend` and `database`. The mapping's `surfaces` block names the
+packages that evidence each, and `requiresSurface` names the audits that need one:
+
+```jsonc
+{
+	"requiresSurface": {
+		"DATABASE": "database",
+		"FRONTEND": "web-frontend",
+		"LIGHTHOUSE": "web-frontend",
+		"SCHEMA_CONSTRAINTS": "database",
+		"WEB_DESIGN_GUIDELINES": "web-frontend",
+	},
+	"surfaces": {
+		"database": { "packages": ["drizzle-orm", "pg", "prisma"] },
+		"web-frontend": { "packages": ["react", "vite", "astro"] },
+	},
+}
+```
+
+A surface is present when either kind of evidence is found, and the detector
+(`shared/src/metadata/project-surfaces.ts`) records which one decided it:
+
+- **A declared package.** Any package in the surface's list, in the root manifest, a declared
+  workspace, or a `package.json` up to two directories down. These are the same manifests
+  `requiresPackages` reads. Evidence reads `declares react in frontend/package.json`.
+- **A file in the project's tree.** For `web-frontend`, markup source: an `.html`, `.astro`, `.vue`,
+  `.svelte`, `.tsx` or `.jsx` file. For `database`, a schema the project owns: a directory named
+  `migrations` or `drizzle` that holds `.sql` files, or a `schema.prisma` file. Evidence reads
+  `index.html under public/`.
+
+The file scan runs only for a surface no manifest settled. It is breadth-first from the project
+root, reads at most four directories down and at most 5,000 directory entries, and never enters
+`node_modules`, `vendor`, `dist`, `build`, `out`, `coverage`, `test`, `tests`, `__tests__`,
+`fixtures`, `docs`, `examples`, `scripts`, `config`, or any directory whose name starts with a dot.
+A scan that runs out reads the surface as absent.
+
+Known limits, all handled by a per-project override:
+
+- Markup counts whether or not anything serves it. A static site's `index.html` and a desktop
+  renderer's page both count, and so does a page that is only opened by hand.
+- An import of `bun:sqlite` or another built-in driver is not evidence of a database. A tool may
+  open another program's database read-only and own no schema.
+- Only `package.json` manifests are read. A project in another ecosystem is detected by its files
+  alone.
+
 ## Matrix UI
 
 `/audits` has three tabs:
@@ -163,10 +246,13 @@ and a tooltip note). A conditional `disabled` or `excluded` cell still counts as
 `applies = true` in `applicableBucketCount`, because some profiles in the bucket will still
 run the audit.
 
-The matrix is a forecast keyed by bucket. The runtime path
-(`filterApplicableAuditNames`, director priority, the `audited` maturity stage) uses the project's
-actual profile through `resolveAuditEffect`, which evaluates every facet, so the runtime
-decision is exact rather than conditional.
+The matrix is a forecast keyed by bucket. It knows nothing about any one project, so it never shows
+a package or surface requirement. The runtime path (`filterApplicableAuditNames`, director
+priority, the `audited` maturity stage, the per-project audit list and the Profile tab's preview)
+uses the project's actual profile and tree through `resolveProjectAuditEffect`, which evaluates
+every facet and then the project's packages and surfaces, so the runtime decision is exact rather
+than conditional. Every one of those readers gets the project's evidence from
+`readProjectAuditEvidence`, so they cannot disagree about what a project is built from.
 
 ### Override file errors are loud
 
@@ -187,6 +273,7 @@ operator is forced to fix the file rather than silently inherit "no overrides."
 | ------------------------------------------------------------ | --------------- | ------------------------------- |
 | `shared/src/contracts/audit-profile-mapping.ts`              | shared contract | Types, schemas, resolver        |
 | `shared/src/metadata/audit-profile-mapping.ts`               | CLI/backend     | fs-bound loaders + writers      |
+| `shared/src/metadata/project-surfaces.ts`                    | CLI/backend     | Surface detector, evidence read |
 | `audits/audit-profile-mapping.json`                          | operator-edited | Global mapping                  |
 | `<project>/.aidd/audit-profile-overrides.json`               | per-project     | Project-scoped overrides        |
 | `scripts/aidd-tools.ts` (`audit:profile-mapping` subcommand) | tooling         | Schema + cross-reference linter |
@@ -201,6 +288,9 @@ operator is forced to fix the file rather than silently inherit "no overrides."
 - Every `rule.match` facet key is a valid `ProjectAssuranceProfile` field.
 - Every facet value array contains only valid enum members.
 - No duplicate rule IDs.
+- Every `requiresPackages` list names at least one package. Every `surfaces` key is a known surface
+  with at least one package, and every `requiresSurface` value is a surface that `surfaces` defines.
+- Every audit named in `requiresPackages` or `requiresSurface` is a runnable audit.
 - Every runnable, non-reference audit is reachable by at least one probed profile, unless an explicit
   unconditional `disabled` rule makes it opt-in by default (catches accidental sweep rules while
   permitting intentional opt-in audits). The probe is the cross product of every bucket with every
@@ -254,6 +344,12 @@ override made it `required`. `COMPOSITION_PATTERNS`, `REACT_BEST_PRACTICES` and 
 `MOBILE` needs `expo` or `react-native`; `CONVEX` needs `convex`; `AI` needs an LLM SDK (`openai`,
 `@anthropic-ai/sdk`, `ai`, `ollama` and the like). A project that calls a provider over plain HTTP
 has no such package, so it marks `AI` `required` in its overrides (aidd and TalkWithMe do).
+
+`requiresSurface` gates an audit on what the project's tree holds, in the same position and with
+the same exception: `LIGHTHOUSE`, `FRONTEND` and `WEB_DESIGN_GUIDELINES` need a `web-frontend`;
+`DATABASE` and `SCHEMA_CONSTRAINTS` need a `database`. A command-line tool or an engine library
+with no page and no schema is not given audits that could only report that they had nothing to
+measure. See [Surfaces](#surfaces) for what counts as evidence.
 
 Per-project overrides start absent everywhere and accumulate as operators opt in.
 

@@ -1,12 +1,295 @@
 {
+	"commit": "271d2aa81e62a193e10a8e95a99d7f31c6da267b",
 	"groups": {
-		"gate-conventions": {},
-		"hook-variant-sources": {},
-		"license-core": {},
-		"license-core-adapter": {},
-		"portable-gates": {},
-		"portable-gates-aidd": {},
-		"shared-core-sync": {}
+		"gate-conventions": {
+			"files": {
+				"docs/reference/gate-conventions.md": {
+					"mode": "100644",
+					"sha256": "5d69f6341868228640ff00b8b3e9dddf844efa2cd1620314d367c0d086b1cd4b"
+				},
+				"scripts/check-gate-conventions.ts": {
+					"mode": "100644",
+					"sha256": "e70b9fd4ce6e535b6aa8b893d8e27b36ca51f5a29b604d0ad2c6b5c40cb28b1a"
+				},
+				"scripts/check-script-targets.ts": {
+					"mode": "100644",
+					"sha256": "88ebf7b810e624ae6fa61b34eae6f658b4d241a9daef41d8fcbf0fad0a800657"
+				},
+				"scripts/lib/gate/allowlist.ts": {
+					"mode": "100644",
+					"sha256": "9548ba0609389fa2b05071244b956054460b75858da0014f8ee278e1fb78fee9"
+				},
+				"scripts/lib/gate/discover.ts": {
+					"mode": "100644",
+					"sha256": "c3e802666ec902af4ffd83c988386ecf00ce3c888782d9101f06a167233e5346"
+				},
+				"scripts/lib/gate/fixtures.ts": {
+					"mode": "100644",
+					"sha256": "f02310054c1804b9cdb619faabca157d0e51b730eb7a544e1ff4a36069ecff10"
+				},
+				"scripts/lib/gate/rules.ts": {
+					"mode": "100644",
+					"sha256": "45e7ab1e889ad603dad5c7b1f71f584ca8cfdc2f35034669e623d80af302f84b"
+				},
+				"scripts/lib/gate/toplevel.ts": {
+					"mode": "100644",
+					"sha256": "66ff584e8bbfa8b9f48f40c96486311fc5972f0075373554d74a35e15c521bcf"
+				},
+				"scripts/lib/gate/types.ts": {
+					"mode": "100644",
+					"sha256": "0f8cdcccc07b0bb759452d010763c85d45971487c93e5cfc81b813eef6296581"
+				},
+				"scripts/lib/gate/vacuity.ts": {
+					"mode": "100644",
+					"sha256": "3617bd053b92049dc660d0fb544980c05d7513b866abb5672ec3eb1b7cdf1a4d"
+				},
+				"scripts/test-gate-conventions.ts": {
+					"mode": "100644",
+					"sha256": "8c1a31e6a23a45952743db158936e2bcd0f5302047399ecb6715a2f1015e6f7b"
+				}
+			}
+		},
+		"hook-variant-sources": {
+			"files": {
+				".githooks/pre-commit-leak-guard-only": {
+					"mode": "100644",
+					"sha256": "5f91787c5251dda300ff132dfb10fb856a3b3ffca9dcb0672d19af93d2ddf7df"
+				}
+			}
+		},
+		"leak-guard-hooks": {
+			"files": {
+				".githooks/leak-guard-setup.sh": {
+					"mode": "100644",
+					"sha256": "2145808b328c186be2f18c569225c6dcaa431bc9e1eaeb06f33a1075910fffcb"
+				},
+				".githooks/leak-guard.sh": {
+					"mode": "100644",
+					"sha256": "60119ad6eda22c8b176c27b6aea44522399a964f787fcbef17e94897cca1dc3d"
+				},
+				".githooks/pre-commit": {
+					"mode": "100755",
+					"sha256": "4a76d13f0ddcebb58b8a9e78834841588975f030e98695d697249574b9252994"
+				}
+			}
+		},
+		"leak-guard-scripts": {
+			"files": {
+				"scripts/check-leak-guard.sh": {
+					"mode": "100644",
+					"sha256": "a8d2cce2947a875870153a8bb6b9b60b0db0933606ba670d719cbccd18eb7418"
+				}
+			}
+		},
+		"license-core": {
+			"files": {
+				"scripts/check-license-core.ts": {
+					"mode": "100644",
+					"sha256": "a6415b61b1532b463bad3ad809556295fb75cde848185ad9e0a5f206d4d2c3dc"
+				},
+				"scripts/lib/license-core/expression.ts": {
+					"mode": "100644",
+					"sha256": "c1c94a063251ba48e021cb88081fbee03666cab90c8e657c348d2ec6175d90d3"
+				},
+				"scripts/lib/license-core/installed.ts": {
+					"mode": "100644",
+					"sha256": "b3bb9990ba8a0667cc9da5f6d9d40e7b5910416f6e71b418e689d1b4988f87bc"
+				},
+				"scripts/lib/license-core/lockfile.ts": {
+					"mode": "100644",
+					"sha256": "c45ff83c95137c6a5600c9beb4e33a53cbf79da76a74b52910f4ff4a3184d4af"
+				},
+				"scripts/lib/license-core/manifest.ts": {
+					"mode": "100644",
+					"sha256": "d27f6909be4e6c2a399f600d60bd0938678e8504f4b49e76c579283d3f13f8c0"
+				},
+				"scripts/lib/license-core/order.ts": {
+					"mode": "100644",
+					"sha256": "1d07d1871143b79334e6016f941d1f7042e3acbc4cafb443c893f6819812bc7c"
+				},
+				"scripts/lib/license-core/resolve.ts": {
+					"mode": "100644",
+					"sha256": "b7957ae32736e9e6ffc79831ea054eb13c528d26776ac9e448e791a839c34e2f"
+				}
+			}
+		},
+		"license-core-adapter": {
+			"files": {
+				"scripts/lib/third-party-licenses/resolve.ts": {
+					"mode": "100644",
+					"sha256": "14b381e116501771ac7bff9e93dae74e2977e134ab0a6fa70707eeefcd4271c8"
+				}
+			}
+		},
+		"portable-gates": {
+			"files": {
+				"scripts/check-destructive-confirmation.ts": {
+					"mode": "100644",
+					"sha256": "215c075b2905b2b3118f82844bec79c88c917f8381a82516a4d10e00742602a1"
+				},
+				"scripts/check-docs.ts": {
+					"mode": "100644",
+					"sha256": "2de1dc16816e993e3862a56bcd3be7f6f50120c8a3f6b62befe88b24cf3a1e74"
+				},
+				"scripts/check-git-window-hide.ts": {
+					"mode": "100644",
+					"sha256": "f4292f0c7b5e81c26901d666fce8806ee495de32bbcc6345725f77a698f2b367"
+				},
+				"scripts/check-no-inline-references.ts": {
+					"mode": "100644",
+					"sha256": "f17d91295abf99d61021181cec8d157e1fac92f84a09d18ce216fc364c9e9710"
+				},
+				"scripts/lib/destructive/comments.ts": {
+					"mode": "100644",
+					"sha256": "85f80bfac8ea1121ae3fbf9035567f806b07fb1da8b02e53fb584b30a7e214a2"
+				},
+				"scripts/lib/destructive/evidence.ts": {
+					"mode": "100644",
+					"sha256": "cf90c0a1713de6c469c26d09c32f838f1f3ff545bd37482b29d6934244e9a656"
+				},
+				"scripts/lib/destructive/waivers.ts": {
+					"mode": "100644",
+					"sha256": "59e6bf40f77bf34bfe880a04e0f5dbc9180b599390089b3cba121941ed4ead55"
+				},
+				"scripts/lib/docs/git-ignored.ts": {
+					"mode": "100644",
+					"sha256": "33d224e075fa2962db292aa54b5544ae01f28901aaccf6d9a3a2a07d4ae8f16f"
+				},
+				"scripts/lib/docs/waivers.ts": {
+					"mode": "100644",
+					"sha256": "3c81730db49825bec629c5c28be3477fd9d391c7449f231429ddffa561657898"
+				}
+			}
+		},
+		"portable-gates-aidd": {
+			"files": {
+				"scripts/check-audit-artifact-hygiene.ts": {
+					"mode": "100644",
+					"sha256": "efd72e2aea41b75f96cd05109cb1efb3301ba17103cc9195209ade0e2253fa7b"
+				},
+				"scripts/check-env-spread.ts": {
+					"mode": "100644",
+					"sha256": "ed83f426d9e8892c8704cc538413d1419770af0e0b2dc37d323a81ec518938d4"
+				}
+			}
+		},
+		"push-guards": {
+			"files": {
+				".githooks/aidd-history-guard.sh": {
+					"mode": "100644",
+					"sha256": "099db9337908def2f7418dda8b6fa5afb84405bc32983f0a213a4cc9e365588b"
+				},
+				".githooks/force-push-guard.sh": {
+					"mode": "100755",
+					"sha256": "c74334c110d0f42d5af5c1a736b216fa1b2b3920572a24e59cfea022f3211f62"
+				},
+				".githooks/pre-push": {
+					"mode": "100755",
+					"sha256": "31879315a1d5a153be0eac049cf110d60f52fa75dcee11051b72268111421adf"
+				},
+				".githooks/screenshot-guard.sh": {
+					"mode": "100644",
+					"sha256": "6c449932c2263d34fe5c278205c405e93b276d63c8e057e852483783a4d8363d"
+				}
+			}
+		},
+		"shared-core-sync": {
+			"files": {
+				"scripts/lib/shared-core/check.ts": {
+					"mode": "100644",
+					"sha256": "492ae69156d8c9cae7719cc014be093db092ed34107d8b5c1f452d4f0049aa59"
+				},
+				"scripts/lib/shared-core/deliveries.ts": {
+					"mode": "100644",
+					"sha256": "4590e5f6ec92f1c5aeaabf907146118fa8ffef095fb50fbe9a369565a4f4468e"
+				},
+				"scripts/lib/shared-core/delivery-check.ts": {
+					"mode": "100644",
+					"sha256": "f9a726c39888871915baea086fc0ab9875f134ad3363f60e51337cd1ccf0272b"
+				},
+				"scripts/lib/shared-core/dispatch.ts": {
+					"mode": "100644",
+					"sha256": "8be1a7521a7fa69e551e6d328c8fc616a4957bad9be6839b308d1a9c3fbcfe6f"
+				},
+				"scripts/lib/shared-core/eligibility.ts": {
+					"mode": "100644",
+					"sha256": "0e39b2dfa6073a4b7993a60a8fde796388995e9e409fb14d70e6b4bb6de79654"
+				},
+				"scripts/lib/shared-core/expected.ts": {
+					"mode": "100644",
+					"sha256": "6744078fafea77fdc10fbc2016659864a9432175f32e7c79a4bcd039cada1d79"
+				},
+				"scripts/lib/shared-core/hook.ts": {
+					"mode": "100644",
+					"sha256": "d34906e6c5264048e8efa4c99cb74964ebc1b4f6982abf9d3ec878ecd0a6cdaf"
+				},
+				"scripts/lib/shared-core/lock-check.ts": {
+					"mode": "100644",
+					"sha256": "fe2ed43c375755de6aff06e9e5e0fc6d6917370fa1c3807727b43ff08c9e024f"
+				},
+				"scripts/lib/shared-core/lock-scope.ts": {
+					"mode": "100644",
+					"sha256": "c6f3ea89e381a7bd08e93b5532aaa0f84c6d4f6b53d7eca7e69bd361e5f7443a"
+				},
+				"scripts/lib/shared-core/lock-write.ts": {
+					"mode": "100644",
+					"sha256": "6b67cfd63474b6582b6abb3709ab3da1b925e04bc68d62a11bbec092fb589311"
+				},
+				"scripts/lib/shared-core/lock.ts": {
+					"mode": "100644",
+					"sha256": "ca32cfc6f002234e65235c99dcdfba02f28b070395188c2f88dfe8ae72464417"
+				},
+				"scripts/lib/shared-core/manifest.ts": {
+					"mode": "100644",
+					"sha256": "48774ce9fd9a129afeb76d28dd5e181dc2c3b9e572dc47e982501b373b198a56"
+				},
+				"scripts/lib/shared-core/origin.ts": {
+					"mode": "100644",
+					"sha256": "39c132b5bbb9251994c6003524257aad8af62b6e76733f1d4e8c711909b70652"
+				},
+				"scripts/lib/shared-core/owner.ts": {
+					"mode": "100644",
+					"sha256": "0d68e27e4beee0fe31eb5bd9c5419efbc3e99a20328c27320f2edd0f27e7094a"
+				},
+				"scripts/lib/shared-core/report.ts": {
+					"mode": "100644",
+					"sha256": "9479b4e692629065d7bacd70354b76bd5cb268d6ed81581fe915ebb17e497998"
+				},
+				"scripts/lib/shared-core/roots.ts": {
+					"mode": "100644",
+					"sha256": "a1bb5e451f51807d66eb49f82d8e74187eb30e193b3ce7e1d161c09404085c0e"
+				},
+				"scripts/lib/shared-core/self-check.ts": {
+					"mode": "100644",
+					"sha256": "8030be0630bd0d4272a0bb0458a7c5e70707c40cedbfa805601cae9f4036bc9b"
+				},
+				"scripts/lib/shared-core/targets.ts": {
+					"mode": "100644",
+					"sha256": "4f625a932e04b54bd8fa43601d3b8cbb90f4bc58c7c218b8157850d64e357344"
+				},
+				"scripts/lib/shared-core/vacuity.ts": {
+					"mode": "100644",
+					"sha256": "8f6ad20000de37622bfa781aecd9c8b18d68fe476fe6d385d99e4ecdc6c860d5"
+				},
+				"scripts/lib/shared-core/wiring.ts": {
+					"mode": "100644",
+					"sha256": "6859d4aec318aee38834764043f08d563d6943ba199cacdd68056403c56b6037"
+				},
+				"scripts/lib/shared-core/write.ts": {
+					"mode": "100644",
+					"sha256": "1555864fb99b6913d1beeba2efe5440a471c6be3027004635dc955eec2822aa8"
+				},
+				"scripts/shared-core-manifest.json": {
+					"mode": "100644",
+					"sha256": "78a8486c223e0ea974e9a068e55c63a28822867181c1c5097049caee89879921"
+				},
+				"scripts/sync-shared-core.ts": {
+					"mode": "100644",
+					"sha256": "0f98f287d0d350c7b53e3838b20b193676bb273a16e81846fabb53988fde54c4"
+				}
+			}
+		}
 	},
-	"owner": "smokestack"
+	"owner": "smokestack",
+	"version": "0.3.0"
 }

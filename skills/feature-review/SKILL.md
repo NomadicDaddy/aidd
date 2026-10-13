@@ -13,11 +13,17 @@ Review all backlog feature.json files in `.aidd/features/` against the target co
 ## Usage
 
 ```
-feature-review [app]
+feature-review [app] [--status backlog|all|<status>[,<status>...]]
 ```
 
 - `[app]` is an optional application name or path. Resolve names through the workspace application
   index; when omitted, use the current repository.
+- `--status` chooses which records are in scope. The default is `backlog`: records whose `status`
+  is `"backlog"` and whose `passes` is `false`, which is the review this skill has always done.
+  `all` puts every record that is not template-owned in scope, whatever its status. A
+  comma-separated list (`in_progress,completed`) names the statuses exactly. Records in scope that
+  are not backlog get the record accuracy check (3h) and are reported only; nothing in this skill
+  rewrites them (see Fix Constraints).
 - The resolved project must contain `.aidd/features/` with feature.json files.
 
 ## Workflow
@@ -27,10 +33,12 @@ feature-review [app]
 1. Resolve the target project, then find all `feature.json` files under
    `.aidd/features/*/feature.json`
 2. **Separate template features**: Any feature with a `spernakit_version` field is template-owned. These are read-only in derived apps and must NOT be reviewed, modified, or auto-fixed. Include them in the dependency graph (step 4) but skip them for analysis. Report their count separately. Exception: when the target project is the Spernakit template repository itself, `spernakit_version` features ARE in scope for review; skip them only in derived apps.
-3. Filter remaining features to those where `status` is `"backlog"` and `passes` is `false`
+3. Filter remaining features to the `--status` scope. With no `--status`, that is those where
+   `status` is `"backlog"` and `passes` is `false`
 4. Parse each into memory; reject and report any with invalid JSON
 5. Build a full dependency graph from all features (backlog AND completed, including template features) so cross-references can be resolved
-6. Report: total features found, template features (skipped), total backlog, total completed
+6. Report: total features found, template features (skipped), total backlog, total completed, the
+   scope in force and how many records it selected per status
 
 ### Phase 2: Learn Codebase Conventions
 
@@ -121,7 +129,9 @@ Summarize conventions discovered. This context is used for all subsequent checks
 
 ### Phase 3: Analyze Each Feature
 
-For every backlog feature, run the following checks. Classify each issue found:
+For every backlog feature in scope, run checks 3a to 3g. For every other record in scope, run 3a
+and 3h only: 3b to 3g judge a specification that has not been built yet, and applying them to work
+that is under way or done produces noise. Classify each issue found:
 
 | Severity          | Meaning                                                                       |
 | ----------------- | ----------------------------------------------------------------------------- |
@@ -253,6 +263,29 @@ If a remediation review was loaded in Phase 2, apply its findings to the current
 
 Do not invent concerns; only apply issues that the remediation review explicitly raised.
 
+#### 3h. Record Accuracy (records in scope that are not backlog)
+
+A record of work under way or done is a claim about the code. Check the claim, one record at a
+time, and give each record exactly one verdict:
+
+- **current**: the code does what the record says, and its `status` and `passes` match the code.
+- **stale**: the record describes behavior, files or limits the code no longer has. Name the
+  sentence and the `file:line` that contradicts it.
+- **status wrong**: the description is right but `status` or `passes` is not, for example a
+  `completed` record whose own `spec` steps do not all hold, or an `in_progress` record whose work
+  is all present and verified.
+- **cannot tell**: the record is too vague to check, or checking it needs something this run
+  cannot do (a running service, a credential, another repository). Say which.
+
+Rules for this check:
+
+- Verify against the code, not against the record's own notes or a changelog. A note saying a
+  thing was verified is not evidence that it still holds.
+- One decisive piece of evidence settles a verdict; stop there and move to the next record.
+- `affectedFiles` that no longer exist make a record **stale** only when the behavior went with
+  them. A file that was renamed or split, with the behavior intact, is a **MINOR** note.
+- Report **cannot tell** honestly. A record you did not check is never **current**.
+
 ### Phase 4: Cross-Feature Analysis
 
 After analyzing all features individually, check across features:
@@ -268,7 +301,11 @@ After analyzing all features individually, check across features:
 
 ### Phase 5: Report
 
-Write the structured markdown report to `.aidd/feature-review-report.md` and present its findings:
+Write the structured markdown report to `.aidd/feature-review-report.md` and present its findings.
+When the run's instructions do not allow writing into the project, the report is still the
+deliverable: return the same complete report through the run's result contract, where aidd saves
+it as a dated file, and list under each finding the fix Phase 6 would have made. Phases 6 to 6.75
+rewrite records, so such a run ends its work at this phase and goes to Phase 7's summary.
 
 ```markdown
 ## Feature Review Report
@@ -323,6 +360,17 @@ Write the structured markdown report to `.aidd/feature-review-report.md` and pre
 - {review concern}: {what the remediation review flagged and current verification status}
 - Shipping verdict: {review's verdict and any unresolved gates}
 
+### RECORD ACCURACY (records in scope that are not backlog)
+
+**Checked**: {count} ({current} current, {stale} stale, {status-wrong} status wrong, {cannot-tell} cannot tell)
+
+#### {feature-title} (`{feature-id}`) - {stale | status wrong | cannot tell}
+
+- {the sentence or field that is wrong}: {evidence, `file:line`}
+- Correction for the lead: {the exact change the record needs}
+
+List every record that is not **current**. Give the **current** ones as a count and a list of ids.
+
 ### Cross-Feature Issues
 
 - {description of any inter-feature conflicts or gaps}
@@ -371,6 +419,9 @@ After presenting the report, automatically rewrite every feature.json that has i
 - **Maintain JSON formatting** with tabs for indentation (matching project convention)
 - **Do not change**: `id`, `status`, `passes`, `createdAt`, `completedAt`, `justFinishedAt`,
   `spernakit_version`
+- **Only backlog records are rewritten.** A wider `--status` scope widens what is checked and
+  reported, never what is fixed: an `in_progress`, `waiting_approval` or `completed` record found
+  stale or wrongly marked goes in the report with its correction, for the project's lead to apply.
 - **Completed features are out of scope for fixes**, with no exception. Fix Rule 13 does NOT amend them: source-feature `spec`/`notes` amendments belong to the coding run that ships the fix, not to this review. If a backlog spec depends on a contract being recorded on a completed feature, leave the step in place and report it — do not pre-apply it.
 - **Never modify template features**: Features with `spernakit_version` are template-owned and must not be auto-fixed in derived apps
 - **Update `updatedAt`** to current ISO timestamp on any modified feature

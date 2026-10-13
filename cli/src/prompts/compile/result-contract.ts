@@ -142,13 +142,23 @@ Do NOT restate the suggestions or fleet summary in this marker; put the complete
 		const closing = readonly
 			? 'This is a read-only directive: the findings or answer in your response ARE the deliverable. Do not commit, write files, or otherwise alter the repository. Emit the success marker only after delivering the full requested review or answer.'
 			: 'Before emitting the success marker, document your work in /.aidd/CHANGELOG.md and commit every non-ignored change, per the completion steps above. A project directory that is not inside a Git repository has nothing to commit, and that skipped commit is not unresolved work.';
+		// A review-only skill run may not write into the project, so it could leave its report
+		// nowhere but the transcript. It hands the report back in the marker and aidd saves it, the
+		// way an audit's reportMarkdown is saved.
+		const savedReport = readonly && plan.skillId !== undefined;
+		const successMarker = savedReport
+			? '{"directiveCompleted":true,"reportMarkdown":"<the complete report, as one JSON string>"}'
+			: '{"directiveCompleted":true}';
+		const reportNote = savedReport
+			? `\n\nPut the complete report in \`reportMarkdown\` as Markdown: everything a reader needs, not a pointer to your response. aidd saves it to \`/.aidd/reports/${plan.skillId}-<date>.md\`; do not write that file or any other yourself.`
+			: '';
 		return `## aidd RESULT CONTRACT
 
 When you have fully carried out the directive, include exactly one final result marker in your assistant response:
 
 \`\`\`text
-AIDD_RESULT: {"directiveCompleted":true}
-\`\`\`
+AIDD_RESULT: ${successMarker}
+\`\`\`${reportNote}
 
 Emit this success marker exactly once, at the very end, and only after every required deliverable and applicable check is complete. A delivered review, a delivered answer, or a completed set of changes all count. A clean "nothing to change / already correct / nothing to review" conclusion is itself a complete result. An applicable documented fallback can satisfy its stated scope; disclose its source and omissions and never claim the upstream workflow ran.
 

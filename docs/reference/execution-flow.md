@@ -50,7 +50,10 @@ already-started features. In directive mode, the supplied/compiled prompt replac
 prompt rather than being appended. `--directive-readonly` forbids the run from touching code,
 metadata, or git state even when the directive asks for changes; the agent describes the change it
 would make instead. `--skill` runs default to read-only for the same reason and need
-`--skill-intent apply-changes` to write. Director mode also accepts
+`--skill-intent apply-changes` to write. A read-only skill run still leaves its report: the agent
+returns it in its result and aidd saves it to `.aidd/reports/<skill>-YYYY-MM-DD.md`, so the agent
+itself writes nothing; a run that returns no report completes and says in its summary that none
+was saved. Director mode also accepts
 `--director-context PATH`; the web Director writes this file from the saved profile plus recent
 chat when a cycle is launched from a chat session.
 

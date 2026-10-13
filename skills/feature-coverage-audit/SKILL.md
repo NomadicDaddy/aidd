@@ -190,6 +190,10 @@ Always report in markdown. When files are changed, also write:
 <target>/.aidd/reports/feature-coverage-audit-YYYY-MM-DD.md
 ```
 
+With `--report-only`, or when the run's instructions do not allow writing into the project, write
+no file yourself. Return the complete report through the run's result contract; aidd saves it at
+that same path, so a report-only run leaves a dated report too.
+
 Report these sections:
 
 1. Coverage summary counts by disposition.

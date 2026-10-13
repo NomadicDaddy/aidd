@@ -89,7 +89,11 @@ below), so a range specifier in an aidd workspace manifest is not a finding.
 though the registry's `latest` is a 7.x release. typescript-eslint does not support TypeScript 7
 yet, and the lint gate crashes under it. Until spernakit's manifest moves, a target on 6.0.3 is
 current, a recommendation to upgrade to 7 is wrong, and a target already on 7 is the finding.
-Downgrading typescript-eslint to make lint run under 7 is also a finding. Re-read the hold in the
+Downgrading typescript-eslint to make lint run under 7 is also a finding. The hold covers every
+TypeScript repository in the workspace, whatever its tier, and a gate that passes under 7 does not
+lift it: a repository with little typed code can lint clean on 7 and still be a finding. A
+dependency update is the usual way a target gets there (`bun update --latest` moves `typescript`
+to 7), so a recent dependency commit is the first place to look. Re-read the hold in the
 workspace-root `AGENTS.md` before scoring; it is lifted there first.
 
 ### 2. tsconfig strictness matrix

@@ -2,7 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { TODAY } from './constants.ts';
-import { type AppSummary, type RunSummary, type ValidatorResult } from './types.ts';
+import {
+	type AppSummary,
+	type RecordStaleness,
+	type RunSummary,
+	type ValidatorResult,
+} from './types.ts';
 import { ensureDir } from './util.ts';
 
 function formatList(items: string[]): string {
@@ -26,6 +31,36 @@ function summarizeValidatorOutput(validator: ValidatorResult): string {
 				!line.startsWith('Invalid:'),
 		);
 	return combined || 'no validator output captured';
+}
+
+function recordStalenessSection(staleness: RecordStaleness): string[] {
+	const lines = ['## Code Changed After The Record', ''];
+	if (staleness.reason !== null) {
+		return [...lines, `- Not checked: ${staleness.reason}`, ''];
+	}
+	lines.push(
+		'A record of work under way or done, whose files were committed to more than a day after the',
+		'record was last edited. It is a place to look, not proof that the record is wrong.',
+		'',
+		`- Records checked against history: ${staleness.checked}`,
+		`- With a later commit to their files: ${staleness.changedSince.length}`,
+		`- Not checked: ${staleness.notChecked.length}`,
+		'',
+	);
+	lines.push(
+		formatList(
+			staleness.changedSince.map(
+				(item) =>
+					`\`${item.id}\` (${item.status}): edited ${item.updatedAt.slice(0, 10)}, files committed ${item.committedAt.slice(0, 10)}, ${item.lagDays} day(s) later, in ${item.commit} ${item.subject}`,
+			),
+		),
+		'',
+		'### Not Checked',
+		'',
+		formatList(staleness.notChecked.map((item) => `\`${item.id}\`: ${item.reason}`)),
+		'',
+	);
+	return lines;
 }
 
 export function buildPerAppReport(summary: AppSummary): string {
@@ -83,6 +118,7 @@ export function buildPerAppReport(summary: AppSummary): string {
 	lines.push('');
 	lines.push(formatList(summary.duplicateHints.map((items) => items.join(' | '))));
 	lines.push('');
+	lines.push(...recordStalenessSection(summary.recordStaleness));
 	lines.push('## Validation');
 	lines.push('');
 	if (summary.validator.skipped) {

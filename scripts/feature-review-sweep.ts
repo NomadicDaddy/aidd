@@ -2,7 +2,7 @@
 /**
  * Fleet-wide feature-review sweep.
  *
- * Walks every application listed in the workspace applications index, normalizes each
+ * Walks every application folder under the applications root that has feature records, normalizes each
  * feature blueprint against the canonical schema, runs the public aidd feature contract
  * validator over the result, and writes a per-app report plus one aggregate report under
  * `reports/`.

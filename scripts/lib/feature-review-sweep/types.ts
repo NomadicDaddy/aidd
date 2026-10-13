@@ -95,6 +95,23 @@ export interface ValidatorResult {
 	stdout?: string;
 }
 
+/** A commit to a record's files, made well after the record was last edited. */
+export interface RecordChange {
+	commit: string;
+	committedAt: string;
+	lagDays: number;
+	subject: string;
+}
+
+export interface RecordStaleness {
+	changedSince: ({ id: string; status: string; updatedAt: string } & RecordChange)[];
+	/** Records compared against history, whether or not a later commit was found. */
+	checked: number;
+	notChecked: { id: string; reason: string }[];
+	/** Set when nothing in the application could be checked at all. */
+	reason: null | string;
+}
+
 export interface AppSummary {
 	after: InventorySummary;
 	app: DiscoveredApp;
@@ -107,6 +124,7 @@ export interface AppSummary {
 	manualFollowUps: string[];
 	mode: string;
 	options: SweepOptions;
+	recordStaleness: RecordStaleness;
 	removedOrphanDirs: number;
 	reportsWritten: number;
 	touchedFeatureFiles: number;

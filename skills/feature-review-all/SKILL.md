@@ -19,8 +19,8 @@ feature-review-all [--apps <app,...>] [--dry-run] [--report-only]
 
 ## Arguments
 
-- `--apps <csv>` - Optional comma-separated subset of names parsed from the workspace
-  applications index (`AGENTS.md`, with `CLAUDE.md` as the fallback filename)
+- `--apps <csv>` - Optional comma-separated subset of application folder names under the
+  applications root
 - `--dry-run` - Inventory and analyze only; do not modify feature files or write reports
 - `--report-only` - Re-scan current state and regenerate reports without mutating feature files
 - `--depth <mode>` - Review depth; default and current supported mode is `full-backlog-light-completed`
@@ -44,7 +44,9 @@ feature-review-all [--apps <app,...>] [--dry-run] [--report-only]
     - canonical schema normalization (`spec`, `affectedFiles`, `dependencies`)
     - alias-field removal (`acceptance_criteria`, `file_locations` rewritten to the canonical fields)
     - dependency remapping when a dependency is clearly a feature title instead of a feature id
-    - per-app report generation in `{app}/.aidd/reports/feature-review-YYYY-MM-DD.md`
+    - per-app report generation in `{app}/.aidd/reports/feature-review-all-YYYY-MM-DD.md`, which
+      also lists each record of work under way or done whose files were committed to more than a
+      day after the record was last edited, and each record that could not be checked
     - dirty-repo mutation guard so new changes stay inside `.aidd/features/*/feature.json` and `.aidd/reports/*`
 
 5. For backlog features only, apply the existing `feature-review` skill heuristics on top of the helper output:
@@ -81,7 +83,7 @@ feature-review-all [--apps <app,...>] [--dry-run] [--report-only]
 ## Outputs
 
 - Per-app report:
-    - `{app}/.aidd/reports/feature-review-YYYY-MM-DD.md`
+    - `{app}/.aidd/reports/feature-review-all-YYYY-MM-DD.md`
 - Aggregate report:
     - `<aidd-root>/reports/feature-review-all-YYYY-MM-DD.md`
 
@@ -97,10 +99,10 @@ feature-review-all [--apps <app,...>] [--dry-run] [--report-only]
 
 ## Notes
 
-- Default scope is every parseable app in the first existing applications index candidate with a
-  `.aidd/features` directory. The current helper requires that index table: it aborts when neither
-  candidate exists or when no indexed app with features is discovered; it does not scan configured
-  application or queue roots as a fallback.
+- Default scope is every folder directly under the applications root (the folder that holds the
+  aidd checkout) that has a `.aidd/features` directory, named by its folder. `.old` folders and
+  linked git worktrees are left out. The helper aborts when no such folder matches the requested
+  scope; it does not read configured application or queue roots.
 - Dirty repositories are in scope; do not require a clean worktree gate
 - The local `scripts/feature-review-sweep.ts` helper is the source of truth for inventory, normalization, and report generation
 - The `feature-review` skill remains the source of truth for deeper backlog review judgment

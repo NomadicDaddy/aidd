@@ -1,64 +1,44 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { APPLICATIONS_INDEX_CANDIDATES, APPLICATIONS_ROOT } from './constants.ts';
+import { APPLICATIONS_ROOT } from './constants.ts';
 import { type DiscoveredApp } from './types.ts';
 
-function resolveApplicationsIndexPath(): string {
-	for (const name of APPLICATIONS_INDEX_CANDIDATES) {
-		const candidate = path.join(APPLICATIONS_ROOT, name);
-		if (fs.existsSync(candidate)) return candidate;
-	}
-	throw new Error(
-		`No applications index found in ${APPLICATIONS_ROOT} (looked for ${APPLICATIONS_INDEX_CANDIDATES.join(', ')})`,
-	);
+function isDirectory(target: string): boolean {
+	return fs.existsSync(target) && fs.statSync(target).isDirectory();
 }
 
-function normalizeMarkdownLocation(location: string): string {
-	return location.replace(/\\_/g, '_').replace(/\//g, path.sep);
+/** A linked git worktree: its `.git` is a file that points at the repository, not a folder. */
+function isLinkedWorktree(root: string): boolean {
+	const gitEntry = path.join(root, '.git');
+	return fs.existsSync(gitEntry) && !isDirectory(gitEntry);
 }
 
-export function discoverApps(filterApps: null | Set<string>): DiscoveredApp[] {
-	const text = fs.readFileSync(resolveApplicationsIndexPath(), 'utf8');
-	const discovered: DiscoveredApp[] = [];
+function wanted(name: string, filterApps: null | Set<string>): boolean {
+	return !name.includes('.old') && (filterApps === null || filterApps.has(name));
+}
 
-	for (const line of text.split(/\r?\n/)) {
-		if (!line.startsWith('|')) {
-			continue;
-		}
-
-		const columns = line
-			.split('|')
-			.slice(1, -1)
-			.map((value) => value.trim());
-
-		if (columns.length < 2) {
-			continue;
-		}
-
-		const [name, rawLocation] = columns;
-		if (!name || name === 'application' || /^-+$/.test(name)) {
-			continue;
-		}
-		if (!rawLocation || rawLocation === 'location' || !/^d:/i.test(rawLocation)) {
-			continue;
-		}
-
-		const root = path.normalize(normalizeMarkdownLocation(rawLocation));
-		if (root.includes('.old')) {
-			continue;
-		}
-
-		const featuresDir = path.join(root, '.aidd', 'features');
-		if (!fs.existsSync(featuresDir) || !fs.statSync(featuresDir).isDirectory()) {
-			continue;
-		}
-		if (filterApps && !filterApps.has(name)) {
-			continue;
-		}
-
-		discovered.push({ featuresDir, name, root });
-	}
-
-	return discovered;
+/**
+ * The applications to sweep: every folder directly under the applications root that carries
+ * `.aidd/features`, named by its folder. The sweep used to read a table of names and locations
+ * from the workspace instruction file; that table was removed from the file, and the sweep then
+ * found nothing at all. The folders themselves are the same list and cannot go out of date.
+ *
+ * Left out: a `.old` folder, and a linked git worktree, which is a second checkout of a repository
+ * the walk already lists under its own name.
+ */
+export function discoverApps(
+	filterApps: null | Set<string>,
+	applicationsRoot: string = APPLICATIONS_ROOT,
+): DiscoveredApp[] {
+	return fs
+		.readdirSync(applicationsRoot, { withFileTypes: true })
+		.filter((entry) => entry.isDirectory() && wanted(entry.name, filterApps))
+		.map((entry) => entry.name)
+		.sort((left, right) => left.localeCompare(right))
+		.map((name) => {
+			const root = path.join(applicationsRoot, name);
+			return { featuresDir: path.join(root, '.aidd', 'features'), name, root };
+		})
+		.filter((app) => isDirectory(app.featuresDir) && !isLinkedWorktree(app.root));
 }

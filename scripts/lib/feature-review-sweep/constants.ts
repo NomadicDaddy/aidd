@@ -7,10 +7,6 @@ const moduleDir = path.dirname(fileURLToPath(import.meta.url));
 export const AIDD_ROOT = path.resolve(moduleDir, '..', '..', '..');
 export const APPLICATIONS_ROOT = path.resolve(AIDD_ROOT, '..');
 
-// The applications index (the markdown table of app name -> location) lives in AGENTS.md after the
-// migration; CLAUDE.md is the pre-migration fallback. Resolved lazily so --help works without it.
-export const APPLICATIONS_INDEX_CANDIDATES = ['AGENTS.md', 'CLAUDE.md'];
-
 export const TODAY = new Date().toISOString().slice(0, 10);
 export const AGGREGATE_REPORT_PATH = path.join(
 	AIDD_ROOT,

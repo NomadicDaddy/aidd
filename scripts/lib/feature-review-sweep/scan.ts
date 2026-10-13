@@ -8,6 +8,7 @@ import { detectIndent, detectNewline, parseJsonWithRepair, stringifyJson } from 
 import { normalizeFeature } from './normalize.ts';
 import { resolveMode } from './options.ts';
 import { buildPerAppReport, writeFileIfNeeded } from './report.ts';
+import { checkRecordStaleness } from './staleness.ts';
 import {
 	type AppSummary,
 	type DiscoveredApp,
@@ -189,7 +190,9 @@ export function scanApp(app: DiscoveredApp, options: SweepOptions): AppSummary {
 		? { ok: false, reason: 'dry-run', skipped: true }
 		: runValidator(app.root);
 
-	const reportPath = path.join(app.root, '.aidd', 'reports', `feature-review-${TODAY}.md`);
+	// Named for this sweep's own skill. `feature-review-<date>.md` belongs to the feature-review
+	// skill, whose review-only report aidd saves under that name; the two used to share it.
+	const reportPath = path.join(app.root, '.aidd', 'reports', `feature-review-all-${TODAY}.md`);
 	const unsafeDiffs: string[] = [];
 
 	const summary: AppSummary = {
@@ -204,6 +207,7 @@ export function scanApp(app: DiscoveredApp, options: SweepOptions): AppSummary {
 		manualFollowUps: uniqueValues(manualFollowUps),
 		mode: resolveMode(options),
 		options,
+		recordStaleness: checkRecordStaleness(app.root, features),
 		removedOrphanDirs,
 		reportsWritten: 0,
 		touchedFeatureFiles: fixes.touchedFeatureFiles,

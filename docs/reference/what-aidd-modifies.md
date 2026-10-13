@@ -67,7 +67,8 @@ Deploy configuration (a `Dockerfile`, `wrangler.toml`, CI workflow, …) is neve
 autonomously. It comes only from the `deployment-readiness` skill — a code-changing
 directive run you launch yourself (one-shot or via the maturity ladder's Shipped stage) — and
 that skill also only fills in what's missing, never overwriting existing config. The
-skill may add a missing `deploy` script to `package.json` and creates or gap-fills
+skill may add a missing `deploy` script to `package.json` when the project already shows what
+deploying means (it never adds one that only fails with a message), and creates or gap-fills
 `.aidd/deployment.md` while preserving its hand-written sections. The bundled `deploy` recipe runs
 your project's own `deploy` script; aidd never stores or handles deploy credentials.
 

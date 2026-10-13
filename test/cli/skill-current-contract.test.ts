@@ -313,6 +313,24 @@ describe('bundled skill current-contract guidance', () => {
 		}
 	});
 
+	// The skill once told the agent to add a `deploy` script that only printed a message and
+	// exited 1 whenever it could not tell what deploying meant, and to add it even to a `local`
+	// project. A run wrote exactly that into another project's manifest (2026-10-13).
+	test('deployment-readiness writes no placeholder deploy script', async () => {
+		const body = await readFile(join(ROOT, 'skills/deployment-readiness/SKILL.md'), 'utf8');
+		expect(body).toContain('only when one is missing and the deploy action is');
+		expect(body).toContain('add no script');
+		expect(body).toContain('create no deploy config and no\n  `deploy` script');
+		for (const instruction of [
+			'add the placeholder',
+			'echoes what to configure',
+			'If missing, add one.',
+			'Still ensure\n  the `deploy` script',
+		]) {
+			expect(body).not.toContain(instruction);
+		}
+	});
+
 	test('captures only clean committed Spernakit release candidates in shipping order', async () => {
 		const body = await readFile(join(ROOT, 'skills/spernakit-bump/SKILL.md'), 'utf8');
 		let previous = -1;

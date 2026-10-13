@@ -76,11 +76,14 @@ By `deployment` target:
 
 Independent of target:
 
-- Ensure `package.json` has a **`deploy` script**. If missing, add one. When the deploy action
-  is knowable (e.g. `wrangler deploy`, `docker compose -f docker-compose.production.yml up -d`),
-  wire it. When it is not, add the placeholder pattern the scaffold uses for `dev`: a script
-  that echoes what to configure and exits 1. The bundled deploy recipe runs `bun run deploy`,
-  so the placeholder makes the missing decision loud instead of silent.
+- Wire a **`deploy` script** in `package.json` only when one is missing and the deploy action is
+  known from the project (e.g. `wrangler deploy`, `docker compose -f
+docker-compose.production.yml up -d`). When the action is not known, or the target is `local`
+  and there is nothing to deploy, add no script: a script that only prints a message and fails
+  is a placeholder written into someone else's manifest. Name the missing decision in the report
+  and in the runbook instead. The bundled deploy recipe runs `bun run deploy`, and with no such
+  script it stops there with the package manager's own script-not-found error, before anything
+  is tagged, so the gap is already loud.
 
 ### Phase 3: Write the missing config
 
@@ -106,7 +109,8 @@ byte-for-byte and only fill gaps). Structure:
 
 ## How to deploy
 
-<the deploy command (`bun run deploy` and what it does), or the local run story for `local`>
+<the deploy command (`bun run deploy` and what it does), or the local run story for `local`; when
+no deploy action is known, say so and name the decision the owner has to make>
 
 ## Configuration
 
@@ -136,19 +140,19 @@ no AI filler (delve, leverage, robust, seamless). Commands, paths, and URLs stay
    (`bun run build` or the app's equivalent). A generated Dockerfile does not need a full
    image build; a syntax sanity pass is enough.
 2. Report as counts and lists: files created, files already present (skipped), the deploy
-   command, and any decision the owner still has to make (e.g. placeholder `deploy` script,
-   unset domain in the Caddy snippet).
+   command, and any decision the owner still has to make (e.g. no `deploy` script because the
+   deploy action is not known, unset domain in the Caddy snippet).
 
 ## Notes
 
 - **Never overwrite deploy config.** An existing Dockerfile, workflow, or wrangler config is
   authoritative; inventory it, don't replace it. `package.json` may be edited only to add a
-  missing `deploy` script. `.aidd/deployment.md` may be refreshed, but hand-written content stays
-  byte-for-byte intact.
+  missing `deploy` script whose action is known, never one that only fails with a message.
+  `.aidd/deployment.md` may be refreshed, but hand-written content stays byte-for-byte intact.
 - **No secrets.** Do not read, echo, or template credential values. Reference only the established
   env var names or secret-file paths.
 - **No deployment.** Do not run the deploy command, push images, or call platform CLIs against
   live infrastructure. Readiness only.
-- **Local is a first-class answer.** For `deployment: local`, create no deploy config. Still ensure
-  the `deploy` script and runbook exist. Emitting container config for a local CLI tool is noise,
-  not readiness.
+- **Local is a first-class answer.** For `deployment: local`, create no deploy config and no
+  `deploy` script; still ensure the runbook exists and says how the tool is run locally. Emitting
+  container config or a failing script for a local CLI tool is noise, not readiness.

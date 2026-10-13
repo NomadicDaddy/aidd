@@ -1,10 +1,9 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { chdir, cwd } from 'node:process';
 
 import { LOCK_FILE, readLock } from '../../scripts/lib/shared-core/lock.ts';
-import { parseSharedCoreArgs, runSharedCoreSync } from '../../scripts/sync-shared-core.ts';
+import { runSharedCoreFrom } from '../_helpers/shared-core-run.ts';
 
 // aidd carries the shared-core sync and owns none of it. The tool's own tests live with its owner;
 // what belongs here is the one thing only this repository can say: that the copy delivered to it
@@ -14,39 +13,16 @@ import { parseSharedCoreArgs, runSharedCoreSync } from '../../scripts/sync-share
 //
 // So these run the delivered entry point in this repository, in process: it has to check this tree
 // against this tree's own lock and nothing else, and it has to refuse everything that belongs to
-// the owner.
+// the owner. What happens when the tree does NOT match is in shared-core-consumer-copy.test.ts,
+// which works on a copy so that nothing here is ever altered.
 
 const REPO_ROOT = join(import.meta.dir, '..', '..');
 
-/** Runs the entry point as `bun scripts/sync-shared-core.ts <args>` would, from the repo root. */
 function run(...args: string[]): { code: number; out: string } {
-	const lines: string[] = [];
-	const original = { error: console.error, log: console.log, warn: console.warn };
-	const collect = (...parts: unknown[]): void => {
-		lines.push(parts.map(String).join(' '));
-	};
-	console.log = collect;
-	console.warn = collect;
-	console.error = collect;
-	try {
-		return { code: runSharedCoreSync(parseSharedCoreArgs(args)), out: lines.join('\n') };
-	} finally {
-		console.log = original.log;
-		console.warn = original.warn;
-		console.error = original.error;
-	}
+	return runSharedCoreFrom(REPO_ROOT, ...args);
 }
 
 describe('the delivered sync, run from this repository', () => {
-	let before = '';
-	beforeEach(() => {
-		before = cwd();
-		chdir(REPO_ROOT);
-	});
-	afterEach(() => {
-		chdir(before);
-	});
-
 	test('this repository keeps a lock that records a delivery', () => {
 		expect(existsSync(join(REPO_ROOT, LOCK_FILE))).toBe(true);
 		const lock = readLock(REPO_ROOT);

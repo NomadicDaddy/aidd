@@ -13,6 +13,7 @@ import {
 	MAX_THRESHOLD_SLACK,
 	normalizeProjectPath,
 } from './contracts.ts';
+import { deliveredPaths } from './delivered.ts';
 import { parseProductionLcov } from './lcov.ts';
 
 export interface AreaCoverageReport {
@@ -137,12 +138,26 @@ export async function collectProductionModules(projectRoot: string): Promise<str
 	return [...modules].sort();
 }
 
+/** Drops delivered files from both sides of the count: the inventory and the measured records. */
+export function withoutDelivered(
+	inventory: string[],
+	lcovFiles: Map<string, FileCoverageMetrics>,
+	delivered: Set<string>,
+): { inventory: string[]; lcovFiles: Map<string, FileCoverageMetrics> } {
+	return {
+		inventory: inventory.filter((path) => !delivered.has(path)),
+		lcovFiles: new Map([...lcovFiles].filter(([path]) => !delivered.has(path))),
+	};
+}
+
 export async function createCoverageReport(projectRoot: string): Promise<CoverageReport> {
 	const lcov = await readFile(resolve(projectRoot, TEST_COVERAGE_LCOV_PATH), 'utf8');
-	return buildCoverageReport(
+	const own = withoutDelivered(
 		await collectProductionModules(projectRoot),
 		parseProductionLcov(projectRoot, lcov),
+		deliveredPaths(projectRoot),
 	);
+	return buildCoverageReport(own.inventory, own.lcovFiles);
 }
 
 function formatMetric(counts: CoverageCounts): string {

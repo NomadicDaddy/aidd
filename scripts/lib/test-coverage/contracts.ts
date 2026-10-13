@@ -36,6 +36,12 @@ export const COVERAGE_AREAS = [
 	// scripts 66.4 / 73.5 / 83.5, shared 96.0 / 94.4 / 96.0). A floor further below than
 	// MAX_THRESHOLD_SLACK lets a large regression through, and the report says so; raise the floor
 	// when it does, never widen the slack.
+	//
+	// The scripts floors were set again on 2026-10-13, when delivered files left the count (see
+	// delivered.ts; Phillip, room #9942). The earlier measurement included this repository's own
+	// tests of the shared-core sync, which moved to the sync's owner with the sync. Measured
+	// without delivered files: 69.8 / 69.9 / 81.4, and the floors sit about two points under
+	// that by the same rule as the rest.
 	{
 		id: 'backend',
 		prefix: 'backend/src/',
@@ -54,7 +60,7 @@ export const COVERAGE_AREAS = [
 	{
 		id: 'scripts',
 		prefix: 'scripts/',
-		thresholds: { functions: 81, lines: 71, modules: 64 },
+		thresholds: { functions: 79, lines: 67, modules: 67 },
 	},
 	{
 		id: 'shared',

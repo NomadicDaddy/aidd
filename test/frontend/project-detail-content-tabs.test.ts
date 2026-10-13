@@ -234,7 +234,10 @@ describe('profile tab', () => {
 	test('an audit name and its effect chip stay adjacent', async () => {
 		// A flexible name spacer distributed a 161px name and a 63px badge across the full rail.
 		const panel = await detail('profile/ComputedProfilePanel.tsx');
-		expect(panel).toContain('flex items-start gap-2 rounded px-1 py-0.5 hover:bg-muted');
+		// The pair is its own row inside the audit's block, so the reason line under it cannot
+		// push the chip away from the name.
+		expect(panel).toContain('className="rounded px-1 py-0.5 hover:bg-muted"');
+		expect(panel).toContain('<div className="flex items-start gap-2">');
 		expect(panel).toContain(
 			'max-w-full min-w-0 font-mono text-sm font-medium [overflow-wrap:anywhere]',
 		);

@@ -97,3 +97,8 @@ Thumbs.db
 skills/humanize-docs/examples.md
 skills/humanize-docs/personal-voice.md
 skills/humanize-docs/confirmed.md
+
+# Shared-core rosters live with the one repository that owns the groups, never here. A roster names
+# private sibling repositories and this repository is published, so the whole name shape stays
+# ignored.
+/*-targets.json

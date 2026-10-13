@@ -39,9 +39,9 @@ export const COVERAGE_AREAS = [
 	//
 	// The scripts floors were set again on 2026-10-13, when delivered files left the count (see
 	// delivered.ts; Phillip, room #9942). The earlier measurement included this repository's own
-	// tests of the shared-core sync, which moved to the sync's owner with the sync. Measured
-	// without delivered files: 69.8 / 69.9 / 81.4, and the floors sit about two points under
-	// that by the same rule as the rest.
+	// tests of the shared-core sync, which moved to the sync's owner with the sync. Measured by
+	// the gate without delivered files: 69.0 / 69.9 / 81.5, and the floors sit about two points
+	// under that by the same rule as the rest.
 	{
 		id: 'backend',
 		prefix: 'backend/src/',

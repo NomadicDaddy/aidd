@@ -39,11 +39,12 @@ function recordStalenessSection(staleness: RecordStaleness): string[] {
 		return [...lines, `- Not checked: ${staleness.reason}`, ''];
 	}
 	lines.push(
-		'A record of work under way or done, whose files were committed to more than a day after the',
-		'record was last edited. It is a place to look, not proof that the record is wrong.',
+		'A record of work under way or done, with a file that only it names committed to more than a',
+		'day after the record was last edited. Files several records name are not counted: they are',
+		'committed to for every one of them. It is a place to look, not proof the record is wrong.',
 		'',
 		`- Records checked against history: ${staleness.checked}`,
-		`- With a later commit to their files: ${staleness.changedSince.length}`,
+		`- With a later commit to a file of their own: ${staleness.changedSince.length}`,
 		`- Not checked: ${staleness.notChecked.length}`,
 		'',
 	);
@@ -51,7 +52,7 @@ function recordStalenessSection(staleness: RecordStaleness): string[] {
 		formatList(
 			staleness.changedSince.map(
 				(item) =>
-					`\`${item.id}\` (${item.status}): edited ${item.updatedAt.slice(0, 10)}, files committed ${item.committedAt.slice(0, 10)}, ${item.lagDays} day(s) later, in ${item.commit} ${item.subject}`,
+					`\`${item.id}\` (${item.status}): edited ${item.updatedAt.slice(0, 10)}, ${item.filesMoved} of its ${item.ownFiles} own file(s) committed since, newest ${item.committedAt.slice(0, 10)}, ${item.lagDays} day(s) later, in ${item.commit} ${item.subject}`,
 			),
 		),
 		'',

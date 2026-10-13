@@ -45,8 +45,9 @@ feature-review-all [--apps <app,...>] [--dry-run] [--report-only]
     - alias-field removal (`acceptance_criteria`, `file_locations` rewritten to the canonical fields)
     - dependency remapping when a dependency is clearly a feature title instead of a feature id
     - per-app report generation in `{app}/.aidd/reports/feature-review-all-YYYY-MM-DD.md`, which
-      also lists each record of work under way or done whose files were committed to more than a
-      day after the record was last edited, and each record that could not be checked
+      also lists each record of work under way or done with a file that only it names committed to
+      more than a day after the record was last edited, and each record that could not be checked
+      (files several records name are not counted, since they are committed to for all of them)
     - dirty-repo mutation guard so new changes stay inside `.aidd/features/*/feature.json` and `.aidd/reports/*`
 
 5. For backlog features only, apply the existing `feature-review` skill heuristics on top of the helper output:

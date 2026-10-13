@@ -45,16 +45,23 @@ function git(cwd: string, args: string[], committedAt?: string): void {
 	if (result.status !== 0) throw new Error(`git ${args.join(' ')}: ${result.stderr}`);
 }
 
-/** A repository with one file committed on the given day. */
-async function repoWithCommit(file: string, committedAt: string): Promise<string> {
+/** A repository in which each file was committed, alone, at its given time. */
+async function repoWithCommits(files: Record<string, string>): Promise<string> {
 	const root = await tempRoot();
 	git(root, ['init', '--quiet']);
 	git(root, ['config', 'core.hooksPath', join(root, 'no-hooks')]);
 	await mkdir(join(root, 'src'), { recursive: true });
-	await writeFile(join(root, file), 'export const value = 1;\n');
-	git(root, ['add', '--', file]);
-	git(root, ['commit', '--quiet', '-m', 'feat: the code moved'], committedAt);
+	for (const [file, committedAt] of Object.entries(files)) {
+		await writeFile(join(root, file), 'export const value = 1;\n');
+		git(root, ['add', '--', file]);
+		git(root, ['commit', '--quiet', '-m', `feat: ${file} moved`], committedAt);
+	}
 	return root;
+}
+
+/** A repository with one file committed on the given day. */
+function repoWithCommit(file: string, committedAt: string): Promise<string> {
+	return repoWithCommits({ [file]: committedAt });
 }
 
 function record(id: string, fields: Record<string, unknown>): FeatureRecord {
@@ -97,26 +104,36 @@ describe('the sweep finds applications from the folders, not from a table that c
 });
 
 describe('a record whose files were committed to after it was last edited', () => {
+	const day10 = '2026-03-10T12:00:00Z';
+
 	test('is listed with the commit and the days between, and one inside a day is not', async () => {
-		const root = await repoWithCommit('src/a.ts', '2026-03-10T12:00:00Z');
+		const root = await repoWithCommits({
+			'src/a.ts': day10,
+			'src/b.ts': day10,
+			'src/b2.ts': '2026-03-09T12:00:00Z',
+			'src/b3.ts': '2026-03-01T12:00:00Z',
+			'src/c.ts': day10,
+			'src/d.ts': day10,
+		});
 		const result = checkRecordStaleness(root, [
 			record('done-long-ago', {
 				affectedFiles: ['src/a.ts'],
 				status: 'completed',
 				updatedAt: '2026-03-05T12:00:00Z',
 			}),
+			// Two of its three own files moved after it; the third was committed before.
 			record('left-in-progress', {
-				affectedFiles: ['src/a.ts', 'src/never-existed.ts'],
+				affectedFiles: ['src/b.ts', 'src/b2.ts', 'src/b3.ts', 'src/never-existed.ts'],
 				status: 'in_progress',
 				updatedAt: '2026-03-08T00:00:00Z',
 			}),
 			record('same-piece-of-work', {
-				affectedFiles: ['src/a.ts'],
+				affectedFiles: ['src/c.ts'],
 				status: 'completed',
 				updatedAt: '2026-03-10T00:00:00Z',
 			}),
 			record('edited-after-the-code', {
-				affectedFiles: ['src/a.ts'],
+				affectedFiles: ['src/d.ts'],
 				status: 'completed',
 				updatedAt: '2026-04-01T00:00:00Z',
 			}),
@@ -125,23 +142,63 @@ describe('a record whose files were committed to after it was last edited', () =
 		expect(result.checked).toBe(4);
 		expect(result.notChecked).toEqual([]);
 		expect(
-			result.changedSince.map((item) => [item.id, item.status, item.lagDays, item.subject]),
+			result.changedSince.map((item) => [
+				item.id,
+				item.status,
+				item.lagDays,
+				`${item.filesMoved}/${item.ownFiles}`,
+				item.subject,
+			]),
 		).toEqual([
-			['done-long-ago', 'completed', 5, 'feat: the code moved'],
-			['left-in-progress', 'in_progress', 2, 'feat: the code moved'],
+			// All of its own files moved, so it comes before one where half did.
+			['done-long-ago', 'completed', 5, '1/1', 'feat: src/a.ts moved'],
+			['left-in-progress', 'in_progress', 2, '2/4', 'feat: src/b.ts moved'],
 		]);
 		expect(result.changedSince[0]?.commit).toMatch(/^[0-9a-f]{10}$/);
 		expect(result.changedSince[0]?.committedAt.slice(0, 10)).toBe('2026-03-10');
 	});
 
+	test('a file several records name is not evidence about any one of them', async () => {
+		// The manifest is committed to for every record, long after each was last edited.
+		const root = await repoWithCommits({
+			'package.json': '2026-06-01T12:00:00Z',
+			'src/own.ts': '2026-03-01T12:00:00Z',
+		});
+		const old = '2026-03-05T12:00:00Z';
+		const result = checkRecordStaleness(root, [
+			record('has-its-own-file', {
+				affectedFiles: ['package.json', 'src/own.ts'],
+				status: 'completed',
+				updatedAt: old,
+			}),
+			record('shared-only', {
+				affectedFiles: ['package.json'],
+				status: 'completed',
+				updatedAt: old,
+			}),
+			// A record nobody has started still makes the file shared.
+			record('planned', {
+				affectedFiles: ['package.json'],
+				status: 'backlog',
+				updatedAt: old,
+			}),
+		]);
+		// Its own file did not move, so the manifest's later commit does not flag it.
+		expect(result.changedSince).toEqual([]);
+		expect(result.checked).toBe(1);
+		expect(result.notChecked).toEqual([
+			{ id: 'shared-only', reason: 'every file it names is also named by another record' },
+		]);
+	});
+
 	test('a record that could not be checked is said so, never counted as current', async () => {
-		const root = await repoWithCommit('src/a.ts', '2026-03-10T12:00:00Z');
+		const root = await repoWithCommits({ 'src/a.ts': day10, 'src/a2.ts': day10 });
 		const result = checkRecordStaleness(root, [
 			record('no-files', { affectedFiles: [], status: 'completed', updatedAt: '2026-01-01' }),
 			record('files-missing-field', { status: 'completed', updatedAt: '2026-01-01' }),
 			record('no-date', { affectedFiles: ['src/a.ts'], status: 'completed' }),
 			record('bad-date', {
-				affectedFiles: ['src/a.ts'],
+				affectedFiles: ['src/a2.ts'],
 				status: 'completed',
 				updatedAt: 'last week',
 			}),
@@ -158,7 +215,7 @@ describe('a record whose files were committed to after it was last edited', () =
 			{ id: 'files-missing-field', reason: 'names no affectedFiles' },
 			{ id: 'no-date', reason: 'has no usable updatedAt' },
 			{ id: 'bad-date', reason: 'has no usable updatedAt' },
-			{ id: 'no-history', reason: 'none of its affectedFiles has commit history' },
+			{ id: 'no-history', reason: 'none of its own files has commit history' },
 		]);
 	});
 
@@ -234,9 +291,9 @@ describe('the report of one application', () => {
 		expect(report).toContain('## Code Changed After The Record');
 		expect(report).toContain('- Records checked against history: 1');
 		expect(report).toContain(
-			'`done-long-ago` (completed): edited 2026-03-05, files committed 2026-03-10, 5 day(s) later, in ',
+			'`done-long-ago` (completed): edited 2026-03-05, 1 of its 1 own file(s) committed since, newest 2026-03-10, 5 day(s) later, in ',
 		);
-		expect(report).toContain('feat: the code moved');
+		expect(report).toContain('feat: src/a.ts moved');
 		const status = spawnSync('git', ['status', '--porcelain', '--', '.aidd/reports'], {
 			cwd: root,
 			encoding: 'utf8',

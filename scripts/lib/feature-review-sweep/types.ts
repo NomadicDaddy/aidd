@@ -104,7 +104,15 @@ export interface RecordChange {
 }
 
 export interface RecordStaleness {
-	changedSince: ({ id: string; status: string; updatedAt: string } & RecordChange)[];
+	changedSince: ({
+		/** How many of the record's own files have a later commit. */
+		filesMoved: number;
+		id: string;
+		/** Files that this record names and no other record does. */
+		ownFiles: number;
+		status: string;
+		updatedAt: string;
+	} & RecordChange)[];
 	/** Records compared against history, whether or not a later commit was found. */
 	checked: number;
 	notChecked: { id: string; reason: string }[];

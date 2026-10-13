@@ -1,12 +1,12 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { readdir, readFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { runOrchestrator } from '../../cli/src/orchestrator/orchestrator.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { compileResultContract } from '../../cli/src/prompts/compile/result-contract.ts';
 import { parseArgs } from '../../shared/src/args/index.ts';
-import { skillReportPath } from '../../shared/src/metadata/skill-reports.ts';
+import { skillReportPath, writeSkillReport } from '../../shared/src/metadata/skill-reports.ts';
 import {
 	config,
 	createOrchestratorTestContext,
@@ -38,8 +38,10 @@ async function runWith(
 	name: string,
 	intent: 'apply-changes' | 'review-only',
 	result: Record<string, unknown>,
+	before?: (metadataDir: string, projectDir: string) => Promise<unknown>,
 ) {
 	const store = await makeStore(name);
+	await before?.(store.metadataDir, store.projectDir);
 	const plan = skillPlan(store.projectDir, intent);
 	const backend = new FakeBackend([
 		{ chunk: `AIDD_RESULT: ${JSON.stringify(result)}`, type: 'assistant_text' },
@@ -47,9 +49,12 @@ async function runWith(
 	]);
 	const exit = await runOrchestrator(plan, { backend, rootDir, store });
 	const ledger = await readFile(join(store.metadataDir, 'runs.jsonl'), 'utf8');
-	const entry = JSON.parse(ledger.trim().split('\n').at(-1) ?? '{}') as { summary: string };
+	const entry = JSON.parse(ledger.trim().split('\n').at(-1) ?? '{}') as {
+		stopReason: string;
+		summary: string;
+	};
 	const reports = await readdir(join(store.metadataDir, 'reports')).catch(() => []);
-	return { exit, plan, reports, store, summary: entry.summary };
+	return { exit, plan, reports, stopReason: entry.stopReason, store, summary: entry.summary };
 }
 
 describe('the report of a review-only skill run', () => {
@@ -75,26 +80,95 @@ describe('the report of a review-only skill run', () => {
 		slowOrchestratorTestTimeoutMs,
 	);
 
+	// The report is the whole deliverable. A run without one has not delivered, whatever it said
+	// of itself, and nothing that schedules these runs may read it as a finished review.
 	test(
-		'a run that returned no report still completes and says none was saved',
+		'a run that returned no report is recorded as incomplete, not as a finished review',
 		async () => {
 			const run = await runWith('none', 'review-only', { directiveCompleted: true });
-			expect(run.exit).toBe(0);
+			expect(run.exit).toBe(1);
+			expect(run.stopReason).toBe('blocked');
 			expect(run.reports).toEqual([]);
-			expect(run.summary).toContain('no report was returned, so none was saved');
+			expect(run.summary).toContain(
+				"skill 'feature-review' run incomplete: the run returned no report",
+			);
 		},
 		slowOrchestratorTestTimeoutMs,
 	);
 
 	test(
-		'a blank report is not saved as an empty file',
+		'a blank report is neither saved as an empty file nor counted as delivered',
 		async () => {
 			const run = await runWith('blank', 'review-only', {
 				directiveCompleted: true,
 				reportMarkdown: '  \n',
 			});
+			expect(run.exit).toBe(1);
 			expect(run.reports).toEqual([]);
-			expect(run.summary).toContain('none was saved');
+			expect(run.summary).toContain('the run returned no report');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'a report that could not be written leaves the run incomplete and says why',
+		async () => {
+			const run = await runWith(
+				'unwritable',
+				'review-only',
+				{ directiveCompleted: true, reportMarkdown: report },
+				// A file where the reports folder has to be: the save cannot succeed.
+				(metadataDir) => writeFile(join(metadataDir, 'reports'), 'not a folder\n'),
+			);
+			expect(run.exit).toBe(1);
+			expect(run.stopReason).toBe('blocked');
+			expect(run.summary).toContain('incomplete: the report could not be saved: ');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'a file aidd did not save is never replaced: the report goes beside it',
+		async () => {
+			const name = `feature-review-${new Date().toISOString().slice(0, 10)}`;
+			const handWritten = '# My own notes on the review\n\nKeep these.\n';
+			const run = await runWith(
+				'hand-written',
+				'review-only',
+				{ directiveCompleted: true, reportMarkdown: report },
+				async (metadataDir) => {
+					await mkdir(join(metadataDir, 'reports'), { recursive: true });
+					await writeFile(join(metadataDir, 'reports', `${name}.md`), handWritten);
+				},
+			);
+			expect(run.exit).toBe(0);
+			expect([...run.reports].sort()).toEqual([`${name}-aidd.md`, `${name}.md`]);
+			const reportsDir = join(run.store.metadataDir, 'reports');
+			expect(await readFile(join(reportsDir, `${name}.md`), 'utf8')).toBe(handWritten);
+			expect(await readFile(join(reportsDir, `${name}-aidd.md`), 'utf8')).toContain(report);
+			expect(run.summary).toContain(`report saved to .aidd/reports/${name}-aidd.md`);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'a report aidd saved earlier the same day is replaced by the newer one',
+		async () => {
+			const path = (projectDir: string) =>
+				skillReportPath(projectDir, 'feature-review', new Date());
+			const run = await runWith(
+				'replace-own',
+				'review-only',
+				{ directiveCompleted: true, reportMarkdown: report },
+				async (_metadataDir, projectDir) => {
+					await writeSkillReport(projectDir, 'feature-review', '# An earlier run today');
+				},
+			);
+			expect(run.exit).toBe(0);
+			expect(run.reports).toHaveLength(1);
+			const saved = await readFile(path(run.store.projectDir), 'utf8');
+			expect(saved).toContain(report);
+			expect(saved).not.toContain('An earlier run today');
 		},
 		slowOrchestratorTestTimeoutMs,
 	);

@@ -9,28 +9,54 @@ import { relative } from 'node:path';
 import { createPlanBackedMode } from './base.ts';
 
 /**
- * Save the report a completed review-only skill run handed back, and say in the run summary where
- * it went. The run may not write into the project, so without this its findings exist only in the
- * transcript. A run that returned no report still completed: the summary says none was saved
- * instead of failing work that was done. The file goes to the canonical project, never to a
- * throwaway worktree that is discarded with the run.
+ * Save the report a review-only skill run handed back, and say where it went. The run may not write
+ * into the project, so without this its findings exist only in the transcript. The file goes to the
+ * canonical project, never to a throwaway worktree that is discarded with the run.
+ *
+ * The report is the whole deliverable of such a run. One that returned none, or whose report could
+ * not be written, has not delivered, whatever the agent said about its own work: `saved` is false
+ * and the caller records the run as incomplete, so nothing that schedules or reads these runs can
+ * take a missing report for a finished review.
  */
 async function saveReviewReport(
 	context: ModeContext,
 	skillId: string,
 	reportMarkdown: unknown,
-): Promise<string> {
+): Promise<{ note: string; saved: boolean }> {
 	if (typeof reportMarkdown !== 'string' || reportMarkdown.trim() === '') {
-		return 'no report was returned, so none was saved';
+		return { note: 'the run returned no report, so there is nothing to save', saved: false };
 	}
 	const projectDir = context.findingLedgerStore?.projectDir ?? context.projectDir;
 	const options = context.runId === undefined ? {} : { runId: context.runId };
 	try {
 		const path = await writeSkillReport(projectDir, skillId, reportMarkdown, options);
-		return `report saved to ${relative(projectDir, path).replaceAll('\\', '/')}`;
+		const shown = relative(projectDir, path).replaceAll('\\', '/');
+		return { note: `report saved to ${shown}`, saved: true };
 	} catch (err) {
-		return `the report could not be saved: ${errorText(err)}`;
+		return { note: `the report could not be saved: ${errorText(err)}`, saved: false };
 	}
+}
+
+/** The result of a completed review-only skill run: complete only once its report is saved. */
+async function withSavedReport(
+	context: ModeContext,
+	skillId: string,
+	result: AgentRunResult,
+	text: { label: string; summary: string },
+): Promise<ModeResult> {
+	const report = result.structuredResult?.reportMarkdown;
+	const outcome = await saveReviewReport(context, skillId, report);
+	return outcome.saved
+		? { complete: true, summary: `${text.summary}; ${outcome.note}` }
+		: incomplete(text.label, outcome.note);
+}
+
+function incomplete(label: string, reason: string): ModeResult {
+	return {
+		complete: false,
+		fatal: { exitCode: orchestratorExitCodes.generalError, stopReason: 'blocked' },
+		summary: `${label} incomplete: ${reason}`,
+	};
 }
 
 function errorText(err: unknown): string {
@@ -41,11 +67,7 @@ function errorText(err: unknown): string {
 function blockedResult(label: string, result: AgentRunResult): ModeResult | undefined {
 	if (result.structuredResult?.directiveCompleted !== false) return undefined;
 	const reason = result.structuredResult.reason;
-	return {
-		complete: false,
-		fatal: { exitCode: orchestratorExitCodes.generalError, stopReason: 'blocked' },
-		summary: `${label} incomplete: ${typeof reason === 'string' ? reason : 'required work remains'}`,
-	};
+	return incomplete(label, typeof reason === 'string' ? reason : 'required work remains');
 }
 
 function isComplete(result: AgentRunResult): boolean {
@@ -85,11 +107,7 @@ export function createDirectiveMode(plan: RunPlan): ModeHandler {
 			if (!complete || skillId === undefined || !savesReviewReport(plan)) {
 				return { complete, summary };
 			}
-			const report = result.structuredResult?.reportMarkdown;
-			return {
-				complete,
-				summary: `${summary}; ${await saveReviewReport(context, skillId, report)}`,
-			};
+			return await withSavedReport(context, skillId, result, { label, summary });
 		},
 		async selectWork(_context: ModeContext): Promise<SelectedWork> {
 			return {

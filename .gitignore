@@ -97,8 +97,3 @@ Thumbs.db
 skills/humanize-docs/examples.md
 skills/humanize-docs/personal-voice.md
 skills/humanize-docs/confirmed.md
-
-# local config
-# Roster for the aidd-owned shared-core group. Gitignored because it names sibling repositories
-# by directory, which must never enter a published tree. Copy the .example beside it to start.
-/portable-gates-aidd-targets.json

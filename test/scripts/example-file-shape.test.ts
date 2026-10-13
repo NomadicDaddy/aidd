@@ -32,11 +32,6 @@ import { backendNames } from '../../shared/src/plan/types.ts';
 // publishes a container image, so `compose.env.example` and `compose.vars.example` were removed
 // along with the Dockerfile. `buildBackendSubprocessEnv`'s allowlist, which the compose assertions
 // probed, keeps its coverage in `env-key-registry.test.ts`.
-//
-// `portable-gates-aidd-targets.json.example` is deliberately not covered. It is a roster of
-// deliberately fictional repository names rather than a key template, so there is no shape to
-// compare -- and its live counterpart holds private sibling repository names that must not be
-// read into a tracked test.
 
 const repoRoot = join(import.meta.dir, '..', '..');
 const read = (name: string) => readFile(join(repoRoot, name), 'utf8');

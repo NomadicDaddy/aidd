@@ -526,7 +526,7 @@ bun run check:source-install
 
 `bun run licenses:generate` rewrites the committed documents; do not run it in an audit. The
 license core (`scripts/check-license-core.ts` and `scripts/lib/license-core/`) is synchronized
-from Spernakit and must not be edited in aidd. A defect in it is reported against Spernakit.
+from smokestack and must not be edited in aidd. A defect in it is reported against smokestack.
 
 Checks specific to this model:
 

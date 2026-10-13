@@ -1,0 +1,12 @@
+{
+	"groups": {
+		"gate-conventions": {},
+		"hook-variant-sources": {},
+		"license-core": {},
+		"license-core-adapter": {},
+		"portable-gates": {},
+		"portable-gates-aidd": {},
+		"shared-core-sync": {}
+	},
+	"owner": "smokestack"
+}

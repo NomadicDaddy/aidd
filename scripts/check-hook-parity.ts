@@ -4,11 +4,10 @@
  *
  * Enforces: `scaffolding/.githooks/` is a byte-identical subset of `.githooks/`.
  *
- * The repository has two copies of the same hook files and two different readers. The fleet syncs
- * (`sync-shared-core.ts`, `install-history-guard.ts`, `install-leak-guard.ts`) copy outward from
- * `.githooks/`, while `ensureHistoryGuard` installs from `scaffolding/.githooks/` — because the
- * scaffold is what a fresh project is built from and the repository root is not. Nothing made the
- * two agree.
+ * The repository has two copies of the same hook files and two different readers. The fleet sync
+ * (`sync-shared-core.ts`) holds `.githooks/` byte-identical with the rest of the fleet, while
+ * `ensureHistoryGuard` installs from `scaffolding/.githooks/` — because the scaffold is what a
+ * fresh project is built from and the repository root is not. Nothing made the two agree.
  *
  * That gap already fired. On 2026-08-03 a fix to `.githooks/screenshot-guard.sh` landed in the
  * repository copy alone; `scaffolding/.githooks/screenshot-guard.sh` kept the pre-fix bytes, and

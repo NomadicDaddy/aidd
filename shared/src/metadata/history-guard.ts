@@ -31,11 +31,12 @@ const HOOK = 'pre-push';
  * here ships a hook that immediately fails on a missing script in every derived project. A guard
  * absent from an older scaffolding tag is simply skipped (see the existence check below).
  *
- * Exported because there are two installers, not one: this covers the ingestion lanes, and
- * scripts/install-history-guard.ts sweeps the existing fleet. They must agree on the file set, and
- * a second literal is how they would stop agreeing — scripts/install-history-guard.ts already
- * shipped a hook calling a guard it did not deliver for that exact reason. scripts/ imports this;
- * shared/ never imports scripts/.
+ * Exported because this installer is not the list's only reader: scripts/check-hook-parity.ts and
+ * the push-guards contract test hold it equal to what the hook invokes and to what the scaffold
+ * carries. They must agree on the file set, and a second literal is how they would stop agreeing —
+ * the fleet installer that used to sit in scripts/ kept its own list and shipped a hook calling a
+ * guard it did not deliver for that exact reason. scripts/ imports this; shared/ never imports
+ * scripts/.
  */
 export const GUARDS = ['force-push-guard.sh', 'aidd-history-guard.sh', 'screenshot-guard.sh'];
 const MARKER = 'aidd history guard';
@@ -54,10 +55,10 @@ export const COMMIT_HOOK = 'pre-commit';
  */
 export const COMMIT_SOURCE = 'pre-commit-leak-guard-only';
 /**
- * Every guard the guard-only hook sources. Deliberately shorter than the leak-guard contract's
- * `HOOK_FILES`: the fleet sync also carries `leak-guard-setup.sh`, which seeds the tier-2 pattern
- * file from a `prepare` script, and a scaffolded package.json has no `prepare` to run it. Copying it
- * here would deliver a file nothing invokes.
+ * Every guard the guard-only hook sources. Deliberately shorter than the `leak-guard-hooks` file
+ * list in scripts/shared-core-manifest.json: the fleet sync also carries `leak-guard-setup.sh`,
+ * which seeds the tier-2 pattern file from a `prepare` script, and a scaffolded package.json has no
+ * `prepare` to run it. Copying it here would deliver a file nothing invokes.
  */
 export const COMMIT_GUARDS = ['leak-guard.sh'];
 export const COMMIT_MARKER = 'bash .githooks/leak-guard.sh';

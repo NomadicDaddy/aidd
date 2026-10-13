@@ -1,12 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
 
 import { AIDD_ROOT, GUARDS, HOOK, MARKER } from '../../scripts/lib/push-guards/contract.ts';
-import { testTempDir } from '../_helpers/temp.ts';
-import { removeTempTree } from '../backend/_helpers/remove-temp-tree.ts';
 
-// The installer copies a hook outward and, separately, a list of guard files. Nothing links the
+// An installer copies a hook outward and, separately, a list of guard files. Nothing links the
 // two: the hook is shell, the list is TypeScript, and a change to one compiles and passes review
 // without the other. That gap has already been exercised once. `feat(release): require screenshot
 // artifacts for tags` taught .githooks/pre-push to call screenshot-guard.sh and did not touch the
@@ -31,7 +29,7 @@ const referencedGuards = [...hookBody.matchAll(/\$hooks_dir\/([A-Za-z0-9._-]+\.s
 	(m) => m[1]!,
 );
 
-describe('install-history-guard contract', () => {
+describe('push-guards contract', () => {
 	test('the hook chains at least one guard', () => {
 		// Guards against the regex silently matching nothing after a hook rewrite, which would make
 		// every assertion below vacuously true.
@@ -70,45 +68,6 @@ describe('install-history-guard contract', () => {
 			expect(hookBody).toMatch(
 				new RegExp(`\\|\\s*bash "\\$hooks_dir/${guard.replace('.', '\\.')}`),
 			);
-		}
-	});
-});
-
-describe('install-history-guard sources', () => {
-	test('the installer reads its file list from the contract, not a local literal', () => {
-		// The whole point of the contract module is that the list has one home. A literal copy here
-		// would reintroduce exactly the drift these tests exist to catch.
-		const installer = readFileSync(
-			resolve(AIDD_ROOT, 'scripts', 'install-history-guard.ts'),
-			'utf8',
-		);
-		expect(installer).toContain("from './lib/push-guards/contract.ts'");
-		for (const guard of GUARDS) expect(installer).not.toContain(`'${guard}'`);
-	});
-
-	test('a foreign fleet root is delivered from this checkout as the owner', async () => {
-		// --root D:/public hands the writer a fleet with no aidd in it. The baseline is this
-		// checkout, not a sibling under that root; the first run over D:/public reported the owner
-		// as not checked out and wrote nothing while announcing eight discovered repositories.
-		const fleet = await testTempDir('aidd-foreign-fleet-');
-		try {
-			const run = Bun.spawnSync(
-				[
-					'bun',
-					'scripts/sync-shared-core.ts',
-					'--check',
-					'--group',
-					'push-guards',
-					'--fleet-root',
-					fleet,
-				],
-				{ cwd: AIDD_ROOT, stderr: 'pipe', stdout: 'pipe', windowsHide: true },
-			);
-			const output = run.stdout.toString() + run.stderr.toString();
-			expect(output).toContain('push-guards (owner: aidd)');
-			expect(output).not.toContain('NOT VERIFIED');
-		} finally {
-			await removeTempTree(fleet);
 		}
 	});
 });

@@ -151,6 +151,71 @@ describe('the report of a review-only skill run', () => {
 		slowOrchestratorTestTimeoutMs,
 	);
 
+	// Found in review: the fallback name was written without the check the usual name got, so a
+	// person's file at both names lost the second one.
+	test(
+		"a person's file at the fallback name is kept too: the report takes the next free name",
+		async () => {
+			const name = `feature-review-${new Date().toISOString().slice(0, 10)}`;
+			const notes = (which: string) => `# ${which} notes of mine\n\nKeep these.\n`;
+			const run = await runWith(
+				'both-names-taken',
+				'review-only',
+				{ directiveCompleted: true, reportMarkdown: report },
+				async (metadataDir) => {
+					await mkdir(join(metadataDir, 'reports'), { recursive: true });
+					await writeFile(join(metadataDir, 'reports', `${name}.md`), notes('first'));
+					await writeFile(
+						join(metadataDir, 'reports', `${name}-aidd.md`),
+						notes('second'),
+					);
+				},
+			);
+			expect(run.exit).toBe(0);
+			const reportsDir = join(run.store.metadataDir, 'reports');
+			expect(await readFile(join(reportsDir, `${name}.md`), 'utf8')).toBe(notes('first'));
+			expect(await readFile(join(reportsDir, `${name}-aidd.md`), 'utf8')).toBe(
+				notes('second'),
+			);
+			expect(await readFile(join(reportsDir, `${name}-aidd-2.md`), 'utf8')).toContain(report);
+			expect(run.summary).toContain(`report saved to .aidd/reports/${name}-aidd-2.md`);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'with every name taken by files aidd did not save, nothing is replaced and the run is incomplete',
+		async () => {
+			const name = `feature-review-${new Date().toISOString().slice(0, 10)}`;
+			const suffixes = ['', '-aidd', '-aidd-2', '-aidd-3', '-aidd-4', '-aidd-5'];
+			const run = await runWith(
+				'every-name-taken',
+				'review-only',
+				{ directiveCompleted: true, reportMarkdown: report },
+				async (metadataDir) => {
+					await mkdir(join(metadataDir, 'reports'), { recursive: true });
+					for (const suffix of suffixes) {
+						await writeFile(
+							join(metadataDir, 'reports', `${name}${suffix}.md`),
+							`mine ${suffix}\n`,
+						);
+					}
+				},
+			);
+			expect(run.exit).toBe(1);
+			expect(run.stopReason).toBe('blocked');
+			expect(run.summary).toContain('incomplete: the report could not be saved: 6 files');
+			expect([...run.reports].sort()).toEqual(suffixes.map((s) => `${name}${s}.md`).sort());
+			const reportsDir = join(run.store.metadataDir, 'reports');
+			for (const suffix of suffixes) {
+				expect(await readFile(join(reportsDir, `${name}${suffix}.md`), 'utf8')).toBe(
+					`mine ${suffix}\n`,
+				);
+			}
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
 	test(
 		'a report aidd saved earlier the same day is replaced by the newer one',
 		async () => {

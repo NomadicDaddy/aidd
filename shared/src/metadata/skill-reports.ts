@@ -32,6 +32,30 @@ async function mayReplace(path: string): Promise<boolean> {
 	}
 }
 
+/** The names tried, in order: the usual one, then `-aidd`, `-aidd-2` and so on. */
+const FALLBACK_SUFFIXES = ['', '-aidd', '-aidd-2', '-aidd-3', '-aidd-4', '-aidd-5'];
+
+/**
+ * The first name that is free or already holds a report of aidd's. Every candidate gets the same
+ * check, the fallbacks too: a person's file at `-aidd` is no more aidd's to replace than one at
+ * the usual name. With every candidate taken by someone else's file the save fails, and the run is
+ * recorded as incomplete, which is the safe outcome; nothing is overwritten to make room.
+ */
+async function freeReportPath(
+	projectDir: string,
+	skillId: string,
+	timestamp: Date,
+): Promise<string> {
+	for (const suffix of FALLBACK_SUFFIXES) {
+		const candidate = reportPath(projectDir, skillId, timestamp, suffix);
+		if (await mayReplace(candidate)) return candidate;
+	}
+	const usual = skillReportPath(projectDir, skillId, timestamp);
+	throw new Error(
+		`${FALLBACK_SUFFIXES.length} files that aidd did not save already hold the names it would use, from ${usual} on`,
+	);
+}
+
 /**
  * Save the report a review-only skill run returned. aidd writes it, not the agent: a review-only
  * run promises the operator that the agent changes nothing in the project, and that promise is
@@ -40,7 +64,8 @@ async function mayReplace(path: string): Promise<boolean> {
  *
  * That folder is ignored by git in most projects and people keep their own notes in it under the
  * same kind of name. A file aidd did not save is never replaced: the report then goes beside it as
- * `<skill>-YYYY-MM-DD-aidd.md`, and the returned path says so.
+ * `<skill>-YYYY-MM-DD-aidd.md` (or `-aidd-2` and on, if that is someone's too), and the returned
+ * path says so.
  */
 export async function writeSkillReport(
 	projectDir: string,
@@ -49,10 +74,7 @@ export async function writeSkillReport(
 	options: { runId?: string; timestamp?: Date } = {},
 ): Promise<string> {
 	const timestamp = options.timestamp ?? new Date();
-	const usual = skillReportPath(projectDir, skillId, timestamp);
-	const path = (await mayReplace(usual))
-		? usual
-		: reportPath(projectDir, skillId, timestamp, '-aidd');
+	const path = await freeReportPath(projectDir, skillId, timestamp);
 	const run = options.runId === undefined ? '' : ` run ${options.runId}`;
 	const provenance = `${PROVENANCE_PREFIX}${run} of skill ${skillId} at ${timestamp.toISOString()}. -->`;
 	await mkdir(dirname(path), { recursive: true });

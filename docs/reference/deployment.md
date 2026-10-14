@@ -58,6 +58,10 @@ the `web` object:
 Clients send the access token to the web API using the standard `Authorization: Bearer` scheme.
 Set it with `AIDD_WEB_AUTH_TOKEN` in preference to the config file.
 
+To exercise the token guard, run `bun run aidd-client -- --host <address> --path /api/v1/projects`
+against the bound non-loopback address. A `127.0.0.1` request is loopback-exempt and passes without
+the token.
+
 See [configuration.md](./configuration.md) for the complete schema and the remaining `web.*` keys.
 
 ## Start And Stop

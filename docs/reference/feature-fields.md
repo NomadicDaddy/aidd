@@ -119,6 +119,13 @@ The schema passes through extra fields so features can carry richer context. Com
 | `spernakit_version`   | `string`             | Marks a feature as template-owned. Preserve it in derived copies: it records the release where ownership originated, not the latest template version. App-owned features and remediation records must not add it.                                                                                                                                                                                                                                                    |
 | `shippedVersion`      | `string`             | Internal project version this feature's current state shipped in. Stamped by the `document-changes` skill alongside a dated revision note in `notes`. The milestone auto-place repair backfills it on completed features that never got stamped, using the app's current `package.json` version — inferred provenance, recorded as such in a dated `notes` entry.                                                                                                    |
 
+Records completed before `completedAt` existed, and records missing `createdAt`, can be backfilled
+from the runs ledger, revision notes and `updatedAt`. Preview with
+`bun run features:backfill-timestamps -- --project-dir=<path> --dry-run`, then run it without
+`--dry-run`. The script rewrites each changed `feature.json` with 2-space JSON, so finish with the
+step it prints: `bunx prettier --write --ignore-path /dev/null ".aidd/features/*/feature.json"`,
+then `bun run start -- --project-dir . --check-features`.
+
 `notes` is optional on ordinary base features. Before appending, normalize missing/null to `[]`, a
 string to `[existingString]`, and an array to a copy; preserve every existing string and persist the
 result as an array. Readers must accept both persisted shapes because synced corpora contain both.

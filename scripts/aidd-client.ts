@@ -11,9 +11,9 @@ import { resolveConfig } from 'aidd-shared/config';
  * Point `--host` at the bound tailnet address to actually exercise the bearer guard —
  * a `127.0.0.1` request is loopback-exempt and would pass without the token.
  *
- *   bun scripts/aidd-client.ts                       # configured host, default path
- *   bun scripts/aidd-client.ts --host 100.x.y.z      # exercise the token over the tailnet
- *   bun scripts/aidd-client.ts --path /api/v1/runs   # any GET endpoint
+ *   bun run aidd-client                          # configured host, default path
+ *   bun run aidd-client -- --host 100.x.y.z      # exercise the token over the tailnet
+ *   bun run aidd-client -- --path /api/v1/runs   # any GET endpoint
  */
 import { resolve } from 'node:path';
 import { parseArgs as parseNodeArgs } from 'node:util';

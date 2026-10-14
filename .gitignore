@@ -22,6 +22,8 @@ artifacts/
 crawltest.json
 devdocs/
 dogfood-output/
+# feature-review sweep's cross-app summary (skills/feature-review-all); written on every run
+/reports/
 screenshots/
 scripts/*-error.png
 scripts/smoke-cache.json

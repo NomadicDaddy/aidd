@@ -148,6 +148,7 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 	// a checkout are scanned at all. `scripts/**/*` carries the check and the scaffold list it reads.
 	'self-contained': [
 		'.gitignore',
+		'AGENTS.md',
 		'README.md',
 		'audits/**/*',
 		'backend/package.json',

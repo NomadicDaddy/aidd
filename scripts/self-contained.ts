@@ -20,7 +20,9 @@ const requiredPaths = [
 	'tsconfig.json',
 ];
 
-const scannedPaths = [
+// Every root here is also a cache input of the self-contained step (scripts/lib/smoke-cache/
+// dependencies.ts); test/scripts/self-contained-ignored.test.ts holds the two lists together.
+export const scannedPaths = [
 	'AGENTS.md',
 	'README.md',
 	'package.json',
@@ -270,4 +272,4 @@ async function main(): Promise<number> {
 	return 0;
 }
 
-process.exit(await main());
+if (import.meta.main) process.exit(await main());

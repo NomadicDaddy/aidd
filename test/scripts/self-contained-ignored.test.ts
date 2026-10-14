@@ -4,6 +4,8 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 import { REQUIRED_SCAFFOLD_PATHS } from '../../scripts/check-scaffold.ts';
+import { STEP_DEPENDENCIES } from '../../scripts/lib/smoke-cache/dependencies.ts';
+import { scannedPaths } from '../../scripts/self-contained.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
@@ -70,5 +72,17 @@ describe('self-contained tool in a git checkout', () => {
 		} finally {
 			await removeTempTree(root);
 		}
+	});
+});
+
+// A scanned root missing from the step's cache inputs lets an edit to it replay a cached pass;
+// root AGENTS.md was one until roger's review of 7c30c2d5.
+describe('self-contained cache inputs', () => {
+	test('cover every root the check scans', () => {
+		const inputs = STEP_DEPENDENCIES['self-contained'] ?? [];
+		const uncovered = scannedPaths.filter(
+			(root) => !inputs.includes(root) && !inputs.includes(`${root}/**/*`),
+		);
+		expect(uncovered).toEqual([]);
 	});
 });

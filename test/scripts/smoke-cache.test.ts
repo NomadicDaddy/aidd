@@ -18,6 +18,7 @@ import {
 } from '../../scripts/smoke-cache.ts';
 import { parseSmokeQcArgs, SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
 
+import { writeAcceptedAnalysis } from '../_helpers/bundle-analysis.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 async function createSmokeProject(): Promise<string> {
 	const root = await testTempDir('aidd-smoke-cache-');
@@ -114,9 +115,6 @@ async function createAnalyzedProject(): Promise<string> {
 	await mkdir(join(root, 'frontend', 'dist', 'assets'), { recursive: true });
 	await writeFile(join(root, 'frontend', 'dist', 'index.html'), '<!doctype html>\n');
 	await writeFile(join(root, 'frontend', 'dist', 'assets', 'index.js'), 'export {};\n');
-	await mkdir(join(root, 'data', 'build-analysis'), { recursive: true });
-	await writeFile(join(root, 'data', 'build-analysis', 'frontend-stats.json'), '{}\n');
-	await writeFile(join(root, 'data', 'build-analysis', 'frontend-stats.html'), '<html></html>\n');
 	await writeFile(
 		join(root, '.gitignore'),
 		['scripts/smoke-cache.json', 'data/', 'frontend/dist/', ''].join('\n'),
@@ -124,6 +122,8 @@ async function createAnalyzedProject(): Promise<string> {
 	await git(root, 'init');
 	await git(root, 'add', '.');
 	await git(root, 'commit', '-m', 'first');
+	// The cache replays build:analyze only over a report its check accepts, at this commit.
+	await writeAcceptedAnalysis(root);
 	return root;
 }
 

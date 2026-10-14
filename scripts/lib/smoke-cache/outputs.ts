@@ -1,6 +1,8 @@
 import { stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+import { currentRevision, inspectAnalysis } from '../../check-bundle-analysis.ts';
+
 /**
  * A cache hit means "the inputs are unchanged", which is only a safe reason to skip a step when
  * the step's output is still on disk. `build:frontend` hashes 408 source files and none of them
@@ -27,6 +29,17 @@ export const STEP_OUTPUTS: Record<string, string[]> = {
 	'verify-minification': ['frontend/dist'],
 };
 
+/**
+ * Outputs whose contents decide the step's own pass, checked again before a hit is replayed.
+ * build:analyze passes only when check:bundle-analysis accepts its report, and nothing in the
+ * cache key reads the report: a corrupt or truncated one with unchanged inputs replayed a pass
+ * the step would now fail (roger, review of 04079824). The same check runs here, in milliseconds.
+ */
+const STEP_OUTPUT_CHECKS: Record<string, (projectRoot: string) => boolean> = {
+	'build:analyze': (projectRoot) =>
+		inspectAnalysis(projectRoot, currentRevision(projectRoot)).length === 0,
+};
+
 async function directoryHasFiles(directory: string): Promise<boolean> {
 	// Take only the first entry: this answers "did anything get emitted", not "how much".
 	const entries = new Bun.Glob('**/*').scan({ cwd: directory, onlyFiles: true });
@@ -43,10 +56,11 @@ export async function stepOutputsExist(projectRoot: string, step: string): Promi
 		const stats = await stat(outputPath).catch(() => null);
 		if (stats === null) return false;
 
-		// A file output is proven by its existence; only a directory can exist yet be empty,
-		// which is what `rm -rf dist/*` and a half-finished build both leave behind.
+		// An empty output is no output: a zero-byte file is what an interrupted write leaves, and
+		// an empty directory is what `rm -rf dist/*` and a half-finished build leave.
+		if (stats.isFile() && stats.size === 0) return false;
 		if (stats.isDirectory() && !(await directoryHasFiles(outputPath))) return false;
 	}
 
-	return true;
+	return STEP_OUTPUT_CHECKS[step]?.(projectRoot) ?? true;
 }

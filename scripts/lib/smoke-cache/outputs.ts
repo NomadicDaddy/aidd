@@ -12,7 +12,12 @@ import { resolve } from 'node:path';
  * as an `outputs` field on each step's dependency record.
  */
 export const STEP_OUTPUTS: Record<string, string[]> = {
-	'build:analyze': ['data/build-analysis'],
+	// Both files, not the directory: check:bundle-analysis needs each, and a directory holding
+	// only one of them still has files in it.
+	'build:analyze': [
+		'data/build-analysis/frontend-stats.json',
+		'data/build-analysis/frontend-stats.html',
+	],
 	'build:frontend': ['frontend/dist'],
 	// Not emitters, but they READ frontend/dist. They hash it too (GENERATED_OUTPUT_STEPS), and
 	// this covers the case hashing cannot: an empty dist has no files, so it produces no hash

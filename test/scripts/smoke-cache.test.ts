@@ -1,7 +1,7 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { collectDependencies } from '../../scripts/lib/smoke-cache/collect.ts';
 import { parseCoverageFiles, TEST_COVERAGE_DIR } from '../../scripts/lib/smoke-cache/coverage.ts';
@@ -87,6 +87,44 @@ async function trackSmokeProject(root: string): Promise<void> {
 			throw new Error(await new Response(process.stderr).text());
 		}
 	}
+}
+
+async function git(root: string, ...args: string[]): Promise<void> {
+	const process = Bun.spawn(
+		[
+			'git',
+			'-C',
+			root,
+			'-c',
+			'user.name=fixture',
+			'-c',
+			'user.email=fixture@example.invalid',
+			...args,
+		],
+		{ stderr: 'pipe', stdout: 'pipe', windowsHide: true },
+	);
+	if ((await process.exited) !== 0) {
+		throw new Error(await new Response(process.stderr).text());
+	}
+}
+
+/** A committed fixture with a built dist and both analysis reports, as build:analyze leaves it. */
+async function createAnalyzedProject(): Promise<string> {
+	const root = await createSmokeProject();
+	await mkdir(join(root, 'frontend', 'dist', 'assets'), { recursive: true });
+	await writeFile(join(root, 'frontend', 'dist', 'index.html'), '<!doctype html>\n');
+	await writeFile(join(root, 'frontend', 'dist', 'assets', 'index.js'), 'export {};\n');
+	await mkdir(join(root, 'data', 'build-analysis'), { recursive: true });
+	await writeFile(join(root, 'data', 'build-analysis', 'frontend-stats.json'), '{}\n');
+	await writeFile(join(root, 'data', 'build-analysis', 'frontend-stats.html'), '<html></html>\n');
+	await writeFile(
+		join(root, '.gitignore'),
+		['scripts/smoke-cache.json', 'data/', 'frontend/dist/', ''].join('\n'),
+	);
+	await git(root, 'init');
+	await git(root, 'add', '.');
+	await git(root, 'commit', '-m', 'first');
+	return root;
 }
 
 describe('smoke cache', () => {
@@ -503,5 +541,50 @@ describe('smoke cache', () => {
 			'run',
 			'test:coverage',
 		]);
+	});
+	// check:bundle-analysis fails when the report names another commit or other dist bytes, yet
+	// neither was in the key: smoke:qc printed [CACHED] build:analyze while the check exited 1.
+	describe('build:analyze', () => {
+		const savedRevision = process.env['AIDD_BUILD_REVISION'];
+		beforeEach(() => {
+			delete process.env['AIDD_BUILD_REVISION'];
+		});
+		afterEach(() => {
+			if (savedRevision === undefined) delete process.env['AIDD_BUILD_REVISION'];
+			else process.env['AIDD_BUILD_REVISION'] = savedRevision;
+		});
+
+		test('skips while the commit, dist and both reports are unchanged', async () => {
+			const root = await createAnalyzedProject();
+			await recordStepSuccess(root, 'build:analyze', 10);
+
+			expect(await canSkipStep(root, 'build:analyze')).toBe(true);
+		});
+
+		test('misses after a commit that changes no build input', async () => {
+			const root = await createAnalyzedProject();
+			await recordStepSuccess(root, 'build:analyze', 10);
+			await writeFile(join(root, 'README.md'), 'not a build input\n');
+			await git(root, 'add', 'README.md');
+			await git(root, 'commit', '-m', 'second');
+
+			expect(await canSkipStep(root, 'build:analyze')).toBe(false);
+		});
+
+		test('misses after a byte change under frontend/dist', async () => {
+			const root = await createAnalyzedProject();
+			await recordStepSuccess(root, 'build:analyze', 10);
+			await writeFile(join(root, 'frontend', 'dist', 'assets', 'index.js'), 'export {}; \n');
+
+			expect(await canSkipStep(root, 'build:analyze')).toBe(false);
+		});
+
+		test('misses when frontend-stats.json is gone but the HTML report remains', async () => {
+			const root = await createAnalyzedProject();
+			await recordStepSuccess(root, 'build:analyze', 10);
+			await rm(join(root, 'data', 'build-analysis', 'frontend-stats.json'));
+
+			expect(await canSkipStep(root, 'build:analyze')).toBe(false);
+		});
 	});
 });

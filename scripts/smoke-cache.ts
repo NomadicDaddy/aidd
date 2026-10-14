@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
+import { currentRevision } from './check-bundle-analysis.ts';
 import {
 	clearSmokeCacheEvaluationContext as clearDependencyEvaluationContext,
 	collectDependencies,
@@ -13,6 +14,7 @@ import { readTestCoverageFiles } from './lib/smoke-cache/coverage.ts';
 import {
 	isCacheableStep,
 	isGeneratedOutputStep,
+	REVISION_KEYED_STEPS,
 	SMOKE_CACHE_RELATIVE_PATH,
 	STEP_DEPENDENCIES,
 	TEST_STEP_NAME,
@@ -91,6 +93,9 @@ async function collectCacheDependencies(
  * A step's cache key: its dependency hash, prefixed with the Bun that ran it. A pass recorded
  * under one runtime says nothing about another, and without the prefix a gate run on a candidate
  * Bun read every unchanged step as already passing on it (Bun 1.4.3 review, room #8215).
+ *
+ * A revision-keyed step also carries the commit, read through the same `currentRevision` its check
+ * uses so the AIDD_BUILD_REVISION override cannot make the key and the check disagree.
  */
 async function hashCacheDependencies(
 	projectRoot: string,
@@ -112,7 +117,10 @@ async function hashCacheDependencies(
 					isGeneratedOutputStep(step),
 					context?.dependencies,
 				);
-	return hash === null ? null : `bun@${Bun.version}:${hash}`;
+	if (hash === null) return null;
+	const key = `bun@${Bun.version}:${hash}`;
+	if (!REVISION_KEYED_STEPS.has(step)) return key;
+	return `${key}:rev@${currentRevision(projectRoot) ?? 'unknown'}`;
 }
 
 async function readCache(projectRoot: string): Promise<SmokeCacheFile> {

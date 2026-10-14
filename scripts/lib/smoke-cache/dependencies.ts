@@ -76,10 +76,15 @@ const LINT_DEPENDENCIES = [
 
 export const STEP_DEPENDENCIES: Record<string, string[]> = {
 	// The analysis build reruns the production build under an overlay, so it shares the build's
-	// inputs, plus the gate that reads what it wrote. Its artifact lives under data/, which
-	// collect.ts excludes from hashing, so the existence check in outputs.ts is what covers a
-	// deleted report.
-	'build:analyze': [...FRONTEND_BUILD_INPUTS, 'scripts/check-bundle-analysis.ts'],
+	// inputs, plus the gate that reads what it wrote. That gate also asserts the report describes
+	// the bytes in frontend/dist, so the dist is an input too (see GENERATED_OUTPUT_STEPS). Its
+	// report lives under data/, which collect.ts excludes from hashing, so the existence check in
+	// outputs.ts is what covers a deleted report, and REVISION_KEYED_STEPS covers the commit.
+	'build:analyze': [
+		...FRONTEND_BUILD_INPUTS,
+		'frontend/dist/**/*',
+		'scripts/check-bundle-analysis.ts',
+	],
 	'build:frontend': [...FRONTEND_BUILD_INPUTS],
 	'check-deps': [
 		// The workflows are inputs, not bystanders: checkBunPinDrift reads the bun-version in each
@@ -258,6 +263,7 @@ export const GENERATED_OUTPUT_PREFIX = 'frontend/dist';
  * or hand-edited dist would sit behind a valid cache entry and never be re-inspected.
  */
 const GENERATED_OUTPUT_STEPS = new Set([
+	'build:analyze',
 	'check:critical-path',
 	'check:media-provenance',
 	'verify-minification',
@@ -266,3 +272,11 @@ const GENERATED_OUTPUT_STEPS = new Set([
 export function isGeneratedOutputStep(step: string): boolean {
 	return GENERATED_OUTPUT_STEPS.has(step);
 }
+
+/**
+ * Steps whose cache key also carries the current revision. check:bundle-analysis fails when
+ * frontend-stats.json was built from another commit (its `parsed.revision !== revision` check), and
+ * no file hash sees a new commit that leaves the build inputs alone, so without the revision a pass
+ * replayed over a check that would now fail.
+ */
+export const REVISION_KEYED_STEPS = new Set(['build:analyze']);

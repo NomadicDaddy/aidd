@@ -28,6 +28,7 @@ import { TerminalSessionManager } from './services/terminal/sessionManager.ts';
 import { detectShells } from './services/terminal/shellDetection.ts';
 import {
 	assertWebAuthTokenPresent,
+	formatInterfaceHost,
 	installProcessSafetyNet,
 	probePublicInterface,
 	removeWebPidFile,
@@ -247,12 +248,12 @@ export async function startWebServer(
 	});
 	// Startup self-test: with allowRemote false, verify no public listener already owns the port.
 	if (!config.web.allowRemote) {
-		const publicHost = await probePublicInterface(config.web.hostname, config.web.port, 500);
+		const publicHost = await probePublicInterface(config.web.port, 500);
 		if (publicHost) {
 			await database.close();
 			throw new Error(
 				`Startup aborted: port ${config.web.port} is already reachable on public interface ` +
-					`${publicHost}. A public listener already exists. Stop the conflicting service ` +
+					`${formatInterfaceHost(publicHost)}. A public listener already exists. Stop the conflicting service ` +
 					'or set web.allowRemote: true to acknowledge remote access.',
 			);
 		}

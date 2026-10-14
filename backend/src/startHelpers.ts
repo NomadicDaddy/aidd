@@ -6,7 +6,7 @@ import {
 import { readProcessEntry } from 'aidd-shared/lib/processTable';
 import { formatWebPidRecord } from 'aidd-shared/lib/webPidRecord';
 import { closeSync, mkdirSync, openSync, rmSync, writeFileSync } from 'node:fs';
-import { networkInterfaces } from 'node:os';
+import { type NetworkInterfaceInfo, networkInterfaces } from 'node:os';
 import { resolve } from 'node:path';
 
 import type { DirectorService } from './services/directorService.ts';
@@ -218,38 +218,67 @@ export function installProcessSafetyNet(): void {
 	});
 }
 
+/** Lists the host's network interfaces; `networkInterfaces` in production. */
+type InterfaceLister = () => NodeJS.Dict<NetworkInterfaceInfo[]>;
+/** Resolves true when a TCP connect to `address:port` succeeds within `timeoutMs`. */
+type ConnectProbe = (port: number, address: string, timeoutMs: number) => Promise<boolean>;
+
+async function tcpConnectProbe(port: number, address: string, timeoutMs: number): Promise<boolean> {
+	const net = await import('node:net');
+	return new Promise<boolean>((resolveProbe) => {
+		const socket = new net.Socket();
+		const timer = setTimeout(() => {
+			socket.destroy();
+			resolveProbe(false);
+		}, timeoutMs);
+		socket.connect(port, address, () => {
+			clearTimeout(timer);
+			socket.destroy();
+			resolveProbe(true);
+		});
+		socket.on('error', () => {
+			clearTimeout(timer);
+			socket.destroy();
+			resolveProbe(false);
+		});
+	});
+}
+
+// An IPv6 link-local address is only routable with its zone, so it is probed as `fe80::…%scope`.
+function probeTarget(entry: NetworkInterfaceInfo): string {
+	if (entry.family === 'IPv6' && entry.address.toLowerCase().startsWith('fe80:')) {
+		return `${entry.address}%${entry.scopeid}`;
+	}
+	return entry.address;
+}
+
+/**
+ * Boot self-test for `web.allowRemote: false`: connect to the panel port on every non-internal
+ * IPv4 and IPv6 interface, so a forwarder already relaying that port to loopback is caught before
+ * `app.listen`. Skipping either family lets a forwarder on that family pass as local traffic.
+ * @returns The first reachable probe target, or null when no public interface answers.
+ */
 export async function probePublicInterface(
-	hostname: string,
 	port: number,
 	timeoutMs: number,
+	listInterfaces: InterfaceLister = networkInterfaces,
+	connectProbe: ConnectProbe = tcpConnectProbe,
 ): Promise<null | string> {
-	const net = await import('node:net');
-	const interfaces = networkInterfaces();
-	for (const entries of Object.values(interfaces)) {
-		if (!entries) continue;
-		for (const entry of entries) {
-			if (entry.internal) continue;
-			if (entry.family !== 'IPv4') continue;
-			const address = entry.address;
-			const reachable = await new Promise<boolean>((resolveProbe) => {
-				const socket = new net.Socket();
-				const timer = setTimeout(() => {
-					socket.destroy();
-					resolveProbe(false);
-				}, timeoutMs);
-				socket.connect(port, address, () => {
-					clearTimeout(timer);
-					socket.destroy();
-					resolveProbe(true);
-				});
-				socket.on('error', () => {
-					clearTimeout(timer);
-					socket.destroy();
-					resolveProbe(false);
-				});
-			});
-			if (reachable) return address;
-		}
+	for (const entry of publicEntries(listInterfaces())) {
+		const target = probeTarget(entry);
+		if (await connectProbe(port, target, timeoutMs)) return target;
 	}
 	return null;
+}
+
+function publicEntries(interfaces: NodeJS.Dict<NetworkInterfaceInfo[]>): NetworkInterfaceInfo[] {
+	const entries = Object.values(interfaces).flatMap((list) => list ?? []);
+	return entries.filter(
+		(entry) => !entry.internal && (entry.family === 'IPv4' || entry.family === 'IPv6'),
+	);
+}
+
+/** Names an interface address for a message, bracketing IPv6 literals (`[::1]`). */
+export function formatInterfaceHost(address: string): string {
+	return address.includes(':') ? `[${address}]` : address;
 }

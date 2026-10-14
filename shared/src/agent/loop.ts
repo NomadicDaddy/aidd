@@ -171,9 +171,21 @@ export async function* runAgentLoop(
 					toolCall.arguments,
 					input.cwd,
 					options.simulation,
+					signal,
 				);
 				trackModifiedFile(filesModified, toolCall.name, args);
 				yield { result, tool: toolCall.name, type: 'tool_result' };
+				// A cancelled tool still reports its result above; the remaining calls in this turn
+				// and the next completion never start.
+				if (signal.aborted) {
+					yield { meta: signal.reason, reason: 'aborted', type: 'error' };
+					yield {
+						exitCode: zrunExitCodes.aborted,
+						filesModified: [...filesModified],
+						type: 'done',
+					};
+					return;
+				}
 				messages.push({
 					content: result,
 					role: 'tool',

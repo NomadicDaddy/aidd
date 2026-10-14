@@ -15,6 +15,7 @@ export async function executeTool(
 	rawArgs: string,
 	cwd: string,
 	simulation = false,
+	signal?: AbortSignal,
 ): Promise<string> {
 	let args: Record<string, unknown>;
 	try {
@@ -30,7 +31,7 @@ export async function executeTool(
 
 	let result: string;
 	try {
-		result = await runTool(name, args, cwd);
+		result = await runTool(name, args, cwd, signal);
 	} catch (error) {
 		result = `ERROR: ${name} threw: ${error instanceof Error ? error.message : String(error)}`;
 	}
@@ -39,16 +40,23 @@ export async function executeTool(
 		: result;
 }
 
-async function runTool(name: string, args: Record<string, unknown>, cwd: string): Promise<string> {
+// The signal reaches the tools that spawn a subprocess; the filesystem tools run in-process and
+// leave no child behind for a cancellation to reach.
+async function runTool(
+	name: string,
+	args: Record<string, unknown>,
+	cwd: string,
+	signal: AbortSignal | undefined,
+): Promise<string> {
 	switch (name) {
 		case 'bash':
-			return await runBash(args, cwd);
+			return await runBash(args, cwd, signal);
 		case 'edit_file':
 			return editWorkspaceFile(args, cwd);
 		case 'glob':
 			return await globWorkspace(args, cwd);
 		case 'grep':
-			return await grepWorkspace(args, cwd);
+			return await grepWorkspace(args, cwd, signal);
 		case 'list_directory':
 			return listWorkspaceDirectory(args, cwd);
 		case 'read_file':

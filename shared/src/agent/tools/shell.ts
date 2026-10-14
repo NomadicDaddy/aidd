@@ -31,7 +31,36 @@ function resolveBashTimeoutMs(value: unknown): number | string {
 	return value;
 }
 
-export async function runBash(args: Record<string, unknown>, cwd: string): Promise<string> {
+// The loop's signal ends an in-flight subprocess the way the timeout does: the whole tree dies and
+// the tool still returns a bounded result naming why, so the transcript records the cancellation.
+function abortReason(signal: AbortSignal | undefined): string {
+	const reason: unknown = signal?.reason;
+	return reason instanceof Error ? reason.message : String(reason);
+}
+
+function onAbort(signal: AbortSignal | undefined): {
+	aborted: Promise<'aborted'>;
+	release: () => void;
+} {
+	let release = (): void => {};
+	const aborted = new Promise<'aborted'>((resolve) => {
+		if (!signal) return;
+		if (signal.aborted) {
+			resolve('aborted');
+			return;
+		}
+		const listener = (): void => resolve('aborted');
+		signal.addEventListener('abort', listener, { once: true });
+		release = () => signal.removeEventListener('abort', listener);
+	});
+	return { aborted, release };
+}
+
+export async function runBash(
+	args: Record<string, unknown>,
+	cwd: string,
+	signal?: AbortSignal,
+): Promise<string> {
 	if (typeof args.command !== 'string' || args.command.trim() === '') {
 		return 'ERROR: command must be a non-empty string';
 	}
@@ -42,6 +71,8 @@ export async function runBash(args: Record<string, unknown>, cwd: string): Promi
 	if ('error' in bash) return `ERROR: ${bash.error}`;
 	const policyError = checkBashWorkspacePolicy(command, cwd);
 	if (policyError) return policyError;
+	if (signal?.aborted) return `ERROR: Command aborted before it started: ${abortReason(signal)}`;
+	const abort = onAbort(signal);
 	try {
 		const proc = Bun.spawn([bash.path, '-c', command], {
 			cwd,
@@ -61,8 +92,9 @@ export async function runBash(args: Record<string, unknown>, cwd: string): Promi
 		const stdoutPromise = new Response(proc.stdout).text();
 		const stderrPromise = new Response(proc.stderr).text();
 		const timeout = sleep(timeoutMs, 'timeout' as const);
-		const exitResult = await Promise.race([proc.exited, timeout]);
+		const exitResult = await Promise.race([proc.exited, timeout, abort.aborted]);
 		const timedOut = exitResult === 'timeout';
+		const aborted = exitResult === 'aborted';
 
 		if (timedOut) {
 			// The Windows tree enumeration inside killProcessTree is bounded by this budget and
@@ -70,12 +102,14 @@ export async function runBash(args: Record<string, unknown>, cwd: string): Promi
 			// resolves as soon as the root dies either way.
 			await Promise.race([proc.exited, killProcessTree(proc.pid, 250)]);
 		}
+		if (aborted) {
+			// Cancellation waits for the whole tree instead of racing the root's exit: a
+			// descendant left running would keep working after the run reported it stopped.
+			await killProcessTree(proc.pid);
+		}
 
-		const exitCode = timedOut
-			? 'timeout'
-			: typeof exitResult === 'number'
-				? exitResult
-				: await proc.exited;
+		// The race result is the exit status, 'timeout' or 'aborted': the reported exit code.
+		const exitCode = exitResult;
 		const [stdout, stderr] = await Promise.all([
 			readWithTimeout(stdoutPromise, 1000),
 			readWithTimeout(stderrPromise, 1000),
@@ -87,10 +121,15 @@ export async function runBash(args: Record<string, unknown>, cwd: string): Promi
 		if (timedOut) {
 			result += `${result ? '\n' : ''}ERROR: Command timed out after ${timeoutMs}ms`;
 		}
+		if (aborted) {
+			result += `${result ? '\n' : ''}ERROR: Command aborted: ${abortReason(signal)}`;
+		}
 		result += `\n[exit code: ${exitCode}]`;
 		return truncate(result, maxCommandOutputChars, 'output truncated at 50000 chars');
 	} catch (error) {
 		return `ERROR: Failed to execute command: ${error instanceof Error ? error.message : String(error)}`;
+	} finally {
+		abort.release();
 	}
 }
 
@@ -99,7 +138,11 @@ async function readWithTimeout(read: Promise<string>, timeoutMs: number): Promis
 	return typeof result === 'string' ? result : '';
 }
 
-export async function grepWorkspace(args: Record<string, unknown>, cwd: string): Promise<string> {
+export async function grepWorkspace(
+	args: Record<string, unknown>,
+	cwd: string,
+	signal?: AbortSignal,
+): Promise<string> {
 	if (typeof args.pattern !== 'string' || args.pattern.trim() === '') {
 		return 'ERROR: pattern must be a non-empty string';
 	}
@@ -122,6 +165,8 @@ export async function grepWorkspace(args: Record<string, unknown>, cwd: string):
 	}
 	rgArgs.push('--', args.pattern, resolved.path);
 
+	if (signal?.aborted) return `ERROR: grep aborted before it started: ${abortReason(signal)}`;
+	const abort = onAbort(signal);
 	try {
 		const proc = Bun.spawn(rgArgs, {
 			cwd,
@@ -130,9 +175,14 @@ export async function grepWorkspace(args: Record<string, unknown>, cwd: string):
 			stdout: 'pipe',
 			windowsHide: true,
 		});
-		const stdout = await new Response(proc.stdout).text();
-		const stderr = await new Response(proc.stderr).text();
-		const exitCode = await proc.exited;
+		const stdoutPromise = new Response(proc.stdout).text();
+		const stderrPromise = new Response(proc.stderr).text();
+		const exitCode = await Promise.race([proc.exited, abort.aborted]);
+		if (exitCode === 'aborted') {
+			await killProcessTree(proc.pid);
+			return `ERROR: grep aborted: ${abortReason(signal)}`;
+		}
+		const [stdout, stderr] = await Promise.all([stdoutPromise, stderrPromise]);
 		if (exitCode === 1) return 'No matches found.';
 		if (exitCode !== 0) return `ERROR: grep failed: ${stderr}`;
 		return (
@@ -141,5 +191,7 @@ export async function grepWorkspace(args: Record<string, unknown>, cwd: string):
 		);
 	} catch (error) {
 		return `ERROR: grep failed: ${error instanceof Error ? error.message : String(error)}`;
+	} finally {
+		abort.release();
 	}
 }

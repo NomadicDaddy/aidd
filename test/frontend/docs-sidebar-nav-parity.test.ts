@@ -2,12 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+import { NAV_DESTINATION_GROUPS } from '../../frontend/src/components/layout/nav-destinations.ts';
 import {
-	NAV_DESTINATION_GROUPS,
-	NAV_DESTINATIONS,
-} from '../../frontend/src/components/layout/nav-destinations.ts';
-import {
-	DOC_GROUP_ORDER,
 	DOC_SECTIONS,
 	DOCS_SIDEBAR_GROUPS,
 } from '../../frontend/src/components/shared/docs/docs-manifest.ts';
@@ -93,9 +89,9 @@ describe('docs sidebar navigation contract', () => {
 			(section): section is { route: string } & typeof section => section.route !== undefined,
 		);
 		const docsRoutes = new Set(sharedDocs.map((section) => section.route));
-		const expectedOrder = NAV_DESTINATIONS.map((destination) => destination.to).filter(
-			(route) => docsRoutes.has(route),
-		);
+		const expectedOrder = NAV_DESTINATION_GROUPS.flatMap((group) => [...group.items])
+			.map((destination) => destination.to)
+			.filter((route) => docsRoutes.has(route));
 
 		expect(sharedDocs.map((section) => section.route)).toEqual(expectedOrder);
 		for (const group of NAV_DESTINATION_GROUPS) {
@@ -106,11 +102,6 @@ describe('docs sidebar navigation contract', () => {
 				);
 			}
 		}
-		expect(DOC_GROUP_ORDER).toEqual([
-			'Getting started',
-			...NAV_DESTINATION_GROUPS.map((group) => group.label),
-			'Reference',
-		]);
 	});
 
 	test('renders only documentation-owned groups and destinations', () => {

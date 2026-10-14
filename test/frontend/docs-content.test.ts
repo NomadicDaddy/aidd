@@ -7,10 +7,8 @@ import {
 	markdownSummary,
 	parseMarkdownBlocks,
 } from '../../frontend/src/lib/markdownBlocks.ts';
-import {
-	DOC_GROUP_ORDER,
-	DOC_SECTIONS,
-} from '../../frontend/src/components/shared/docs/docs-manifest.ts';
+import { NAV_DESTINATION_GROUPS } from '../../frontend/src/components/layout/nav-destinations.ts';
+import { DOC_SECTIONS } from '../../frontend/src/components/shared/docs/docs-manifest.ts';
 import { docsNeighbors } from '../../frontend/src/pages/docs/docsPagination.ts';
 
 const DOCS_DIR = resolve(import.meta.dir, '../../frontend/content/docs');
@@ -57,8 +55,13 @@ describe('docs content', () => {
 	});
 
 	test('every section belongs to a known group', () => {
+		const knownGroups: string[] = [
+			'Getting started',
+			'Reference',
+			...NAV_DESTINATION_GROUPS.map((group) => group.label),
+		];
 		for (const section of DOC_SECTIONS) {
-			expect(DOC_GROUP_ORDER).toContain(section.group);
+			expect(knownGroups).toContain(section.group);
 		}
 	});
 

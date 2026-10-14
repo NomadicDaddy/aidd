@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
-import { NAV_DESTINATIONS } from '../../frontend/src/components/layout/nav-destinations.ts';
+import { NAV_DESTINATION_GROUPS } from '../../frontend/src/components/layout/nav-destinations.ts';
 
 const FRONTEND_SOURCE = resolve(import.meta.dir, '../../frontend/src');
 
@@ -17,7 +17,7 @@ function readNavItems(source: string): { icon: string; label: string }[] {
 			match[2] ?? '',
 		]),
 	);
-	return NAV_DESTINATIONS.map((destination) => ({
+	return NAV_DESTINATION_GROUPS.flatMap((group) => [...group.items]).map((destination) => ({
 		icon: iconByPath.get(destination.to) ?? '',
 		label: destination.label,
 	}));

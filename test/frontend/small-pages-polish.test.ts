@@ -18,7 +18,6 @@ describe('the docs rail groups in the accessibility tree, not just on screen', (
 		expect(manifest).toContain("{ label: 'Reference', slugs: ['faq', 'glossary'] }");
 		expect(docs.match(/<nav\s+aria-label=/g)).toHaveLength(1);
 		expect(docs).toContain('DOCS_SIDEBAR_GROUPS.map((group)');
-		expect(docs).not.toContain('DOC_GROUP_ORDER');
 		// The one landmark in source sits inside the group map, so one renders per group.
 		expect(docs.indexOf('<nav\n')).toBeGreaterThan(docs.indexOf('DOCS_SIDEBAR_GROUPS.map'));
 	});

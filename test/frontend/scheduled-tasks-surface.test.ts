@@ -2,7 +2,7 @@ import type { ScheduledTask } from 'aidd-shared/contracts/scheduled-tasks';
 
 import { expect, test } from 'bun:test';
 
-import { NAV_DESTINATIONS } from '../../frontend/src/components/layout/nav-destinations.ts';
+import { NAV_DESTINATION_GROUPS } from '../../frontend/src/components/layout/nav-destinations.ts';
 import { sessionStatusTone } from '../../frontend/src/lib/pipelineSessionStatus.ts';
 import {
 	draftPresetFromParams,
@@ -26,7 +26,10 @@ test('Scheduled is lazy-loaded, navigable, and covered by the crawl route contra
 	expect(app).toContain('scheduled: <ScheduledPage />');
 	// The destination registry is the shell's single source of navigation, so assert the entry
 	// itself rather than the icon-bearing view that reads it.
-	expect(NAV_DESTINATIONS).toContainEqual({ label: 'Scheduled', to: '/scheduled' });
+	expect(NAV_DESTINATION_GROUPS.flatMap((group) => [...group.items])).toContainEqual({
+		label: 'Scheduled',
+		to: '/scheduled',
+	});
 	expect(routes).toContain(
 		"scheduled: { kind: 'static', route: FRONTEND_ROUTE_PATHS.scheduled }",
 	);

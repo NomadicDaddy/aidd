@@ -64,12 +64,6 @@ export const DOC_SECTIONS: DocSection[] = [
 	{ group: 'Reference', slug: 'glossary', title: 'Glossary' },
 ];
 
-export const DOC_GROUP_ORDER: DocGroup[] = [
-	'Getting started',
-	...NAV_DESTINATION_GROUPS.map((group) => group.label),
-	'Reference',
-];
-
 /**
  * Documentation-owned destinations that earn space beside an article.
  *

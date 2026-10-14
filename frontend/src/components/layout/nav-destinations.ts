@@ -42,7 +42,3 @@ export const NAV_DESTINATION_GROUPS = [
 
 export type NavDestination = (typeof NAV_DESTINATION_GROUPS)[number]['items'][number];
 export type NavDestinationPath = NavDestination['to'];
-
-export const NAV_DESTINATIONS: readonly NavDestination[] = NAV_DESTINATION_GROUPS.flatMap(
-	(group): NavDestination[] => [...group.items],
-);

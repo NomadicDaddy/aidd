@@ -129,7 +129,13 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'shared/tsconfig*.json',
 		'tsconfig*.json',
 	],
-	'format:check': ['.prettierignore', '.prettierrc', 'package.json', 'bun.lock'],
+	'format:check': [
+		'.prettierignore',
+		'.prettierrc',
+		'package.json',
+		'bun.lock',
+		'scripts/run-format.ts',
+	],
 	lint: LINT_DEPENDENCIES,
 	// The fast gate's ESLint-cached stand-in for lint (see FAST_STEP_OVERRIDES). Same dependency
 	// set, deliberately its own cache entry so a fast pass never satisfies the uncached full gate.

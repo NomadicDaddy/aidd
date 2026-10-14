@@ -152,8 +152,8 @@ bun run start:web
 Confirm the panel comes up, then confirm `releases/latest` resolves to the new tag.
 
 Run this check under its own user profile when your working checkout's panel is running: the
-extracted tree's `start:web` reads the port from `~/.aidd/config.json` and stops whatever listens
-there, which is your working panel (see
+extracted tree's `start:web` reads the port from `~/.aidd/config.json` and by default stops the
+aidd panel listening there, which is your working panel (see
 [deployment.md](../reference/deployment.md#start-and-stop)). The build in the extracted tree
 records `source: null` in `release-build.json`, because a source archive carries no `.git` to
 attest from. That is expected; release evidence comes from the build in the clean Git checkout.

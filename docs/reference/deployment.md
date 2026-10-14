@@ -86,9 +86,11 @@ Listener settings changed from the Settings page persist to `~/.aidd/config.json
 address.
 
 The port comes from the user-level `~/.aidd/config.json`, not from the checkout you run the command
-in, and `start:web` always stops whatever listens there first. With one checkout that is what you
-want. With a second checkout on the same machine (a release check, a clone for testing), its
-`start:web` stops the first checkout's panel. Give the second checkout its own user profile:
+in. By default `start:web` first runs `stop:web` against that port, which shuts down the aidd panel
+listening there (and refuses to start if that stop is refused); `--wait-for-release` waits for the
+port to be released instead. With one checkout that is what you want. With a second checkout on
+the same machine (a release check, a clone for testing), its `start:web` stops the first
+checkout's panel. Give the second checkout its own user profile:
 point `HOME` and `USERPROFILE` at a scratch directory holding a config with a different
 `web.port`, and use that same environment for its `stop:web`.
 

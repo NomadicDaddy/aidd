@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { parseReport, recordBaseline } from '../../scripts/check-function-size.ts';
+import { eslintArgs, parseReport, recordBaseline } from '../../scripts/check-function-size.ts';
 import { STEP_DEPENDENCIES } from '../../scripts/lib/smoke-cache/dependencies.ts';
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
 import { testTempDir } from '../_helpers/temp.ts';
@@ -117,9 +117,28 @@ describe('function-size ratchet wiring', () => {
 		expect(SMOKE_QC_STEPS.map((step) => step.name)).toContain('check:function-size');
 	});
 
-	// The gate hands ESLint whole directories and the config selects ts, tsx, js and jsx, so the
-	// cached pass has to be invalidated by any of those under any measured root, by every
-	// configuration the parse depends on, and by the toolchain manifests.
+	// The measurement is syntax-only: no config lookup, the parser named by path. A repository
+	// lint config would load the type-aware project service and cost ten times the time for the
+	// same two counts.
+	test('runs ESLint without config lookup and with a parser that exists', () => {
+		const args = eslintArgs({
+			complexity: { over: 0, threshold: 7 },
+			lines: { over: 0, threshold: 40 },
+		});
+		const parser = args[args.indexOf('--parser') + 1] ?? '';
+
+		expect(args).toContain('--no-config-lookup');
+		expect(args.slice(args.indexOf('--ext'), args.indexOf('--ext') + 2)).toEqual([
+			'--ext',
+			'.ts,.tsx,.js,.jsx',
+		]);
+		expect(args).toContain('--no-inline-config');
+		expect(existsSync(parser)).toBe(true);
+	});
+
+	// The gate hands ESLint whole directories with --ext ts, tsx, js and jsx, so the cached pass
+	// has to be invalidated by any of those under any measured root and by the toolchain
+	// manifests. It reads no lint config or tsconfig, so those must not invalidate it.
 	test('its cache entry covers everything it measures or measures with', () => {
 		const globs = STEP_DEPENDENCIES['check:function-size'] ?? [];
 		const covered = (path: string): boolean =>
@@ -134,13 +153,6 @@ describe('function-size ratchet wiring', () => {
 			'frontend/src/pages/New.jsx',
 			'shared/src/new.ts',
 			'shared/src/new.js',
-			'eslint.config.js',
-			'frontend/eslint.config.js',
-			'tsconfig.json',
-			'backend/tsconfig.json',
-			'cli/tsconfig.json',
-			'frontend/tsconfig.json',
-			'shared/tsconfig.json',
 			'package.json',
 			'cli/package.json',
 			'bun.lock',
@@ -149,7 +161,18 @@ describe('function-size ratchet wiring', () => {
 		]) {
 			expect([path, covered(path)]).toEqual([path, true]);
 		}
-		for (const path of ['frontend/dist/out.js', 'frontend/src/styles.css', 'docs/README.md']) {
+		for (const path of [
+			'frontend/dist/out.js',
+			'frontend/src/styles.css',
+			'docs/README.md',
+			'eslint.config.js',
+			'frontend/eslint.config.js',
+			'tsconfig.json',
+			'backend/tsconfig.json',
+			'cli/tsconfig.json',
+			'frontend/tsconfig.json',
+			'shared/tsconfig.json',
+		]) {
 			expect([path, covered(path)]).toEqual([path, false]);
 		}
 	});

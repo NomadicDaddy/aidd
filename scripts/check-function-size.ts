@@ -5,31 +5,29 @@
  * Enforces: the function-size ratchet, beside the 300-line file gate (check:max-lines). No
  * assertion ID: the rule is a count that may only fall, not a fixed limit a record could state.
  *
- * WHY A RATCHET AND NOT A THRESHOLD. A file-length gate shapes files, not design: a file can sit
- * just under 300 lines while the functions inside it run to hundreds of lines and a cyclomatic
- * complexity in the dozens, and nothing measures them. Turning ESLint's complexity and
- * max-lines-per-function rules into errors would fail on hundreds of functions at once, so nobody
- * would land it. A ratchet records how many functions are over each line today, fails any change
- * that adds to either count, and lets the counts fall. The thresholds are the COMPLICATION audit's
- * (complexity 7, 40 lines excluding blanks and comments). The count is what moves; the worst
- * offenders are printed so the next refactor has a target.
+ * WHY A RATCHET. A file-length gate shapes files, not design: a file can sit under 300 lines while
+ * its functions run to hundreds of lines and a complexity in the dozens. Making ESLint's complexity
+ * and max-lines-per-function rules errors would fail hundreds of functions at once, so a ratchet
+ * records how many are over each line today, fails any change that adds to either count, and lets
+ * the counts fall. The thresholds are the COMPLICATION audit's (complexity 7, 40 lines excluding
+ * blanks and comments); the worst offenders are printed so the next refactor has a target. It
+ * counts and does not name functions: adding one oversized function while shrinking another passes.
  *
- * WHAT IT DOES NOT DO. It counts; it does not name functions. A change that adds one oversized
- * function while shrinking another leaves both counts where they were and passes.
+ * THE MEASUREMENT IS SYNTAX-ONLY. Both rules are core and need no type information, so ESLint
+ * runs with --no-config-lookup and the typescript-eslint parser named directly: no repository
+ * lint config and no type-aware project service is loaded. The counts depend on the source and
+ * the parser, never on eslint.config.js or a tsconfig.
  *
- * The baseline lives in scripts/function-size-baseline.json and is committed. Spernakit carries
- * the same gate with its own baseline; the two canon repositories share the rule, not the counts.
- *
- * When a change lowers a count the gate passes and says so; run with --update-baseline to record
- * the lower number, and commit it with the change that earned it. The gate never raises the
- * baseline. A repository with no baseline yet fails and says how to record one:
- * --record-baseline writes the file from today's counts, once, and refuses when one exists.
+ * The baseline lives in scripts/function-size-baseline.json and is committed; Spernakit carries
+ * the same rule with its own counts. When a count falls the gate passes and says so;
+ * --update-baseline records the lower number. The gate never raises it. With no baseline the gate
+ * fails; --record-baseline writes one from today's counts, once, and refuses when one exists.
  *
  * Run: bun scripts/check-function-size.ts [--update-baseline | --record-baseline]
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 import { exit } from 'node:process';
 import { parseArgs } from 'node:util';
 
@@ -66,34 +64,47 @@ interface EslintMessage {
 }
 
 /**
- * Runs ESLint over the scanned trees with the two size rules at the baseline's thresholds and
- * collects every function over either line.
+ * The ESLint command line: the two size rules alone, parsed syntax-only with the typescript-eslint
+ * parser resolved from the installed typescript-eslint package, and no config lookup.
+ *
+ * @param baseline - The thresholds to measure at.
+ * @returns The arguments after `bunx`.
+ */
+export function eslintArgs(baseline: Baseline): string[] {
+	const tsEslint = dirname(Bun.resolveSync('typescript-eslint/package.json', ROOT));
+	return [
+		'eslint',
+		...SCANNED,
+		'--no-config-lookup',
+		'--ext',
+		'.ts,.tsx,.js,.jsx',
+		'--parser',
+		Bun.resolveSync('@typescript-eslint/parser', tsEslint),
+		'--no-inline-config',
+		'--rule',
+		`complexity:["warn",${baseline.complexity.threshold}]`,
+		'--rule',
+		`max-lines-per-function:["warn",{"max":${baseline.lines.threshold},"skipBlankLines":true,"skipComments":true}]`,
+		'-f',
+		'json',
+	];
+}
+
+/**
+ * Runs the syntax-only ESLint pass over the scanned trees and collects every function over either
+ * line. The result is independent of the repository's lint configuration and tsconfigs.
  *
  * @param baseline - The thresholds to measure at.
  * @returns The offenders per rule and how many files ESLint scanned.
  */
 function measure(baseline: Baseline): Measured {
-	const result = spawnSync(
-		'bunx',
-		[
-			'eslint',
-			...SCANNED,
-			'--no-inline-config',
-			'--rule',
-			`complexity:["warn",${baseline.complexity.threshold}]`,
-			'--rule',
-			`max-lines-per-function:["warn",{"max":${baseline.lines.threshold},"skipBlankLines":true,"skipComments":true}]`,
-			'-f',
-			'json',
-		],
-		{
-			cwd: ROOT,
-			encoding: 'utf8',
-			maxBuffer: 64 * 1024 * 1024,
-			shell: true,
-			windowsHide: true,
-		},
-	);
+	const result = spawnSync('bunx', eslintArgs(baseline), {
+		cwd: ROOT,
+		encoding: 'utf8',
+		maxBuffer: 64 * 1024 * 1024,
+		shell: true,
+		windowsHide: true,
+	});
 	if (result.error) throw new Error(`eslint could not be run: ${result.error.message}`);
 	return parseReport(result.stdout, result.status, result.stderr, ROOT);
 }
@@ -240,13 +251,10 @@ export async function runCheckFunctionSize(updateBaseline: boolean): Promise<num
 }
 
 /**
- * Writes a repository's first baseline from today's counts. Refuses when one exists: a baseline
- * that could be re-recorded at will would let the counts rise, which is the one thing the gate is
- * for.
- *
- * The path and the measurement are parameters so the test can exercise both outcomes against a
- * throwaway file. Called with the defaults from a test, this would write a real baseline into any
- * repository that has none.
+ * Writes a repository's first baseline from today's counts, and refuses when one exists: a
+ * re-recordable baseline would let the counts rise. The path and the measurement are parameters so
+ * the test can exercise both outcomes against a throwaway file; called with the defaults from a
+ * test, this would write a real baseline into any repository that has none.
  *
  * @param baselinePath - Where the baseline lives; the repository's own by default.
  * @param measureWith - How the counts are taken; a real ESLint run by default.

@@ -173,3 +173,95 @@ export async function killProcessTree(pid: number | undefined, timeoutMs = 1000)
 	}
 	await waitForProcessExit(pid, timeoutMs);
 }
+
+/** What stopProcessTree can vouch for once it returns. */
+export interface TreeStopReport {
+	/** True only when the tree was read and every process in it is gone. */
+	complete: boolean;
+	/** Processes from the tree still alive at the end, the root among them if it survived. */
+	survivors: number[];
+	/** False when the process table could not be read, so the descendants were never known. */
+	tableRead: boolean;
+}
+
+/** The process-table and kill primitives stopProcessTree uses; replaced only in tests. */
+export interface TreeStopDeps {
+	isAlive: (pid: number) => boolean;
+	killPids: (pids: number[], timeoutMs: number) => Promise<void>;
+	killRoot: (pid: number, timeoutMs: number) => Promise<void>;
+	/** Resolves null, or rejects, when the table cannot be read. */
+	listTable: () => Promise<null | ProcessTableEntry[]>;
+}
+
+async function killPids(pids: number[], timeoutMs: number): Promise<void> {
+	if (process.platform === 'win32') {
+		await taskkill(pids, timeoutMs);
+		return;
+	}
+	for (const target of pids) {
+		try {
+			process.kill(target, 'SIGKILL');
+		} catch {
+			// Process may already have exited.
+		}
+	}
+}
+
+const defaultTreeStopDeps: TreeStopDeps = {
+	isAlive: isProcessAlive,
+	killPids,
+	killRoot: killProcessTree,
+	listTable: listProcessTable,
+};
+
+/**
+ * Stops `pid` and everything under it, and says whether it can vouch for that.
+ *
+ * killProcessTree cannot: on Windows its snapshot races the kill budget and a lost race kills only
+ * the root, and a root that has already exited returns before any descendant is looked at. Here
+ * the tree is read once, with no race, so the descendants are known even when the root is gone;
+ * every process in it is killed from that one reading and then checked. A caller that reports a
+ * cancellation as finished must not do so on a tree it never saw or that is still running.
+ * @param pid The root process.
+ * @param timeoutMs Budget for the kill and for the processes to disappear.
+ * @param deps The process primitives; tests pass fakes.
+ * @returns Whether the whole tree is confirmed gone, and which processes are not.
+ */
+export async function stopProcessTree(
+	pid: number,
+	timeoutMs = 1000,
+	deps: TreeStopDeps = defaultTreeStopDeps,
+): Promise<TreeStopReport> {
+	if (pid === process.pid) return { complete: false, survivors: [pid], tableRead: false };
+	const table = await deps.listTable().catch(() => null);
+	if (table === null || table.length === 0) return await stopRootOnly(pid, timeoutMs, deps);
+	const tree = collectTreePids(table, pid);
+	await deps.killPids(tree, timeoutMs);
+	const survivors = await survivorsAfter(tree, timeoutMs, deps.isAlive);
+	return { complete: survivors.length === 0, survivors, tableRead: true };
+}
+
+/** Without a table the descendants are unknown, so the most it can do is the root, unconfirmed. */
+async function stopRootOnly(
+	pid: number,
+	timeoutMs: number,
+	deps: TreeStopDeps,
+): Promise<TreeStopReport> {
+	await deps.killRoot(pid, timeoutMs);
+	return { complete: false, survivors: deps.isAlive(pid) ? [pid] : [], tableRead: false };
+}
+
+/** The processes of `pids` still alive once they have had `timeoutMs` to disappear. */
+async function survivorsAfter(
+	pids: number[],
+	timeoutMs: number,
+	isAlive: (pid: number) => boolean,
+): Promise<number[]> {
+	const deadline = Date.now() + timeoutMs;
+	let survivors = pids.filter((candidate) => isAlive(candidate));
+	while (survivors.length > 0 && Date.now() < deadline) {
+		await sleep(25);
+		survivors = survivors.filter((candidate) => isAlive(candidate));
+	}
+	return survivors;
+}

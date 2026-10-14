@@ -47,6 +47,7 @@ describe('tool cancellation', () => {
 		expect(Date.now() - abortedAt).toBeLessThan(2000);
 		expect(result).toContain('ERROR: Command aborted: stop requested');
 		expect(result).toContain('[exit code: aborted]');
+		expect(result).not.toContain('cleanup incomplete');
 		await expectTreeGone(cwd);
 	}, 20_000);
 

@@ -1,6 +1,6 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import { killProcessTree } from '../../lib/processTree.ts';
+import { killProcessTree, stopProcessTree, type TreeStopReport } from '../../lib/processTree.ts';
 import { AGENT_MARKER_ENV, buildToolSubprocessEnv } from '../../subprocess-env.ts';
 import { augmentEnvPathForGitBash, resolvedBash } from './bash-runtime.ts';
 import {
@@ -36,6 +36,16 @@ function resolveBashTimeoutMs(value: unknown): number | string {
 function abortReason(signal: AbortSignal | undefined): string {
 	const reason: unknown = signal?.reason;
 	return reason instanceof Error ? reason.message : String(reason);
+}
+
+// A cancellation that could not confirm the whole tree is gone says so in the tool result,
+// instead of reading as a clean stop while a descendant keeps working.
+function incompleteStop(report: TreeStopReport): string {
+	if (report.complete) return '';
+	if (!report.tableRead) {
+		return 'WARNING: cleanup incomplete: the process table could not be read, so child processes may still be running';
+	}
+	return `WARNING: cleanup incomplete: still running after the kill: pid ${report.survivors.join(', ')}`;
 }
 
 function onAbort(signal: AbortSignal | undefined): {
@@ -102,17 +112,18 @@ export async function runBash(
 			// resolves as soon as the root dies either way.
 			await Promise.race([proc.exited, killProcessTree(proc.pid, 250)]);
 		}
-		if (aborted) {
-			// Cancellation waits for the whole tree instead of racing the root's exit: a
-			// descendant left running would keep working after the run reported it stopped.
-			await killProcessTree(proc.pid);
-		}
+		// Cancellation waits for the whole tree instead of racing the root's exit: a descendant
+		// left running would keep working after the run reported it stopped.
+		const cleanup = aborted ? incompleteStop(await stopProcessTree(proc.pid)) : '';
 
 		// The race result is the exit status, 'timeout' or 'aborted': the reported exit code.
 		const exitCode = exitResult;
+		// A killed tree can leave a pipe open past its own death; after a cancellation the output
+		// is partial anyway, so the stop is not held up a full second waiting for it.
+		const readBudgetMs = aborted ? 250 : 1000;
 		const [stdout, stderr] = await Promise.all([
-			readWithTimeout(stdoutPromise, 1000),
-			readWithTimeout(stderrPromise, 1000),
+			readWithTimeout(stdoutPromise, readBudgetMs),
+			readWithTimeout(stderrPromise, readBudgetMs),
 		]);
 
 		let result = '';
@@ -123,6 +134,7 @@ export async function runBash(
 		}
 		if (aborted) {
 			result += `${result ? '\n' : ''}ERROR: Command aborted: ${abortReason(signal)}`;
+			if (cleanup) result += `\n${cleanup}`;
 		}
 		result += `\n[exit code: ${exitCode}]`;
 		return truncate(result, maxCommandOutputChars, 'output truncated at 50000 chars');
@@ -179,8 +191,9 @@ export async function grepWorkspace(
 		const stderrPromise = new Response(proc.stderr).text();
 		const exitCode = await Promise.race([proc.exited, abort.aborted]);
 		if (exitCode === 'aborted') {
-			await killProcessTree(proc.pid);
-			return `ERROR: grep aborted: ${abortReason(signal)}`;
+			const cleanup = incompleteStop(await stopProcessTree(proc.pid));
+			const message = `ERROR: grep aborted: ${abortReason(signal)}`;
+			return cleanup ? `${message}\n${cleanup}` : message;
 		}
 		const [stdout, stderr] = await Promise.all([stdoutPromise, stderrPromise]);
 		if (exitCode === 1) return 'No matches found.';

@@ -143,16 +143,27 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'shared/src/**/*.ts',
 		'package.json',
 	],
+	// Every root the check scans, whole: it reads .md, .json and shell text as well as .ts, and a
+	// root left out here let an edit to it replay a cached pass. `.gitignore` decides which files in
+	// a checkout are scanned at all. `scripts/**/*` carries the check and the scaffold list it reads.
 	'self-contained': [
+		'.gitignore',
+		'README.md',
+		'audits/**/*',
 		'backend/package.json',
-		'backend/src/**/*.ts',
+		'backend/src/**/*',
 		'cli/package.json',
-		'cli/src/**/*.ts',
+		'cli/src/**/*',
+		'docs/**/*',
+		'frontend/src/**/*',
 		'package.json',
+		'prompts/**/*',
 		'scaffolding/**/*',
+		'scripts/**/*',
 		'shared/package.json',
-		'shared/src/**/*.ts',
-		'scripts/self-contained.ts',
+		'shared/src/**/*',
+		'skills/**/*',
+		'tsconfig.json',
 	],
 	test: [
 		'bun.lock',

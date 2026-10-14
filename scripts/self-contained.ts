@@ -155,6 +155,56 @@ async function collectFiles(path: string): Promise<string[]> {
 	return files;
 }
 
+// In a checkout the scan covers what the repository carries: tracked files, and new files git does
+// not ignore. An ignored file (the local copy of the workspace AGENTS.md, personal skill notes)
+// never reaches CI or an installed aidd, and reading it failed this gate on one machine only.
+async function listCheckoutFiles(root: string): Promise<string[]> {
+	let output = '';
+	let exitCode: number;
+	try {
+		// Bun.spawn throws ENOENT for a missing binary instead of returning a non-zero exit.
+		const child = Bun.spawn(
+			[
+				'git',
+				'-C',
+				root,
+				'ls-files',
+				'--cached',
+				'--others',
+				'--exclude-standard',
+				'-z',
+				'--',
+				...scannedPaths,
+			],
+			{ stderr: 'ignore', stdout: 'pipe', windowsHide: true },
+		);
+		output = await new Response(child.stdout).text();
+		exitCode = await child.exited;
+	} catch {
+		exitCode = -1;
+	}
+	if (exitCode !== 0) {
+		throw new Error(`Cannot list the files of the git checkout at ${root}; put git on PATH.`);
+	}
+	const files: string[] = [];
+	for (const file of output.split('\0')) {
+		// `--cached` also lists tracked files deleted only in the worktree; there is nothing to read.
+		if (file !== '' && (await pathExists(join(root, file)))) files.push(join(root, file));
+	}
+	return files;
+}
+
+async function collectScannedFiles(root: string): Promise<string[]> {
+	if (await pathExists(join(root, '.git'))) return await listCheckoutFiles(root);
+	// Outside a repository nothing is ignored, so every file under the scanned paths counts.
+	const files: string[] = [];
+	for (const path of scannedPaths) {
+		const fullPath = join(root, path);
+		if (await pathExists(fullPath)) files.push(...(await collectFiles(fullPath)));
+	}
+	return files;
+}
+
 function isTextFile(path: string): boolean {
 	return /\.(?:ts|tsx|js|mjs|cjs|json|md|sh|ps1|txt|yml|yaml)$/i.test(path);
 }
@@ -189,11 +239,7 @@ async function main(): Promise<number> {
 		if (!(await pathExists(join(root, path)))) missing.push(path);
 	}
 
-	const files: string[] = [];
-	for (const path of scannedPaths) {
-		const fullPath = join(root, path);
-		if (await pathExists(fullPath)) files.push(...(await collectFiles(fullPath)));
-	}
+	const files = await collectScannedFiles(root);
 
 	const staleRefs: string[] = [];
 	for (const file of files.filter(isTextFile)) {

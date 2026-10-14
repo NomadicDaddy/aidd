@@ -16,29 +16,30 @@ there, on the Docs page. Their source is `frontend/content/docs/`.
 
 ## Reference
 
-| Document                                                         | Purpose                                                                               |
-| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| [configuration.md](./reference/configuration.md)                 | User and project config files, merge order, accepted keys, examples.                  |
-| [what-aidd-modifies.md](./reference/what-aidd-modifies.md)       | Trust reference: everything aidd reads, writes, runs, and sends over the network.     |
-| [backends.md](./reference/backends.md)                           | Backend adapter contract and supported CLI/provider surfaces.                         |
-| [deployment.md](./reference/deployment.md)                       | Install, launch, config/log/data locations, remote binding, update, uninstall.        |
-| [licensing.md](./reference/licensing.md)                         | Fair Source terms and the capabilities included with aidd.                            |
-| [recipes.md](./reference/recipes.md)                             | Bundled file-backed recipes defined in `recipes/*.json`.                              |
-| [coderabbit.md](./reference/coderabbit.md)                       | CodeRabbit integration: the local CLI review skill, prerequisites, and recipe wiring. |
-| [interview.md](./reference/interview.md)                         | Interview mode: gathering project context via questions and answers.                  |
-| [triumvirate.md](./reference/triumvirate.md)                     | Triumvirate planning, overseer, execution, and artifacts.                             |
-| [auto-rebuild.md](./reference/auto-rebuild.md)                   | Rebuild workflow for project specs, feature backlogs, audits, and validation.         |
-| [feature-fields.md](./reference/feature-fields.md)               | Feature JSON fields, IDs, statuses, roadmap mapping, audit metadata.                  |
-| [sample-feature-full.json](./reference/sample-feature-full.json) | Full valid feature JSON example.                                                      |
-| [project-profile.md](./reference/project-profile.md)             | `.aidd/project-profile.json` schema, fields, and inference behavior.                  |
-| [audit-applicability.md](./reference/audit-applicability.md)     | Global and per-project audit applicability mapping and `/audits` matrix UI.           |
-| [artifacts.md](./reference/artifacts.md)                         | How each `.aidd/` artifact is created or refreshed.                                   |
-| [external-skills.md](./reference/external-skills.md)             | Optional upstream skills aidd can use, and the distribution boundary.                 |
-| [execution-flow.md](./reference/execution-flow.md)               | Execution flow from CLI args through iteration artifacts.                             |
-| [gate-conventions.md](./reference/gate-conventions.md)           | The eight rules every `check*` gate follows, and how to change one.                   |
-| [project-reports.md](./reference/project-reports.md)             | Web bug/feature reports and the feature records they generate.                        |
-| [dashboard-metrics.md](./reference/dashboard-metrics.md)         | Definition of record for the four dashboard fleet-metric numbers.                     |
-| [data-refresh.md](./reference/data-refresh.md)                   | How the panel keeps data current: defaults, invalidation, polling, reconnect.         |
+| Document                                                                       | Purpose                                                                               |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| [configuration.md](./reference/configuration.md)                               | User and project config files, merge order, accepted keys, examples.                  |
+| [what-aidd-modifies.md](./reference/what-aidd-modifies.md)                     | Trust reference: everything aidd reads, writes, runs, and sends over the network.     |
+| [backends.md](./reference/backends.md)                                         | Backend adapter contract and supported CLI/provider surfaces.                         |
+| [deployment.md](./reference/deployment.md)                                     | Install, launch, config/log/data locations, remote binding, update, uninstall.        |
+| [licensing.md](./reference/licensing.md)                                       | Fair Source terms and the capabilities included with aidd.                            |
+| [recipes.md](./reference/recipes.md)                                           | Bundled file-backed recipes defined in `recipes/*.json`.                              |
+| [coderabbit.md](./reference/coderabbit.md)                                     | CodeRabbit integration: the local CLI review skill, prerequisites, and recipe wiring. |
+| [interview.md](./reference/interview.md)                                       | Interview mode: gathering project context via questions and answers.                  |
+| [triumvirate.md](./reference/triumvirate.md)                                   | Triumvirate planning, overseer, execution, and artifacts.                             |
+| [auto-rebuild.md](./reference/auto-rebuild.md)                                 | Rebuild workflow for project specs, feature backlogs, audits, and validation.         |
+| [feature-fields.md](./reference/feature-fields.md)                             | Feature JSON fields, IDs, statuses, roadmap mapping, audit metadata.                  |
+| [sample-feature-full.json](./reference/sample-feature-full.json)               | Full valid feature JSON example.                                                      |
+| [project-profile.md](./reference/project-profile.md)                           | `.aidd/project-profile.json` schema, fields, and inference behavior.                  |
+| [audit-applicability.md](./reference/audit-applicability.md)                   | Global and per-project audit applicability mapping and `/audits` matrix UI.           |
+| [artifacts.md](./reference/artifacts.md)                                       | How each `.aidd/` artifact is created or refreshed.                                   |
+| [external-skills.md](./reference/external-skills.md)                           | Optional upstream skills aidd can use, and the distribution boundary.                 |
+| [execution-flow.md](./reference/execution-flow.md)                             | Execution flow from CLI args through iteration artifacts.                             |
+| [gate-conventions.md](./reference/gate-conventions.md)                         | The eight rules every `check*` gate follows, and how to change one.                   |
+| [project-reports.md](./reference/project-reports.md)                           | Web bug/feature reports and the feature records they generate.                        |
+| [aidd-screen-recording-script.md](./reference/aidd-screen-recording-script.md) | Recording the release walkthrough: isolated profile, segments, export, acceptance.    |
+| [dashboard-metrics.md](./reference/dashboard-metrics.md)                       | Definition of record for the four dashboard fleet-metric numbers.                     |
+| [data-refresh.md](./reference/data-refresh.md)                                 | How the panel keeps data current: defaults, invalidation, polling, reconnect.         |
 
 ## Architecture
 

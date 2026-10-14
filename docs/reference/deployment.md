@@ -85,6 +85,13 @@ Listener settings changed from the Settings page persist to `~/.aidd/config.json
 `hostname`, `port`, or `allowRemote` value restarts aidd-web and reloads the page at the configured
 address.
 
+The port comes from the user-level `~/.aidd/config.json`, not from the checkout you run the command
+in, and `start:web` always stops whatever listens there first. With one checkout that is what you
+want. With a second checkout on the same machine (a release check, a clone for testing), its
+`start:web` stops the first checkout's panel. Give the second checkout its own user profile:
+point `HOME` and `USERPROFILE` at a scratch directory holding a config with a different
+`web.port`, and use that same environment for its `stop:web`.
+
 ## Remote Binding Constraints
 
 The panel binds loopback (`127.0.0.1`) by default and refuses non-loopback hostnames unless

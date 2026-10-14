@@ -159,6 +159,17 @@ or Ingest Existing. From Template uses a registered scaffold; From GitHub starts
 template repository with fresh history.
 _Avoid_: Wizard, import (the lane is "Ingest Existing").
 
+**Ingest** / **Register only**:
+The two actions of the Ingest Existing lane. Both create the project's `.aidd/` metadata skeleton.
+**Ingest** then launches the metadata-only project-intake pipeline; **Register only** launches
+nothing, so no Run exists until someone starts one.
+_Avoid_: import (for either action), onboard, migrate.
+
+**Product loop**:
+Plan → run → audit → review: the public description of what one Run does, used in the README and
+the site. It names the user-visible cycle, not aidd's internals.
+_Avoid_: using it for the pipeline, recipe or orchestrator mechanics.
+
 **Terminal pane**:
 The embedded terminal docked at the bottom of the control panel (toggled with ``Ctrl+` ``),
 backed by persistent PTY sessions that survive navigation; supports shell picker, restart,

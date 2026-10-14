@@ -6,12 +6,9 @@ renders the notes and creates the GitHub release. Release assets require no manu
 local production builds are still required to verify the candidate.
 
 > This describes the steady-state flow, which assumes `main` already exists publicly and grows
-> linearly. It does **not** cover the initial 3.0.0 cut, which publishes a parentless root commit
-> instead of the repository's development history. The maintainer owns a private
-> `launch-runbook.md`; its location is recorded in the local release punchlist, not shipped with
-> this repository. It governs the
-> initial cut: do not push development main before constructing and proving the final root.
-> From 3.0.1 onward this document is authoritative.
+> linearly. The initial 3.0.0 cut was different: it published a parentless root commit instead of
+> the repository's development history. That was a one-time step; every later release follows
+> this document.
 
 aidd ships source rather than prebuilt assets, so a release is a **tag plus notes**. The Release
 workflow does not package or upload built files. GitHub generates the `Source code (zip)` and
@@ -153,6 +150,13 @@ bun run start:web
 ```
 
 Confirm the panel comes up, then confirm `releases/latest` resolves to the new tag.
+
+Run this check under its own user profile when your working checkout's panel is running: the
+extracted tree's `start:web` reads the port from `~/.aidd/config.json` and stops whatever listens
+there, which is your working panel (see
+[deployment.md](../reference/deployment.md#start-and-stop)). The build in the extracted tree
+records `source: null` in `release-build.json`, because a source archive carries no `.git` to
+attest from. That is expected; release evidence comes from the build in the clean Git checkout.
 
 > GitHub's source archives are generated on demand and are **not byte-stable** — the same tag can
 > produce zips with different hashes over time. Do not publish a checksum manifest for them; verify

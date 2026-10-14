@@ -81,7 +81,7 @@ export function mapProfile(profile: ProfileRow): DirectorProfileRecord {
 	};
 }
 
-export function parseChatActions(raw: null | string): ChatAgentAction[] {
+function parseChatActions(raw: null | string): ChatAgentAction[] {
 	if (!raw) return [];
 	try {
 		const parsed: unknown = JSON.parse(raw);

@@ -67,7 +67,7 @@ export async function requestedAudits(
  * @param remainingCount Audits still pending.
  * @returns The completion fields of the mode result.
  */
-export function auditRunCompletion(
+function auditRunCompletion(
 	totals: AuditRunTotals,
 	remainingCount: number,
 ): Pick<ModeResult, 'complete' | 'unsuccessfulEnding'> {

@@ -96,7 +96,7 @@ export function hasWallClockTimeoutMarker(summary: null | string | undefined): b
 // this marker must not read as a clean success.
 export const uncommittedSourceMarker = 'uncommitted_source_files:';
 
-export function hasUncommittedSourceMarker(summary: null | string | undefined): boolean {
+function hasUncommittedSourceMarker(summary: null | string | undefined): boolean {
 	return (summary ?? '').includes(uncommittedSourceMarker);
 }
 

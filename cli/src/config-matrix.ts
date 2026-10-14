@@ -184,7 +184,7 @@ function addTriumvirateRows(rows: ConfigMatrixRow[], config: ResolvedConfig): vo
 	});
 }
 
-export function buildConfigMatrixRows(config: ResolvedConfig): ConfigMatrixRow[] {
+function buildConfigMatrixRows(config: ResolvedConfig): ConfigMatrixRow[] {
 	const rows: ConfigMatrixRow[] = [
 		{
 			backend: config.cli,

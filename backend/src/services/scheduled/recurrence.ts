@@ -9,7 +9,7 @@ import { HttpError } from '../errors.ts';
 
 const FIVE_FIELDS = /^\S+(?:\s+\S+){4}$/;
 
-export function assertTimezone(timezone: string): void {
+function assertTimezone(timezone: string): void {
 	try {
 		new Intl.DateTimeFormat('en-US', { timeZone: timezone }).format(new Date());
 	} catch {

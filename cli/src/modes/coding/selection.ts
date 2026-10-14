@@ -148,7 +148,7 @@ export function invalidRoadmapNoWork(error: unknown): SelectedWork {
 	};
 }
 
-export function roadmapErrorDetail(error: unknown): {
+function roadmapErrorDetail(error: unknown): {
 	filePath?: string;
 	message: string;
 	position?: { column: number; line: number; offset: number };

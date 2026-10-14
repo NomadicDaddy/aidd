@@ -68,7 +68,7 @@ export function assertDirectAiComplete(
  * Map a `DirectAiSurface` (config key) to the corresponding `AiCallSurface`
  * (structured log surface).
  */
-export function directAiSurfaceToCallSurface(surface: DirectAiSurface): AiCallSurface {
+function directAiSurfaceToCallSurface(surface: DirectAiSurface): AiCallSurface {
 	switch (surface) {
 		case 'directorChat':
 			return 'director_chat';

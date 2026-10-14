@@ -4,7 +4,7 @@ import { METADATA_DIR } from '../paths.ts';
 import { createAuditFreshnessContext, currentGitHead } from './git.ts';
 import { declaresSkippedStatus, unavailableMarker } from './unavailable.ts';
 
-export const AUDIT_FRESHNESS_METADATA_PREFIX = 'aidd:audit-report-meta';
+const AUDIT_FRESHNESS_METADATA_PREFIX = 'aidd:audit-report-meta';
 export const AUDIT_STALE_THRESHOLD_DAYS = 30;
 
 export const AUDIT_CODE_CHANGE_THRESHOLDS = {

@@ -3,7 +3,7 @@ import type { DataTraceStatus } from './types.ts';
 import { TRACE_STORAGE_KEY } from './constants.ts';
 import { getStorage, isDevBuild, readConfigDefault, readQueryPreference } from './environment.ts';
 
-export function resolveTrace(): { enabled: boolean; source: DataTraceStatus['source'] } {
+function resolveTrace(): { enabled: boolean; source: DataTraceStatus['source'] } {
 	const storage = getStorage();
 	const preference = readQueryPreference();
 	if (preference === 'enable') {

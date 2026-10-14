@@ -38,7 +38,7 @@ export interface AiddGitProbeResult {
 
 export type AiddGitProbe = (args: readonly string[], cwd: string) => Promise<AiddGitProbeResult>;
 
-export const unknownAiddRunProvenance: AiddRunProvenance = {
+const unknownAiddRunProvenance: AiddRunProvenance = {
 	aiddDirty: null,
 	aiddRevision: null,
 	aiddVersion: null,

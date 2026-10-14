@@ -7,7 +7,7 @@ import { type Feature } from './types.ts';
 // the source feature's `dependencies` array; `id` is the canonical node name (directory ?? id) it
 // resolved to. They differ whenever a feature's directory and id disagree — the spernakit-derived
 // case — which is exactly when a hand-written dependency list goes stale unnoticed.
-export const featureGraphNodeSchema = z.object({
+const featureGraphNodeSchema = z.object({
 	id: z.string(),
 	passes: z.boolean(),
 	ref: z.string(),

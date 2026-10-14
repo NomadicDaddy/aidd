@@ -7,17 +7,17 @@ import {
 	SENSITIVE_KEY_PATTERN,
 } from './constants.ts';
 
-export function numberValue(value: unknown): null | number {
+function numberValue(value: unknown): null | number {
 	return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
-export function stringValue(value: unknown): null | string {
+function stringValue(value: unknown): null | string {
 	if (typeof value !== 'string') return null;
 	const trimmed = value.trim();
 	return trimmed.length > 0 ? trimmed : null;
 }
 
-export function scalarValue(value: unknown): null | string {
+function scalarValue(value: unknown): null | string {
 	if (typeof value === 'string') return value.trim() || null;
 	if (typeof value === 'number' && Number.isFinite(value)) return String(value);
 	if (typeof value === 'boolean') return String(value);

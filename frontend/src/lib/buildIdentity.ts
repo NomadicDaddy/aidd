@@ -30,7 +30,7 @@ declare const __AIDD_BUILD_REVISION__: string;
 declare const __AIDD_VERSION__: string;
 
 /** The meta tag vite.config.ts injects into index.html; the one per-build value outside the chunks. */
-export const BUILD_TIMESTAMP_META = 'aidd-build-timestamp';
+const BUILD_TIMESTAMP_META = 'aidd-build-timestamp';
 
 /**
  * When this bundle was built, read from the entry document rather than compiled in: a timestamp
@@ -46,7 +46,7 @@ export function buildTimestamp(): string {
 }
 
 /** The build constants Vite inlined into this bundle, plus the timestamp from the document. */
-export function buildIdentity(): AiddBuildIdentity {
+function buildIdentity(): AiddBuildIdentity {
 	const env: Record<string, string | undefined> = import.meta.env;
 	return {
 		mode: env.MODE ?? 'unknown',

@@ -22,7 +22,7 @@ export type TreeNode = TreeDirNode | TreeFileNode;
  * the cap viewable from a link but with no row to select or highlight — the tree and the viewer
  * showing different worlds.
  */
-export const maxChildrenPerDir = 200;
+const maxChildrenPerDir = 200;
 
 export function matchesQuery(file: ProjectCodeFileEntry, query: string): boolean {
 	const normalized = query.trim().toLowerCase();

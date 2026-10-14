@@ -12,7 +12,7 @@ export const STALE_RESULT_LOG_TAIL_BYTES = 256 * 1024;
  * assistant message carries every report inline and can run to hundreds of kilobytes on
  * one line, so the starting window is a fast path rather than a limit.
  */
-export const STALE_RESULT_LOG_MAX_TAIL_BYTES = 16 * 1024 * 1024;
+const STALE_RESULT_LOG_MAX_TAIL_BYTES = 16 * 1024 * 1024;
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
 	return typeof value === 'object' && value !== null && !Array.isArray(value)

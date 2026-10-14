@@ -212,7 +212,7 @@ export interface DetectedSurfaces {
  * @param declared The project's declared packages, each with the manifest that declares it.
  * @returns The surfaces present, each with a short statement of why, and which were undecided.
  */
-export async function detectProjectSurfaces(
+async function detectProjectSurfaces(
 	projectDir: string,
 	catalogue: SurfaceCatalogue,
 	declared: ReadonlyMap<string, string>,

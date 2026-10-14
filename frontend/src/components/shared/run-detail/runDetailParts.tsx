@@ -62,7 +62,7 @@ export function MetadataItem({
 	);
 }
 
-export function ReadOnlyContractViolation() {
+function ReadOnlyContractViolation() {
 	return (
 		<div
 			className={cn(

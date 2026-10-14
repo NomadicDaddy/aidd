@@ -121,9 +121,7 @@ export async function explicitProjectProfileError(projectDir: string): Promise<n
 	return read.kind === 'invalid' ? read.error : null;
 }
 
-export async function inferProjectAssuranceProfile(
-	projectDir: string,
-): Promise<ProjectAssuranceProfile> {
+async function inferProjectAssuranceProfile(projectDir: string): Promise<ProjectAssuranceProfile> {
 	const signals = await gatherInferenceSignals(projectDir);
 	const updatedAt = new Date().toISOString();
 	const carriage = signals.carriage;

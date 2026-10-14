@@ -214,7 +214,7 @@ function assembleAssistantText(stdout: string): string {
 	return text;
 }
 
-export function finalizeGrokBackend(input: FinalizePlainBackendInput): AgentEvent[] {
+function finalizeGrokBackend(input: FinalizePlainBackendInput): AgentEvent[] {
 	const { stdout } = input;
 	const events: AgentEvent[] = [];
 	const assistantText = assembleAssistantText(stdout);

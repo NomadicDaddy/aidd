@@ -53,7 +53,7 @@ export function toRecord(row: {
 	};
 }
 
-export async function isRowStillRunning(row: AppLaunchRow): Promise<boolean> {
+async function isRowStillRunning(row: AppLaunchRow): Promise<boolean> {
 	if (isSpernakitStartRow(row)) {
 		const pids = await readSpernakitPids(row.projectPath);
 		return pids.some((pid) => isPidAlive(pid));

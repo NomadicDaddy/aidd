@@ -58,7 +58,7 @@ export function cycleArtifactPaths(
 	};
 }
 
-export function cycleArtifacts(
+function cycleArtifacts(
 	getConfig: DirectorConfigProvider,
 	cycleId: string,
 ): DirectorCycleArtifacts {

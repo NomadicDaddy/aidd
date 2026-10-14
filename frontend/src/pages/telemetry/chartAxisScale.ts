@@ -39,7 +39,7 @@ const NICE_MANTISSAS = [1, 2, 2.5, 5, 10];
  * Ticks at the raw data max and half of it would label a whole-number invocation axis `20.5`.
  * Rounding to a step first means the label is always a number a reader would have chosen.
  */
-export function niceAxisStep(value: number, options: AxisScaleOptions = {}): number {
+function niceAxisStep(value: number, options: AxisScaleOptions = {}): number {
 	if (!Number.isFinite(value) || value <= 0) return options.integral === true ? 1 : 0;
 	const exponent = Math.floor(Math.log10(value));
 	const magnitude = 10 ** exponent;

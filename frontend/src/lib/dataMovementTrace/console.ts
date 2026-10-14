@@ -5,7 +5,7 @@ import { getWindow } from './environment.ts';
 import { formatTraceLabel } from './formatting.ts';
 import { getDataTraceStatus, isTraceEnabled } from './status.ts';
 
-export function writeTraceRecord(event: TraceRecord): void {
+function writeTraceRecord(event: TraceRecord): void {
 	const record = {
 		...event,
 	};

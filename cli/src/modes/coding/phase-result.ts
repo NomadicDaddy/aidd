@@ -6,7 +6,7 @@ import { classifyFeatureStatusType, type Feature } from 'aidd-shared/metadata/fe
 import { listMissingOnboardingArtifacts } from 'aidd-shared/metadata/onboarding';
 import { parkedWorkMarker } from 'aidd-shared/runs/outcome';
 
-export function advanceBlueprintRunToCoding(plan: RunPlan): void {
+function advanceBlueprintRunToCoding(plan: RunPlan): void {
 	plan.prompt.phase = 'coding';
 	plan.prompt.fragments = plan.prompt.fragments.map((fragment) =>
 		fragment.kind === 'phase'

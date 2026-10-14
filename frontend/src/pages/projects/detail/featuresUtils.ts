@@ -141,9 +141,9 @@ export function featureMatchesSearch(feature: ProjectFeature, query: string): bo
 
 export type SourceCategory = 'audit' | 'feature' | 'remediation';
 
-export const SOURCE_AGGREGATE_ALL_FEATURES = '__all_features';
-export const SOURCE_AGGREGATE_ALL_AUDITS = '__all_audits';
-export const SOURCE_AGGREGATE_ALL_REMEDIATIONS = '__all_remediations';
+const SOURCE_AGGREGATE_ALL_FEATURES = '__all_features';
+const SOURCE_AGGREGATE_ALL_AUDITS = '__all_audits';
+const SOURCE_AGGREGATE_ALL_REMEDIATIONS = '__all_remediations';
 
 export function featureSourceLabel(feature: ProjectFeature): string {
 	const auditSource = stringValue(feature, 'auditSource');
@@ -167,7 +167,7 @@ export function sourceLabelCategory(label: string): SourceCategory {
 	return 'feature';
 }
 
-export function featureMatchesSourceFilter(feature: ProjectFeature, filter: string): boolean {
+function featureMatchesSourceFilter(feature: ProjectFeature, filter: string): boolean {
 	if (filter === 'all') return true;
 	const category = sourceLabelCategory(featureSourceLabel(feature));
 	if (filter === SOURCE_AGGREGATE_ALL_FEATURES) return category === 'feature';

@@ -39,7 +39,7 @@ export function optionalString(args: Record<string, unknown>, key: string): stri
 	return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
-export function optionalNumber(args: Record<string, unknown>, key: string): number | undefined {
+function optionalNumber(args: Record<string, unknown>, key: string): number | undefined {
 	const value = args[key];
 	return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }

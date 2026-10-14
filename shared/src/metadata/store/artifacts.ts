@@ -101,7 +101,7 @@ export async function runArtifactCheck(
 	};
 }
 
-export async function collectArtifactStatuses(
+async function collectArtifactStatuses(
 	projectDir: string,
 	checkedAt: Date,
 ): Promise<ArtifactStatus[]> {

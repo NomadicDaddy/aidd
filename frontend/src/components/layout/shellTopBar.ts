@@ -11,7 +11,7 @@
  * width, instead of pairing an offset with an `sm:` override that has to be kept in step with the
  * breakpoint the shell actually uses.
  */
-export const shellTopBarHeightVar = '--app-topbar-height';
+const shellTopBarHeightVar = '--app-topbar-height';
 
 /**
  * Ref callback for the shell's navigation `aside`: keeps {@link shellTopBarHeightVar} current.

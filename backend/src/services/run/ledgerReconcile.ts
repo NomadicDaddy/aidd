@@ -31,7 +31,7 @@ function isDirectorCycleProjection(run: RunRecord): boolean {
 // every run that reaches finalization (writeRunSummary, for web/cli/director sources alike) —
 // but the append itself can fail, so absence from the ledger is corroborating evidence only,
 // never proof by itself that a run is synthetic.
-export async function readLedgerRunIds(projectPath: string): Promise<Set<string>> {
+async function readLedgerRunIds(projectPath: string): Promise<Set<string>> {
 	const ids = new Set<string>();
 	let content: string;
 	try {

@@ -15,7 +15,7 @@ export interface RunBudgetTotals {
  * tokens were 94% cache reads reported 14.3M against a 10M ceiling while its $11.15 cost sat
  * under half of its $25 cost ceiling.
  */
-export const CACHE_READ_TOKEN_WEIGHT = 0.1;
+const CACHE_READ_TOKEN_WEIGHT = 0.1;
 
 /** Tokens as the budget counts them: fresh input and output in full, cache reads discounted. */
 export function budgetTokens(totals: RunBudgetTotals): number {

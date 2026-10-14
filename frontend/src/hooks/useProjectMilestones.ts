@@ -17,7 +17,7 @@ import {
 import { retryUnlessClientError } from '../api/retry.ts';
 import { cancelProjectQueries, invalidateProjectQueries } from './useProjectsShared.ts';
 
-export function projectMilestonesQueryKey(id: string | undefined): unknown[] {
+function projectMilestonesQueryKey(id: string | undefined): unknown[] {
 	return ['project-milestones', id];
 }
 

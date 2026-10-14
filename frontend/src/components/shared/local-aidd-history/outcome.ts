@@ -71,7 +71,7 @@ export function categorizeRun(
 // A run that edited nothing, created nothing, committed nothing, and completed no
 // feature is a no-op — it bailed before doing work (e.g. a self-abort on a dirty
 // worktree) rather than trying and failing. Surfacing this distinguishes the two.
-export function isNoOpRun(run: ProjectLocalRun): boolean {
+function isNoOpRun(run: ProjectLocalRun): boolean {
 	return (
 		run.filesEdited === 0 &&
 		run.filesCreated === 0 &&

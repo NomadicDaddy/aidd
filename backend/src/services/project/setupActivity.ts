@@ -20,7 +20,7 @@ import { pipelineSessions } from '../../db/schema.ts';
  * inspects a project rather than setting one up, so an active one of those says nothing about a
  * blueprint and must not license in-progress wording for it.
  */
-export const blueprintSetupRunModes: readonly WebRunMode[] = ['coding', 'directive', 'interview'];
+const blueprintSetupRunModes: readonly WebRunMode[] = ['coding', 'directive', 'interview'];
 
 const setupRunModes = new Set<WebRunMode>(blueprintSetupRunModes);
 

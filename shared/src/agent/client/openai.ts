@@ -31,7 +31,7 @@ export class ProviderRateLimitError extends Error {
 	}
 }
 
-export function retryAfterIso(header: null | string, now = Date.now()): string | undefined {
+function retryAfterIso(header: null | string, now = Date.now()): string | undefined {
 	if (header === null) return undefined;
 	const value = header.trim();
 	if (/^\d+$/.test(value)) return new Date(now + Number(value) * 1000).toISOString();

@@ -4,7 +4,7 @@ import type { Roadmap } from './roadmap.ts';
 // The single milestone a synthesized roadmap starts from. Matches selectAssignmentMilestone's
 // from-scratch convention (an empty roadmap creates v1.0 at priority 1) so hand-authored and
 // auto-created roadmaps share one naming rule.
-export const DEFAULT_ROADMAP_MILESTONE = 'v1.0';
+const DEFAULT_ROADMAP_MILESTONE = 'v1.0';
 
 const AUTO_ROADMAP_DESCRIPTION = 'Initial milestone (auto-created from existing features)';
 

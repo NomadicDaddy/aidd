@@ -65,7 +65,7 @@ function runStatus(run: ActivityRunInput): string {
  * lowercase words, so this is a word-split rather than a sentence-case: `no work`,
  * `stop_requested` to `stop requested`.
  */
-export function runStatusLabel(status: string): string {
+function runStatusLabel(status: string): string {
 	if (status === 'success') return executionStatusPresentation.completed.label.toLowerCase();
 	if (Object.hasOwn(executionStatusPresentation, status)) {
 		return executionStatusPresentation[status as ExecutionStatus].label.toLowerCase();
@@ -96,7 +96,7 @@ function runModeLabel(run: ActivityRunInput): string {
 }
 
 /** How a launch source reads in a timeline row. Exported so a surface can label a source alone. */
-export function activitySourceLabel(source: null | string): null | string {
+function activitySourceLabel(source: null | string): null | string {
 	if (!source) return null;
 	if (source === 'cli') return 'CLI launch';
 	if (source === 'director') return 'Director launch';

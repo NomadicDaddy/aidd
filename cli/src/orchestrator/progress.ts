@@ -1,6 +1,6 @@
 import type { AgentEvent } from 'aidd-shared/backends/types';
 
-export const defaultProgressHeartbeatMs = 30_000;
+const defaultProgressHeartbeatMs = 30_000;
 
 export interface ProgressReporterOptions {
 	backend?: string;

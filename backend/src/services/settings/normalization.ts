@@ -154,7 +154,7 @@ export function normalizeSharedFiles(
 	});
 }
 
-export function normalizeOptionalBackendInput(
+function normalizeOptionalBackendInput(
 	value: BackendInputName | null | undefined,
 ): BackendName | undefined {
 	if (value === null || value === undefined) return undefined;

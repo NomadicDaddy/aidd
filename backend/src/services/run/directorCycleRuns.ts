@@ -80,10 +80,7 @@ function directorCycleSummary(ctx: DirectorCycleRunContext, row: DirectorCycleRo
 	return `Director cycle completed with ${row.totalSuggestions} ${row.totalSuggestions === 1 ? 'suggestion' : 'suggestions'}.`;
 }
 
-export function toDirectorCycleRunRecord(
-	ctx: DirectorCycleRunContext,
-	row: DirectorCycleRow,
-): RunRecord {
+function toDirectorCycleRunRecord(ctx: DirectorCycleRunContext, row: DirectorCycleRow): RunRecord {
 	const status = runStatusFromCycle(row.status);
 	const terminal = status !== 'running';
 	const projectPath = directorProjectPath(ctx);

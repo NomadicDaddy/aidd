@@ -9,7 +9,7 @@ import { normalizeAuditName } from '../audit/auditHelpers.ts';
 import { HttpError } from '../errors.ts';
 import { SKILL_RECIPE_PREFIX } from '../recipeService.ts';
 
-export const AUDIT_ACTION_SLUG_PREFIX = 'audit:';
+const AUDIT_ACTION_SLUG_PREFIX = 'audit:';
 
 /**
  * What a maturity action needs from the services, named narrowly so the dispatch is testable
@@ -45,7 +45,7 @@ export interface MaturityRunNextResult {
 	target?: string;
 }
 
-export function normalizeRunNextInput(
+function normalizeRunNextInput(
 	slug: string,
 	auditName: string | undefined,
 ): { auditName?: string; invocationSlug: string; responseSlug: string } {

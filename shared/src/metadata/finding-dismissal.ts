@@ -46,7 +46,7 @@ export function assertFeatureRemovable(feature: Feature): void {
 	}
 }
 
-export function assertFindingDismissable(feature: Feature): asserts feature is {
+function assertFindingDismissable(feature: Feature): asserts feature is {
 	auditSource: string;
 	fingerprint: string;
 } & Feature {

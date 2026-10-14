@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
  * Text as hashed: a leading byte order mark dropped and CRLF folded to LF, so a checkout with
  * autocrlf and one without describe the same document.
  */
-export function canonicalText(content: string): string {
+function canonicalText(content: string): string {
 	const withoutBom = content.startsWith('﻿') ? content.slice(1) : content;
 	return withoutBom.replaceAll('\r\n', '\n');
 }

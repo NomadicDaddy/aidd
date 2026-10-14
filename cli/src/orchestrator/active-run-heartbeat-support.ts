@@ -30,7 +30,7 @@ export interface CliActiveRunHeartbeatOptions {
 	webDataDir?: string;
 }
 
-export function errorSummary(error: unknown): string {
+function errorSummary(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }
 

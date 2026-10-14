@@ -33,7 +33,7 @@ export async function findPromptArtifactEncodingViolations(
 	return violations;
 }
 
-export function detectTextEncodingViolation(buffer: Buffer): string | undefined {
+function detectTextEncodingViolation(buffer: Buffer): string | undefined {
 	if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) {
 		return 'UTF-16LE BOM';
 	}

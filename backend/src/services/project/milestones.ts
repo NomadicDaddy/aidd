@@ -64,7 +64,7 @@ async function loadState(ctx: MilestoneContext, projectId: string): Promise<Mile
 }
 
 // Milestone names travel in the URL path, so reject the separators before they reach the planner.
-export function assertMilestoneParam(name: string): string {
+function assertMilestoneParam(name: string): string {
 	if (name.length === 0 || name.includes('/') || name.includes('\\')) {
 		throw new HttpError('Invalid milestone name', 400);
 	}

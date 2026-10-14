@@ -13,7 +13,7 @@ import { backendNameBody } from './schemas/backend.ts';
 
 const safeBackendArg = t.String({ pattern: SAFE_BACKEND_ARG_PATTERN });
 
-export const launchBody = t.Object({
+const launchBody = t.Object({
 	auditAll: t.Optional(t.Boolean()),
 	auditFindings: t.Optional(t.Boolean()),
 	auditFindingsSource: t.Optional(t.String()),

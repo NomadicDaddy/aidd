@@ -94,7 +94,7 @@ export function entryMatchesStatus(entry: UnifiedEntry, filter: UnifiedStatusFil
 	return entry.kind === 'run' ? entry.run.status === filter : entry.session.status === filter;
 }
 
-export function entryMatchesKind(entry: UnifiedEntry, filter: UnifiedKindFilter): boolean {
+function entryMatchesKind(entry: UnifiedEntry, filter: UnifiedKindFilter): boolean {
 	if (filter === 'all') return true;
 	if (entry.kind === 'run') return filter === 'run';
 	return filter === (isSkillSession(entry.session) ? 'skill' : 'pipeline');
@@ -103,10 +103,7 @@ export function entryMatchesKind(entry: UnifiedEntry, filter: UnifiedKindFilter)
 // Initiator is filtered on runs only, exactly as mode is: a recipe session stores an initiator so
 // the runs it launches inherit it, but the session API does not expose one, so narrowing to an
 // initiator hides pipeline and skill entries rather than guessing for them.
-export function entryMatchesInitiator(
-	entry: UnifiedEntry,
-	filter: UnifiedInitiatorFilter,
-): boolean {
+function entryMatchesInitiator(entry: UnifiedEntry, filter: UnifiedInitiatorFilter): boolean {
 	if (filter === 'all') return true;
 	if (entry.kind !== 'run') return false;
 	return (entry.run.initiator ?? 'unknown') === filter;

@@ -27,7 +27,7 @@ export function emptyTriumvirate(): TriumvirateSettings {
 	};
 }
 
-export function emptyDirectAiSettings(): DirectAiSettings {
+function emptyDirectAiSettings(): DirectAiSettings {
 	return {
 		apiKeyConfigured: false,
 		baseUrl: null,
@@ -115,7 +115,7 @@ export function nullableText(value: string): null | string {
 	return trimmed ? trimmed : null;
 }
 
-export function cleanIgnoredFolders(values: string[]): string[] {
+function cleanIgnoredFolders(values: string[]): string[] {
 	return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 

@@ -1,7 +1,7 @@
 import type { FindingDismissalReason } from './contracts/finding-dispositions.ts';
 import type { FindingLedgerEvent } from './metadata/findings-ledger.ts';
 
-export const findingLifecycleBuckets = [
+const findingLifecycleBuckets = [
 	'dismissed',
 	'emitted',
 	'recurred',

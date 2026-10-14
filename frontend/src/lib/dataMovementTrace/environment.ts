@@ -30,7 +30,7 @@ export function readQueryPreference(): 'disable' | 'enable' | null {
 	return null;
 }
 
-export function getDocument(): TraceDocument | undefined {
+function getDocument(): TraceDocument | undefined {
 	return (globalThis as unknown as { document?: TraceDocument }).document;
 }
 

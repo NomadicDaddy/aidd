@@ -6,7 +6,7 @@ import { webLogger } from '../../logger.ts';
 import { nextOccurrence } from './recurrence.ts';
 
 export const DIRECTOR_SYSTEM_KEY = 'director';
-export const DIRECTOR_TASK_NAME = 'Director fleet cycle';
+const DIRECTOR_TASK_NAME = 'Director fleet cycle';
 
 // An hourly cron repeats within the day, so only a factor of 24 keeps an even spacing across
 // midnight. Everything else drifts: `0 */5 * * *` fires at 20:00 and again at 00:00, four hours

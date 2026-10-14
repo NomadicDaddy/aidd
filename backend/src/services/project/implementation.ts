@@ -100,7 +100,7 @@ export async function evaluatePersistedProjectImplementationState(
  * @param projectDir The project to read.
  * @returns The implementation contract, with a null activity.
  */
-export async function readProjectImplementationState(
+async function readProjectImplementationState(
 	projectDir: string,
 ): Promise<ProjectImplementationStateDto> {
 	return toImplementationState(await readPersistedBlueprintReadiness(projectDir), null);

@@ -77,13 +77,13 @@ export function normalizeFinding(
  * One path spelling per file so the fingerprint survives the agent's platform: a Windows
  * backend reports `src\a.ts`, a POSIX one `src/a.ts`, and either may prefix `./`.
  */
-export function normalizeAffectedFilePath(path: string): string {
+function normalizeAffectedFilePath(path: string): string {
 	let normalized = path.trim().replaceAll('\\', '/');
 	while (normalized.startsWith('./')) normalized = normalized.slice(2);
 	return normalized;
 }
 
-export function canonicalAffectedFiles(affectedFiles: readonly string[]): string[] {
+function canonicalAffectedFiles(affectedFiles: readonly string[]): string[] {
 	return [
 		...new Set(affectedFiles.map(normalizeAffectedFilePath).filter((f) => f !== '')),
 	].sort();

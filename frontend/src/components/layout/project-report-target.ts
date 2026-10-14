@@ -2,7 +2,7 @@ import type { ProjectSummary } from '../../api/types.ts';
 
 type ReportProject = Pick<ProjectSummary, 'id' | 'name' | 'path'>;
 
-export function isAiddReportProject(project: ReportProject): boolean {
+function isAiddReportProject(project: ReportProject): boolean {
 	const name = project.name.trim().toLowerCase();
 	if (name === 'aidd') return true;
 

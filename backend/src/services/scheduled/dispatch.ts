@@ -45,7 +45,7 @@ export interface ScheduledDispatchInput {
  * @param trigger What claimed the occurrence.
  * @returns 'operator' for Run now, 'automatic' for anything the timer started.
  */
-export function occurrenceInitiator(trigger: ScheduledExecutionTrigger): RunInitiator {
+function occurrenceInitiator(trigger: ScheduledExecutionTrigger): RunInitiator {
 	return trigger === 'manual' ? 'operator' : 'automatic';
 }
 

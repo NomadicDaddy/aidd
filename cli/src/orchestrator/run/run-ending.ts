@@ -28,7 +28,7 @@ export function buildWallClockTimeoutSummary(baseSummary: string, plan: RunPlan)
 // deadline has passed. Without this the run claims work, writes a started artifact, and
 // spawns a backend that the wall-clock watchdog kills at startup — wasted spend and a dirty
 // worktree. Returns the final exit code when the run must end, undefined to proceed.
-export async function endRunIfWallClockExpired(input: {
+async function endRunIfWallClockExpired(input: {
 	acc: RunAccumulator;
 	deps: OrchestratorDeps;
 	lastSummary: string;

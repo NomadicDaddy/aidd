@@ -37,7 +37,7 @@ export function assertValidApplicationRoots(applicationRoots: readonly string[])
 	if (error) throw new Error(error);
 }
 
-export function knownDirectAiDefaults(
+function knownDirectAiDefaults(
 	provider: string,
 ): (typeof providerDefaults)[keyof typeof providerDefaults] | undefined {
 	if (provider === 'zhipu') return providerDefaults.zhipu;

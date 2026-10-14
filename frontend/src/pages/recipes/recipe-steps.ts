@@ -54,7 +54,7 @@ function isConfigValue(value: unknown): value is RecipeConfigValue {
 	return Object.values(value as Record<string, unknown>).every(isConfigValue);
 }
 
-export function parseConfigJson(text: string, label: string): Record<string, RecipeConfigValue> {
+function parseConfigJson(text: string, label: string): Record<string, RecipeConfigValue> {
 	let parsed: unknown;
 	try {
 		parsed = JSON.parse(text || '{}') as unknown;

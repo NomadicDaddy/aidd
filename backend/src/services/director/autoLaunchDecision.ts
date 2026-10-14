@@ -78,7 +78,7 @@ export function buildAutoLaunchDecision(config: DirectorConfig): AutoLaunchDecis
  * @param value The stored JSON, if any.
  * @returns The preserved bounds, or null when there are none to read.
  */
-export function parsePreservedBounds(value: null | string): null | PreservedAutoLaunchBounds {
+function parsePreservedBounds(value: null | string): null | PreservedAutoLaunchBounds {
 	if (!value) return null;
 	try {
 		const parsed: unknown = JSON.parse(value);

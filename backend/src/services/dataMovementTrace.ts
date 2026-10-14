@@ -73,7 +73,7 @@ function sanitizeObject(value: Record<string, unknown>): Record<string, unknown>
 	return result;
 }
 
-export function summarizeTraceValue(value: unknown, depth = 0): unknown {
+function summarizeTraceValue(value: unknown, depth = 0): unknown {
 	if (value === null || value === undefined) return value;
 	if (typeof value === 'boolean' || typeof value === 'number') return value;
 	if (typeof value === 'string') {

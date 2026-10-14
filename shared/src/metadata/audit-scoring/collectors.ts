@@ -13,7 +13,7 @@ import { type AuditPriority, extractPriorityFromFrontmatter } from './scorer.ts'
 // Per-root child-directory deny-list when enumerating projects. The leading `.`/`_`
 // prefix filter handles dotted dirs (`.git`, `.aidd`, `.old`, `.next`, …) so this set
 // only needs to name non-dot entries we want to skip.
-export const IGNORED_DIRS: ReadonlySet<string> = new Set([
+const IGNORED_DIRS: ReadonlySet<string> = new Set([
 	'build',
 	'coverage',
 	'dist',

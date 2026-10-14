@@ -7,7 +7,7 @@ import { navigationShortcuts } from '../lib/keyboardShortcuts.ts';
  * focuses the first visible element carrying it; pages without search simply
  * omit the marker and `/` falls through to the browser's native behavior.
  */
-export const SHORTCUT_SEARCH_ATTR = 'data-shortcut-search';
+const SHORTCUT_SEARCH_ATTR = 'data-shortcut-search';
 
 /** Window (ms) after pressing `g` during which a destination key completes the chord. */
 const GO_CHORD_TIMEOUT_MS = 1200;

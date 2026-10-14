@@ -89,7 +89,7 @@ function normalizedCell(cell: string): string {
 	return cell.trim().replace(/\\/g, '').replace(/[*`]/g, '').trim().toLowerCase();
 }
 
-export function extractProjectStackDeclaration(
+function extractProjectStackDeclaration(
 	doc: string,
 	projectDir: string,
 	isProjectLocal: boolean,

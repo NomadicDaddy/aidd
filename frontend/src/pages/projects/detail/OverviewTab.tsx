@@ -44,7 +44,7 @@ function LinkedValue({
 	);
 }
 
-export function RoadmapMilestones({ roadmap }: { roadmap: null | ProjectRoadmapSummary }) {
+function RoadmapMilestones({ roadmap }: { roadmap: null | ProjectRoadmapSummary }) {
 	if (!roadmap) {
 		return (
 			<LinkedValue
@@ -90,7 +90,7 @@ export function RoadmapMilestones({ roadmap }: { roadmap: null | ProjectRoadmapS
 	);
 }
 
-export function InterviewSummary({ interview }: { interview: null | ProjectInterviewProgress }) {
+function InterviewSummary({ interview }: { interview: null | ProjectInterviewProgress }) {
 	if (!interview) return <span className="text-muted-foreground">No interview file</span>;
 	if (interview.total === 0) return <span className="text-muted-foreground">0 questions</span>;
 	return <span>{formatRatio(interview.answered, interview.total)}</span>;

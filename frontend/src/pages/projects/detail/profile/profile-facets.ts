@@ -153,7 +153,7 @@ const integrationsBlurbs: Record<ProjectExternalIntegrations, string> = {
 	write_capable: 'Can write to or modify external systems.',
 };
 
-export const bucketFacet: FacetDef<ProjectAssuranceBucket> = {
+const bucketFacet: FacetDef<ProjectAssuranceBucket> = {
 	description: 'Overall exposure and operating model. Drives most audit applicability.',
 	field: 'bucket',
 	options: bucketOptions.map((value) =>
@@ -165,7 +165,7 @@ export const bucketFacet: FacetDef<ProjectAssuranceBucket> = {
 	title: 'Bucket',
 };
 
-export const dataSensitivityFacet: FacetDef<ProjectDataSensitivity> = {
+const dataSensitivityFacet: FacetDef<ProjectDataSensitivity> = {
 	description: 'Highest expected sensitivity of the data the app handles.',
 	field: 'dataSensitivity',
 	options: dataSensitivityOptions.map((value) =>
@@ -177,7 +177,7 @@ export const dataSensitivityFacet: FacetDef<ProjectDataSensitivity> = {
 	title: 'Data sensitivity',
 };
 
-export const deploymentFacet: FacetDef<ProjectDeployment> = {
+const deploymentFacet: FacetDef<ProjectDeployment> = {
 	description: 'Where the app is expected to run.',
 	field: 'deployment',
 	options: deploymentOptions.map((value) =>
@@ -189,7 +189,7 @@ export const deploymentFacet: FacetDef<ProjectDeployment> = {
 	title: 'Deployment',
 };
 
-export const authModeFacet: FacetDef<ProjectAuthMode> = {
+const authModeFacet: FacetDef<ProjectAuthMode> = {
 	description: 'Ownership, login, and authorization boundary.',
 	field: 'authMode',
 	options: authModeOptions.map((value) =>
@@ -198,7 +198,7 @@ export const authModeFacet: FacetDef<ProjectAuthMode> = {
 	title: 'Auth mode',
 };
 
-export const criticalityFacet: FacetDef<ProjectCriticality> = {
+const criticalityFacet: FacetDef<ProjectCriticality> = {
 	description: 'Impact if the app is unavailable, wrong, or unsafe.',
 	field: 'criticality',
 	options: criticalityOptions.map((value) =>
@@ -210,7 +210,7 @@ export const criticalityFacet: FacetDef<ProjectCriticality> = {
 	title: 'Criticality',
 };
 
-export const externalIntegrationsFacet: FacetDef<ProjectExternalIntegrations> = {
+const externalIntegrationsFacet: FacetDef<ProjectExternalIntegrations> = {
 	description: 'Risk level of outbound systems the app can read from or modify.',
 	field: 'externalIntegrations',
 	options: externalIntegrationOptions.map((value) =>
@@ -222,7 +222,7 @@ export const externalIntegrationsFacet: FacetDef<ProjectExternalIntegrations> = 
 	title: 'External integrations',
 };
 
-export const shipsContainerImageFacet: FacetDef<ProjectContainerImage> = {
+const shipsContainerImageFacet: FacetDef<ProjectContainerImage> = {
 	description: 'Whether a container image is produced, and whether it leaves the machine.',
 	field: 'shipsContainerImage',
 	options: containerImageOptions.map((value) =>
@@ -231,7 +231,7 @@ export const shipsContainerImageFacet: FacetDef<ProjectContainerImage> = {
 	title: 'Container image',
 };
 
-export const hasCliBinaryFacet: FacetDef<ProjectCliBinary> = {
+const hasCliBinaryFacet: FacetDef<ProjectCliBinary> = {
 	description: 'Whether the project is invoked as a command, and whether it ships an executable.',
 	field: 'hasCliBinary',
 	options: cliBinaryOptions.map((value) =>
@@ -240,7 +240,7 @@ export const hasCliBinaryFacet: FacetDef<ProjectCliBinary> = {
 	title: 'CLI binary',
 };
 
-export const derivesFromTemplateFacet: FacetDef<ProjectTemplateOrigin> = {
+const derivesFromTemplateFacet: FacetDef<ProjectTemplateOrigin> = {
 	description: 'Which fleet template scaffolded the project, if any.',
 	field: 'derivesFromTemplate',
 	options: templateOriginOptions.map((value) =>
@@ -249,7 +249,7 @@ export const derivesFromTemplateFacet: FacetDef<ProjectTemplateOrigin> = {
 	title: 'Template origin',
 };
 
-export const publishesReleaseArchivesFacet: FacetDef<ProjectReleaseArtifacts> = {
+const publishesReleaseArchivesFacet: FacetDef<ProjectReleaseArtifacts> = {
 	description: 'What a published release carries, if the project publishes releases at all.',
 	field: 'publishesReleaseArchives',
 	options: releaseArtifactOptions.map((value) =>

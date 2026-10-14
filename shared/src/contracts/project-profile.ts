@@ -175,7 +175,7 @@ export function normalizeProjectAssuranceProfileFile(value: unknown): ProjectAss
 	});
 }
 
-export function normalizeProjectAssuranceProfile(
+function normalizeProjectAssuranceProfile(
 	value: unknown,
 	options: {
 		fallbackUpdatedAt?: string;

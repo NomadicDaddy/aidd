@@ -167,7 +167,7 @@ export function isAuditApplicableToProfile(
 	return resolveAuditEffect(profile, auditName, mapping, overrides).applies;
 }
 
-export function resolveBucketAuditEffect(
+function resolveBucketAuditEffect(
 	bucket: ProjectAssuranceBucket,
 	auditName: string,
 	mapping: AuditProfileMapping,

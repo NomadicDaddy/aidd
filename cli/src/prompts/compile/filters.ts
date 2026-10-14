@@ -2,7 +2,7 @@ import type { FeatureFilter, PromptPlan } from 'aidd-shared/plan/types';
 
 import { compileMilestone } from './milestone.ts';
 
-export function compileFilterBlock(filter: FeatureFilter): string {
+function compileFilterBlock(filter: FeatureFilter): string {
 	return `## FEATURE FILTER (applied via --filter-by ${filter.field} --filter ${filter.value})
 
 **CRITICAL: You MUST only work on features where \`${filter.field}\` equals \`${filter.value}\`.**
@@ -18,7 +18,7 @@ When selecting features from \`/.aidd/features/*/feature.json\`:
 `;
 }
 
-export function compileFeatureFocus(value: string, directory: string): string {
+function compileFeatureFocus(value: string, directory: string): string {
 	return `## FEATURE FOCUS (applied via --feature ${value})
 
 **CRITICAL: You MUST focus exclusively on the feature in directory \`${directory}\`.**

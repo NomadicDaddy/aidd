@@ -61,7 +61,7 @@ export const COMMIT_SOURCE = 'pre-commit-leak-guard-only';
  * `prepare` to run it. Copying it here would deliver a file nothing invokes.
  */
 export const COMMIT_GUARDS = ['leak-guard.sh'];
-export const COMMIT_MARKER = 'bash .githooks/leak-guard.sh';
+const COMMIT_MARKER = 'bash .githooks/leak-guard.sh';
 
 export type GuardOutcome =
 	| 'foreign-commit-hook'

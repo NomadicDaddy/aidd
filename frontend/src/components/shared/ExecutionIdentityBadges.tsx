@@ -31,7 +31,7 @@ export type { ExecutionIdentity } from '../../lib/executionIdentity.ts';
  * punctuation such as the hyphen in `glm-5.3` ordered correctly while ordinary tail truncation
  * keeps the family visible.
  */
-export const identityTruncateClass = 'truncate text-left';
+const identityTruncateClass = 'truncate text-left';
 
 type DisplayExecutionIdentityItem = {
 	displayLabel: string;

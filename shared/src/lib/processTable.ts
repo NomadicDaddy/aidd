@@ -41,7 +41,7 @@ const probeTimeoutMultiplier = 4;
 /** Smoothed cost of a successful probe on this machine; seeds the adaptive budget. */
 let observedProbeMs: number | undefined;
 
-export function probeTimeoutMs(): number {
+function probeTimeoutMs(): number {
 	if (observedProbeMs === undefined) return minProbeTimeoutMs;
 	const budget = observedProbeMs * probeTimeoutMultiplier;
 	return Math.min(maxProbeTimeoutMs, Math.max(minProbeTimeoutMs, Math.round(budget)));

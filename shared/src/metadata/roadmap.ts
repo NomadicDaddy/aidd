@@ -5,14 +5,14 @@ import type { Feature } from './features.ts';
 import { isFeatureOutstanding } from './features/query.ts';
 import { printJson } from './json-format.ts';
 
-export const roadmapMilestoneSchema = z
+const roadmapMilestoneSchema = z
 	.object({
 		description: z.string().optional(),
 		priority: z.number().optional(),
 	})
 	.passthrough();
 
-export const roadmapFeatureEntrySchema = z
+const roadmapFeatureEntrySchema = z
 	.object({
 		dependencies: z.array(z.string()).optional(),
 		milestone: z.string().optional(),

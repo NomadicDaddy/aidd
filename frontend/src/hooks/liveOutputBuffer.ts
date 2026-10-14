@@ -4,7 +4,7 @@
 // windowed (the console only paints a tail) and the full transcript remains on disk via the
 // backfill snapshot (run-output query, which reports truncated/totalBytes), so dropping the oldest
 // characters from the head is invisible to the operator while bounding heap on the longest runs.
-export const MAX_LIVE_OUTPUT_CHARS = 2_000_000;
+const MAX_LIVE_OUTPUT_CHARS = 2_000_000;
 
 // Keep only the trailing MAX_LIVE_OUTPUT_CHARS characters. Trimming from the head preserves the
 // suffix the snapshot-overlap dedup inspects, so capping never corrupts that logic.

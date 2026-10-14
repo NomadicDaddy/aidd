@@ -33,7 +33,7 @@ export interface AiddApiClient {
 	post<T = unknown>(path: string, body?: unknown, options?: ApiRequestOptions): Promise<T>;
 }
 
-export class ApiClientError extends Error {
+class ApiClientError extends Error {
 	readonly status: number;
 
 	constructor(message: string, status: number) {

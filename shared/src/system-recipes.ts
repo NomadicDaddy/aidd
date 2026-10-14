@@ -1,4 +1,4 @@
-export const SYSTEM_RECIPE_NAMES = {
+const SYSTEM_RECIPE_NAMES = {
 	'audit-all': 'audit (all)',
 	coding: 'coding',
 	'project-intake': 'project-intake',

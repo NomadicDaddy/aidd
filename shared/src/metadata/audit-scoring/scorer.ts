@@ -28,7 +28,7 @@ const MEDIUM_CONFIDENCE_REPORT_APPS = 3;
 // Audits known to drive code-change remediation (create `.aidd/features/audit-*` entries
 // or otherwise prompt edits). Reviewed when audits are added or change purpose. If this
 // list churns, promote to an `actionable` frontmatter field on audit definitions.
-export const ACTIONABLE_AUDITS: ReadonlySet<string> = new Set([
+const ACTIONABLE_AUDITS: ReadonlySet<string> = new Set([
 	'ARCHITECTURE',
 	'BUILD_OUTPUT',
 	'CODE_QUALITY',

@@ -15,7 +15,7 @@ export function isFindingDismissalReason(value: unknown): value is FindingDismis
 }
 
 /** Feature statuses whose record may be removed (deleted or dismissed) from the backlog. */
-export const featureRemovableStatuses = ['backlog', 'waiting_approval'] as const;
+const featureRemovableStatuses = ['backlog', 'waiting_approval'] as const;
 
 export function isRemovableFeatureStatus(status: unknown): boolean {
 	return (

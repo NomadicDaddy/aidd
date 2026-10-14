@@ -17,7 +17,7 @@ import { useRunsList } from './useRunsList.ts';
  * running is new, so a count that needed the 51st row would be counting a run older than fifty
  * finished ones.
  */
-export function useActiveRunCount() {
+function useActiveRunCount() {
 	const runs = useRunsList().data?.pages[0]?.runs ?? [];
 	return runs.filter(
 		(r) => (r.status === 'queued' || r.status === 'running') && !r.pipelineSessionId,

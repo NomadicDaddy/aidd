@@ -125,7 +125,7 @@ describe('execution identity survives a narrow column', () => {
 
 		// The model family at the start is the stable discriminator operators recognize. Ordinary
 		// tail truncation preserves that prefix instead of spending the final width on a suffix.
-		expect(source).toContain("export const identityTruncateClass = 'truncate text-left'");
+		expect(source).toContain("const identityTruncateClass = 'truncate text-left'");
 		expect(source).not.toContain('[direction:rtl]');
 		expect(render(full)).toContain('truncate text-left');
 		// The isolate keeps punctuation such as the hyphen in `glm-5.3` ordered correctly.

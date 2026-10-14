@@ -4,9 +4,7 @@ import type { GitCommitSummary, RunAccumulator } from './types.ts';
 
 import { gitCommitsFileChanges } from './git-file-changes.ts';
 
-export function modeFileChangesFromArtifacts(
-	artifacts: Record<string, unknown> | undefined,
-): FileChanges {
+function modeFileChangesFromArtifacts(artifacts: Record<string, unknown> | undefined): FileChanges {
 	return {
 		filesCreated: stringArray(artifacts?.modeFilesCreated),
 		filesEdited: stringArray(artifacts?.modeFilesEdited),

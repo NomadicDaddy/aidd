@@ -24,7 +24,7 @@ export const CLI_ACTIVE_RUN_STALE_MS = 120_000;
 export const ACTIVE_RUN_TEMP_STALE_MS = 60_000;
 export const COMPLETED_RUN_TTL_MS = 86_400_000;
 
-export const TERMINAL_STATES: ReadonlySet<string> = new Set([
+const TERMINAL_STATES: ReadonlySet<string> = new Set([
 	'blocked',
 	'completed',
 	'failed',
@@ -74,7 +74,7 @@ export interface CliActiveRunRecord extends AiddRunDriver, AiddRunProvenance {
 // Terminal-only output metrics: git diffstat over the run's attributed commits plus the run's
 // token totals. Null until the final summary lands (and forever, for records written by older
 // CLI versions — parsers must treat absence as null, never reject the record).
-export const CLI_RUN_OUTPUT_METRIC_KEYS = [
+const CLI_RUN_OUTPUT_METRIC_KEYS = [
 	'cachedTokens',
 	'filesChanged',
 	'inputTokens',

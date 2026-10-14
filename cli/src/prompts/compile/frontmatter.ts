@@ -11,7 +11,7 @@ export function parseFrontmatter(markdown: string): Record<string, string> {
 	return Object.fromEntries(entries);
 }
 
-export function stripFrontmatter(markdown: string): string {
+function stripFrontmatter(markdown: string): string {
 	if (!markdown.startsWith('---')) return markdown;
 	const end = markdown.indexOf('\n---', 3);
 	if (end === -1) return markdown;

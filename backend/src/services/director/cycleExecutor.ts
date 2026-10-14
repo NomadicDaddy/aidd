@@ -35,7 +35,7 @@ import { readRecentSuggestionHistory, type SuggestionHistoryEntry } from './sugg
 
 export type { CycleContext, CycleExecutorDeps, DirectCycleResult } from './cycleExecutorTypes.ts';
 
-export async function writeCycleContext(
+async function writeCycleContext(
 	cycleDir: string,
 	cycleId: string,
 	input: { directive?: string; sessionId?: string },

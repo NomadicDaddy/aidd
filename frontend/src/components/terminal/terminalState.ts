@@ -217,7 +217,7 @@ export function sendTerminalInput(sessionId: string, data: string): void {
 	socketFor(sessionId)?.send(JSON.stringify({ data, type: 'input' }));
 }
 
-export function sendTerminalResize(sessionId: string, cols: number, rows: number): boolean {
+function sendTerminalResize(sessionId: string, cols: number, rows: number): boolean {
 	const socket = socketFor(sessionId);
 	if (!socket) return false;
 	socket.send(JSON.stringify({ cols, rows, type: 'resize' }));

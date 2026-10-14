@@ -20,18 +20,8 @@ export const directorTaskTypes = [
 ] as const;
 
 export const directorRiskLevels = ['LOW', 'MEDIUM', 'HIGH'] as const;
-export const directorChatRoles = ['assistant', 'system', 'user'] as const;
-export const directorReasoningEfforts = [
-	'none',
-	'minimal',
-	'low',
-	'medium',
-	'high',
-	'xhigh',
-] as const;
-
-export type DirectorChatRole = (typeof directorChatRoles)[number];
-export type DirectorReasoningEffort = (typeof directorReasoningEfforts)[number];
+export type DirectorChatRole = 'assistant' | 'system' | 'user';
+export type DirectorReasoningEffort = 'high' | 'low' | 'medium' | 'minimal' | 'none' | 'xhigh';
 export type DirectorRiskLevel = (typeof directorRiskLevels)[number];
 export type DirectorTaskType = (typeof directorTaskTypes)[number];
 
@@ -212,18 +202,15 @@ export interface DirectorChatSessionRecord {
 	updatedAt: number;
 }
 
-export const chatAgentActionKinds = [
-	'launch_run',
-	'launch_suggestion',
-	'dismiss_suggestion',
-	'run_cycle',
-	'stop_run',
-	'kill_run',
-	'file_edit',
-	'query',
-] as const;
-
-export type ChatAgentActionKind = (typeof chatAgentActionKinds)[number];
+export type ChatAgentActionKind =
+	| 'dismiss_suggestion'
+	| 'file_edit'
+	| 'kill_run'
+	| 'launch_run'
+	| 'launch_suggestion'
+	| 'query'
+	| 'run_cycle'
+	| 'stop_run';
 export type ChatAgentActionStatus = 'error' | 'ok';
 
 /**

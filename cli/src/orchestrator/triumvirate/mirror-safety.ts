@@ -3,7 +3,7 @@ import { basename, dirname, join, relative, resolve } from 'node:path';
 
 import { mirrorExclusions } from './types.ts';
 
-export function shouldCopyToPlanningMirror(source: string): boolean {
+function shouldCopyToPlanningMirror(source: string): boolean {
 	return !mirrorExclusions.has(basename(source));
 }
 
@@ -11,7 +11,7 @@ export function shouldCopyToPlanningMirror(source: string): boolean {
  * Like `realpath` but falls back to the lexical resolution when the path does not
  * exist (e.g. the destination of a copy that has not been created yet).
  */
-export async function realpathSafe(p: string): Promise<string> {
+async function realpathSafe(p: string): Promise<string> {
 	try {
 		return await realpath(p);
 	} catch {

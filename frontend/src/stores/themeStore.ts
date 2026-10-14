@@ -16,7 +16,7 @@ interface ThemeState {
  * first paint and cannot import this module; test/frontend/theme-color-contract.test.ts holds the
  * two to the same value.
  */
-export const THEME_STORAGE_KEY = 'aidd-theme';
+const THEME_STORAGE_KEY = 'aidd-theme';
 
 export const useThemeStore = create<ThemeState>()(
 	persist(

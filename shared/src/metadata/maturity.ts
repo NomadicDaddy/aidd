@@ -46,7 +46,7 @@ export interface MaturityStageDef {
  * Deploy-config shapes recognized as evidence for the `shipped` stage. The
  * artifact is present when any one exists; directories count when non-empty.
  */
-export const SHIPPED_DEPLOY_CONFIG_PATHS: readonly string[] = [
+const SHIPPED_DEPLOY_CONFIG_PATHS: readonly string[] = [
 	'.github/workflows',
 	'Dockerfile',
 	'docker-compose.production.yml',

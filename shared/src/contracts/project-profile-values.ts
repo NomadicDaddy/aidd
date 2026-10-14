@@ -80,7 +80,6 @@ export const projectReleaseArtifactValues = ['none', 'source_only', 'binary_arch
 
 // --- Provenance. ---
 
-export const projectProfileSourceValues = ['explicit', 'inferred'] as const;
 export const projectProfileFileSourceValues = ['explicit'] as const;
 export const projectProfileNotesMaxLength = 4000;
 
@@ -92,6 +91,6 @@ export type ProjectCriticality = (typeof projectCriticalityValues)[number];
 export type ProjectDataSensitivity = (typeof projectDataSensitivityValues)[number];
 export type ProjectDeployment = (typeof projectDeploymentValues)[number];
 export type ProjectExternalIntegrations = (typeof projectExternalIntegrationValues)[number];
-export type ProjectProfileSource = (typeof projectProfileSourceValues)[number];
+export type ProjectProfileSource = 'explicit' | 'inferred';
 export type ProjectReleaseArtifacts = (typeof projectReleaseArtifactValues)[number];
 export type ProjectTemplateOrigin = (typeof projectTemplateOriginValues)[number];

@@ -82,7 +82,7 @@ export function summarizeSessionOutcome(
 
 // Human-readable session errorMessage for a partial-success terminal state, naming the
 // failed steps so the session list/detail UI reads as partial rather than a bare 'failed'.
-export function summarizeFailedSteps(failedStepNames: string[]): string {
+function summarizeFailedSteps(failedStepNames: string[]): string {
 	const noun = failedStepNames.length === 1 ? 'step' : 'steps';
 	return `${failedStepNames.length} ${noun} failed after earlier steps succeeded: ${failedStepNames.join(', ')}`;
 }

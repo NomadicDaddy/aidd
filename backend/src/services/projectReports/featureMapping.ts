@@ -14,7 +14,7 @@ import type {
 import { HttpError } from '../errors.ts';
 import { isObject, REPORT_SOURCE, type ReportFeatureMetadata } from './classification.ts';
 
-export async function featureExists(store: FileAiddStore, featureId: string): Promise<boolean> {
+async function featureExists(store: FileAiddStore, featureId: string): Promise<boolean> {
 	try {
 		await stat(join(store.metadataDir, 'features', featureId, 'feature.json'));
 		return true;

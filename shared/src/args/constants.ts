@@ -11,7 +11,7 @@ export const reasoningEffortValues = [...persistedReasoningEffortValues, 'max'] 
 export type PersistedReasoningEffortValue = (typeof persistedReasoningEffortValues)[number];
 export type ReasoningEffortValue = (typeof reasoningEffortValues)[number];
 
-export const thinkingLevelValues = ['low', 'medium', 'high'] as const;
+const thinkingLevelValues = ['low', 'medium', 'high'] as const;
 export type ThinkingLevelValue = (typeof thinkingLevelValues)[number];
 
 const reasoningEffortAliases = new Map<string, ReasoningEffortValue>([

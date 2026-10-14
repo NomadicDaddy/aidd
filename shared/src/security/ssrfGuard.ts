@@ -22,7 +22,7 @@
  * and LAN self-hosted inference servers (Ollama, vLLM, etc.) are a supported provider
  * configuration. This enumerated list must be revisited when cloud credential endpoints change.
  */
-export const BLOCKED_METADATA_HOSTS = new Set([
+const BLOCKED_METADATA_HOSTS = new Set([
 	'100.100.100.200', // Alibaba Cloud metadata
 	'169.254.169.254', // AWS / Azure / GCP IMDS
 	'169.254.170.2', // AWS ECS container credentials
@@ -43,7 +43,7 @@ export const BLOCKED_METADATA_HOSTS = new Set([
  * @param hostname - The URL hostname (may include surrounding brackets for IPv6).
  * @returns The canonicalized host string for blocklist comparison.
  */
-export function normalizeHostForBlocklist(hostname: string): string {
+function normalizeHostForBlocklist(hostname: string): string {
 	let host = hostname
 		.replace(/^\[|\]$/g, '')
 		.toLowerCase()

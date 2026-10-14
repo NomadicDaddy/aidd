@@ -4,8 +4,8 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { summarizeValue, traceDataMovement } from '../lib/dataMovementTrace.ts';
 import { resilientLocalStorage } from './persistStorage.ts';
 
-export const TERMINAL_MIN_HEIGHT_PX = 120;
-export const TERMINAL_DEFAULT_HEIGHT_PX = 320;
+const TERMINAL_MIN_HEIGHT_PX = 120;
+const TERMINAL_DEFAULT_HEIGHT_PX = 320;
 
 /** Keep the pane from swallowing the whole viewport when dragged to the top. */
 export function clampTerminalHeight(px: number): number {

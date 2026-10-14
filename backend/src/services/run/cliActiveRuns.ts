@@ -21,8 +21,6 @@ import { webLogger } from '../../logger.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { cliRunWebStatus, pathsMatch, toCliRunRecord } from './cliActiveRunRecord.ts';
 
-export { pathsMatch };
-
 interface CliActiveRunsContext {
 	config: { web: ResolvedWebConfig } & ResolvedConfig;
 	hub: WebSocketHub;
@@ -153,10 +151,7 @@ export async function findCliActiveRun(
 // waiting on a heartbeat or stop file that will never be consumed. A live pid behind a stale
 // heartbeat is alive only when its recorded start time proves it is still this run's process; a
 // reused pid, or one whose identity cannot be checked, is never signalled.
-export async function isCliRunProcessAlive(
-	run: CliActiveRunRecord,
-	now = Date.now(),
-): Promise<boolean> {
+async function isCliRunProcessAlive(run: CliActiveRunRecord, now = Date.now()): Promise<boolean> {
 	if (run.pid === null) return false;
 	if (!isProcessAlive(run.pid)) return false;
 	if (now - run.heartbeatAt <= CLI_ACTIVE_RUN_STALE_MS) return true;

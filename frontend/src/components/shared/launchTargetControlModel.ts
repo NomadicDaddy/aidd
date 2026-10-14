@@ -70,7 +70,7 @@ export function launchTargetDefaultDisplay(input: {
 	};
 }
 
-export function hasLaunchOverride(value: LaunchTargetValue): boolean {
+function hasLaunchOverride(value: LaunchTargetValue): boolean {
 	return (
 		value.backend !== undefined ||
 		(value.model ?? '') !== '' ||

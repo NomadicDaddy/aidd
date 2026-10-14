@@ -30,7 +30,7 @@ const VALUE_LONG: Record<string, string[]> = {
 };
 
 /** True for `--hard`, and for any abbreviation of it that git would accept. */
-export function isOption(arg: string, name: string): boolean {
+function isOption(arg: string, name: string): boolean {
 	const spelled = arg.split('=')[0] ?? arg;
 	return spelled === name || (spelled.length >= 3 && name.startsWith(spelled));
 }

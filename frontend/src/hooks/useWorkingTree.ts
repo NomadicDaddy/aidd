@@ -22,7 +22,7 @@ export type WorkingTreeCommand =
 	| { kind: 'stage'; paths: string[] }
 	| { kind: 'unstage'; paths: string[] };
 
-export function workingTreeQueryKey(id: string | undefined) {
+function workingTreeQueryKey(id: string | undefined) {
 	return ['project-working-tree', id];
 }
 

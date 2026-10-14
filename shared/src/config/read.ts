@@ -76,7 +76,7 @@ export async function readConfig(path: string): Promise<PartialAiddConfig> {
  * over the user config, so it beat the environment-supplied token that exists to keep it out of
  * files. The rest of `web` (port, data directory, roots, run limits) stays a project's to set.
  */
-export function restrictProjectConfig(config: PartialAiddConfig): PartialAiddConfig {
+function restrictProjectConfig(config: PartialAiddConfig): PartialAiddConfig {
 	const {
 		channels: _channels,
 		defaultProvider: _defaultProvider,
@@ -105,7 +105,7 @@ export function restrictProjectConfig(config: PartialAiddConfig): PartialAiddCon
 	return restricted;
 }
 
-export function applyConfig(base: PartialAiddConfig, next: PartialAiddConfig): PartialAiddConfig {
+function applyConfig(base: PartialAiddConfig, next: PartialAiddConfig): PartialAiddConfig {
 	const directAi = mergeDirectAiConfig(base, next);
 	return {
 		...base,

@@ -36,7 +36,7 @@ const backendCommands: Record<BackendName, { args: string[]; command: string }> 
 	opencode: { args: ['--version'], command: 'opencode' },
 };
 
-export async function runStatusCommand(
+async function runStatusCommand(
 	command: string,
 	args: string[],
 	timeoutMs = statusTimeoutMs,

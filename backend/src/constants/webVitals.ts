@@ -4,15 +4,15 @@
 // constants/webVitals.ts so the two stay homogeneous.
 
 /** Cumulative Layout Shift — unitless; visual stability, lower is better. */
-export const CLS_THRESHOLD = 0.1;
+const CLS_THRESHOLD = 0.1;
 /** First Contentful Paint — ms; lower is better. */
-export const FCP_THRESHOLD = 1800;
+const FCP_THRESHOLD = 1800;
 /** Interaction to Next Paint — ms; input responsiveness, lower is better. */
-export const INP_THRESHOLD = 200;
+const INP_THRESHOLD = 200;
 /** Largest Contentful Paint — ms; lower is better. */
-export const LCP_THRESHOLD = 2500;
+const LCP_THRESHOLD = 2500;
 /** Time to First Byte — ms; lower is better. */
-export const TTFB_THRESHOLD = 600;
+const TTFB_THRESHOLD = 600;
 
 /** Threshold lookup keyed by web-vital name (uppercase, as web-vitals reports it). */
 export const WEB_VITAL_THRESHOLDS: Record<string, number> = {

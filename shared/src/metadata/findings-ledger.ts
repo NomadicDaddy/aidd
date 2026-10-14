@@ -2,7 +2,7 @@ import { z } from 'zod/v4';
 
 import { findingDismissalReasons } from '../contracts/finding-dispositions.ts';
 
-export const findingLedgerEventKinds = [
+const findingLedgerEventKinds = [
 	'dismissed',
 	'emitted',
 	'recurred',

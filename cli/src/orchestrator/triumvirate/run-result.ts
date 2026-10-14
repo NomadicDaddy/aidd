@@ -97,7 +97,7 @@ export function failedStageResult(
 // one marker retry) produced no plan. The stage result's exit code is rewritten to
 // missingResult so the run ledgers this exactly like a single-agent missing AIDD_RESULT,
 // instead of the generic validation-error classification.
-export function invalidPlanningOutputResult(
+function invalidPlanningOutputResult(
 	stage: string,
 	result: StageRunResult,
 	reason: string,

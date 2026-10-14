@@ -145,7 +145,7 @@ const featureStatusRow = t.Object({
  * name, so a future field added to the project listing cannot silently reappear in the
  * Dashboard's payload — which is the failure this endpoint exists to prevent.
  */
-export const dashboardSummaryResponse = t.Object({
+const dashboardSummaryResponse = t.Object({
 	featureStatus: t.Object({
 		buckets: t.Array(
 			t.Object({

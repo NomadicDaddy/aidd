@@ -4,7 +4,7 @@ import { z } from 'zod/v4';
 // failing output, and the machine reason. Persisted onto the feature record at parking time so the
 // decision queue and the next run's agent can see what they are approving past instead of a blind
 // bounce (see the waiting-approval-gate-context feature).
-export const featureBlockingContextSchema = z.object({
+const featureBlockingContextSchema = z.object({
 	commands: z.array(z.string()),
 	outcomeStatus: z.string().optional(),
 	outputExcerpt: z.string(),

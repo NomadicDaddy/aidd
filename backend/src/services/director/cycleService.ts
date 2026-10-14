@@ -33,7 +33,7 @@ import { type DirectorFleetSummaryService } from './fleetSummaryService.ts';
 import { createCycleId } from './helpers.ts';
 import { type DirectorProfileService } from './profileService.ts';
 
-export const CYCLE_ALREADY_RUNNING = 'A Director cycle is already running.';
+const CYCLE_ALREADY_RUNNING = 'A Director cycle is already running.';
 
 export class DirectorCycleService {
 	private readonly activeStages = new Map<string, ActiveCycleState>();

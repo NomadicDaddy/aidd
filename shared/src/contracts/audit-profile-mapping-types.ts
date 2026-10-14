@@ -11,16 +11,7 @@ import {
 	type ProjectTemplateOrigin,
 } from './project-profile.ts';
 
-export const auditEffectValues = ['default', 'disabled', 'required', 'excluded'] as const;
 export const auditOverrideEffectValues = ['disabled', 'required', 'excluded'] as const;
-export const auditApplicabilitySources = [
-	'default',
-	'global-rule',
-	'override-rule',
-	'override-explicit',
-	'missing-package',
-	'missing-surface',
-] as const;
 
 /**
  * The things an audit can measure that a profile cannot record: whether a project has a web page to
@@ -29,9 +20,15 @@ export const auditApplicabilitySources = [
  */
 export const auditSurfaceValues = ['database', 'web-frontend'] as const;
 
-export type AuditEffect = (typeof auditEffectValues)[number];
+export type AuditEffect = 'default' | AuditOverrideEffect;
 export type AuditOverrideEffect = (typeof auditOverrideEffectValues)[number];
-export type AuditApplicabilitySource = (typeof auditApplicabilitySources)[number];
+export type AuditApplicabilitySource =
+	| 'default'
+	| 'global-rule'
+	| 'missing-package'
+	| 'missing-surface'
+	| 'override-explicit'
+	| 'override-rule';
 export type AuditSurface = (typeof auditSurfaceValues)[number];
 
 export interface AuditSurfaceDefinition {

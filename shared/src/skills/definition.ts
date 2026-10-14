@@ -57,7 +57,7 @@ export interface SkillDefinition {
 	usage: string;
 }
 
-export const skillIdPattern = /^(?!.*--)[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
+const skillIdPattern = /^(?!.*--)[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 const knownFrontmatterKeys = new Set([
 	'allowed-tools',
 	'compatibility',

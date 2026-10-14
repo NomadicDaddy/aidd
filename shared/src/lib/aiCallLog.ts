@@ -83,8 +83,8 @@ export interface AiCallLogEntry {
 
 // Exported so the Telemetry disclosure test can assert the user-facing copy still matches the
 // real rotation policy instead of hard-coding numbers that can drift out of sync.
-export const DEFAULT_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
-export const DEFAULT_MAX_ROTATED_FILES = 5;
+const DEFAULT_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+const DEFAULT_MAX_ROTATED_FILES = 5;
 const LOG_FILE_NAME = 'ai-calls.jsonl';
 
 // ---------------------------------------------------------------------------

@@ -10,7 +10,7 @@ export const simulationMarker = '<!-- aidd:simulated -->';
 // Defined with the freshness readers, which recognise it and cannot import the modes.
 export { unavailableMarker } from '../metadata/audit-freshness/unavailable.ts';
 
-export function isReferenceAudit(body: string): boolean {
+function isReferenceAudit(body: string): boolean {
 	return /type:\s*['"]reference['"]/.test(body);
 }
 

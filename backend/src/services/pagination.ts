@@ -4,7 +4,7 @@
 // share the same millisecond timestamp.
 
 export const DEFAULT_PAGE_LIMIT = 50;
-export const MAX_PAGE_LIMIT = 200;
+const MAX_PAGE_LIMIT = 200;
 
 export interface CursorKey {
 	id: string;

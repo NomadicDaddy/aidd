@@ -11,7 +11,7 @@ import {
 
 import type { extractIterationDetails } from './details.ts';
 
-export function formatSelectedWork(work: SelectedWork): string {
+function formatSelectedWork(work: SelectedWork): string {
 	const kind = work.kind ?? 'generic';
 	return `${kind}:${work.id}${work.description ? ` - ${work.description}` : ''}`;
 }
@@ -29,7 +29,7 @@ export function formatIdleWarningLine(afterMs: number): string {
 	return `[thinking] still waiting after ${formatDuration(afterMs)}; logged idle warning (telemetry only).\n`;
 }
 
-export function formatDuration(ms: number): string {
+function formatDuration(ms: number): string {
 	const seconds = Math.round(ms / 1000);
 	if (seconds < 60) return `${seconds}s`;
 	const minutes = Math.floor(seconds / 60);

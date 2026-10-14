@@ -18,7 +18,7 @@ export interface ComplexityThresholds {
 	textMedium: number;
 }
 
-export const defaultComplexityThresholds: ComplexityThresholds = {
+const defaultComplexityThresholds: ComplexityThresholds = {
 	depsMedium: 1,
 	textMedium: 400,
 };

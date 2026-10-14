@@ -1,5 +1,7 @@
 import type { ToolDefinition } from '../client.ts';
 
+import { maxToolTimeoutMs } from './constants.ts';
+
 export const toolDefinitions: ToolDefinition[] = [
 	{
 		function: {
@@ -66,8 +68,9 @@ export const toolDefinitions: ToolDefinition[] = [
 				properties: {
 					command: { description: 'The bash command to execute', type: 'string' },
 					timeout_ms: {
-						description:
-							'Timeout in milliseconds (default 300000 = 5 minutes). Raise it for long builds or full test suites instead of letting them be killed mid-run.',
+						description: `Timeout in milliseconds (default 300000 = 5 minutes, maximum ${maxToolTimeoutMs}). Raise it for long builds or full test suites instead of letting them be killed mid-run.`,
+						exclusiveMinimum: 0,
+						maximum: maxToolTimeoutMs,
 						type: 'number',
 					},
 				},

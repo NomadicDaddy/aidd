@@ -3,6 +3,9 @@ import { dirname, isAbsolute, relative, resolve } from 'node:path';
 
 export const maxToolResultChars = 100_000;
 export const maxCommandOutputChars = 50_000;
+// The longest a single tool call may declare. The backend idle monitor extends its silence
+// allowance up to this same value, so a call can never outlive the guard that watches it.
+export const maxToolTimeoutMs = 1_800_000;
 export const excludedSearchDirs = [
 	'node_modules',
 	'.git',

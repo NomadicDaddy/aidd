@@ -6,6 +6,7 @@ import { augmentEnvPathForGitBash, resolvedBash } from './bash-runtime.ts';
 import {
 	excludedSearchDirs,
 	maxCommandOutputChars,
+	maxToolTimeoutMs,
 	resolveWorkspacePath,
 	truncate,
 } from './constants.ts';
@@ -16,11 +17,26 @@ import { checkBashWorkspacePolicy } from './shell-policy.ts';
 // still bounds a truly hung command. Models can extend per-call via timeout_ms.
 const defaultBashTimeoutMs = 300_000;
 
+// Zero, negative and non-finite values made the timer fire at once (with Node's negative and
+// overflow warnings), and anything past the ceiling outlived the idle monitor, so a declared
+// timeout is refused before spawning unless it is a positive number within the ceiling.
+function resolveBashTimeoutMs(value: unknown): number | string {
+	if (value === undefined || value === null) return defaultBashTimeoutMs;
+	if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+		return 'ERROR: timeout_ms must be a positive, finite number of milliseconds';
+	}
+	if (value > maxToolTimeoutMs) {
+		return `ERROR: timeout_ms must not exceed ${maxToolTimeoutMs}ms`;
+	}
+	return value;
+}
+
 export async function runBash(args: Record<string, unknown>, cwd: string): Promise<string> {
 	if (typeof args.command !== 'string' || args.command.trim() === '') {
 		return 'ERROR: command must be a non-empty string';
 	}
-	const timeoutMs = typeof args.timeout_ms === 'number' ? args.timeout_ms : defaultBashTimeoutMs;
+	const timeoutMs = resolveBashTimeoutMs(args.timeout_ms);
+	if (typeof timeoutMs === 'string') return timeoutMs;
 	const command = args.command;
 	const bash = resolvedBash();
 	if ('error' in bash) return `ERROR: ${bash.error}`;

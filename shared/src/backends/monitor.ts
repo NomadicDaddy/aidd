@@ -2,6 +2,8 @@ import { setTimeout as sleep } from 'node:timers/promises';
 
 import type { AgentEvent, CLIBackend, PromptInput } from './types.ts';
 
+import { maxToolTimeoutMs } from '../agent/tools/constants.ts';
+
 export interface MonitorOptions {
 	cleanupTimeoutMs?: number;
 	idleNudgeTimeoutMs?: number;
@@ -13,7 +15,7 @@ export interface MonitorOptions {
 // and was killed mid-run (cli_1790802515910_0ae50fe6: timeout_ms 1500000 against a 900 s kill).
 // The call's own declared timeout bounds it instead, up to this ceiling so that a huge declared
 // value cannot switch the idle guard off.
-const defaultToolTimeoutCeilingMs = 1_800_000;
+const defaultToolTimeoutCeilingMs = maxToolTimeoutMs;
 
 function declaredToolTimeoutMs(args: unknown): number {
 	if (typeof args !== 'object' || args === null || !('timeout_ms' in args)) return 0;

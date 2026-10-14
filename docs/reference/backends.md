@@ -169,9 +169,10 @@ itself. To use one:
 > **Grok Build (`grok`).** Install via xAI's instructions (docs.x.ai/build) and authenticate with
 > `grok login` or `XAI_API_KEY`. aidd runs it headless with `--permission-mode bypassPermissions` and
 > delivers the prompt via `--prompt-file` (grok does not read a prompt from stdin). Its default model
-> is `grok-4.6`; `--reasoning-effort` accepts `low`/`medium`/`high`/`xhigh`.
-> Grok's headless output surfaces no tool-call events, so the Live Console shows its reasoning and
-> final text but not intermediate tool steps.
+> is `grok-4.6`. aidd passes `low`, `medium` and `high` to `--reasoning-effort` unchanged, sends
+> `xhigh` as `high`, and omits the flag for `none` and `minimal`. Grok 1.x reports tool activity as
+> `tool_call` / `tool_call_update` events, and aidd shows those steps in the Live Console; builds up
+> to 0.2.101 ran tools silently and emitted only reasoning and final text.
 
 > **Model ids are the CLI's, not aidd's.** `backends.<name>.model` is passed straight through to the
 > tool, so it must be an id that tool accepts. For example OpenCode wants the provider-qualified form

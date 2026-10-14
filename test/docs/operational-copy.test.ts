@@ -59,4 +59,35 @@ describe('operational documentation contracts', () => {
 		expect(doc).not.toContain('release candidate');
 		expect(doc).not.toContain('Publication is planned');
 	});
+
+	test('readme, contributor and reference docs match the shipped behavior', async () => {
+		const readme = await read('README.md');
+		expect(readme).toContain(
+			'Dashboard, Projects, Director, Runs, Scheduled, Diary, Recipes, Skills, Audits, Telemetry, Settings, Docs, and About',
+		);
+		expect(readme).not.toContain('Pipeline Sessions');
+		expect(readme).not.toContain('Node.js `24.x`');
+
+		const contributing = await read('CONTRIBUTING.md');
+		expect(contributing).toContain('`bun run test`');
+		expect(contributing).toContain('`bun test <file>` only for focused diagnostics');
+		expect(await read('docs/reference/triumvirate.md')).toContain(
+			'--check-features bun run test bun run build:frontend',
+		);
+
+		const backends = await read('docs/reference/backends.md');
+		expect(backends).toContain(
+			'`xhigh` as `high`, and omits the flag for `none` and `minimal`',
+		);
+		expect(backends).toContain('`tool_call` / `tool_call_update`');
+		expect(backends).not.toContain('surfaces no tool-call events');
+
+		const deployment = await read('docs/reference/deployment.md');
+		expect(deployment).toContain('the web backend refuses to start when `allowRemote` is true');
+		expect(deployment).not.toContain('config resolution rejects remote access');
+
+		const bunfig = await read('bunfig.toml');
+		expect(bunfig).toContain('shared/src/config/env-secrets.ts');
+		expect(bunfig).not.toContain('configLoader');
+	});
 });

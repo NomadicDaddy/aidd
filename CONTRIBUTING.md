@@ -29,8 +29,9 @@ local-first.
 
 - Install [Bun](https://bun.sh) (see `package.json` `engines` for the version).
 - `bun install`
-- Run the gates before proposing a change: `bun test`, `bun run typecheck`, `bun run lint`, and
-  `bun run smoke:qc`.
+- Run the gates before proposing a change: `bun run test`, `bun run typecheck`, `bun run lint`, and
+  `bun run smoke:qc`. `bun run smoke:qc` already runs typecheck, lint and the test wrapper; use
+  `bun test <file>` only for focused diagnostics.
 
 See `README.md` and `docs/` for architecture and workflow detail. Maintainers cutting a release
 should follow [docs/architecture/releasing.md](docs/architecture/releasing.md) (checklist + rollback plan).

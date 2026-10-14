@@ -109,10 +109,11 @@ The panel binds loopback (`127.0.0.1`) by default and refuses non-loopback hostn
   and loopback aliases. List stable machine names or fixed LAN IPs here.
 - When `hostname` is `0.0.0.0` or `::`, detected local network interface origins are trusted
   automatically.
-- Keep `web.authToken` set for every exposed listener; config resolution rejects remote access
-  without it. Supply it through `AIDD_WEB_AUTH_TOKEN` rather than writing it into
-  `~/.aidd/config.json`, so an agent that reads your config file does not read your access token
-  with it — see
+- Keep `web.authToken` set for every exposed listener; the web backend refuses to start when
+  `allowRemote` is true and no token is supplied (see
+  [Web Settings](./configuration.md#web-settings) for why the check lives at startup). Supply it
+  through `AIDD_WEB_AUTH_TOKEN` rather than writing it into `~/.aidd/config.json`, so an agent that
+  reads your config file does not read your access token with it — see
   [configuration.md](./configuration.md#credentials-in-the-environment).
 
 To verify a LAN-facing listener without changing config:

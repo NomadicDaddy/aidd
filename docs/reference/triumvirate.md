@@ -208,7 +208,7 @@ Use the normal aidd gates after changing Triumvirate behavior:
 
 ```powershell
 bun run start -- --project-dir . --check-features
-bun test
+bun run test
 bun run build:frontend
 bun run smoke:qc
 ```

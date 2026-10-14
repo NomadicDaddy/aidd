@@ -20,8 +20,9 @@ Product overview and audience guides: **[nomadicdaddy.github.io/aidd](https://no
 
 ## Highlights
 
-- **One local control panel**: Dashboard, Projects, Runs, Director, Audits, Skills,
-  Recipes, Pipeline Sessions, Telemetry, and Settings, plus an embedded terminal pane
+- **One local control panel**: Dashboard, Projects, Director, Runs, Scheduled, Diary,
+  Recipes, Skills, Audits, Telemetry, Settings, Docs, and About (pipeline sessions are
+  reviewed from the Runs page), plus an embedded terminal pane
   (``Ctrl+` ``) with persistent PTY sessions.
 - **Fleet Director**: looks across every project and proposes prioritized work; a
   tool-calling chat agent can drive it.
@@ -59,7 +60,6 @@ statement.
 - **Windows 11 + PowerShell 7** is the primary platform and the only one with browser-smoke
   coverage. **Linux** runs the full quality gate and test suite in CI on every push. **macOS** has
   no automated coverage; it is expected to work but is verified only by hand.
-- Node.js `24.x` only if you use Node-compatible tooling under `scripts/`.
 
 ## Install & quickstart
 

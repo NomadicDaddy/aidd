@@ -1,6 +1,7 @@
 # Disable automatic .env file loading - we use JSON config exclusively.
-# Note: This does NOT prevent explicit process.env reads in configLoader.ts
-# for production secret injection (the only approved use of env vars).
+# Note: This does NOT prevent the explicit process.env reads in shared/src/config/env-secrets.ts,
+# which take credentials (AIDD_WEB_AUTH_TOKEN, AIDD_TELEGRAM_BOT_TOKEN) from the environment.
+# See "Credentials In The Environment" in docs/reference/configuration.md.
 env = false
 
 [test]

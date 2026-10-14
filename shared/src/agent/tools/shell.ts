@@ -45,7 +45,31 @@ function incompleteStop(report: TreeStopReport): string {
 	if (!report.tableRead) {
 		return 'WARNING: cleanup incomplete: the process table could not be read, so child processes may still be running';
 	}
-	return `WARNING: cleanup incomplete: still running after the kill: pid ${report.survivors.join(', ')}`;
+	if (report.survivors.length > 0) {
+		return `WARNING: cleanup incomplete: still running after the kill: pid ${report.survivors.join(', ')}`;
+	}
+	return 'WARNING: cleanup incomplete: the command exited before its process tree was read, so child processes it started may still be running';
+}
+
+// The diagnostics are what a caller acts on, so the output bound trims the command's own output
+// and never the timeout, abort, cleanup or exit-code lines that follow it.
+export function formatBashResult(
+	output: { stderr: string; stdout: string },
+	errors: string[],
+	exitCode: number | string,
+): string {
+	let body = '';
+	if (output.stdout) body += output.stdout;
+	if (output.stderr) body += `${body ? '\n' : ''}STDERR:\n${output.stderr}`;
+	const exitLine = `[exit code: ${exitCode}]`;
+	const tailLength = [...errors, exitLine].join('\n').length + 1;
+	let result = truncate(
+		body,
+		Math.max(0, maxCommandOutputChars - tailLength),
+		'output truncated at 50000 chars',
+	);
+	for (const error of errors) result += `${result ? '\n' : ''}${error}`;
+	return `${result}\n${exitLine}`;
 }
 
 function onAbort(signal: AbortSignal | undefined): {
@@ -116,8 +140,6 @@ export async function runBash(
 		// left running would keep working after the run reported it stopped.
 		const cleanup = aborted ? incompleteStop(await stopProcessTree(proc.pid)) : '';
 
-		// The race result is the exit status, 'timeout' or 'aborted': the reported exit code.
-		const exitCode = exitResult;
 		// A killed tree can leave a pipe open past its own death; after a cancellation the output
 		// is partial anyway, so the stop is not held up a full second waiting for it.
 		const readBudgetMs = aborted ? 250 : 1000;
@@ -126,18 +148,12 @@ export async function runBash(
 			readWithTimeout(stderrPromise, readBudgetMs),
 		]);
 
-		let result = '';
-		if (stdout) result += stdout;
-		if (stderr) result += `${result ? '\n' : ''}STDERR:\n${stderr}`;
-		if (timedOut) {
-			result += `${result ? '\n' : ''}ERROR: Command timed out after ${timeoutMs}ms`;
-		}
-		if (aborted) {
-			result += `${result ? '\n' : ''}ERROR: Command aborted: ${abortReason(signal)}`;
-			if (cleanup) result += `\n${cleanup}`;
-		}
-		result += `\n[exit code: ${exitCode}]`;
-		return truncate(result, maxCommandOutputChars, 'output truncated at 50000 chars');
+		const errors: string[] = [];
+		if (timedOut) errors.push(`ERROR: Command timed out after ${timeoutMs}ms`);
+		if (aborted) errors.push(`ERROR: Command aborted: ${abortReason(signal)}`);
+		if (cleanup) errors.push(cleanup);
+		// The race result is the exit status, 'timeout' or 'aborted': the reported exit code.
+		return formatBashResult({ stderr, stdout }, errors, exitResult);
 	} catch (error) {
 		return `ERROR: Failed to execute command: ${error instanceof Error ? error.message : String(error)}`;
 	} finally {

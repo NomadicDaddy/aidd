@@ -13,9 +13,19 @@ const ROOT = 4100;
 const CHILD = 4101;
 const GRANDCHILD = 4102;
 
-const table: ProcessTableEntry[] = [
+const liveTree: ProcessTableEntry[] = [
 	{ pid: ROOT, ppid: 1000 },
 	{ pid: CHILD, ppid: ROOT },
+	{ pid: GRANDCHILD, ppid: CHILD },
+];
+// The root has exited. Windows keeps reporting its number on the orphan...
+const exitedRootWindows: ProcessTableEntry[] = [
+	{ pid: CHILD, ppid: ROOT },
+	{ pid: GRANDCHILD, ppid: CHILD },
+];
+// ...while POSIX reparents the orphan to init, so nothing links it to the root any more.
+const exitedRootPosix: ProcessTableEntry[] = [
+	{ pid: CHILD, ppid: 1 },
 	{ pid: GRANDCHILD, ppid: CHILD },
 ];
 
@@ -45,7 +55,7 @@ function fakeWorld(options: {
 			killed.push(pid);
 			alive.delete(pid);
 		},
-		listTable: options.listTable ?? (async () => table),
+		listTable: options.listTable ?? (async () => liveTree),
 	};
 	return { alive, deps, killed };
 }
@@ -56,22 +66,40 @@ describe('stopProcessTree', () => {
 		const report = await stopProcessTree(ROOT, 50, world.deps);
 		expect(world.killed).toEqual([GRANDCHILD, CHILD, ROOT]);
 		expect(world.alive.size).toBe(0);
-		expect(report).toEqual({ complete: true, survivors: [], tableRead: true });
+		expect(report).toEqual({ complete: true, rootSeen: true, survivors: [], tableRead: true });
 	});
 
-	test('still reaches the descendants when the root has already exited', async () => {
-		const world = fakeWorld({ rootAlive: false });
+	test('kills what an exited root still links, but does not vouch for the tree', async () => {
+		const world = fakeWorld({ listTable: async () => exitedRootWindows, rootAlive: false });
 		const report = await stopProcessTree(ROOT, 50, world.deps);
 		expect(world.killed).toContain(CHILD);
 		expect(world.killed).toContain(GRANDCHILD);
 		expect(world.alive.size).toBe(0);
-		expect(report.complete).toBe(true);
+		expect(report).toEqual({
+			complete: false,
+			rootSeen: false,
+			survivors: [],
+			tableRead: true,
+		});
+	});
+
+	test('does not report a reparented orphan as stopped', async () => {
+		const world = fakeWorld({ listTable: async () => exitedRootPosix, rootAlive: false });
+		const report = await stopProcessTree(ROOT, 50, world.deps);
+		expect(world.alive.has(CHILD)).toBe(true);
+		expect(report.complete).toBe(false);
+		expect(report.rootSeen).toBe(false);
 	});
 
 	test('names a descendant that outlives the kill instead of claiming success', async () => {
 		const world = fakeWorld({ unkillable: [GRANDCHILD] });
 		const report = await stopProcessTree(ROOT, 50, world.deps);
-		expect(report).toEqual({ complete: false, survivors: [GRANDCHILD], tableRead: true });
+		expect(report).toEqual({
+			complete: false,
+			rootSeen: true,
+			survivors: [GRANDCHILD],
+			tableRead: true,
+		});
 	});
 
 	test('reports the tree as unconfirmed when the process table cannot be read', async () => {
@@ -84,7 +112,12 @@ describe('stopProcessTree', () => {
 			const world = fakeWorld({ listTable });
 			const report = await stopProcessTree(ROOT, 50, world.deps);
 			expect(world.killed).toEqual([ROOT]);
-			expect(report).toEqual({ complete: false, survivors: [], tableRead: false });
+			expect(report).toEqual({
+				complete: false,
+				rootSeen: false,
+				survivors: [],
+				tableRead: false,
+			});
 		}
 	});
 });

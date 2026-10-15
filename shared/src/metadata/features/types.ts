@@ -45,6 +45,8 @@ export const FEATURE_ID_PATTERN =
 export type Feature = z.infer<typeof featureSchema>;
 
 export interface FeatureQuery {
+	/** Keep only the records the project page counts as audit findings (see isSweepAuditFinding). */
+	auditOnly?: boolean;
 	featureDirectory?: string;
 	filters?: { field: string; value: string }[];
 	includeAudit?: boolean;

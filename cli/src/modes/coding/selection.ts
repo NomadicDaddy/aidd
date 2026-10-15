@@ -22,9 +22,11 @@ export function featureQuery(plan: RunPlan): FeatureQuery {
 	// exclusion for this run only. An optional source narrows the sweep to one audit's
 	// findings by matching each feature's `auditSource`; ordering (severity → priority) is
 	// handled downstream by selectNextFeature, whose priority sort already tracks severity
-	// (Critical=1 … Low=4).
+	// (Critical=1 … Low=4). auditOnly keeps ordinary backlog records out of the sweep, which the
+	// page offers as "N approved audit findings ready to work".
 	if (plan.scope.auditFindings) {
 		query.includeAudit = true;
+		query.auditOnly = true;
 		if (plan.scope.auditFindingsSource) {
 			query.filters = [
 				...plan.scope.filters,

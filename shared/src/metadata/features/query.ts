@@ -11,6 +11,7 @@ import { indexFeaturesByRef } from './indexByRef.ts';
 export function featureMatchesQuery(feature: Feature, query: FeatureQuery = {}): boolean {
 	const directory = feature.directory ?? feature.id;
 	if (!query.includeAudit && isAuditFinding(feature)) return false;
+	if (query.auditOnly && !isSweepAuditFinding(feature)) return false;
 	if (query.featureDirectory && directory !== query.featureDirectory) return false;
 	if (
 		query.milestoneFeatureDirectories &&
@@ -29,6 +30,15 @@ export function featureMatchesQuery(feature: Feature, query: FeatureQuery = {}):
 export function isAuditFinding(feature: Feature): boolean {
 	const id = feature.directory ?? feature.id;
 	return Boolean(feature.auditSource) || /^audit-[a-z][a-z0-9-]*-\d+-/.test(id);
+}
+
+/** An audit finding as the project page counts one for its audit-findings sweep: a non-empty
+ * auditSource on a record that is not a remediation-* directory. The sweep must work exactly the
+ * records the page offered, so this mirrors the page's source label, not isAuditFinding's wider
+ * id pattern. */
+export function isSweepAuditFinding(feature: Feature): boolean {
+	const directory = feature.directory ?? feature.id;
+	return Boolean(feature.auditSource) && !directory.startsWith('remediation-');
 }
 
 export function isRemediationFeature(feature: Feature): boolean {

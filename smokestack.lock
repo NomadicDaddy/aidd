@@ -1,5 +1,5 @@
 {
-	"commit": "85048526392b7e519333dd74c5d28856b3f4c9ad",
+	"commit": "3a6a9409768074fe2e4592130a3e859fd6ed62b6",
 	"groups": {
 		"gate-conventions": {
 			"files": {
@@ -293,7 +293,7 @@
 				},
 				"scripts/shared-core-manifest.json": {
 					"mode": "100644",
-					"sha256": "597f590dbca690876ffab9fcfaae594a2a94b442f38539c5e2f54df1cc482c69"
+					"sha256": "9da22ce6f67cab286687d4989e643e86cea8c1e9154fe57cc52f44cd77ddcdf7"
 				},
 				"scripts/sync-shared-core.ts": {
 					"mode": "100644",
@@ -303,5 +303,5 @@
 		}
 	},
 	"owner": "smokestack",
-	"version": "0.4.0"
+	"version": "0.5.0"
 }

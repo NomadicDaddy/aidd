@@ -113,6 +113,13 @@ automation reading the exit code. Two safe options:
 Never trust a chained gate's success without reading its output for a `[FAIL]`/non-zero step; a
 green exit code from a `;`-joined chain proves nothing about the commands before the last.
 
+**CRITICAL: Never pipe a gate.** A pipeline reports the exit code of its LAST command, so
+`bun run smoke:qc 2>&1 | tail -25` exits `0` when `tail` succeeds, whatever the gate did. The same
+holds for `| head`, `| grep`, `| tee` and PowerShell's `| Select-Object`. Run the gate plainly and
+read its output, or, to keep long output short, redirect it to a file
+(`bun run smoke:qc > qc.log 2>&1`), check that command's own exit code, then read the end of the
+file. A gate's pass is its own exit code, never a pipeline's.
+
 ### Setup Script Prohibition
 
 **CRITICAL: Do not run `scripts/setup.ts` or other setup scripts (except in initializer session)**

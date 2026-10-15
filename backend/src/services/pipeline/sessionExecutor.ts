@@ -17,6 +17,7 @@ import { dumpSessionMetrics } from './sessionMetricsDump.ts';
 interface PipelineSessionExecutorInput {
 	broadcast: BroadcastService;
 	db: WebDatabase;
+	forceStopFlags: Set<string>;
 	lifecycle: SessionLifecycle;
 	report: ReportBuilder;
 	stepExecutor: StepExecutor;
@@ -38,7 +39,7 @@ export class PipelineSessionExecutor {
 		} catch (err) {
 			await this.finalize(context, 'failed', Date.now(), stringifyError(err));
 		} finally {
-			this.input.stopFlags.delete(context.sessionId);
+			this.clearStopFlags(context.sessionId);
 		}
 	}
 
@@ -65,8 +66,13 @@ export class PipelineSessionExecutor {
 		} catch (err) {
 			await this.finalize(context, 'failed', Date.now(), stringifyError(err));
 		} finally {
-			this.input.stopFlags.delete(context.sessionId);
+			this.clearStopFlags(context.sessionId);
 		}
+	}
+
+	private clearStopFlags(sessionId: string): void {
+		this.input.stopFlags.delete(sessionId);
+		this.input.forceStopFlags.delete(sessionId);
 	}
 
 	// Terminalizes a non-stopped session from its persisted step results so a partial

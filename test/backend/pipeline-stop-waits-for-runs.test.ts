@@ -4,6 +4,7 @@ import type { RecipeDefinition } from '../../backend/src/types.ts';
 
 import { pipelineSessions, pipelineStepResults } from '../../backend/src/db/schema.ts';
 import { ProjectBusyError } from '../../backend/src/services/errors.ts';
+import { RunWaiter } from '../../backend/src/services/pipeline/runWaiter.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 import { makeStopHarness, waitFor } from './_helpers/pipeline-stop-harness.ts';
 import { removeTempTree } from './_helpers/remove-temp-tree.ts';
@@ -143,6 +144,58 @@ describe('Session Stop waits for its runs', () => {
 			expect(await pipelineService.countActiveSessions()).toBe(0);
 		});
 	});
+
+	// Force stop kills the runs it can see; a launch still in flight when it was confirmed links
+	// its run afterwards, and that run must be killed too rather than only asked to stop.
+	test('a force stop kills a run its step links only after the stop', async () => {
+		await withHarness(async ({ launch, pipelineService, runs, session, steps }) => {
+			const release = runs.holdLaunches();
+			const launched = await launch(twoRunSteps);
+			await waitFor(() => runs.launchesEntered() === 1, 'the held launch');
+
+			expect(await pipelineService.stopSession(launched.id)).toBe('stopping');
+			expect(await pipelineService.stopSession(launched.id, { force: true })).toBe(
+				'stopping',
+			);
+			expect(runs.calls).toEqual([]);
+			release();
+
+			await waitFor(() => runs.calls.includes('kill:run_1'), 'the late kill');
+			await waitFor(async () => (await session(launched.id))?.status === 'stopped', 'stop');
+			const rows = await steps(launched.id);
+			expect(rows.map((row) => [row.stepName, row.status, row.exitCode])).toEqual([
+				['First', 'failed', -1],
+			]);
+			expect(runs.runs.size).toBe(1);
+		});
+	}, 20_000);
+
+	test('a force stop escalates the graceful stop a waiter already sent', async () => {
+		await withHarness(async ({ projectDir, runs }) => {
+			await runs.service.launchRun(
+				{ mode: 'directive', projectDir },
+				{ initiator: 'operator' },
+			);
+			const forceStopFlags = new Set<string>();
+			const waiter = new RunWaiter({
+				forceStopFlags,
+				runService: runs.service,
+				stopFlags: new Set(['pipe_1']),
+			});
+			const waited = waiter.waitForRun('run_1', 'pipe_1');
+			try {
+				await waitFor(() => runs.calls.includes('stop:run_1'), 'the graceful request');
+				forceStopFlags.add('pipe_1');
+				await waitFor(() => runs.calls.includes('kill:run_1'), 'the escalation');
+				expect((await waited).status).toBe('killed');
+				expect(runs.calls).toEqual(['stop:run_1', 'kill:run_1']);
+			} finally {
+				if (runs.runs.get('run_1')?.row.status === 'running') {
+					runs.finish('run_1', { status: 'stopped' });
+				}
+			}
+		});
+	}, 20_000);
 });
 
 describe('a stopping session across a restart', () => {
@@ -202,6 +255,53 @@ describe('a stopping session across a restart', () => {
 			const rows = await steps('pipe_restart');
 			expect(rows.map((row) => [row.stepName, row.status])).toEqual([['First', 'completed']]);
 			expect(runs.runs.size).toBe(1);
+		});
+	});
+
+	// Before resume re-attaches it, nothing in this process waits on the session's run, so nothing
+	// else could escalate a graceful request: a force stop must kill there and then.
+	test('a force stop on a session no execution here holds kills its run', async () => {
+		await withHarness(async (harness) => {
+			const { db, pipelineService, projectDir, recipeService, runs, session } = harness;
+			await recipeService.writeRecipe({ ...twoRunSteps, parameters: [] });
+			await runs.service.launchRun(
+				{ mode: 'directive', projectDir },
+				{ initiator: 'operator' },
+			);
+			const now = Date.now();
+			await db.insert(pipelineSessions).values({
+				currentStepIndex: 0,
+				id: 'pipe_detached',
+				parametersJson: '{}',
+				projectName: 'project',
+				projectPath: projectDir,
+				recipeId: 'two_runs',
+				recipeName: 'Two runs',
+				startedAt: now,
+				status: 'running',
+				totalSteps: 2,
+			});
+			await db.insert(pipelineStepResults).values({
+				attemptKind: 'ordinary',
+				attemptNumber: 1,
+				displayOrder: 1,
+				id: 'step_detached',
+				runId: 'run_1',
+				sequenceNumber: 1,
+				sessionId: 'pipe_detached',
+				startedAt: now,
+				status: 'running',
+				stepDefinitionId: 'first',
+				stepName: 'First',
+				stepType: 'aidd-cli',
+			});
+
+			expect(await pipelineService.stopSession('pipe_detached', { force: true })).toBe(
+				'stopped',
+			);
+			expect(runs.calls).toContain('kill:run_1');
+			expect(runs.calls).not.toContain('stop:run_1');
+			expect((await session('pipe_detached'))?.status).toBe('stopped');
 		});
 	});
 });

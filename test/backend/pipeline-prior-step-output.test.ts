@@ -74,6 +74,7 @@ describe('prior step output forwarding', () => {
 			'{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"## Review\\n\\nFINDING: the guard is unreachable."}]}}',
 		].join('\n');
 		const waiter = new RunWaiter({
+			forceStopFlags: new Set<string>(),
 			runService: {
 				readOutput: async () => ({ output: transcript }),
 			} as unknown as ConstructorParameters<typeof RunWaiter>[0]['runService'],
@@ -87,6 +88,7 @@ describe('prior step output forwarding', () => {
 
 	test('an unreadable transcript forwards nothing rather than throwing', async () => {
 		const waiter = new RunWaiter({
+			forceStopFlags: new Set<string>(),
 			runService: {
 				readOutput: async () => {
 					throw new Error('log missing');

@@ -11,21 +11,30 @@ import { type RunRow, terminalRunStatuses } from './types.ts';
 // Isolate run polling and backstop logic so it can be tested independently of StepExecutor. A
 // session stop does not end the wait: it asks the run to stop (the stop file ends it at its next
 // iteration boundary) and keeps waiting, so the step records what the run actually did and the
-// session holds its place until then. The deadline only exists so a step cannot block a session
+// session holds its place until then. A force stop kills the run instead, escalating a graceful
+// request this waiter already sent. The deadline only exists so a step cannot block a session
 // forever on a run row that never becomes terminal.
+type StopRequest = 'force' | 'graceful';
+
 export class RunWaiter {
 	private readonly runService: RunService;
 	private readonly stopFlags: Set<string>;
+	private readonly forceStopFlags: Set<string>;
 
-	constructor(input: { runService: RunService; stopFlags: Set<string> }) {
+	constructor(input: {
+		forceStopFlags: Set<string>;
+		runService: RunService;
+		stopFlags: Set<string>;
+	}) {
 		this.runService = input.runService;
 		this.stopFlags = input.stopFlags;
+		this.forceStopFlags = input.forceStopFlags;
 	}
 
 	async waitForRun(runId: string, sessionId: string): Promise<RunRow> {
 		let deadline = Date.now() + RUN_WAIT_MAX_MS;
 		let lastHeartbeat: null | number = null;
-		let stopRequested = false;
+		let sent: StopRequest | undefined;
 		for (;;) {
 			const run = await this.runService.getRun(runId);
 			if (run && terminalRunStatuses.has(run.status as WebRunStatus)) return run;
@@ -43,12 +52,14 @@ export class RunWaiter {
 				lastHeartbeat = heartbeat;
 				deadline = Date.now() + RUN_WAIT_MAX_MS;
 			}
-			// Session Stop asks every run it can see, but a run linked after that (or one re-attached
-			// by a restart) is only known here. Asking twice is harmless: the stop file is idempotent,
-			// and a run that already ended answers with an error that changes nothing.
-			if (!stopRequested && this.stopFlags.has(sessionId)) {
-				stopRequested = true;
-				await this.runService.stopRun(runId).catch(() => undefined);
+			// Session Stop asks (or, forced, kills) every run it can see, but a run linked after that
+			// (or one re-attached by a restart) is only known here. Asking twice is harmless: the stop
+			// file is idempotent, and a run that already ended answers with an error that changes
+			// nothing.
+			const request = this.pendingStop(sessionId, sent);
+			if (request !== undefined) {
+				sent = request;
+				await this.sendStop(runId, request).catch(() => undefined);
 				continue;
 			}
 			if (Date.now() >= deadline) {
@@ -60,6 +71,25 @@ export class RunWaiter {
 			}
 			await sleep(200);
 		}
+	}
+
+	/**
+	 * The stop request this waiter still owes its run. A force stop is owed even after a graceful
+	 * one: an explicit force must never be downgraded to waiting for the iteration boundary.
+	 * @param sessionId The session the run belongs to.
+	 * @param sent The request this waiter already sent, if any.
+	 * @returns The request to send now, or undefined when nothing more is owed.
+	 */
+	private pendingStop(sessionId: string, sent: StopRequest | undefined): StopRequest | undefined {
+		if (sent !== 'force' && this.forceStopFlags.has(sessionId)) return 'force';
+		if (sent === undefined && this.stopFlags.has(sessionId)) return 'graceful';
+		return undefined;
+	}
+
+	private sendStop(runId: string, request: StopRequest): Promise<void> {
+		return request === 'force'
+			? this.runService.killRun(runId)
+			: this.runService.stopRun(runId);
 	}
 
 	async outputForRun(runId: string): Promise<string | undefined> {

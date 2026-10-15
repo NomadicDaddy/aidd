@@ -83,6 +83,7 @@ async function runRecipe(firstStepConfig: Record<string, RecipeConfigValue>) {
 	const executor = new StepExecutor({
 		activeShellProcesses: new Map(),
 		db: {} as WebDatabase,
+		forceStopFlags: new Set(),
 		getAllowedRoots: () => [],
 		lifecycle,
 		recipeService: {} as RecipeService,

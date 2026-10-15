@@ -46,6 +46,7 @@ export class LaunchService {
 		broadcast: BroadcastService;
 		commands: DbCommands;
 		db: WebDatabase;
+		forceStopFlags: Set<string>;
 		lifecycle: SessionLifecycle;
 		projectService: ProjectService;
 		recipeService: RecipeService;
@@ -61,6 +62,7 @@ export class LaunchService {
 		this.sessionExecutor = new PipelineSessionExecutor({
 			broadcast: input.broadcast,
 			db: input.db,
+			forceStopFlags: input.forceStopFlags,
 			lifecycle: input.lifecycle,
 			report: input.report,
 			stepExecutor: input.stepExecutor,

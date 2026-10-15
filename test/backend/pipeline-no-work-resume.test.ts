@@ -63,6 +63,7 @@ function harness() {
 		activeShellProcesses: new Map(),
 		broadcast: new BroadcastService({ broadcast: () => {} } as unknown as WebSocketHub),
 		db,
+		forceStopFlags: new Set(),
 		report,
 		runService,
 		stopFlags: new Set(),
@@ -71,6 +72,7 @@ function harness() {
 	const executor = new StepExecutor({
 		activeShellProcesses: new Map(),
 		db,
+		forceStopFlags: new Set(),
 		getAllowedRoots: () => [],
 		lifecycle,
 		recipeService: {} as RecipeService,

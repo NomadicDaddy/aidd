@@ -38,6 +38,8 @@ export class SessionLifecycle {
 	private readonly telemetryService: TelemetryService;
 	private readonly activeShellProcesses: Map<string, Set<ReturnType<typeof Bun.spawn>>>;
 	private readonly stopFlags: Set<string>;
+	// Sessions whose stop was forced: their runs are killed, never just asked to stop.
+	private readonly forceStopFlags: Set<string>;
 	private readonly activeExecutions: Map<string, Promise<void>>;
 
 	constructor(input: {
@@ -45,6 +47,7 @@ export class SessionLifecycle {
 		activeShellProcesses: Map<string, Set<ReturnType<typeof Bun.spawn>>>;
 		broadcast: BroadcastService;
 		db: WebDatabase;
+		forceStopFlags: Set<string>;
 		report: ReportBuilder;
 		runService: RunService;
 		stopFlags: Set<string>;
@@ -57,6 +60,7 @@ export class SessionLifecycle {
 		this.telemetryService = input.telemetryService;
 		this.activeShellProcesses = input.activeShellProcesses;
 		this.stopFlags = input.stopFlags;
+		this.forceStopFlags = input.forceStopFlags;
 		this.activeExecutions = input.activeExecutions;
 		this.progress = new PipelineProgressService(input.db, input.broadcast);
 	}
@@ -92,7 +96,8 @@ export class SessionLifecycle {
 	 * to stop through its stop file and ends at its iteration boundary, shell steps are killed at
 	 * once, and the execution itself finishes the session as 'stopped' once the runs it waits on
 	 * are terminal, recording each step's real outcome on the way. A plain Stop on a session that
-	 * is already stopping changes nothing; `force` kills the runs' process trees instead.
+	 * is already stopping changes nothing; `force` (on a running or stopping session) kills the
+	 * runs' process trees instead, including any run its steps link after this call.
 	 * @param id The pipeline session.
 	 * @param options What kind of stop this is.
 	 * @param options.force End the runs now rather than at their iteration boundary.
@@ -122,14 +127,17 @@ export class SessionLifecycle {
 		const execution = this.activeExecutions.get(id);
 		if (!execution) {
 			// Nothing in this process waits on the session's runs, so nothing else would finish it.
-			await this.stopWithoutExecution(id);
+			await this.stopWithoutExecution(id, force);
 			return 'stopped';
 		}
 		await this.markStopping(id);
 		// The graceful request reaches each run through the RunWaiter that waits on it, which sees
 		// the stop flag within a poll and also covers a run linked after this point. A force stop
-		// cannot wait for that: it kills every run tree the session's in-flight steps hold.
+		// cannot wait for that: it kills every run tree the session's in-flight steps hold. A run
+		// not linked yet (its launch still in flight) is killed by its RunWaiter once it is, which
+		// is why the force flag is set first and kept until the execution finishes.
 		if (force) {
+			this.forceStopFlags.add(id);
 			for (const runId of await this.activeStepRunIds(id)) {
 				await this.runService.killRun(runId).catch(() => undefined);
 			}
@@ -168,9 +176,12 @@ export class SessionLifecycle {
 		return rows.flatMap((row) => (row.runId === null ? [] : [row.runId]));
 	}
 
-	private async stopWithoutExecution(id: string): Promise<void> {
+	// A force stop kills here too: with no execution in this process (one not yet re-attached after
+	// a restart, say) nothing else would escalate a graceful request to a kill.
+	private async stopWithoutExecution(id: string, force: boolean): Promise<void> {
 		for (const runId of await this.activeStepRunIds(id)) {
-			await this.runService.stopRun(runId).catch(() => undefined);
+			const stop = force ? this.runService.killRun(runId) : this.runService.stopRun(runId);
+			await stop.catch(() => undefined);
 		}
 		await this.killShellSteps(id);
 		const completedAt = Date.now();

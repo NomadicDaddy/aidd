@@ -55,6 +55,7 @@ export class StepExecutor {
 		activeShellProcesses: Map<string, Set<ReturnType<typeof Bun.spawn>>>;
 		afterTopLevelStep?: (sessionId: string, projectDir: string) => Promise<void>;
 		db: WebDatabase;
+		forceStopFlags: Set<string>;
 		getAllowedRoots: () => readonly string[];
 		lifecycle: SessionLifecycle;
 		recipeService: RecipeService;
@@ -68,6 +69,7 @@ export class StepExecutor {
 		this.stopFlags = input.stopFlags;
 		this.afterTopLevelStep = input.afterTopLevelStep;
 		const runWaiter = new RunWaiter({
+			forceStopFlags: input.forceStopFlags,
 			runService: input.runService,
 			stopFlags: input.stopFlags,
 		});

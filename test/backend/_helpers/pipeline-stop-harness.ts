@@ -39,6 +39,8 @@ export interface FakeRunRow {
 export function fakeRunService(db: WebDatabase) {
 	const runs = new Map<string, { exited: boolean; row: FakeRunRow; stopRequested: boolean }>();
 	const calls: string[] = [];
+	// A held launch stays in flight, the way a slow spawn does, so its step has no run linked yet.
+	const launches = { entered: 0, gate: undefined as Promise<void> | undefined };
 	const live = (id: string) => {
 		const run = runs.get(id);
 		if (!run) throw new Error(`Run not found: ${id}`);
@@ -59,6 +61,8 @@ export function fakeRunService(db: WebDatabase) {
 			});
 		},
 		launchRun: async () => {
+			launches.entered += 1;
+			await launches.gate;
 			const id = `run_${runs.size + 1}`;
 			const row: FakeRunRow = {
 				aiSummary: null,
@@ -116,7 +120,20 @@ export function fakeRunService(db: WebDatabase) {
 		if (!run) throw new Error(`Run not found: ${id}`);
 		Object.assign(run.row, { completedAt: Date.now(), ...outcome });
 	};
-	return { calls, finish, runs, service: service as unknown as RunService };
+	/** Hold every launch until the returned release is called. */
+	const holdLaunches = () => {
+		const { promise, resolve } = Promise.withResolvers<void>();
+		launches.gate = promise;
+		return resolve;
+	};
+	return {
+		calls,
+		finish,
+		holdLaunches,
+		launchesEntered: () => launches.entered,
+		runs,
+		service: service as unknown as RunService,
+	};
 }
 
 export async function makeStopHarness(workspace: string) {

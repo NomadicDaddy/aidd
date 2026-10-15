@@ -23,7 +23,11 @@ function waiterOver(rows: Record<string, unknown>[], now: () => number) {
 			return row;
 		},
 	} as unknown as RunService;
-	const waiter = new RunWaiter({ runService, stopFlags: new Set<string>() });
+	const waiter = new RunWaiter({
+		forceStopFlags: new Set<string>(),
+		runService,
+		stopFlags: new Set<string>(),
+	});
 	const realNow = Date.now;
 	Date.now = now;
 	return {
@@ -113,7 +117,7 @@ describe('run waiter backstop', () => {
 				stops.push(id);
 			},
 		} as unknown as RunService;
-		const waiter = new RunWaiter({ runService, stopFlags });
+		const waiter = new RunWaiter({ forceStopFlags: new Set<string>(), runService, stopFlags });
 
 		expect((await waiter.waitForRun('run_1', 'pipe_1')).status).toBe('completed');
 		expect(stops).toEqual(['run_1']);

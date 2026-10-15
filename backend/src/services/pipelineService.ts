@@ -29,6 +29,8 @@ export class PipelineService {
 	private readonly activeExecutions = new Map<string, Promise<void>>();
 	private readonly activeShellProcesses = new Map<string, Set<ReturnType<typeof Bun.spawn>>>();
 	private readonly stopFlags = new Set<string>();
+	// The subset of stopFlags whose stop was forced; cleared with stopFlags when a session finishes.
+	private readonly forceStopFlags = new Set<string>();
 	private readonly report: ReportBuilder;
 	private readonly lifecycle: SessionLifecycle;
 	private readonly launch: LaunchService;
@@ -53,6 +55,7 @@ export class PipelineService {
 			activeShellProcesses: this.activeShellProcesses,
 			broadcast,
 			db: input.db,
+			forceStopFlags: this.forceStopFlags,
 			report: this.report,
 			runService: input.runService,
 			stopFlags: this.stopFlags,
@@ -64,6 +67,7 @@ export class PipelineService {
 			afterTopLevelStep: (sessionId, projectDir) =>
 				dumpSessionMetrics(reportForDump, sessionId, projectDir),
 			db: input.db,
+			forceStopFlags: this.forceStopFlags,
 			getAllowedRoots: () => input.projectService.getAllowedRoots(),
 			lifecycle: this.lifecycle,
 			recipeService: input.recipeService,
@@ -78,6 +82,7 @@ export class PipelineService {
 			broadcast,
 			commands: input.commands,
 			db: input.db,
+			forceStopFlags: this.forceStopFlags,
 			lifecycle: this.lifecycle,
 			projectService: input.projectService,
 			recipeService: input.recipeService,

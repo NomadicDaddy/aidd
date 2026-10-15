@@ -14,7 +14,11 @@ import { Tooltip } from '../../components/ui/tooltip.tsx';
 import { useRunRecord } from '../../hooks/useRuns.ts';
 import { cn } from '../../lib/cn.ts';
 import { formatDate } from '../../lib/formatters.ts';
-import { sessionStatusTone, stepStatusLabel } from '../../lib/pipelineSessionStatus.ts';
+import {
+	sessionStatusTone,
+	type StepBadgeStatus,
+	stepStatusLabel,
+} from '../../lib/pipelineSessionStatus.ts';
 import { stepTypeLabel } from '../../lib/stepTypeLabel.ts';
 import { toneText } from '../../lib/tones.ts';
 import { proseMeasureClass } from '../../lib/typography.ts';
@@ -64,6 +68,7 @@ function StepRunQualifiers({ run }: { run: RunRecord | undefined }) {
  */
 export function ExecutedStepRow({
 	attemptLabel,
+	badgeStatus,
 	now,
 	parentStepName,
 	sessionErrorMessage,
@@ -73,6 +78,7 @@ export function ExecutedStepRow({
 	totalSteps,
 }: {
 	attemptLabel: null | string;
+	badgeStatus: StepBadgeStatus;
 	now: number;
 	parentStepName: null | string;
 	sessionErrorMessage: null | string;
@@ -125,8 +131,8 @@ export function ExecutedStepRow({
 							{/* Status leads the badge rail: `phase` reads 'step' on every top-level
 							    row, so it only earns a badge where it distinguishes a hook, a nested
 							    recipe-ref child or an auto-fix retry. */}
-							<Badge tone={sessionStatusTone(step.status)}>
-								{stepStatusLabel(step.status)}
+							<Badge tone={sessionStatusTone(badgeStatus)}>
+								{stepStatusLabel(badgeStatus)}
 							</Badge>
 							{step.phase !== 'step' && <Badge>{step.phase}</Badge>}
 							{/* Only where there is more than one attempt to tell apart, so an

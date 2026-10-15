@@ -15,10 +15,15 @@ import type { AutoFixRunner } from './autoFixRunner.ts';
 import type { HookRunner } from './hookRunner.ts';
 import type { SessionLifecycle } from './sessionLifecycle.ts';
 import type { StepDispatcher } from './stepDispatcher.ts';
-import type { ExecutionContext, StepDispatchResult, StepExecutionResult } from './types.ts';
 
 import { stringifyError, substituteConfig } from './helpers.ts';
 import { stepParameters } from './stepParameters.ts';
+import {
+	type ExecutionContext,
+	type StepDispatchResult,
+	type StepExecutionResult,
+	stoppedStepOutcome,
+} from './types.ts';
 
 const METADATA_ALLOWLIST = ['.aidd'];
 
@@ -126,18 +131,18 @@ export async function executeStep(
 	let superseded:
 		| { dispatch: StepDispatchResult; row: PipelineStepResultRecord; startedAt: number }
 		| undefined;
-	// A stop keeps the step's stopped status, but the boundary is still checked: a dispatch that
-	// discarded uncommitted work and was then stopped must not end with no record of the loss.
-	const stopStep = async (): Promise<StepExecutionResult> => {
+	// A stopped step records what its run did (stoppedStepOutcome). The boundary is still checked:
+	// a dispatch that discarded uncommitted work and was then stopped must not end with no record of
+	// the loss.
+	const stopStep = async (dispatch?: StepDispatchResult): Promise<StepExecutionResult> => {
 		const boundaryError = guardBaseline
 			? await writeBoundaryError(context.projectDir, guardBaseline)
 			: null;
 		await lifecycle.completeStep({
+			...stoppedStepOutcome(dispatch, boundaryError),
 			completedAt: Date.now(),
-			errorMessage: boundaryError ?? undefined,
 			resultId: attemptRow.id,
 			startedAt: attemptStartedAt,
-			status: 'stopped',
 		});
 		return { ok: false, stopped: true };
 	};
@@ -182,7 +187,7 @@ export async function executeStep(
 		} catch (err) {
 			lastDispatch = { errorMessage: stringifyError(err), ok: false };
 		}
-		if (stopFlags.has(context.sessionId)) return stopStep();
+		if (stopFlags.has(context.sessionId)) return stopStep(lastDispatch);
 		if (lastDispatch.ok || attempt >= attempts) break;
 		if (step.onFailure === 'auto-fix') {
 			// This attempt stays in flight for the whole remediation, which can be a managed run

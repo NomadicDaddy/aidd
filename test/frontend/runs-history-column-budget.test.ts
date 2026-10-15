@@ -23,6 +23,7 @@ const session: PipelineSessionRecord = {
 	skippedTopLevelSteps: 0,
 	startedAt: 1_000,
 	status: 'completed',
+	stopRequestedAt: null,
 	totalSteps: 1,
 };
 

@@ -18,6 +18,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useNow } from '../../hooks/useNow.ts';
 import { usePipelineSessionReport, usePipelineSessions } from '../../hooks/usePipelineSessions.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
+import { isSessionActive, sessionStopOutcomeMessage } from '../../lib/pipelineSessionStatus.ts';
 import { buildStepRows } from '../../lib/pipelineStepRows.ts';
 import { touchTargetTextClass } from '../../lib/touchTarget.ts';
 import { sectionCaptionClass } from '../../lib/typography.ts';
@@ -35,25 +36,30 @@ export function PipelineSessionReportPage() {
 	const [showStopConfirm, setShowStopConfirm] = useState(false);
 	const stopPending = pipelineSessions.stopSession.isPending;
 	const sessionStatus = report?.session.status;
-	const canStop = sessionStatus === 'queued' || sessionStatus === 'running';
+	const canStop = sessionStatus !== undefined && isSessionActive(sessionStatus);
+	// While stopping, the second Stop is the explicit force stop that kills the run tree.
+	const force = sessionStatus === 'stopping';
 	const now = useNow(canStop);
 
 	const handleConfirmStop = () => {
 		if (!id) return;
-		pipelineSessions.stopSession.mutate(id, {
-			onError: (error) => {
-				const message =
-					error instanceof Error && error.message !== ''
-						? error.message
-						: 'Could not stop session';
-				toast.error(message);
-				setShowStopConfirm(false);
+		pipelineSessions.stopSession.mutate(
+			{ force, id },
+			{
+				onError: (error) => {
+					const message =
+						error instanceof Error && error.message !== ''
+							? error.message
+							: 'Could not stop session';
+					toast.error(message);
+					setShowStopConfirm(false);
+				},
+				onSuccess: (status) => {
+					toast.success(sessionStopOutcomeMessage(status));
+					setShowStopConfirm(false);
+				},
 			},
-			onSuccess: () => {
-				toast.success('Session stopped');
-				setShowStopConfirm(false);
-			},
-		});
+		);
 	};
 	useDocumentTitle(
 		report ? `${report.session.recipeName} · Pipeline Sessions` : 'Pipeline Session',
@@ -104,7 +110,7 @@ export function PipelineSessionReportPage() {
 							onClick={() => setShowStopConfirm(true)}
 							variant="danger">
 							<CircleStop className="h-4 w-4" />
-							Stop
+							{force ? 'Force stop' : 'Stop'}
 						</Button>
 					) : undefined
 				}
@@ -157,8 +163,12 @@ export function PipelineSessionReportPage() {
 			)}
 
 			<ConfirmDialog
-				confirmLabel="Stop session"
-				description="The session will be stopped immediately. Any in-progress steps may be interrupted."
+				confirmLabel={force ? 'Force stop session' : 'Stop session'}
+				description={
+					force
+						? 'The active run is killed now instead of at its iteration boundary. Work it has not committed may be lost.'
+						: 'The active run finishes its current iteration and then stops; the session ends once it has. Shell steps stop at once.'
+				}
 				destructive
 				isPending={stopPending}
 				onClose={() => {
@@ -166,7 +176,7 @@ export function PipelineSessionReportPage() {
 				}}
 				onConfirm={handleConfirmStop}
 				open={showStopConfirm}
-				title="Stop pipeline session?"
+				title={force ? 'Force stop pipeline session?' : 'Stop pipeline session?'}
 			/>
 		</PageRail>
 	);
@@ -196,6 +206,7 @@ function StepsCard({ now, report }: { now: number; report: PipelineSessionReport
 					row.kind === 'executed' ? (
 						<ExecutedStepRow
 							attemptLabel={row.attemptLabel}
+							badgeStatus={row.badgeStatus}
 							key={`exec-${row.result.id}`}
 							now={now}
 							parentStepName={row.parentStepName}

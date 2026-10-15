@@ -29,6 +29,7 @@ function session(overrides: Partial<PipelineSessionRecord> = {}): PipelineSessio
 		skippedTopLevelSteps: 0,
 		startedAt: 1_000,
 		status: 'completed',
+		stopRequestedAt: null,
 		totalSteps: 4,
 		...overrides,
 	};

@@ -8,6 +8,7 @@ import type { WebDatabase } from '../../db/client.ts';
 import { pipelineSessions } from '../../db/schema.ts';
 import { webLogger } from '../../logger.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
+import { activeSessionStatuses } from './helpers.ts';
 import { pipelineSessionRuntimeDir, RUNTIME_GITIGNORE } from './sessionMetricsPath.ts';
 
 // Historical location, before metrics moved under .aidd/runtime/. Matches the CLI's
@@ -53,7 +54,7 @@ export async function sweepSessionMetrics(db: WebDatabase): Promise<number> {
 	const activeRows = await db
 		.select({ id: pipelineSessions.id })
 		.from(pipelineSessions)
-		.where(inArray(pipelineSessions.status, ['queued', 'running']));
+		.where(inArray(pipelineSessions.status, [...activeSessionStatuses]));
 	const active = new Set(activeRows.map((row) => row.id));
 	const projectPaths = new Set(allSessions.map((row) => row.projectPath));
 	let removed = 0;

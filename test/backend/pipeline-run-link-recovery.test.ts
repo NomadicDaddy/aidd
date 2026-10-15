@@ -88,6 +88,7 @@ describe('managed pipeline run linkage', () => {
 			exitCode: undefined,
 			ok: true,
 			outputSummary: 'finished',
+			runStatus: 'completed',
 		});
 	});
 });

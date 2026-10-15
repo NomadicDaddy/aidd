@@ -41,7 +41,13 @@ export interface RunLaunchCommand {
 }
 
 export type PipelineSessionStatus =
-	'completed_with_failures' | 'completed' | 'failed' | 'queued' | 'running' | 'stopped';
+	| 'completed_with_failures'
+	| 'completed'
+	| 'failed'
+	| 'queued'
+	| 'running'
+	| 'stopped'
+	| 'stopping';
 
 export type PipelineStepPhase = 'post-hook' | 'pre-hook' | 'step';
 
@@ -247,6 +253,7 @@ export interface PipelineSessionRecord {
 	skippedTopLevelSteps: number;
 	startedAt: number;
 	status: PipelineSessionStatus;
+	stopRequestedAt: null | number;
 	totalSteps: number;
 }
 

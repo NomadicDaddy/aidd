@@ -14,8 +14,14 @@ export interface SessionOutcome {
 	failedStepNames: string[];
 	// Top-level steps that completed successfully.
 	producedArtifacts: ProducedArtifact[];
-	status: PipelineSessionStatus;
+	status: TerminalOutcomeStatus;
 }
+
+// The statuses a finished, non-stopped session resolves to from its step results.
+type TerminalOutcomeStatus = Extract<
+	PipelineSessionStatus,
+	'completed_with_failures' | 'completed' | 'failed'
+>;
 
 // Collapses the attempts at one logical step to the attempt that decided it. Every attempt is
 // persisted now, so a step that failed and was retried into a success leaves a 'failed' row behind;
@@ -69,7 +75,7 @@ export function summarizeSessionOutcome(
 		stepName: step.stepName,
 		stepType: step.stepType,
 	}));
-	let status: PipelineSessionStatus;
+	let status: TerminalOutcomeStatus;
 	if (failedStepNames.length === 0) {
 		status = baseOk ? 'completed' : 'failed';
 	} else if (completed.length > 0) {
@@ -94,7 +100,7 @@ export function resolveSessionTerminal(
 	baseOk: boolean,
 	baseErrorMessage: string | undefined,
 	stepResults: PipelineStepResultRecord[],
-): { errorMessage: string | undefined; status: PipelineSessionStatus } {
+): { errorMessage: string | undefined; status: TerminalOutcomeStatus } {
 	const outcome = summarizeSessionOutcome(baseOk, stepResults);
 	const errorMessage =
 		outcome.status === 'completed_with_failures'

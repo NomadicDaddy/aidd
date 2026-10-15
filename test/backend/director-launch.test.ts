@@ -2013,6 +2013,7 @@ describe('DirectorService.launchSuggestion', () => {
 							skippedTopLevelSteps: 0,
 							startedAt: Date.now(),
 							status: 'queued',
+							stopRequestedAt: null,
 							totalSteps: 1,
 						};
 					},

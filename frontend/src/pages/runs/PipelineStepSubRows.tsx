@@ -86,8 +86,8 @@ export function PipelineStepSubRows({
 						</div>
 						<div className="mt-1 flex flex-wrap items-center gap-1.5 pl-8 text-muted-foreground">
 							<Badge tone="neutral">{stepTypeLabel(step.stepType)}</Badge>
-							<Badge tone={sessionStatusTone(step.status)}>
-								{stepStatusLabel(step.status)}
+							<Badge tone={sessionStatusTone(row.badgeStatus)}>
+								{stepStatusLabel(row.badgeStatus)}
 							</Badge>
 							{/* The same badge the desktop rows and the report page show: without it a
 							    retried step reads as one card contradicting the card above it. */}

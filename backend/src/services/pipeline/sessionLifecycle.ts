@@ -1,4 +1,3 @@
-import { killProcessTree } from 'aidd-shared/lib/processTree';
 import { and, eq, inArray } from 'drizzle-orm';
 
 import type { WebDatabase } from '../../db/client.ts';
@@ -12,7 +11,7 @@ import type { PipelineSessionRow, ResumeResolution } from './types.ts';
 import { pipelineSessions, pipelineStepResults } from '../../db/schema.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
 import { RunControlError, type RunService } from '../runService.ts';
-import { PROCESS_CLEANUP_TIMEOUT_MS, STEP_CLEANUP_TIMEOUT_MS } from './constants.ts';
+import { PROCESS_CLEANUP_TIMEOUT_MS } from './constants.ts';
 import { isActiveSessionStatus } from './helpers.ts';
 import { PipelineProgressService } from './progressService.ts';
 import {
@@ -20,6 +19,7 @@ import {
 	type ReconcileResult,
 	reconcileStaleSessions as reconcileStaleSessionsFn,
 } from './sessionReconciler.ts';
+import { killShellProcesses } from './shellStepKill.ts';
 import {
 	completeStepRow,
 	insertStepResult,
@@ -87,7 +87,21 @@ export class SessionLifecycle {
 		);
 	}
 
-	async stopSession(id: string): Promise<void> {
+	/**
+	 * Session Stop. A session with a live execution moves to 'stopping': each run it owns is asked
+	 * to stop through its stop file and ends at its iteration boundary, shell steps are killed at
+	 * once, and the execution itself finishes the session as 'stopped' once the runs it waits on
+	 * are terminal, recording each step's real outcome on the way. A plain Stop on a session that
+	 * is already stopping changes nothing; `force` kills the runs' process trees instead.
+	 * @param id The pipeline session.
+	 * @param options What kind of stop this is.
+	 * @param options.force End the runs now rather than at their iteration boundary.
+	 * @returns The session's status when the call returns: 'stopping' while a run still works.
+	 */
+	async stopSession(
+		id: string,
+		options: { force?: boolean | undefined } = {},
+	): Promise<PipelineSessionStatus> {
 		const session = await this.report.getSession(id);
 		if (!session) throw new RunControlError(`Pipeline session not found: ${id}`, 404);
 		if (!isActiveSessionStatus(session.status)) {
@@ -95,16 +109,55 @@ export class SessionLifecycle {
 				`Pipeline session is already in terminal status '${session.status}': ${id}`,
 			);
 		}
+		const force = options.force === true;
+		if (session.status === 'stopping' && !force) return 'stopping';
 		this.stopFlags.add(id);
 		recordDataMovement({
 			category: 'database',
-			operation: 'pipeline.session.stop.request',
+			operation: force ? 'pipeline.session.stop.force' : 'pipeline.session.stop.request',
 			status: 'success',
 			summary: { sessionId: id },
 			target: 'pipelineSessions',
 		});
-		const activeSteps = await this.db
-			.select()
+		const execution = this.activeExecutions.get(id);
+		if (!execution) {
+			// Nothing in this process waits on the session's runs, so nothing else would finish it.
+			await this.stopWithoutExecution(id);
+			return 'stopped';
+		}
+		await this.markStopping(id);
+		// The graceful request reaches each run through the RunWaiter that waits on it, which sees
+		// the stop flag within a poll and also covers a run linked after this point. A force stop
+		// cannot wait for that: it kills every run tree the session's in-flight steps hold.
+		if (force) {
+			for (const runId of await this.activeStepRunIds(id)) {
+				await this.runService.killRun(runId).catch(() => undefined);
+			}
+		}
+		await this.killShellSteps(id);
+		// A shell step, or a run that had already exited, settles at once; give the execution a
+		// moment so the answer can say the session stopped rather than that it is stopping.
+		await Promise.race([execution, Bun.sleep(PROCESS_CLEANUP_TIMEOUT_MS)]);
+		return (await this.report.getSession(id))?.status ?? 'stopped';
+	}
+
+	private async markStopping(id: string): Promise<void> {
+		const updated = await this.db
+			.update(pipelineSessions)
+			.set({ status: 'stopping', stopRequestedAt: Date.now() })
+			.where(
+				and(
+					eq(pipelineSessions.id, id),
+					inArray(pipelineSessions.status, ['queued', 'running']),
+				),
+			)
+			.returning({ id: pipelineSessions.id });
+		if (updated.length > 0) this.broadcast.sessionStatus(id, 'stopping');
+	}
+
+	private async activeStepRunIds(id: string): Promise<string[]> {
+		const rows = await this.db
+			.select({ runId: pipelineStepResults.runId })
 			.from(pipelineStepResults)
 			.where(
 				and(
@@ -112,28 +165,14 @@ export class SessionLifecycle {
 					inArray(pipelineStepResults.status, ['queued', 'running']),
 				),
 			);
-		for (const step of activeSteps) {
-			if (step.runId === null) continue;
-			try {
-				await this.runService.stopRun(step.runId);
-			} catch {
-				continue;
-			}
+		return rows.flatMap((row) => (row.runId === null ? [] : [row.runId]));
+	}
+
+	private async stopWithoutExecution(id: string): Promise<void> {
+		for (const runId of await this.activeStepRunIds(id)) {
+			await this.runService.stopRun(runId).catch(() => undefined);
 		}
-		const shellProcesses = [...(this.activeShellProcesses.get(id) ?? [])];
-		for (const childProcess of shellProcesses) {
-			await killProcessTree(childProcess.pid);
-			childProcess.kill();
-		}
-		await Promise.allSettled(
-			shellProcesses.map(
-				(childProcess) =>
-					Promise.race([
-						childProcess.exited,
-						Bun.sleep(STEP_CLEANUP_TIMEOUT_MS),
-					]) as Promise<number | void>,
-			),
-		);
+		await this.killShellSteps(id);
 		const completedAt = Date.now();
 		await this.db
 			.update(pipelineStepResults)
@@ -146,15 +185,19 @@ export class SessionLifecycle {
 			);
 		await this.progress.refreshCompleted(id);
 		await this.finishSession(id, 'stopped', completedAt, undefined);
-		const execution = this.activeExecutions.get(id);
-		if (execution) {
-			await Promise.race([execution, Bun.sleep(PROCESS_CLEANUP_TIMEOUT_MS)]);
-		}
+	}
+
+	private async killShellSteps(id: string): Promise<void> {
+		await killShellProcesses(
+			[...(this.activeShellProcesses.get(id) ?? [])],
+			(childProcess) => this.activeShellProcesses.get(id)?.has(childProcess) ?? false,
+		);
 	}
 
 	async finishSession(
 		sessionId: string,
-		status: PipelineSessionStatus,
+		// Never 'stopping': that is entered by stopSession and left only by finishing.
+		status: Exclude<PipelineSessionStatus, 'stopping'>,
 		completedAt: number,
 		errorMessage: string | undefined,
 	): Promise<void> {

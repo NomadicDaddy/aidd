@@ -6,6 +6,7 @@ import type {
 	RunStatus,
 } from '../../api/types.ts';
 
+import { isSessionActive } from '../../lib/pipelineSessionStatus.ts';
 import { presentRunRecordInitiator, type UnifiedInitiatorFilter } from './runInitiator.ts';
 import { normalizePathForFilter, type UnifiedKindFilter } from './runsUtils.ts';
 
@@ -41,7 +42,7 @@ export function entryStartedAt(entry: UnifiedEntry): number {
 export function isEntryActive(entry: UnifiedEntry): boolean {
 	if (entry.kind === 'run')
 		return entry.run.status === 'queued' || entry.run.status === 'running';
-	return entry.session.status === 'queued' || entry.session.status === 'running';
+	return isSessionActive(entry.session.status);
 }
 
 // Only multi-step pipelines nest: a single-step session's step row would just restate the

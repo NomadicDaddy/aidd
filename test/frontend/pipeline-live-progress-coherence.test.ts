@@ -34,6 +34,7 @@ function makeSession(overrides: Partial<PipelineSessionRecord> = {}): PipelineSe
 		skippedTopLevelSteps: 0,
 		startedAt: 1,
 		status: 'running',
+		stopRequestedAt: null,
 		totalSteps: 3,
 		...overrides,
 	};

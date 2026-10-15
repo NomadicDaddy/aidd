@@ -77,6 +77,9 @@ function pipelineLifecycle(status: string): BlueprintSetupLifecycle | null {
 			return 'running';
 		case 'stopped':
 			return 'stopped';
+		// Still working: the run ends at its iteration boundary before the session reads stopped.
+		case 'stopping':
+			return 'running';
 		default:
 			return null;
 	}

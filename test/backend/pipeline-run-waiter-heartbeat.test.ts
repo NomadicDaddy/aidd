@@ -96,15 +96,26 @@ describe('run waiter backstop', () => {
 		}
 	});
 
-	test('stops immediately when the session is stopped', async () => {
+	// A session stop used to abandon the run here, so the step lost what the run went on to do. The
+	// waiter now asks the run to stop (once) and waits for the row the run ends with.
+	test('asks the run to stop once when the session stops, then waits for it', async () => {
 		const stopFlags = new Set<string>(['pipe_1']);
+		const statuses = ['running', 'running', 'running', 'completed'];
+		let poll = 0;
+		const stops: string[] = [];
 		const runService = {
-			getRun: async () => row('running', Date.now()),
+			getRun: async () => {
+				const status = statuses[Math.min(poll, statuses.length - 1)] ?? 'completed';
+				poll += 1;
+				return row(status, poll);
+			},
+			stopRun: async (id: string) => {
+				stops.push(id);
+			},
 		} as unknown as RunService;
 		const waiter = new RunWaiter({ runService, stopFlags });
 
-		await expect(waiter.waitForRun('run_1', 'pipe_1')).rejects.toThrow(
-			/Pipeline session was stopped/,
-		);
+		expect((await waiter.waitForRun('run_1', 'pipe_1')).status).toBe('completed');
+		expect(stops).toEqual(['run_1']);
 	});
 });

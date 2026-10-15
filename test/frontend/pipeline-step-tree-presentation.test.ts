@@ -31,7 +31,7 @@ function renderRows(): string[] {
 		"import { ExecutedStepRow } from './src/pages/pipelineSessions/StepRows.tsx';",
 		`const step = ${JSON.stringify(step)};`,
 		'const client = new QueryClient();',
-		'const render = (depth, parentStepName, suppressTiming = false, suppressName = false) => renderToStaticMarkup(h(QueryClientProvider, { client }, h(MemoryRouter, null, h(ExecutedStepRow, { now: 2000, parentStepName, sessionErrorMessage: null, step: { ...step, depth }, suppressName, suppressTiming, totalSteps: 3 }))));',
+		'const render = (depth, parentStepName, suppressTiming = false, suppressName = false) => renderToStaticMarkup(h(QueryClientProvider, { client }, h(MemoryRouter, null, h(ExecutedStepRow, { badgeStatus: step.status, now: 2000, parentStepName, sessionErrorMessage: null, step: { ...step, depth }, suppressName, suppressTiming, totalSteps: 3 }))));',
 		"console.log(JSON.stringify([render(0, null), render(1, 'Top-level step'), render(2, 'Nested step'), render(0, null, true), render(0, null, true, true)]));",
 	].join('\n');
 	const result = Bun.spawnSync([process.execPath, '-e', script], {

@@ -7,7 +7,7 @@ import type { TelemetryService } from '../telemetryService.ts';
 import type { PipelineSessionRow, ResumeInFlightStep, ResumeResolution } from './types.ts';
 
 import { pipelineSessions, pipelineStepResults } from '../../db/schema.ts';
-import { isManagedStepType } from './helpers.ts';
+import { activeSessionStatuses, isManagedStepType } from './helpers.ts';
 import { findOrphanedRunForStep } from './orphanedRunResolver.ts';
 import { countCompletedTopLevelSteps } from './progressService.ts';
 import { failUnresumableSession } from './sessionFailure.ts';
@@ -49,7 +49,9 @@ export async function reconcileStaleSessions(
 	const staleSessions = await deps.db
 		.select()
 		.from(pipelineSessions)
-		.where(inArray(pipelineSessions.status, ['queued', 'running']));
+		// A 'stopping' session is resumed too: its run may still be working, and the resumed
+		// execution picks the stop back up (markRunning keeps the status) and waits for it.
+		.where(inArray(pipelineSessions.status, [...activeSessionStatuses]));
 	const resumable: ResumableSession[] = [];
 	let failedCount = 0;
 	const active = deps.activeSessionIds();

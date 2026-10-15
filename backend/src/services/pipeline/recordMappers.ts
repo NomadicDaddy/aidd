@@ -46,6 +46,7 @@ export function toSessionRecord(
 		skippedTopLevelSteps: progress.skipped,
 		startedAt: row.startedAt,
 		status: row.status as PipelineSessionStatus,
+		stopRequestedAt: row.stopRequestedAt,
 		totalSteps: row.totalSteps,
 	};
 }

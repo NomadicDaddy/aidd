@@ -102,6 +102,7 @@ const EXPECTED_MIGRATION_VERSIONS = [
 	'0010_runs_status_queued',
 	'0011_single_active_row_indexes',
 	'0012_runs_backend_substitution',
+	'0013_pipeline_session_stopping',
 ];
 
 describe('web database and project APIs', () => {

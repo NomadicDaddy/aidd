@@ -22,6 +22,7 @@ const STATUS_OPTIONS = [
 			'completed',
 			'completed_with_failures',
 			'failed',
+			'stopping',
 			'stopped',
 			'killed',
 		] as const

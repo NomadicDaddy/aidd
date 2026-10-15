@@ -37,10 +37,17 @@ export function createPipelineSessionsRoutes(context: WebContext) {
 		)
 		.post(
 			'/:id/stop',
-			async ({ params }) => {
-				await context.pipelineService.stopSession(params.id);
-				return { ok: true };
+			// The first Stop lets the session's runs end at their iteration boundary and answers
+			// 'stopping' while they work; `force`, offered while stopping, kills their process trees.
+			async ({ body, params }) => {
+				const status = await context.pipelineService.stopSession(params.id, {
+					force: body?.force,
+				});
+				return { ok: true, status };
 			},
-			{ params: t.Object({ id: t.String() }) },
+			{
+				body: t.Optional(t.Object({ force: t.Optional(t.Boolean()) })),
+				params: t.Object({ id: t.String() }),
+			},
 		);
 }

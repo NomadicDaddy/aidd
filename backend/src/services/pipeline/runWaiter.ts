@@ -8,9 +8,11 @@ import { RUN_WAIT_MAX_MS } from './constants.ts';
 import { formatForwardedAgentMessage, formatOutputSummary } from './helpers.ts';
 import { type RunRow, terminalRunStatuses } from './types.ts';
 
-// Isolate run polling and backstop logic so it can be tested independently of StepExecutor. The
-// session stop flag is the primary cancellation path; the deadline only exists so a step cannot
-// block a session forever on a run row that never becomes terminal.
+// Isolate run polling and backstop logic so it can be tested independently of StepExecutor. A
+// session stop does not end the wait: it asks the run to stop (the stop file ends it at its next
+// iteration boundary) and keeps waiting, so the step records what the run actually did and the
+// session holds its place until then. The deadline only exists so a step cannot block a session
+// forever on a run row that never becomes terminal.
 export class RunWaiter {
 	private readonly runService: RunService;
 	private readonly stopFlags: Set<string>;
@@ -23,6 +25,7 @@ export class RunWaiter {
 	async waitForRun(runId: string, sessionId: string): Promise<RunRow> {
 		let deadline = Date.now() + RUN_WAIT_MAX_MS;
 		let lastHeartbeat: null | number = null;
+		let stopRequested = false;
 		for (;;) {
 			const run = await this.runService.getRun(runId);
 			if (run && terminalRunStatuses.has(run.status as WebRunStatus)) return run;
@@ -40,10 +43,13 @@ export class RunWaiter {
 				lastHeartbeat = heartbeat;
 				deadline = Date.now() + RUN_WAIT_MAX_MS;
 			}
-			if (this.stopFlags.has(sessionId)) {
-				throw new Error(
-					`Pipeline session was stopped while waiting for run ${runId} to finish.`,
-				);
+			// Session Stop asks every run it can see, but a run linked after that (or one re-attached
+			// by a restart) is only known here. Asking twice is harmless: the stop file is idempotent,
+			// and a run that already ended answers with an error that changes nothing.
+			if (!stopRequested && this.stopFlags.has(sessionId)) {
+				stopRequested = true;
+				await this.runService.stopRun(runId).catch(() => undefined);
+				continue;
 			}
 			if (Date.now() >= deadline) {
 				throw new Error(

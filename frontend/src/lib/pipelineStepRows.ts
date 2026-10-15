@@ -4,6 +4,7 @@ import type {
 	RecipeStepDefinition,
 } from '../api/types.ts';
 
+import { stepBadgeStatus, type StepBadgeStatus } from './pipelineSessionStatus.ts';
 import { buildAttemptLabels } from './pipelineStepAttempts.ts';
 
 /**
@@ -21,6 +22,8 @@ export type StepRow =
 	| {
 			/** Label for this row among the other attempts at the same step; null when it is the only one. */
 			attemptLabel: null | string;
+			/** The step's status as its badge shows it ('stopping' while its session stops). */
+			badgeStatus: StepBadgeStatus;
 			kind: 'executed';
 			parentStepName: null | string;
 			result: PipelineStepResultRecord;
@@ -36,6 +39,7 @@ export function buildStepRows(report: PipelineSessionReport): StepRow[] {
 	const attemptLabels = buildAttemptLabels(executed);
 	const executedRow = (result: PipelineStepResultRecord): StepRow => ({
 		attemptLabel: attemptLabels.get(result.id) ?? null,
+		badgeStatus: stepBadgeStatus(result.status, report.session.status),
 		kind: 'executed',
 		parentStepName:
 			result.parentStepResultId === null

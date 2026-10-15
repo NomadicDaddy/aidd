@@ -2,7 +2,12 @@ import { sha256Json } from 'aidd-shared/content-hash';
 import { normalizeBackendName } from 'aidd-shared/plan/types';
 import { isSkillExecutionIntent } from 'aidd-shared/skill-execution-intent';
 
-import type { RecipeConfigValue, RecipeStepDefinition, RunLaunchRequest } from '../../types.ts';
+import type {
+	RecipeConfigValue,
+	RecipeStepDefinition,
+	RunLaunchRequest,
+	WebRunStatus,
+} from '../../types.ts';
 import type { RunService } from '../runService.ts';
 import type { SkillService } from '../skillService.ts';
 import type { TelemetryResourceType, TelemetryService } from '../telemetryService.ts';
@@ -172,6 +177,7 @@ export class ManagedStepHandler {
 			...(noWork === undefined ? {} : { noWork: true }),
 			ok: completed.status === 'completed',
 			outputSummary: noWork ?? (await this.runWaiter.outputForRun(run.id)),
+			runStatus: completed.status as WebRunStatus,
 		};
 	}
 }

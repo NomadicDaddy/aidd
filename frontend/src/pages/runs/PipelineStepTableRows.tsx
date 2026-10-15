@@ -125,8 +125,8 @@ export function PipelineStepTableRows({
 							)}
 						</td>
 						<td className={cn(cellClass, 'min-w-0')}>
-							<Badge tone={sessionStatusTone(step.status)}>
-								{stepStatusLabel(step.status)}
+							<Badge tone={sessionStatusTone(row.badgeStatus)}>
+								{stepStatusLabel(row.badgeStatus)}
 							</Badge>
 							{/* The same badge the report page shows. Without it two rows with the
 							    same name and different outcomes read as one step contradicting

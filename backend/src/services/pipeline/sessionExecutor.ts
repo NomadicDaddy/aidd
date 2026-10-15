@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 import type { WebDatabase } from '../../db/client.ts';
 import type { PipelineSessionStatus, RecipeDefinition } from '../../types.ts';
@@ -91,10 +91,23 @@ export class PipelineSessionExecutor {
 	}
 
 	private async markRunning(sessionId: string, operation: string): Promise<void> {
-		await this.input.db
+		const updated = await this.input.db
 			.update(pipelineSessions)
 			.set({ status: 'running' })
-			.where(eq(pipelineSessions.id, sessionId));
+			.where(
+				and(
+					eq(pipelineSessions.id, sessionId),
+					inArray(pipelineSessions.status, ['queued', 'running']),
+				),
+			)
+			.returning({ id: pipelineSessions.id });
+		if (updated.length === 0) {
+			// Stop was asked for before this execution started, or before a restart resumed it: the
+			// row says 'stopping' (or is already terminal) and must not be written back to running.
+			// The flag makes the execution wait for the session's runs and then end it as stopped.
+			this.input.stopFlags.add(sessionId);
+			return;
+		}
 		recordDataMovement({
 			category: 'database',
 			operation,
@@ -107,7 +120,7 @@ export class PipelineSessionExecutor {
 
 	private async finalize(
 		context: ExecutionContext,
-		status: PipelineSessionStatus,
+		status: Exclude<PipelineSessionStatus, 'stopping'>,
 		completedAt: number,
 		errorMessage: string | undefined,
 	): Promise<void> {

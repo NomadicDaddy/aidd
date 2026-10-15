@@ -1,4 +1,8 @@
-import type { PipelineSessionRecord, PipelineSessionReport } from './types.ts';
+import type {
+	PipelineSessionRecord,
+	PipelineSessionReport,
+	PipelineSessionStatus,
+} from './types.ts';
 
 import { apiGet, apiSend } from './client.ts';
 
@@ -29,6 +33,19 @@ export async function listPipelineSessions(
 	return apiGet<PipelineSessionsPage>(`/api/v1/pipeline-sessions${query ? `?${query}` : ''}`);
 }
 
-export async function stopPipelineSession(id: string): Promise<void> {
-	await apiSend<{ ok: true }>(`/api/v1/pipeline-sessions/${id}/stop`, 'POST');
+/**
+ * Stops a session. The first Stop lets its run end at its iteration boundary and answers
+ * 'stopping' while it works; `force`, offered while stopping, kills the run tree.
+ * @returns The session's status after the request.
+ */
+export async function stopPipelineSession(input: {
+	force: boolean;
+	id: string;
+}): Promise<PipelineSessionStatus> {
+	const response = await apiSend<{ ok: true; status: PipelineSessionStatus }>(
+		`/api/v1/pipeline-sessions/${input.id}/stop`,
+		'POST',
+		{ force: input.force },
+	);
+	return response.status;
 }

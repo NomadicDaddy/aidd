@@ -1,5 +1,15 @@
+/**
+ * 'stopping' is a session whose Stop was asked for while a run it owns was still working: the run
+ * ends at its iteration boundary, and the session holds its place until then.
+ */
 export type PipelineSessionStatus =
-	'completed_with_failures' | 'completed' | 'failed' | 'queued' | 'running' | 'stopped';
+	| 'completed_with_failures'
+	| 'completed'
+	| 'failed'
+	| 'queued'
+	| 'running'
+	| 'stopped'
+	| 'stopping';
 
 export type PipelineStepPhase = 'post-hook' | 'pre-hook' | 'step';
 
@@ -91,6 +101,8 @@ export interface PipelineSessionRecord {
 	skippedTopLevelSteps: number;
 	startedAt: number;
 	status: PipelineSessionStatus;
+	/** When Stop was asked for; null when it never was. */
+	stopRequestedAt: null | number;
 	totalSteps: number;
 }
 

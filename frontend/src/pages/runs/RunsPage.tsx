@@ -16,6 +16,7 @@ import { useDocumentTitle } from '../../hooks/useDocumentTitle.ts';
 import { useViewportFill } from '../../hooks/useViewportFill.ts';
 import { cn } from '../../lib/cn.ts';
 import { pageRailByContentType } from '../../lib/contentRails.ts';
+import { ForceStopConfirm } from './ForceStopConfirm.tsx';
 import { LiveConsolePanel } from './LiveConsolePanel.tsx';
 import { MobileRunLaunchDisclosure } from './MobileRunLaunchDisclosure.tsx';
 import { PipelineConsoleSummary } from './PipelineConsoleSummary.tsx';
@@ -293,6 +294,7 @@ export function RunsPage() {
 					)}
 				</div>
 			</div>
+			<ForceStopConfirm {...page.forceStop} />
 		</PageRail>
 	);
 }

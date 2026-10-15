@@ -47,6 +47,9 @@ export const pipelineSessions = sqliteTable(
 		scheduledTaskExecutionId: text('scheduled_task_execution_id'),
 		startedAt: integer('started_at').notNull(),
 		status: text('status').notNull().default('queued'),
+		// When Stop was asked for (0013). The session stays 'stopping' from then until every run it
+		// owns has ended at its iteration boundary; NULL means no stop was requested.
+		stopRequestedAt: integer('stop_requested_at'),
 		totalSteps: integer('total_steps').notNull(),
 	},
 	(table) => [
@@ -67,7 +70,7 @@ export const pipelineSessions = sqliteTable(
 		check('ck_pipeline_sessions_parameters_json', sql`json_valid(${table.parametersJson})`),
 		check(
 			'ck_pipeline_sessions_status',
-			sql`${table.status} IN ('completed','completed_with_failures','failed','queued','running','stopped')`,
+			sql`${table.status} IN ('completed','completed_with_failures','failed','queued','running','stopped','stopping')`,
 		),
 		check(
 			'ck_pipeline_sessions_launch_backend',

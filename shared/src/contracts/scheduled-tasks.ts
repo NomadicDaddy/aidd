@@ -23,6 +23,7 @@ export type ScheduledExecutionChildStatus =
 	| 'queued'
 	| 'running'
 	| 'stopped'
+	| 'stopping'
 	| 'unknown'
 	| 'waiting_approval';
 

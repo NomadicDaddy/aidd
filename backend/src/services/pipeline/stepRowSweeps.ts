@@ -4,6 +4,7 @@ import type { WebDatabase } from '../../db/client.ts';
 
 import { pipelineSessions, pipelineStepResults } from '../../db/schema.ts';
 import { recordDataMovement } from '../dataMovementTrace.ts';
+import { activeSessionStatuses } from './helpers.ts';
 
 // Idempotent startup sweep: terminalize queued/running step rows whose session is already
 // terminal. These are strandings left by historical duplicate executions (pre-guard) or by a
@@ -17,7 +18,7 @@ export async function sweepStrandedStepRows(db: WebDatabase): Promise<number> {
 		.where(
 			and(
 				inArray(pipelineStepResults.status, ['queued', 'running']),
-				notInArray(pipelineSessions.status, ['queued', 'running']),
+				notInArray(pipelineSessions.status, [...activeSessionStatuses]),
 			),
 		);
 	if (stranded.length === 0) return 0;

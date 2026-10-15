@@ -7,6 +7,7 @@ import {
 	stopPipelineSession,
 } from '../api/pipelineSessions.ts';
 import { retryUnlessClientError } from '../api/retry.ts';
+import { isSessionActive } from '../lib/pipelineSessionStatus.ts';
 
 // poll-justified: the session REPORT key, ['pipeline-session-report', id], is outside the
 // ['pipeline-sessions'] prefix the WebSocket invalidation covers, so this poll is its live signal.
@@ -19,7 +20,7 @@ export function usePipelineSessionReport(id: string | undefined) {
 		queryKey: ['pipeline-session-report', id],
 		refetchInterval: (query) => {
 			const status = query.state.data?.session.status;
-			if (status === 'queued' || status === 'running') return ACTIVE_SESSION_POLL_MS;
+			if (status !== undefined && isSessionActive(status)) return ACTIVE_SESSION_POLL_MS;
 			return false;
 		},
 		refetchIntervalInBackground: false,

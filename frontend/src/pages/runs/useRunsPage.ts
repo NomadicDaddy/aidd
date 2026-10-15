@@ -10,6 +10,7 @@ import { useProjectNames } from '../../hooks/useProjects.ts';
 import { useContinueRun, useRunControls, useRunRecord, useRuns } from '../../hooks/useRuns.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { reportFailure } from '../../lib/failureToast.ts';
+import { isSessionActive, sessionStopOutcomeMessage } from '../../lib/pipelineSessionStatus.ts';
 import { consumeInitialRunScroll } from './runsUtils.ts';
 import {
 	buildProjectRouteIdByPath,
@@ -146,11 +147,7 @@ export function useRunsPage() {
 	if (!seededExpansion && sessionList.length > 0) {
 		setSeededExpansion(true);
 		const ids = sessionList
-			.filter(
-				(session) =>
-					session.totalSteps > 1 &&
-					(session.status === 'queued' || session.status === 'running'),
-			)
+			.filter((session) => session.totalSteps > 1 && isSessionActive(session.status))
 			.slice(0, MAX_AUTO_EXPANDED_SESSIONS)
 			.map((session) => session.id);
 		if (pipelineContextId !== undefined) ids.push(pipelineContextId);
@@ -196,19 +193,39 @@ export function useRunsPage() {
 		});
 	}
 
-	function stopSession(id: string): void {
+	// A force stop kills the run, so it waits for a confirm; a graceful Stop goes straight through.
+	const [forceStopId, setForceStopId] = useState<null | string>(null);
+	const forceStop = {
+		isPending: pipelineSessions.stopSession.isPending,
+		onClose: () => setForceStopId(null),
+		onConfirm: () => {
+			if (forceStopId !== null) stopSession(forceStopId, true);
+			setForceStopId(null);
+		},
+		open: forceStopId !== null,
+	};
+
+	function requestStop(id: string, force: boolean): void {
+		if (force) setForceStopId(id);
+		else stopSession(id, false);
+	}
+
+	function stopSession(id: string, force: boolean): void {
 		traceDataMovement({
 			category: 'event',
 			layer: 'ui',
-			operation: 'pipeline.stop',
+			operation: force ? 'pipeline.stop.force' : 'pipeline.stop',
 			source: 'RunsPage',
 			summary: { sessionId: id },
 			target: '/api/v1/pipeline-sessions/:id/stop',
 		});
-		pipelineSessions.stopSession.mutate(id, {
-			onError: reportFailure('Stopping the session'),
-			onSuccess: () => toast.success('Session stopped'),
-		});
+		pipelineSessions.stopSession.mutate(
+			{ force, id },
+			{
+				onError: reportFailure('Stopping the session'),
+				onSuccess: (status) => toast.success(sessionStopOutcomeMessage(status)),
+			},
+		);
 	}
 
 	async function refresh(): Promise<boolean> {
@@ -238,6 +255,7 @@ export function useRunsPage() {
 		emptyFilters: runFilterRegister(filters, projectList, filterState.clearFilters),
 		expandedSessions,
 		filteredEntryCount: filteredEntries.length,
+		forceStop,
 		handleSelectPipeline,
 		handleSelectRun,
 		handleSelectStepRun,
@@ -255,7 +273,7 @@ export function useRunsPage() {
 		selectedSession,
 		selection,
 		sessionsQuery: pipelineSessions.sessions,
-		stopSession,
+		stopSession: requestStop,
 		submitContinue,
 		toggleSession,
 	};

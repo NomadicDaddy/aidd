@@ -13,10 +13,12 @@ export function createPipelineStepResultId(): string {
 	return `step_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
 }
 
-// The two statuses that mean a session is still going. Exported as a list as well as a predicate
+// The statuses that mean a session is still going. Exported as a list as well as a predicate
 // because the auto-launch project claim asks the same question in SQL, and a session that counts as
 // active in one place and not the other would let a second session start on top of the first.
-export const activeSessionStatuses = ['queued', 'running'] as const;
+// 'stopping' is active: its run is still working until its iteration boundary, so the session keeps
+// its place (project claim, active count, restart recovery) until that run has ended.
+export const activeSessionStatuses = ['queued', 'running', 'stopping'] as const;
 
 export function isActiveSessionStatus(status: string): boolean {
 	return (activeSessionStatuses as readonly string[]).includes(status);

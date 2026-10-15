@@ -12,7 +12,7 @@ export type WebRunOutcomeStatus =
 	'completed' | 'failed' | 'killed' | 'queued' | 'running' | 'stopped' | 'waiting_approval';
 
 export type ExecutionStatus =
-	'completed_with_failures' | 'queued' | 'skipped' | WebRunOutcomeStatus;
+	'completed_with_failures' | 'queued' | 'skipped' | 'stopping' | WebRunOutcomeStatus;
 
 export type WebRunOutcomeTone = 'amber' | 'emerald' | 'neutral' | 'red' | 'teal';
 
@@ -42,6 +42,11 @@ export const executionStatusPresentation: Readonly<Record<ExecutionStatus, WebRu
 	running: { label: 'Running', title: 'Run is in progress.', tone: 'teal' },
 	skipped: { label: 'Skipped', title: 'Execution was skipped.', tone: 'amber' },
 	stopped: { label: 'Stopped', title: 'Run was stopped on request.', tone: 'neutral' },
+	stopping: {
+		label: 'Stopping',
+		title: 'Stop was requested; the active run ends at its next iteration boundary.',
+		tone: 'teal',
+	},
 	waiting_approval: {
 		label: 'Awaiting approval',
 		title: 'Work is parked for a human decision.',

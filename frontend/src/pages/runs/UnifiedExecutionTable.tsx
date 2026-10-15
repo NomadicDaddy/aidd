@@ -47,7 +47,8 @@ export interface UnifiedExecutionTableProps {
 	/** A step's Console click: selects the step's run, keeping its session as context. */
 	onSelectStepRun: (sessionId: string, runId: string) => void;
 	onStop: (id: string) => void;
-	onStopSession: (id: string) => void;
+	/** `force` is the second Stop on a stopping session: it kills the run tree. */
+	onStopSession: (id: string, force: boolean) => void;
 	onToggleSession: (id: string) => void;
 	projectRouteIdByPath: ReadonlyMap<string, string>;
 	selection: undefined | UnifiedSelection;

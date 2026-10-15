@@ -1,10 +1,10 @@
-import type { PipelineStepStatus, RecipeStepDefinition } from '../../types.ts';
+import type { RecipeStepDefinition, WebRunStatus } from '../../types.ts';
 import type { RunWaiter } from './runWaiter.ts';
 import type { SessionLifecycle } from './sessionLifecycle.ts';
-import type { ResumeLeafStep, StepExecutionResult } from './types.ts';
 
 import { runFailureNarrative, stringifyError } from './helpers.ts';
 import { noWorkSummary } from './noWork.ts';
+import { type ResumeLeafStep, type StepExecutionResult, stepStatusForRun } from './types.ts';
 
 // Re-attach to a detached managed run if the runId is still resolvable, or terminalize
 // the in-flight step row as failed and propagate onFailure semantics. The existing step
@@ -53,13 +53,7 @@ export async function resolveInFlightStep(
 		// wait for its existing terminal-state update to land in the DB.
 		const run = await runWaiter.waitForRun(inFlightStep.runId, sessionId);
 		const ok = run.status === 'completed';
-		const status: PipelineStepStatus = ok
-			? 'completed'
-			: run.status === 'stopped'
-				? 'stopped'
-				: run.status === 'killed'
-					? 'failed'
-					: 'failed';
+		const status = stepStatusForRun(run.status as WebRunStatus);
 		const noWork = noWorkSummary(run);
 		const outputSummary = noWork ?? (await runWaiter.outputForRun(inFlightStep.runId));
 		const failureNarrative = ok ? undefined : runFailureNarrative(run);

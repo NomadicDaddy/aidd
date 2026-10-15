@@ -67,6 +67,12 @@ export interface StepDispatchResult {
 	noWork?: boolean | undefined;
 	ok: boolean;
 	outputSummary?: string | undefined;
+	/**
+	 * The terminal status of the run a managed step waited on. A step stopped with its session
+	 * records this, not a blanket 'stopped': the run ended at its iteration boundary and may well
+	 * have completed its work.
+	 */
+	runStatus?: undefined | WebRunStatus;
 }
 
 export interface StepExecutionResult {
@@ -93,6 +99,62 @@ export const terminalRunStatuses = new Set<WebRunStatus>([
 	'killed',
 	'stopped',
 ]);
+// The step status a terminal run leaves behind: its own for completed and stopped, failed otherwise
+// (a killed run reads as a failed step).
+export function stepStatusForRun(status: WebRunStatus): PipelineStepStatus {
+	if (status === 'completed' || status === 'stopped') return status;
+	return 'failed';
+}
+
+export interface StoppedStepOutcome {
+	errorMessage: string | undefined;
+	exitCode: number | undefined;
+	outputSummary: string | undefined;
+	status: PipelineStepStatus;
+}
+
+/**
+ * What a step records when its session is stopped. A step that waited on a run records what that
+ * run did (Session Stop lets it end at its iteration boundary, possibly after finishing its work);
+ * a step with no run behind it (a killed shell command, or a stop before dispatch) reads
+ * 'stopped'. A write-boundary violation is recorded too, and turns a completed run into a failure.
+ * @param dispatch The step's last dispatch result, if it got that far.
+ * @param boundaryError The write-boundary violation found after the stop, or null.
+ * @returns The fields the step row is completed with.
+ */
+export function stoppedStepOutcome(
+	dispatch: StepDispatchResult | undefined,
+	boundaryError: null | string,
+): StoppedStepOutcome {
+	const runStatus = dispatch?.runStatus;
+	if (dispatch === undefined || runStatus === undefined) {
+		return {
+			errorMessage: boundaryError ?? undefined,
+			exitCode: undefined,
+			outputSummary: undefined,
+			status: 'stopped',
+		};
+	}
+	return ranStepOutcome(dispatch, runStatus, boundaryError);
+}
+
+function ranStepOutcome(
+	run: StepDispatchResult,
+	runStatus: WebRunStatus,
+	boundaryError: null | string,
+): StoppedStepOutcome {
+	const status = stepStatusForRun(runStatus);
+	const errors = [run.errorMessage, boundaryError].filter(
+		(error): error is string => typeof error === 'string' && error !== '',
+	);
+	return {
+		errorMessage: errors.length > 0 ? errors.join('; ') : undefined,
+		exitCode: run.exitCode,
+		outputSummary: run.outputSummary,
+		status: boundaryError !== null && status === 'completed' ? 'failed' : status,
+	};
+}
+
 export const managedStepTypes = new Set(['aidd-cli', 'skill']);
 export const maxRecipeDepth = 5;
 

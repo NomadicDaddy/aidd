@@ -9,7 +9,9 @@ import type {
 import { pipelineSessions, runs } from '../schema.ts';
 import { projectPathMatches } from './projectPaths.ts';
 
-const ACTIVE_STATUSES = ['queued', 'running'];
+// The same list as activeSessionStatuses in services/pipeline/helpers.ts, kept here so the worker's
+// command module does not import the service layer. A stopping session still has a run working.
+const ACTIVE_STATUSES = ['queued', 'running', 'stopping'];
 
 /**
  * Inserts a pipeline session only when its project has no active session and no active run.

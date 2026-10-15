@@ -35,7 +35,7 @@ interface PipelineSessionRowProps {
 	expanded: boolean;
 	now: number;
 	onSelect: (id: string) => void;
-	onStop: (id: string) => void;
+	onStop: (id: string, force: boolean) => void;
 	onToggle: (id: string) => void;
 	projectRouteId: string | undefined;
 	selected: boolean;
@@ -51,6 +51,10 @@ function SessionActions({
 }: Pick<PipelineSessionRowProps, 'onStop' | 'session' | 'showLifecycleControls'>) {
 	const sessionContext = `${session.recipeName} (${session.projectName})`;
 	const stopBlockedReason = sessionStopUnavailableReason(session.status);
+	// The first Stop lets the run reach its iteration boundary; while it does, the same control is
+	// the explicit force stop that kills the run tree.
+	const stopping = session.status === 'stopping';
+	const stopActionLabel = stopping ? 'Force stop session (kills the run now)' : 'Stop session';
 	return (
 		// Two 32px controls plus an 8px gap fit the ACTIONS cell at every width the table renders at;
 		// left wrappable they stacked at 768 and every session row grew to double the height of the
@@ -81,12 +85,12 @@ function SessionActions({
 					ariaLabel={
 						stopBlockedReason !== null
 							? `${stopBlockedReason} for ${sessionContext}`
-							: `Stop session: ${sessionContext}`
+							: `${stopActionLabel}: ${sessionContext}`
 					}
 					className="shrink-0 sm:h-8 sm:w-8"
 					disabled={!isSessionActive(session.status)}
-					onClick={() => onStop(session.id)}
-					title={stopBlockedReason ?? 'Stop session'}
+					onClick={() => onStop(session.id, stopping)}
+					title={stopBlockedReason ?? stopActionLabel}
 					variant="danger">
 					<CircleStop aria-hidden="true" className="h-3.5 w-3.5" />
 				</IconButton>
@@ -185,6 +189,16 @@ function SessionMeta({
 	);
 }
 
+// When the stop was asked for, under the 'Stopping' badge, in the same muted line as the start time.
+function StopRequestedAt({ session }: Pick<PipelineSessionRowProps, 'session'>) {
+	if (session.status !== 'stopping' || session.stopRequestedAt === null) return null;
+	return (
+		<div className="mt-1 text-xs text-muted-foreground tabular-nums">
+			Stop requested {formatDate(session.stopRequestedAt)}
+		</div>
+	);
+}
+
 export function PipelineSessionRow(props: PipelineSessionRowProps) {
 	const { now, onSelect, selected, session } = props;
 	return (
@@ -226,6 +240,7 @@ export function PipelineSessionRow(props: PipelineSessionRowProps) {
 					<ParkedWorkBadge parkedWorkRuns={session.parkedWorkRuns} />
 				</div>
 				{session.errorMessage && <FailureReason message={session.errorMessage} />}
+				<StopRequestedAt session={session} />
 			</td>
 			<td className="px-3 py-3 whitespace-nowrap tabular-nums">
 				{formatActiveDuration(session.durationMs, session.startedAt, now)}
@@ -263,6 +278,7 @@ export function PipelineSessionMobileCard(props: PipelineSessionRowProps) {
 				</span>
 			</div>
 			{session.errorMessage && <FailureReason message={session.errorMessage} />}
+			<StopRequestedAt session={session} />
 			<div className="mt-2">
 				<SessionActions
 					onStop={props.onStop}

@@ -31,7 +31,8 @@ function groupLabel(type: ScheduledExecutionChild['type'], count: number): strin
 function childStatusTone(status: ScheduledExecutionChild['status']): Tone {
 	if (status === 'completed') return 'emerald';
 	if (status === 'failed' || status === 'killed') return 'red';
-	if (status === 'queued' || status === 'running') return 'teal';
+	// Stopping needs nothing from the operator and ends by itself: an active state, not a warning.
+	if (status === 'queued' || status === 'running' || status === 'stopping') return 'teal';
 	if (
 		status === 'completed_with_failures' ||
 		status === 'stopped' ||

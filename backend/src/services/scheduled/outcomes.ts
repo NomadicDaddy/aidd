@@ -1,5 +1,7 @@
 import type { directorCycles, pipelineSessions, runs } from '../../db/schema.ts';
 
+import { isActiveSessionStatus } from '../pipeline/helpers.ts';
+
 type CycleRow = typeof directorCycles.$inferSelect;
 type RunRow = typeof runs.$inferSelect;
 type SessionRow = typeof pipelineSessions.$inferSelect;
@@ -15,9 +17,7 @@ export function aggregateExecutionStatus(input: {
 	if (
 		input.runs.some((run) => run.status === 'running') ||
 		input.cycles.some((cycle) => cycle.status === 'running') ||
-		input.sessions.some(
-			(session) => session.status === 'queued' || session.status === 'running',
-		)
+		input.sessions.some((session) => isActiveSessionStatus(session.status))
 	) {
 		return 'running';
 	}

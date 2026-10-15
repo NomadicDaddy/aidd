@@ -80,6 +80,7 @@ function report(
 			skippedTopLevelSteps: 0,
 			startedAt: 1_000,
 			status: 'running',
+			stopRequestedAt: null,
 			totalSteps: recipeSteps.length,
 		},
 		stepResults,

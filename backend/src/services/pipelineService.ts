@@ -2,7 +2,11 @@ import { killProcessTree } from 'aidd-shared/lib/processTree';
 
 import type { WebDatabase } from '../db/client.ts';
 import type { DbCommands } from '../db/commands.ts';
-import type { PipelineSessionRecord, PipelineSessionReport } from '../types.ts';
+import type {
+	PipelineSessionRecord,
+	PipelineSessionReport,
+	PipelineSessionStatus,
+} from '../types.ts';
 import type { WebSocketHub } from '../webSocketHub.ts';
 import type { AppWatchdog } from './appLauncher/watchdog.ts';
 import type { CursorPage } from './pagination.ts';
@@ -157,8 +161,11 @@ export class PipelineService {
 		return await this.lifecycle.deriveResumeResolution(session);
 	}
 
-	stopSession(id: string): Promise<void> {
-		return this.lifecycle.stopSession(id);
+	stopSession(
+		id: string,
+		options: { force?: boolean | undefined } = {},
+	): Promise<PipelineSessionStatus> {
+		return this.lifecycle.stopSession(id, options);
 	}
 
 	// Mark every in-flight session for stop and synchronously kill any tracked shell

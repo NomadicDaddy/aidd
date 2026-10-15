@@ -1,5 +1,5 @@
 {
-	"commit": "3a6a9409768074fe2e4592130a3e859fd6ed62b6",
+	"commit": "5eaefdc13fa89940bda4e28ba3bb0f2fac209167",
 	"groups": {
 		"gate-conventions": {
 			"files": {
@@ -261,7 +261,7 @@
 				},
 				"scripts/lib/shared-core/report.ts": {
 					"mode": "100644",
-					"sha256": "f9dfbf47104220b1192fb7a0399ffe69878e6bc747fa8584e7c778314daca97b"
+					"sha256": "1a970652a6daa43e0fba53b5c02eabd587fe85ba2d13f7916080c149e6a21bd2"
 				},
 				"scripts/lib/shared-core/requires.ts": {
 					"mode": "100644",
@@ -273,7 +273,7 @@
 				},
 				"scripts/lib/shared-core/self-check.ts": {
 					"mode": "100644",
-					"sha256": "ccf66f210302e44a5dcbb995891268a6fd9117a5a48941decf8e90934f286bca"
+					"sha256": "29871a0fc1727c4e00714f88b09359d6f7ae8a1bdafea57babb21e02f966e375"
 				},
 				"scripts/lib/shared-core/targets.ts": {
 					"mode": "100644",
@@ -281,7 +281,7 @@
 				},
 				"scripts/lib/shared-core/vacuity.ts": {
 					"mode": "100644",
-					"sha256": "8f6ad20000de37622bfa781aecd9c8b18d68fe476fe6d385d99e4ecdc6c860d5"
+					"sha256": "da690a4c1952ac8520b79fe261f51492856ed7538f63e1a7bc3ef53c044033b5"
 				},
 				"scripts/lib/shared-core/wiring.ts": {
 					"mode": "100644",
@@ -297,11 +297,11 @@
 				},
 				"scripts/sync-shared-core.ts": {
 					"mode": "100644",
-					"sha256": "0f98f287d0d350c7b53e3838b20b193676bb273a16e81846fabb53988fde54c4"
+					"sha256": "db4be6d8c77449b7d6b8079ce446803c891003899441ac6b4538f3d6bc5f5b46"
 				}
 			}
 		}
 	},
 	"owner": "smokestack",
-	"version": "0.5.0"
+	"version": "0.5.1"
 }

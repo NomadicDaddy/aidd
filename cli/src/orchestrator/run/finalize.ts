@@ -109,12 +109,10 @@ export async function finalizeIteration(
 		: typeof modeResult.artifacts?.completedFeature === 'string'
 			? modeResult.artifacts.completedFeature
 			: undefined;
-	const featureScope = await auditFeatureScope(
-		deps.store,
-		work,
-		featureSnapshotBefore,
-		completedResultFeature,
-	);
+	const featureScope = await auditFeatureScope(deps.store, work, featureSnapshotBefore, {
+		allowedCompletedFeature: completedResultFeature,
+		readOnly: plan.prompt.customDirectiveReadonly === true,
+	});
 	// Classify the outcome and extract iteration details up front so the parking sites below can
 	// persist the failing-gate context onto the feature they demote (see buildFeatureBlockingContext).
 	const {
@@ -166,10 +164,10 @@ export async function finalizeIteration(
 		await stampCompletedFeatures(deps.store, featureScope.completedFeatures);
 	}
 	acc.scopeOverrun = acc.scopeOverrun || featureScope.scopeOverrun;
-	const unexpectedAuditCommits = accumulateIterationCommits({
+	const unexpectedReadOnlyCommits = accumulateIterationCommits({
 		acc,
 		commits: iterationCommits,
-		mode: plan.mode,
+		plan,
 		work,
 	});
 	const iterationProgress =
@@ -263,7 +261,7 @@ export async function finalizeIteration(
 		stopRequestedAfterRun,
 		timeToFirstEventMs,
 		triumvirateArtifacts,
-		unexpectedAuditCommits,
+		unexpectedReadOnlyCommits,
 	});
 	await deps.store.writeIteration({
 		index: iterationArtifactIndex,

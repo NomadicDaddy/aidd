@@ -19,6 +19,8 @@ import { gitCommitsDiffStat } from './git.ts';
 
 export interface RunAiSummaryInput {
 	acc: RunAccumulator;
+	/** The commits attributed to this run; `acc.commitsCreated` also holds concurrent ones. */
+	commits: readonly GitCommitSummary[];
 	exitCode: number;
 	plan: RunPlan;
 	stopReason: StopReason;
@@ -52,11 +54,10 @@ export function explainAbnormalTermination(
 }
 
 async function buildSummaryPrompt(input: RunAiSummaryInput): Promise<string> {
-	const { acc, exitCode, plan, stopReason, summary } = input;
+	const { acc, commits, exitCode, plan, stopReason, summary } = input;
 	const durationMs = Date.now() - acc.runStartedAtMs;
 	const selectedFeatures = [...acc.selectedFeatures];
 	const completedFeatures = [...acc.completedFeatures];
-	const commits = acc.commitsCreated;
 	const totals = acc.runTotals;
 
 	const parts: string[] = [

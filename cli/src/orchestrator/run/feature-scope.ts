@@ -63,11 +63,18 @@ export async function captureFeatureCompletionSnapshot(
 	return { completed, status, unreadable: await store.listFeatureReadFailures() };
 }
 
+export interface FeatureScopeOptions {
+	/** The feature the mode's result says this iteration completed. */
+	allowedCompletedFeature?: string | undefined;
+	/** A read-only run changes nothing, so a feature completed while it ran is someone else's. */
+	readOnly?: boolean;
+}
+
 export async function auditFeatureScope(
 	store: AiddStore,
 	work: SelectedWork,
 	before: FeatureCompletionSnapshot,
-	allowedCompletedFeature: string | undefined,
+	{ allowedCompletedFeature, readOnly = false }: FeatureScopeOptions = {},
 ): Promise<FeatureScopeAudit> {
 	const allowedFeatureIds = allowedFeatureIdsForWork(work);
 	const allowedFeatureIdSet = new Set(allowedFeatureIds);
@@ -77,15 +84,21 @@ export async function auditFeatureScope(
 	// Repairing it therefore looks identical to completing it, and a run was once killed for
 	// "completing" a feature that had been finished four days earlier and corrupted since.
 	const unreadableBefore = new Set(before.unreadable.map((failure) => failure.directory));
-	const completed = [...after.completed.entries()]
-		.filter(
-			([featureId, isComplete]) =>
-				isComplete &&
-				before.completed.get(featureId) !== true &&
-				!unreadableBefore.has(featureId),
-		)
-		.map(([featureId]) => featureId);
-	if (allowedCompletedFeature !== undefined && !completed.includes(allowedCompletedFeature)) {
+	const completed = readOnly
+		? []
+		: [...after.completed.entries()]
+				.filter(
+					([featureId, isComplete]) =>
+						isComplete &&
+						before.completed.get(featureId) !== true &&
+						!unreadableBefore.has(featureId),
+				)
+				.map(([featureId]) => featureId);
+	if (
+		!readOnly &&
+		allowedCompletedFeature !== undefined &&
+		!completed.includes(allowedCompletedFeature)
+	) {
 		completed.push(allowedCompletedFeature);
 	}
 	const completedAllowedFeatures = completed.filter((featureId) =>

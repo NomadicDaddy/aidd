@@ -43,7 +43,7 @@ export function buildIterationStructured(input: {
 	stopRequestedAfterRun: boolean;
 	timeToFirstEventMs: number | undefined;
 	triumvirateArtifacts: Record<string, unknown>;
-	unexpectedAuditCommits: string[];
+	unexpectedReadOnlyCommits: string[];
 }): Record<string, unknown> {
 	const {
 		acc,
@@ -73,8 +73,10 @@ export function buildIterationStructured(input: {
 		stopRequestedAfterRun,
 		timeToFirstEventMs,
 		triumvirateArtifacts,
-		unexpectedAuditCommits,
+		unexpectedReadOnlyCommits,
 	} = input;
+	// A read-only iteration's window commits are someone else's: listed apart, never as its own.
+	const ownCommits = unexpectedReadOnlyCommits.length > 0 ? [] : iterationCommits;
 	return {
 		durationMs,
 		endedAt,
@@ -90,7 +92,7 @@ export function buildIterationStructured(input: {
 		...runRuntimeFields(plan),
 		allowedFeatureIds: featureScope.allowedFeatureIds,
 		commands: details.commands,
-		commitsCreated: iterationCommits,
+		commitsCreated: ownCommits,
 		completedFeatures: featureScope.completedFeatures,
 		detailsSummary: details.summary,
 		errors: details.errors,
@@ -107,7 +109,7 @@ export function buildIterationStructured(input: {
 			: {}),
 		selectedFeatures: featureScope.selectedFeatures,
 		unacceptedCompletedFeatures: featureScope.unacceptedCompletedFeatures,
-		...(unexpectedAuditCommits.length > 0 ? { unexpectedAuditCommits } : {}),
+		...(unexpectedReadOnlyCommits.length > 0 ? { unexpectedReadOnlyCommits } : {}),
 		...(featureScope.completionMarkerIssue !== undefined
 			? { completionMarkerIssue: featureScope.completionMarkerIssue }
 			: {}),
@@ -128,7 +130,7 @@ export function buildIterationStructured(input: {
 		...(details.featureDescription !== undefined
 			? { featureDescription: details.featureDescription }
 			: {}),
-		commitsCreatedCount: iterationCommits.length,
+		commitsCreatedCount: ownCommits.length,
 		filesCreatedCount: details.filesCreated.length,
 		filesEditedCount: details.filesEdited.length,
 		residualDirtyFilesCount,

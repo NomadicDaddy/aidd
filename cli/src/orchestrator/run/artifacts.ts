@@ -123,11 +123,21 @@ export async function writeRunSummary(
 	// record via observer.onFinalSummary. The iteration-count guard below ensures
 	// zero-iteration runs (preflight blocked, no-work, dirty-tree, encoding guard)
 	// never invoke the summarizer even though they do reach this function.
+	const attributedFeatures = new Set<string>([...acc.selectedFeatures, ...acc.completedFeatures]);
+	const attributedCommits = await filterRunAttributedCommits(
+		runRepoDir(plan),
+		acc.commitsCreated,
+		attributedFeatures,
+		acc.forcedAttributionCommits,
+	);
 	let aiSummary: null | string = null;
 	if (deps.aiSummarizer && acc.runTotals.iterations > 0) {
 		try {
+			// The summary describes the commits the ledger attributes to this run, never every
+			// commit that landed in the repository while it ran (a concurrent session's included).
 			aiSummary = await deps.aiSummarizer({
 				acc,
+				commits: attributedCommits,
 				exitCode: finalExitCode,
 				plan,
 				stopReason,
@@ -139,13 +149,6 @@ export async function writeRunSummary(
 			aiSummary = null;
 		}
 	}
-	const attributedFeatures = new Set<string>([...acc.selectedFeatures, ...acc.completedFeatures]);
-	const attributedCommits = await filterRunAttributedCommits(
-		runRepoDir(plan),
-		acc.commitsCreated,
-		attributedFeatures,
-		acc.forcedAttributionCommits,
-	);
 	const residualUntrackedFeatureDirs = await gitUntrackedFeatureDirectories(runRepoDir(plan));
 	const artifactWarnings = [
 		...(residualUntrackedFeatureDirs.length > 0 ? ['untracked_feature_directories'] : []),

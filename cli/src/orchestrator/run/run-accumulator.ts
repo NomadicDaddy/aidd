@@ -71,20 +71,22 @@ export function accumulateIterationEvidence(
 	}
 }
 
-/** Fold the iteration's commits into the run ledger, and return the commits an audit iteration was
- * never supposed to produce (audits are read-only, so theirs are reported and left unattributed). */
+/** Fold the iteration's commits into the run ledger, and return the commits that landed during a
+ * read-only iteration. An audit or a read-only directive changes nothing, so every commit in its
+ * window is someone else's (a concurrent session's), reported and never attributed to the run. */
 export function accumulateIterationCommits(input: {
 	acc: RunAccumulator;
 	commits: readonly GitCommitSummary[];
-	mode: RunPlan['mode'];
+	plan: Pick<RunPlan, 'mode' | 'prompt'>;
 	work: SelectedWork;
 }): string[] {
-	const { acc, commits, mode, work } = input;
-	if (mode === 'audit') {
+	const { acc, commits, plan, work } = input;
+	const audit = plan.mode === 'audit';
+	if (audit || plan.prompt.customDirectiveReadonly === true) {
 		if (commits.length === 0) return [];
 		const hashes = commits.map((commit) => commit.hash);
 		console.warn(
-			`[audit-mode] ${hashes.length} unexpected commit(s) landed during audit iteration; not attributing to features: ${hashes.join(', ')}`,
+			`[${audit ? 'audit-mode' : 'read-only'}] ${hashes.length} commit(s) landed during a read-only iteration; not attributing them to this run: ${hashes.join(', ')}`,
 		);
 		return hashes;
 	}

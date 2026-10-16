@@ -1,5 +1,5 @@
 {
-	"commit": "5eaefdc13fa89940bda4e28ba3bb0f2fac209167",
+	"commit": "7946c78ccc003d790293b3b81f229b25c1f73c9e",
 	"groups": {
 		"gate-conventions": {
 			"files": {
@@ -209,7 +209,7 @@
 				},
 				"scripts/lib/shared-core/dispatch.ts": {
 					"mode": "100644",
-					"sha256": "8be1a7521a7fa69e551e6d328c8fc616a4957bad9be6839b308d1a9c3fbcfe6f"
+					"sha256": "b299a3c4e85d5798b20b145c6d687df012b24e69d56d869363341cc39b5da25b"
 				},
 				"scripts/lib/shared-core/eligibility.ts": {
 					"mode": "100644",
@@ -249,7 +249,7 @@
 				},
 				"scripts/lib/shared-core/origin.ts": {
 					"mode": "100644",
-					"sha256": "39c132b5bbb9251994c6003524257aad8af62b6e76733f1d4e8c711909b70652"
+					"sha256": "ade3e74a717c3b28e52fca0ba790477be06ab2bad8f094d01b478d374c665079"
 				},
 				"scripts/lib/shared-core/owner.ts": {
 					"mode": "100644",
@@ -303,5 +303,5 @@
 		}
 	},
 	"owner": "smokestack",
-	"version": "0.5.1"
+	"version": "0.5.3"
 }

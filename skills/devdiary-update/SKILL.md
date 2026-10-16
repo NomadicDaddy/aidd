@@ -112,13 +112,21 @@ Zero reflection bullets is a valid outcome for a day. Do not manufacture one, an
     The scan start date is the **boundary day**. When it has an entry pair, those files were written
     partway through the day and cover only the activity known then. The boundary day remains in
     scope; Phase 8 amends it instead of skipping it. Establish its **watermark** from the pair's
-    own text: the last `_Covered through: YYYY-MM-DD HH:MM Zone_` line in `DD.md` (Phase 5 writes
-    one at the end of every entry and addendum). A correction or formatting edit does not move it.
-    For an older pair written before that line existed, use the latest `## Later that day (after
- HH:MM)` heading's time only as a lower bound, and the pair's latest filesystem mtime as the
-    watermark, and say in the report that the watermark came from mtime. If neither file exists,
-    use the start of the boundary day and treat it as a normal new-entry day rather than an
-    addendum.
+    own text, never from Git or a file's modification time (a pair is written minutes after the
+    scan it records, so its mtime overstates coverage):
+
+    - The last `_Covered through: YYYY-MM-DD HH:MM Zone_` line in `DD.md`. Phase 5 writes one at
+      the end of every entry and addendum. A correction or formatting edit does not move it.
+    - For a pair written before that line existed, the latest coverage the pair states in words
+      (for example "Coverage ends at October 16, 12:48:04 p.m. CDT"), or the time in its latest
+      "Later that day (after HH:MM)" heading, whichever is later. A heading gives only where its
+      addendum started, so this is an earlier, conservative boundary: read that addendum and do
+      not restate what it already records.
+    - If the pair states no time at all, use the start of the boundary day, read the pair, and add
+      only what it does not already record.
+
+    Say in the report which of these gave the watermark. If neither file exists, use the start of
+    the boundary day and treat it as a normal new-entry day rather than an addendum.
 
 4. **Report the window** to the user before continuing:
     - Last diary entry: {date} ({path})

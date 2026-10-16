@@ -208,6 +208,8 @@ describe('Runs row consistency', () => {
 		expect(runSourceLabel({ source: 'director' })).toBe('Director');
 		expect(runSourceLabel({ source: 'cli' })).toBe('CLI');
 		expect(runSourceLabel({ source: 'web' })).toBe('Web');
+		// A scheduled run read "Web" (Alice, mail 45d4b84c): it names itself, as on Telemetry.
+		expect(runSourceLabel({ source: 'scheduled' })).toBe('Scheduled');
 
 		const surfaces = await Promise.all([
 			readRunSource('ActiveRunRow.tsx'),

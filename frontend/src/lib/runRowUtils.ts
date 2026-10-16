@@ -100,8 +100,20 @@ export function runDisplayName(run: {
 	return run.summary ?? (run.id ? `Director cycle ${run.id.slice(-8)}` : 'Director cycle');
 }
 
+/**
+ * Every source names itself. A scheduled run once read "Web" here, beside a trigger line saying aidd
+ * started it on its own, because every source but cli and director fell through to Web. The switch
+ * is exhaustive so a new source fails typecheck instead of borrowing another's name.
+ */
 export function runSourceLabel(run: Pick<RunRecord, 'source'>): string {
-	if (run.source === 'cli') return 'CLI';
-	if (run.source === 'director') return 'Director';
-	return 'Web';
+	switch (run.source) {
+		case 'cli':
+			return 'CLI';
+		case 'director':
+			return 'Director';
+		case 'scheduled':
+			return 'Scheduled';
+		case 'web':
+			return 'Web';
+	}
 }

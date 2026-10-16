@@ -1,5 +1,5 @@
 {
-	"commit": "7946c78ccc003d790293b3b81f229b25c1f73c9e",
+	"commit": "b0fcb022616355dc1c28f9fec9ffdbb28e6ac195",
 	"groups": {
 		"gate-conventions": {
 			"files": {
@@ -9,11 +9,11 @@
 				},
 				"scripts/check-gate-conventions.ts": {
 					"mode": "100644",
-					"sha256": "e70b9fd4ce6e535b6aa8b893d8e27b36ca51f5a29b604d0ad2c6b5c40cb28b1a"
+					"sha256": "62a62c4394e4585922bb2613bd4c94391139818efe29bdcc92e09a7c7f011042"
 				},
 				"scripts/check-script-targets.ts": {
 					"mode": "100644",
-					"sha256": "88ebf7b810e624ae6fa61b34eae6f658b4d241a9daef41d8fcbf0fad0a800657"
+					"sha256": "60121a8dab4b1b5b372f4c89468f287f68a643d3a2ac2ab1e54727f130887701"
 				},
 				"scripts/lib/gate/allowlist.ts": {
 					"mode": "100644",
@@ -21,7 +21,7 @@
 				},
 				"scripts/lib/gate/discover.ts": {
 					"mode": "100644",
-					"sha256": "c3e802666ec902af4ffd83c988386ecf00ce3c888782d9101f06a167233e5346"
+					"sha256": "9d4669873c06988351e191742eaab977b8c4818a4b5f5d1ef114b1163005107a"
 				},
 				"scripts/lib/gate/fixtures.ts": {
 					"mode": "100644",
@@ -29,11 +29,11 @@
 				},
 				"scripts/lib/gate/rules.ts": {
 					"mode": "100644",
-					"sha256": "45e7ab1e889ad603dad5c7b1f71f584ca8cfdc2f35034669e623d80af302f84b"
+					"sha256": "870a75a305dc1f640e688b6e513de6bbbb66d93dd580a5a1a27a6d877ee920cc"
 				},
 				"scripts/lib/gate/toplevel.ts": {
 					"mode": "100644",
-					"sha256": "66ff584e8bbfa8b9f48f40c96486311fc5972f0075373554d74a35e15c521bcf"
+					"sha256": "7553ab25138d8d383118ee4fdb97778f5863bd710d5648739c5914efeb1dd8b3"
 				},
 				"scripts/lib/gate/types.ts": {
 					"mode": "100644",
@@ -41,11 +41,11 @@
 				},
 				"scripts/lib/gate/vacuity.ts": {
 					"mode": "100644",
-					"sha256": "3617bd053b92049dc660d0fb544980c05d7513b866abb5672ec3eb1b7cdf1a4d"
+					"sha256": "edafed77662cf6337aa5a96da7146f696f680db08575f0a5a2251347be668542"
 				},
 				"scripts/test-gate-conventions.ts": {
 					"mode": "100644",
-					"sha256": "8c1a31e6a23a45952743db158936e2bcd0f5302047399ecb6715a2f1015e6f7b"
+					"sha256": "7c2c9e7fded12ce90f29ba9ca7b4c10dd22b132859121a3ac5201309619856bb"
 				}
 			}
 		},
@@ -77,7 +77,7 @@
 			"files": {
 				"scripts/check-leak-guard.sh": {
 					"mode": "100644",
-					"sha256": "a8d2cce2947a875870153a8bb6b9b60b0db0933606ba670d719cbccd18eb7418"
+					"sha256": "4de9b50f9bd6a7bfcb2a9694160e60b6bc271daa89eeff805dccd184e2fcd0c6"
 				}
 			}
 		},
@@ -97,7 +97,7 @@
 				},
 				"scripts/lib/license-core/lockfile.ts": {
 					"mode": "100644",
-					"sha256": "c45ff83c95137c6a5600c9beb4e33a53cbf79da76a74b52910f4ff4a3184d4af"
+					"sha256": "a3e81291d76279469effe6d3af71e3ff6485eae17e6da39ccea39218aabd05a3"
 				},
 				"scripts/lib/license-core/manifest.ts": {
 					"mode": "100644",
@@ -125,15 +125,15 @@
 			"files": {
 				"scripts/check-destructive-confirmation.ts": {
 					"mode": "100644",
-					"sha256": "215c075b2905b2b3118f82844bec79c88c917f8381a82516a4d10e00742602a1"
+					"sha256": "d2971bf16e6c58f1bb9a094358ba478b5b94d2c0ab55d7641b399fcd9b5f59bf"
 				},
 				"scripts/check-docs.ts": {
 					"mode": "100644",
-					"sha256": "2de1dc16816e993e3862a56bcd3be7f6f50120c8a3f6b62befe88b24cf3a1e74"
+					"sha256": "19bae59881d02d68801fdaed7462c07aac846a72a869f686de24f320055e6472"
 				},
 				"scripts/check-git-window-hide.ts": {
 					"mode": "100644",
-					"sha256": "f4292f0c7b5e81c26901d666fce8806ee495de32bbcc6345725f77a698f2b367"
+					"sha256": "ee12a7a50fcf34eead62d8364e03c8de5ad01349ed91763f825b951f8dfeaf29"
 				},
 				"scripts/check-no-inline-references.ts": {
 					"mode": "100644",
@@ -141,7 +141,7 @@
 				},
 				"scripts/lib/destructive/comments.ts": {
 					"mode": "100644",
-					"sha256": "85f80bfac8ea1121ae3fbf9035567f806b07fb1da8b02e53fb584b30a7e214a2"
+					"sha256": "c2753560b02add251e9295af41498ee07112e29743742109a04482ffb4f84188"
 				},
 				"scripts/lib/destructive/evidence.ts": {
 					"mode": "100644",
@@ -197,7 +197,7 @@
 			"files": {
 				"scripts/lib/shared-core/check.ts": {
 					"mode": "100644",
-					"sha256": "36940bc414e18124efbfbf4f16620b34be2c70ab561bdaeb3d107d3e1d0f0b2e"
+					"sha256": "02637049242fc31b9f3a17c6ef7fa854532f314630a133b1abf293fb7b203c80"
 				},
 				"scripts/lib/shared-core/deliveries.ts": {
 					"mode": "100644",
@@ -205,15 +205,15 @@
 				},
 				"scripts/lib/shared-core/delivery-check.ts": {
 					"mode": "100644",
-					"sha256": "f9a726c39888871915baea086fc0ab9875f134ad3363f60e51337cd1ccf0272b"
+					"sha256": "db2f0fb83fc728351de514e845d1ec9b9c9d243fd9186f6ece258df6621c6a79"
 				},
 				"scripts/lib/shared-core/dispatch.ts": {
 					"mode": "100644",
-					"sha256": "b299a3c4e85d5798b20b145c6d687df012b24e69d56d869363341cc39b5da25b"
+					"sha256": "7da29aa5cd59cfbe0577b29cfe91c97a43c5ea218abb9dbf335dc6237a367f53"
 				},
 				"scripts/lib/shared-core/eligibility.ts": {
 					"mode": "100644",
-					"sha256": "0e39b2dfa6073a4b7993a60a8fde796388995e9e409fb14d70e6b4bb6de79654"
+					"sha256": "ffd9b5ebcae1edca7c3588dbdb6559c6aee7a689e1e08c64b46f73888019a664"
 				},
 				"scripts/lib/shared-core/expected.ts": {
 					"mode": "100644",
@@ -221,7 +221,7 @@
 				},
 				"scripts/lib/shared-core/hook.ts": {
 					"mode": "100644",
-					"sha256": "d34906e6c5264048e8efa4c99cb74964ebc1b4f6982abf9d3ec878ecd0a6cdaf"
+					"sha256": "98cda35ed01e00e6ceac41f19b713288345493e8d6bfa841c4fc4b5b3a6b516a"
 				},
 				"scripts/lib/shared-core/lock-check.ts": {
 					"mode": "100644",
@@ -233,7 +233,7 @@
 				},
 				"scripts/lib/shared-core/lock-write.ts": {
 					"mode": "100644",
-					"sha256": "e3677cba5d4f1f57c573496aabbb8a424d75d50862a32952191fd876eff1fa9c"
+					"sha256": "e1f2baae966980f295c02e4d80e4ff811d955534317aac1f413f7450e520a67d"
 				},
 				"scripts/lib/shared-core/lock.ts": {
 					"mode": "100644",
@@ -241,19 +241,19 @@
 				},
 				"scripts/lib/shared-core/manifest-file.ts": {
 					"mode": "100644",
-					"sha256": "a20e64e1fb4b7b2f9df27ca558ff0546dbb08f860c66274ecd16208823514885"
+					"sha256": "5b290731a793d7cfd7347d3e3ca3834513ee0cf1aad37e8d72c3dfd01f032bb4"
 				},
 				"scripts/lib/shared-core/manifest.ts": {
 					"mode": "100644",
-					"sha256": "530bbae1ed4921ff241265becfbdec3c1c89263892e2cfdd48cb2124aefc106f"
+					"sha256": "79bc85b26031560217ca94250d79b58d9203e95456fcec7c21f7c42a5d0299e6"
 				},
 				"scripts/lib/shared-core/origin.ts": {
 					"mode": "100644",
-					"sha256": "ade3e74a717c3b28e52fca0ba790477be06ab2bad8f094d01b478d374c665079"
+					"sha256": "99b7abe933b366f3b5185c20a55a7f68590f9321c77f672fa3e968c430c949ba"
 				},
 				"scripts/lib/shared-core/owner.ts": {
 					"mode": "100644",
-					"sha256": "0d68e27e4beee0fe31eb5bd9c5419efbc3e99a20328c27320f2edd0f27e7094a"
+					"sha256": "7a7193647cbb34ec824707bb23d6fdb48842383e8ecc86224a0533a86ca624f6"
 				},
 				"scripts/lib/shared-core/reaching.ts": {
 					"mode": "100644",
@@ -261,7 +261,7 @@
 				},
 				"scripts/lib/shared-core/report.ts": {
 					"mode": "100644",
-					"sha256": "1a970652a6daa43e0fba53b5c02eabd587fe85ba2d13f7916080c149e6a21bd2"
+					"sha256": "8d25ef29ee87fae7f07640366d282bf83560b847f7858ef00eb273891a9ed46f"
 				},
 				"scripts/lib/shared-core/requires.ts": {
 					"mode": "100644",
@@ -303,5 +303,5 @@
 		}
 	},
 	"owner": "smokestack",
-	"version": "0.5.3"
+	"version": "0.5.5"
 }

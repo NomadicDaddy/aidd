@@ -103,9 +103,12 @@ function checkFile(projectRoot: string, filePath: string): FileResult {
 	// code view would find none, and reading evidence out of the raw text is what let a comment
 	// naming a dialog stand in for the dialog. See `comments.ts` for the faults that came of it.
 	const code = codeOnly(lines);
+	// Sites are found with string contents kept: the method and endpoint patterns match quoted text,
+	// which the evidence view blanks. Comments are dropped from both views.
+	const sitesView = codeOnly(lines, { keepStrings: true });
 
 	const used = new Set<number>();
-	for (const [index, line] of code.entries()) {
+	for (const [index, line] of sitesView.entries()) {
 		if (!line) continue;
 		if (!DESTRUCTIVE_PATTERNS.some((pattern) => pattern.test(line))) continue;
 

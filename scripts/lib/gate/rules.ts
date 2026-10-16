@@ -58,12 +58,23 @@ export function checkEntryShape(gate: Gate): Finding[] {
 	return findings;
 }
 
+/**
+ * A literal exit code, in the three forms that set one: `exit(n)` imported from `node:process`,
+ * `process.exit(n)` with or without a `globalThis.` qualifier, and an assignment to
+ * `process.exitCode`. The assignment form needs a digit straight after a single `=`, so a
+ * comparison against `process.exitCode` sets nothing and is not read as one.
+ *
+ * The left boundary is a lookbehind rather than a consumed character, so a match that starts a
+ * line reports that line and not the one whose newline it would otherwise have swallowed.
+ */
+const EXIT_CODE =
+	/(?<![.\w])(?:(?:globalThis\.)?process\.)?exit\(\s*(-?\d+)\s*\)|(?<![.\w])(?:globalThis\.)?process\.exitCode\s*=\s*(-?\d+)/g;
+
 /** GC2 -- exit codes: 0 pass, 1 findings, 2 unexpected error or bad arguments. */
 export function checkExitCodes(gate: Gate): Finding[] {
 	const findings: Finding[] = [];
-	const pattern = /(?:^|[^.\w])(?:process\.)?exit\(\s*(-?\d+)\s*\)/g;
-	for (const match of gate.source.matchAll(pattern)) {
-		const code = Number(match[1]);
+	for (const match of gate.source.matchAll(EXIT_CODE)) {
+		const code = Number(match[1] ?? match[2]);
 		if (code === 0 || code === 1 || code === 2) continue;
 		findings.push(
 			finding(
@@ -197,12 +208,37 @@ export function checkRuleLinkage(gate: Gate, assertionIds: Set<string>): Finding
 /** The keys every `--json` gate emits. One shape or none; a second shape is the drift rule 8 bans. */
 export const JSON_ENVELOPE_KEYS = ['examined', 'findings', 'gate', 'status'] as const;
 
+/**
+ * The argument text of every `JSON.stringify(...)` call, read to its balanced closing paren.
+ *
+ * Shorthand keys are only looked for here. `{ status }` is a shorthand property inside a literal
+ * and a destructuring pattern outside one, and only the former puts a key in an envelope.
+ */
+function stringifyArguments(source: string): string[] {
+	const found: string[] = [];
+	for (const call of source.matchAll(/\bJSON\.stringify\(/g)) {
+		const start = call.index + call[0].length;
+		let depth = 1;
+		let end = start;
+		while (end < source.length && depth > 0) {
+			if (source[end] === '(') depth++;
+			else if (source[end] === ')') depth--;
+			end++;
+		}
+		found.push(source.slice(start, end - 1));
+	}
+	return found;
+}
+
 /** GC8 -- `--json` is optional, but a gate that offers it emits the one envelope. */
 export function checkJson(gate: Gate): Finding[] {
 	const offer = /--json\b/.exec(gate.source);
 	if (offer === null) return [];
+	const envelopes = stringifyArguments(gate.source);
 	const missing = JSON_ENVELOPE_KEYS.filter(
-		(key) => !new RegExp(`['"]?${key}['"]?\\s*:`).test(gate.source),
+		(key) =>
+			!new RegExp(`['"]?${key}['"]?\\s*:`).test(gate.source) &&
+			!envelopes.some((text) => new RegExp(`[{,]\\s*${key}\\s*[,}]`).test(text)),
 	);
 	if (missing.length === 0) return [];
 	return [

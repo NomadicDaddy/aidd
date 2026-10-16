@@ -109,7 +109,9 @@ export async function collectGateConventions(root: string): Promise<GateConventi
 		examined: gates.length,
 		findings: applied.surviving,
 		gate: 'check:gate-conventions',
-		status: applied.surviving.length === 0 ? 'pass' : 'fail',
+		// Rule 5 belongs to the result, not to one way of printing it: examining nothing fails here
+		// too, so --json cannot report a pass the text output would refuse.
+		status: applied.surviving.length === 0 && gates.length > 0 ? 'pass' : 'fail',
 		waived: applied.suppressed,
 	};
 }

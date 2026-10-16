@@ -49,6 +49,34 @@ const REGEX_PRECEDERS = new Set([
 	'~',
 ]);
 
+/**
+ * Keywords after which a `/` begins a regex literal rather than a division.
+ *
+ * Each of them is followed by an expression, never by an operand awaiting an operator, so
+ * `return /[{]/.test(x)` carries a regex. Reading that slash as division counted the brace inside
+ * the class, left the rest of the file one level deep, and hid every module-scope statement after
+ * it from GC1. Identifiers are read whole so that `returned / 2` stays a division.
+ */
+const REGEX_KEYWORDS = new Set([
+	'await',
+	'case',
+	'delete',
+	'do',
+	'else',
+	'in',
+	'instanceof',
+	'new',
+	'of',
+	'return',
+	'throw',
+	'typeof',
+	'void',
+	'yield',
+]);
+
+/** An identifier or keyword, read whole from the index set on `lastIndex`. */
+const WORD = /[A-Za-z_$][\w$]*/y;
+
 /** Advance past a quoted string that starts at `i`. Returns the index after the closing quote. */
 function skipString(line: string, i: number, quote: string): number {
 	let j = i + 1;
@@ -138,9 +166,19 @@ export function scanLines(source: string): LineContext[] {
 				lastSignificant = c;
 				continue;
 			}
-			if (c === '/' && REGEX_PRECEDERS.has(lastSignificant)) {
+			if (
+				c === '/' &&
+				(REGEX_PRECEDERS.has(lastSignificant) || REGEX_KEYWORDS.has(lastSignificant))
+			) {
 				i = skipRegex(line, i);
 				lastSignificant = '/';
+				continue;
+			}
+			WORD.lastIndex = i;
+			const word = WORD.exec(line);
+			if (word !== null) {
+				lastSignificant = word[0];
+				i += word[0].length;
 				continue;
 			}
 			if (c === '{') depth++;

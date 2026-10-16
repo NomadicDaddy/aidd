@@ -52,8 +52,15 @@ const QUOTES = new Set(["'", '"', '`']);
  * Block comments and template literals both carry across lines, which is why this takes the whole
  * file rather than working a line at a time: a `/*` or a backtick opened three lines above is still
  * open here, and a line-at-a-time scan reads what is inside it as code.
+ *
+ * `keepStrings` keeps what sits between the quotes and still drops every comment. The gate finds
+ * its sites in that view, because two of its three site patterns are a quoted `'DELETE'` method and
+ * a quoted endpoint path: matched against blanked strings they could never fire, and an unguarded
+ * `fetch(url, { method: 'DELETE' })` passed. Evidence is still read from the default view, so
+ * prose inside a string never stands in for a confirmation.
  */
-export function codeOnly(lines: string[]): string[] {
+export function codeOnly(lines: string[], options: { keepStrings?: boolean } = {}): string[] {
+	const keepStrings = options.keepStrings === true;
 	const stripped: string[] = [];
 	let inBlock = false;
 	// Innermost context last. A quote character means "inside a string of that kind"; a brace means
@@ -83,6 +90,7 @@ export function codeOnly(lines: string[]): string[] {
 				// Neither character of an escape pair is content, and skipping the second is what keeps
 				// `'it\'s'` from being read as closing here and reopening at the apostrophe.
 				if (char === '\\') {
+					if (keepStrings) code += char + (next ?? '');
 					i++;
 				} else if (char === top) {
 					code += char;
@@ -91,6 +99,8 @@ export function codeOnly(lines: string[]): string[] {
 					code += '${';
 					stack.push('{');
 					i++;
+				} else if (keepStrings) {
+					code += char;
 				}
 				continue;
 			}

@@ -132,19 +132,28 @@ function checkFile(
 	const broken: BrokenLink[] = [];
 	const used = new Set<number>();
 
-	// Match inline links: [text](path) but not images ![alt](path) which may use data URIs
-	const linkRegex = /(?<!!)\[([^\]]*)\]\(([^)]+)\)/g;
-	let inCodeBlock = false;
+	// Match inline links: [text](path) but not images ![alt](path) which may use data URIs. The
+	// target admits one level of balanced parentheses, as CommonMark does, so `a(b).md` is read
+	// whole rather than cut at its first `)` and reported as a missing `a(b`.
+	const linkRegex = /(?<!!)\[([^\]]*)\]\(((?:[^()]|\([^()]*\))+)\)/g;
+	/** The fence that opened the current code block, or null when outside one. */
+	let fence: null | string = null;
 
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i]!;
 
-		// Track fenced code block state
-		if (line.trimStart().startsWith('```')) {
-			inCodeBlock = !inCodeBlock;
+		// Track fenced code blocks of either kind. Only a run of the opening character at least as
+		// long closes one, so a ``` line inside a ~~~ example is content, not a toggle. A fence still
+		// open at end of file is valid Markdown: the block runs to the end, and nothing is reported.
+		const run = /^(`{3,}|~{3,})/.exec(line.trimStart())?.[1];
+		if (fence === null && run !== undefined) {
+			fence = run;
 			continue;
 		}
-		if (inCodeBlock) continue;
+		if (fence !== null) {
+			if (run?.startsWith(fence) === true && line.trim() === run) fence = null;
+			continue;
+		}
 
 		// Strip inline code spans to avoid matching links inside backticks
 		const lineWithoutCode = line.replace(/`[^`]+`/g, '');

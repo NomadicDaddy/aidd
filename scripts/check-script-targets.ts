@@ -35,7 +35,19 @@ const SCRIPT_FILE = /^[\w./@-]+\.(?:ts|tsx|sh|ps1|mjs|cjs|js)$/;
 const RUNNERS = new Set(['bun', 'bunx', 'npm', 'pnpm', 'yarn']);
 
 /** Flags that take a value, so the token after them is never a task name. */
-const VALUED_FLAGS = new Set(['--config', '--cwd', '--filter']);
+const VALUED_FLAGS = new Set(['--config', '--cwd', '--filter', '-F']);
+
+/** Valued flags whose value is the directory holding the manifest that defines the task. */
+const DIRECTORY_FLAGS = new Set(['--cwd']);
+
+/**
+ * npm's workspace flags, which take a directory. Bun has neither (`bun run --help` lists
+ * `--filter`/`-F`, `--workspaces` and `--cwd`), so they count only after npm.
+ */
+const NPM_DIRECTORY_FLAGS = new Set(['--workspace', '-w']);
+
+/** Flags after which every non-flag token is another task name rather than an argument. */
+const MULTI_TASK_FLAGS = new Set(['--parallel', '--sequential']);
 
 export interface ScriptTargetFinding {
 	reason: string;
@@ -105,8 +117,13 @@ export interface TaskReference {
 }
 
 /**
- * Tasks a segment invokes through `<runner> run`. Everything after the `run` token that is not a
- * flag is a task name: `--parallel` takes two, `--cwd <dir>` moves the lookup to a workspace.
+ * Tasks a segment invokes through `<runner> run`. The first token after `run` that is not a flag or
+ * a flag's value is the task, and everything after it is that task's own arguments: in
+ * `bun run build --mode production`, `production` is an argument, not a second task. Only
+ * `--parallel` and `--sequential` take several task names. `--` ends the runner's arguments
+ * outright. `--cwd <dir>`, and npm's `-w <dir>` and `--workspace <dir>`, move the lookup to that
+ * directory; a workspace named by package name rather than path finds no manifest there and is
+ * skipped, the same as any other absent workspace.
  */
 export function taskReferences(tokens: string[]): TaskReference[] {
 	if (tokens.length === 0 || !RUNNERS.has(tokens[0] ?? '')) return [];
@@ -115,16 +132,21 @@ export function taskReferences(tokens: string[]): TaskReference[] {
 
 	const references: TaskReference[] = [];
 	let dir = '.';
+	let several = false;
 	for (let index = runAt + 1; index < tokens.length; index += 1) {
 		const token = tokens[index] ?? '';
+		if (token === '--') break;
 		if (token.startsWith('-')) {
-			if (VALUED_FLAGS.has(token)) {
-				if (token === '--cwd') dir = tokens[index + 1] ?? dir;
+			if (MULTI_TASK_FLAGS.has(token)) several = true;
+			const npmDirectory = tokens[0] === 'npm' && NPM_DIRECTORY_FLAGS.has(token);
+			if (VALUED_FLAGS.has(token) || npmDirectory) {
+				if (DIRECTORY_FLAGS.has(token) || npmDirectory) dir = tokens[index + 1] ?? dir;
 				index += 1;
 			}
 			continue;
 		}
 		references.push({ dir, task: token });
+		if (!several) break;
 	}
 	return references;
 }

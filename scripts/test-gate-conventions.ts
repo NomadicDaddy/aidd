@@ -232,6 +232,13 @@ try {
 		result.exitCode === 1 && result.output.includes('examined no gates'),
 		`A run that examined nothing must fail:\n${result.output}`,
 	);
+	// The machine-readable form must not skip that rule (latent-bug review finding 7, #12645).
+	result = runCheck('--json');
+	assert(
+		result.exitCode === 1 &&
+			(JSON.parse(result.stdout) as { status?: string }).status === 'fail',
+		`A --json run that examined nothing must fail:\n${result.output}`,
+	);
 
 	// --- A task pointing at a file that does not exist is an error, not a convention finding. --
 	writeManifest({ 'check:ghost': 'bun scripts/check-ghost.ts' });

@@ -23,8 +23,11 @@
  * shared with non-gate tasks are removed by the allowlist's `excluded` map, with a reason each.
  */
 
-/** Any `scripts/...ts` path appearing as a command argument. */
-const SCRIPT_PATH = /(?:^|\s)(?:\.\/)?(scripts\/[A-Za-z0-9._/-]+\.ts)/g;
+/**
+ * Any `scripts/...ts` path appearing as a command argument, bare or quoted. A quoted path is the
+ * same file to the shell, and missing it dropped that gate from the population without a word.
+ */
+const SCRIPT_PATH = /(?:^|\s)["']?(?:\.\/)?(scripts\/[A-Za-z0-9._/-]+\.ts)/g;
 
 /** A `bun run <task>` reference to another package.json script. */
 const TASK_REFERENCE = /\bbun run ([A-Za-z0-9:_-]+)/g;

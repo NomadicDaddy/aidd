@@ -74,13 +74,15 @@ const capitalize = (word: string): string => word[0]!.toUpperCase() + word.slice
  * A count expression, in three shapes: a collection's size, a bare or snake_case count word, or a
  * camelCase one.
  *
- * The leading `[^A-Za-z0-9_]` on the bare form is load-bearing: without it `account` and `discount`
- * both read as counts. The camelCase form is what makes `rowCount` and `ruleCount` resolve, which
- * `check-artifact-parity.ts` states its two counts with.
+ * The leading `[^A-Za-z0-9]` on the bare form is load-bearing: without it `account` and `discount`
+ * both read as counts. It leaves `_` out on both sides on purpose, because an underscore is a word
+ * boundary in snake_case: `file_count` and `files_examined` name counts, and treating `_` as part
+ * of the word rejected them. The camelCase form is what makes `rowCount` and `ruleCount` resolve,
+ * which `check-artifact-parity.ts` states its two counts with.
  */
 const COUNT_EXPRESSION = new RegExp(
 	'\\.length\\b|\\.size\\b|\\.filter\\(|' +
-		`(?:^|[^A-Za-z0-9_])(?:${COUNT_WORDS.join('|')})(?![A-Za-z0-9_])|` +
+		`(?:^|[^A-Za-z0-9])(?:${COUNT_WORDS.join('|')})(?![A-Za-z0-9])|` +
 		`[a-z0-9_](?:${COUNT_WORDS.map(capitalize).join('|')})(?![A-Za-z0-9_])`,
 );
 

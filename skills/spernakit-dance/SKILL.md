@@ -449,7 +449,7 @@ non-technical (`DDhl.md`) entry in its scan window and updates the `devstory.md`
 **Additive to D4's `DD.md`/`DDhl.md`.** The session report captures fleet-wide outcomes: per-app
 status, gates, direct fixes, and formal issue features. Write it alongside the daily diaries.
 
-Write to `<applications-root>/devdiary/entries/YYYY/MM/DD-dance-session.md` using
+Write to `<applications-root>/beazley.org/devdiary/YYYY/MM/DD-dance-session.md` using
 [references/session-report-template.md](references/session-report-template.md), which carries the
 template, the rule that every scope decision is recorded (not only the apps processed), and the
 prose style contract.

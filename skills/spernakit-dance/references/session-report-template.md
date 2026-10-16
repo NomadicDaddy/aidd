@@ -1,6 +1,6 @@
 # Dance Session Report Template
 
-Written in D5 to `<applications-root>/devdiary/entries/YYYY/MM/DD-dance-session.md`, alongside
+Written in D5 to `<applications-root>/beazley.org/devdiary/YYYY/MM/DD-dance-session.md`, alongside
 D4's daily diaries rather than in place of them.
 
 ```markdown

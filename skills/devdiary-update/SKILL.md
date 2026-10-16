@@ -18,9 +18,15 @@ devdiary-update [repository-path ...]
 
 ## Target Files
 
-- **Technical diary entries**: `<applications-root>/devdiary/entries/YYYY/MM/DD.md` - Detailed technical log with code changes, architectural decisions, and technical reflections
-- **Non-technical diary entries**: `<applications-root>/devdiary/entries/YYYY/MM/DDhl.md` - Plain-language fact sheet for non-technical audiences (family, friends, stakeholders)
-- **Dev story**: `<applications-root>/devdiary/entries/devstory.md` - Narrative retrospective
+- **Technical diary entries**: `<applications-root>/beazley.org/devdiary/YYYY/MM/DD.md` - Detailed technical log with code changes, architectural decisions, and technical reflections
+- **Non-technical diary entries**: `<applications-root>/beazley.org/devdiary/YYYY/MM/DDhl.md` - Plain-language fact sheet for non-technical audiences (family, friends, stakeholders)
+- **Dev story**: `<applications-root>/beazley.org/devdiary/devstory.md` - Narrative retrospective
+
+The diary moved here from `<applications-root>/devdiary/entries` on 2026-10-16 (Phillip #13122,
+plan #13121). The folder is ignored by beazley.org's Git and Prettier, so it has no Git history of
+its own: never commit diary files to beazley.org, and never take a date or watermark from Git. The
+old devdiary repository, retired to `D:\applications.prevers\devdiary`, holds the history up to the
+move and is read-only.
 
 ## Entry Types
 
@@ -95,7 +101,7 @@ Zero reflection bullets is a valid outcome for a day. Do not manufacture one, an
 
 ### Phase 1: Determine the Scan Window
 
-1. **Find the most recent diary entry** by listing files in `<applications-root>/devdiary/entries/` recursively and identifying the newest `YYYY/MM/DD.md` OR `YYYY/MM/DDhl.md` file by path (lexicographic sort). Parse the date from the path. This is the diary cutoff date.
+1. **Find the most recent diary entry** by listing files in `<applications-root>/beazley.org/devdiary/` recursively and identifying the newest `YYYY/MM/DD.md` OR `YYYY/MM/DDhl.md` file by path (lexicographic sort). Parse the date from the path. This is the diary cutoff date.
 
 2. **Read devstory.md** and find the `_Last updated:` footer line. Parse the date (format: `Month DD, YYYY`). This is the story cutoff date.
 
@@ -106,16 +112,13 @@ Zero reflection bullets is a valid outcome for a day. Do not manufacture one, an
     The scan start date is the **boundary day**. When it has an entry pair, those files were written
     partway through the day and cover only the activity known then. The boundary day remains in
     scope; Phase 8 amends it instead of skipping it. Establish its **watermark** from the pair's
-    history:
-
-    ```bash
-    git -C <applications-root>/devdiary log -p --format="commit %H %cI %s" -- entries/YYYY/MM/DD.md entries/YYYY/MM/DDhl.md
-    ```
-
-    Use the time of the latest commit that created the pair or appended activity coverage. A later
-    correction-only or formatting commit does not advance coverage. If the files are untracked, use
-    their latest filesystem mtime. If neither file exists, use the start of the boundary day and
-    treat it as a normal new-entry day rather than an addendum.
+    own text: the last `_Covered through: YYYY-MM-DD HH:MM Zone_` line in `DD.md` (Phase 5 writes
+    one at the end of every entry and addendum). A correction or formatting edit does not move it.
+    For an older pair written before that line existed, use the latest `## Later that day (after
+ HH:MM)` heading's time only as a lower bound, and the pair's latest filesystem mtime as the
+    watermark, and say in the report that the watermark came from mtime. If neither file exists,
+    use the start of the boundary day and treat it as a normal new-entry day rather than an
+    addendum.
 
 4. **Report the window** to the user before continuing:
     - Last diary entry: {date} ({path})
@@ -213,6 +216,8 @@ For each repository that had commits since the cutoff, read the relevant data so
     **Reflections:**
 
     - {observations, each naming the file, project, version, or run it came from; omit the section entirely if the day produced none}
+
+    _Covered through: {YYYY-MM-DD HH:MM Zone of the scan, from `date`}_
     ```
 
 **Non-technical entry format (DDhl.md):**
@@ -239,8 +244,11 @@ For each repository that had commits since the cutoff, read the relevant data so
 
     - The `# H1` heading uses full date format: `# Wednesday, February 19, 2026: Title`
     - Titles are plain and factual (e.g., "Spernakit v3.1.29 and fleet upgrade", "Deleted the auto-apply script"), not clever or evocative - the human names the post later if one gets written
-    - Technical file path: `<applications-root>/devdiary/entries/YYYY/MM/DD.md`
-    - Non-technical file path: `<applications-root>/devdiary/entries/YYYY/MM/DDhl.md`
+    - Technical file path: `<applications-root>/beazley.org/devdiary/YYYY/MM/DD.md`
+    - Non-technical file path: `<applications-root>/beazley.org/devdiary/YYYY/MM/DDhl.md`
+    - End every technical entry and every technical addendum with the `_Covered through: ..._`
+      line, taking the time from `date` at the scan, never typed by hand. It is the next run's
+      watermark (Phase 1), so it states how far the scan reached, not when the file was written.
     - Create parent directories (`YYYY/MM/`) if they don't exist
     - Ensure both entries cover the same day's activities but with appropriate audience and tone
 
@@ -280,11 +288,11 @@ For each repository that had commits since the cutoff, read the relevant data so
 20. Apply the updates directly.
 
 21. **Write diary entry files**:
-    - Create `<applications-root>/devdiary/entries/YYYY/MM/DD.md` (technical) for each new entry
-    - Create `<applications-root>/devdiary/entries/YYYY/MM/DDhl.md` (non-technical) for each new entry
+    - Create `<applications-root>/beazley.org/devdiary/YYYY/MM/DD.md` (technical) for each new entry
+    - Create `<applications-root>/beazley.org/devdiary/YYYY/MM/DDhl.md` (non-technical) for each new entry
     - Create parent directories if they don't exist
     - **Days other than the boundary day are never rewritten.** If a file already exists for that date (either `DD.md` or `DDhl.md`), skip that entry (do not overwrite) and report the conflict in the run summary for later review
-    - **A boundary day with an existing pair is amended, not skipped.** Append a `## Later that day (after HH:MM)` section - HH:MM being the watermark - to both `DD.md` and `DDhl.md`. The appended section carries the same bullet sections a new entry would (`**What changed:**`, `**Decisions & rationale:**`, `**Reflections:**` in the technical file; `**What happened:**`, `**Numbers and specifics:**`, `**How it went:**`, `**What's next:**` in the non-technical one). Append only - never edit the text above the appended section. If the boundary day produced nothing after the watermark, leave both files untouched and say so in the report. If only one file in the pair exists, report the conflict and change neither file
+    - **A boundary day with an existing pair is amended, not skipped.** Append a `## Later that day (after HH:MM)` section - HH:MM being the watermark - to both `DD.md` and `DDhl.md`. The appended section carries the same bullet sections a new entry would (`**What changed:**`, `**Decisions & rationale:**`, `**Reflections:**` in the technical file; `**What happened:**`, `**Numbers and specifics:**`, `**How it went:**`, `**What's next:**` in the non-technical one), and the technical addendum ends with its own `_Covered through: ..._` line. Append only - never edit the text above the appended section. If the boundary day produced nothing after the watermark, leave both files untouched and say so in the report. If only one file in the pair exists, report the conflict and change neither file
 
 22. **Update devstory.md**:
     - Insert new narrative section(s) before the `### What I actually learned` section

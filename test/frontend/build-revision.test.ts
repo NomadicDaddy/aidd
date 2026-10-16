@@ -18,6 +18,7 @@ const frontendDir = join(process.cwd(), 'frontend');
 const HEAD = execFileSync('git', ['rev-parse', '--verify', 'HEAD'], {
 	cwd: process.cwd(),
 	encoding: 'utf8',
+	windowsHide: true,
 }).trim();
 
 /**

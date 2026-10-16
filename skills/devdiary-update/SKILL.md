@@ -23,8 +23,9 @@ devdiary-update [repository-path ...]
 - **Dev story**: `<applications-root>/beazley.org/devdiary/devstory.md` - Narrative retrospective
 
 The diary moved here from `<applications-root>/devdiary/entries` on 2026-10-16 (Phillip #13122,
-plan #13121). The folder is ignored by beazley.org's Git and Prettier, so it has no Git history of
-its own: never commit diary files to beazley.org, and never take a date or watermark from Git. The
+plan #13121). The folder is ignored by beazley.org's Git, so it has no Git history of its own:
+never commit diary files to beazley.org, and never take a date or watermark from Git. Prettier does
+format it (Phillip #13258), through beazley.org's `.prettierignore` only (Phase 8 step 23). The
 old devdiary repository, retired to `D:\applications.prevers\devdiary`, holds the history up to the
 move and is read-only.
 
@@ -306,7 +307,18 @@ For each repository that had commits since the cutoff, read the relevant data so
     - Insert new narrative section(s) before the `### What I actually learned` section
     - Update the `_Last updated:` footer date to today's date
 
-23. **Verify** all written files are well-formed markdown after edits.
+23. **Format and verify** exactly the diary files this run wrote or amended, from
+    `<applications-root>/beazley.org`:
+
+    ```bash
+    bunx prettier --ignore-path .prettierignore --write <each written diary file>
+    bunx prettier --ignore-path .prettierignore --check <each written diary file>
+    ```
+
+    `--ignore-path .prettierignore` is required: Prettier otherwise also reads `.gitignore`, which
+    ignores the whole diary folder, so the command would skip every file and still exit 0. Pass
+    only this run's files, never the folder, so earlier entries are left as they are. A non-zero
+    `--check` is a failure to report, not to work around.
 
 ## Notes
 

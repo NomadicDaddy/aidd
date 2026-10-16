@@ -33,6 +33,9 @@ describe('scheduled execution outcome aggregation', () => {
 		['failed', 'failed'],
 		['killed', 'failed'],
 		['stopped', 'failed'],
+		// A run dispatched behind another waits as queued; finalizing then would record a failure
+		// for an occurrence whose run has not started (Weekly advisory audit, 10-16 10:40).
+		['queued', 'running'],
 		['running', 'running'],
 	] as const)('maps run %s to %s', async (status, expected) => {
 		await db.insert(runs).values({

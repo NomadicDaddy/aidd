@@ -15,7 +15,8 @@ export function aggregateExecutionStatus(input: {
 	sessions: SessionRow[];
 }): 'completed_with_failures' | 'completed' | 'failed' | 'running' {
 	if (
-		input.runs.some((run) => run.status === 'running') ||
+		// A queued run has not started yet, so its occurrence is still in progress, not childless.
+		input.runs.some((run) => ['queued', 'running'].includes(run.status)) ||
 		input.cycles.some((cycle) => cycle.status === 'running') ||
 		input.sessions.some((session) => isActiveSessionStatus(session.status))
 	) {

@@ -311,14 +311,17 @@ For each repository that had commits since the cutoff, read the relevant data so
     `<applications-root>/beazley.org`:
 
     ```bash
+    bunx prettier --ignore-path .prettierignore --file-info <each written diary file>
     bunx prettier --ignore-path .prettierignore --write <each written diary file>
     bunx prettier --ignore-path .prettierignore --check <each written diary file>
     ```
 
-    `--ignore-path .prettierignore` is required: Prettier otherwise also reads `.gitignore`, which
-    ignores the whole diary folder, so the command would skip every file and still exit 0. Pass
-    only this run's files, never the folder, so earlier entries are left as they are. A non-zero
-    `--check` is a failure to report, not to work around.
+    First, `--file-info` must report `"ignored": false` for every file. If any reports `true`, stop
+    and report it: an ignore rule (in `.prettierignore` or elsewhere) has come back, and the next
+    two commands would skip that file and still exit 0. `--ignore-path .prettierignore` is required
+    for the same reason: Prettier otherwise also reads `.gitignore`, which ignores the whole diary
+    folder. Pass only this run's files, never the folder, so earlier entries are left as they are.
+    A non-zero `--check` is a failure to report, not to work around.
 
 ## Notes
 

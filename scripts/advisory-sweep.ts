@@ -35,10 +35,10 @@ import { matchFile, scanRoot } from './lib/advisory-sweep/scan.ts';
 // an npm install surface of its own, so it is swept like the rest.
 const DEFAULT_ROOTS = ['D:\\amiga', 'D:\\applications', 'D:\\infra', 'D:\\scripts'];
 const DEFAULT_SWEEPS_FILE = 'D:\\infra\\advisory-sweeps.md';
-// The sweeps file's header names @ianvs/prettier-plugin-sort-imports as the control, but in the
-// estate that name occurs only as a peerDependency key inside another package's lockfile entry, so
-// an exact match cannot find it and every sweep that reported it found was matching substrings.
-// prettier-plugin-tailwindcss is a resolved entry in several lockfiles.
+// The control must be findable the way a real finding is: a declaration or a resolved lockfile
+// entry of its own. The earlier control, @ianvs/prettier-plugin-sort-imports, occurs only inside
+// another package's peer list, so only a substring match ever found it (the sweeps file's header
+// records why). prettier-plugin-tailwindcss is a resolved entry in several lockfiles.
 const DEFAULT_CONTROL = 'prettier-plugin-tailwindcss';
 
 /**

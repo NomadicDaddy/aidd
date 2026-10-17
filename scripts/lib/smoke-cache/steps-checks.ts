@@ -86,12 +86,16 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/check-destructive-confirmation.ts',
 		'scripts/lib/destructive/*.ts',
 	],
-	// `**/*.md` rather than the documentation directories by name: the gate walks the whole tree, so
-	// a glob list naming today's doc roots would let the cache skip the run that would have seen a
-	// broken link in a markdown file added somewhere else. It over-hashes in one direction only —
-	// gitignored markdown the gate itself skips still counts as an input, which costs a cache miss
-	// and never a missed finding.
-	'check:docs': ['**/*.md', 'package.json', 'scripts/check-docs.ts', 'scripts/lib/docs/*.ts'],
+	// The gate's own files only. What it reads (every markdown file it scans, each link target that
+	// resolves, the tracked .gitignore files) comes from the gate itself at run time: collect.ts adds
+	// collectDocsInputs through smoke-cache/docs.ts, so a new doc root or a non-markdown target is
+	// an input without this list naming it.
+	'check:docs': [
+		'package.json',
+		'scripts/check-docs.ts',
+		'scripts/lib/docs/*.ts',
+		'scripts/lib/smoke-cache/docs.ts',
+	],
 	'check:env-spread': [
 		'backend/src/**/*.{ts,tsx,js,mjs,cjs}',
 		'cli/src/**/*.{ts,tsx,js,mjs,cjs}',

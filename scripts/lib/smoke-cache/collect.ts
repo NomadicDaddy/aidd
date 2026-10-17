@@ -10,6 +10,7 @@ import {
 	TEST_RUNTIME_INPUTS,
 	TEST_STEP_NAME,
 } from './dependencies.ts';
+import { collectDocsDependencies } from './docs.ts';
 import { collectPrettierDependencies } from './prettier.ts';
 
 /**
@@ -33,6 +34,8 @@ interface CachedFileRead {
 }
 
 export interface SmokeCacheEvaluationContext {
+	/** The `check:docs` input list (docs.ts), which walks every markdown file once per run. */
+	docsDependencies: null | Promise<string[]>;
 	fileReads: Map<string, CachedFileRead>;
 	globMatches: Map<string, Promise<string[]>>;
 	/** The `format:check` input list. One enumeration asks Prettier about every candidate file. */
@@ -42,6 +45,7 @@ export interface SmokeCacheEvaluationContext {
 
 export function createSmokeCacheEvaluationContext(): SmokeCacheEvaluationContext {
 	return {
+		docsDependencies: null,
 		fileReads: new Map(),
 		globMatches: new Map(),
 		prettierDependencies: null,
@@ -50,6 +54,7 @@ export function createSmokeCacheEvaluationContext(): SmokeCacheEvaluationContext
 }
 
 export function clearSmokeCacheEvaluationContext(context: SmokeCacheEvaluationContext): void {
+	context.docsDependencies = null;
 	context.fileReads.clear();
 	context.globMatches.clear();
 	context.prettierDependencies = null;
@@ -219,7 +224,12 @@ export async function collectDependencies(
 		}
 	}
 
-	return [...files].filter((file) => !isIgnored(file, allowGeneratedOutput)).sort();
+	const resolved = [...files].filter((file) => !isIgnored(file, allowGeneratedOutput)).sort();
+	if (step !== 'check:docs') return resolved;
+	// The gate names what it reads (docs.ts); memoized like the Prettier list, for the same reason.
+	if (context === undefined) return collectDocsDependencies(projectRoot, resolved);
+	context.docsDependencies ??= Promise.resolve(collectDocsDependencies(projectRoot, resolved));
+	return await context.docsDependencies;
 }
 
 export async function hashDependencies(
@@ -242,6 +252,12 @@ export async function hashDependencies(
 			throw err;
 		});
 		if (stats === null) return null;
+		if (dependency.endsWith('/')) {
+			// A linked directory (docs.ts): its presence is the input, not its content.
+			if (!stats.isDirectory()) return null;
+			hash.update(`${dependency}\0dir\0`);
+			continue;
+		}
 		const cached = context?.fileReads.get(absolutePath);
 		const contents =
 			cached !== undefined &&

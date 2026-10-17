@@ -17,45 +17,17 @@
  *   bun run check:docs
  */
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { existsSync, readFileSync, statSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-import { gitIgnored, toPosixRelative } from './lib/docs/git-ignored.ts';
+import { gitIgnored, toPosixRelative, trackedGitignores } from './lib/docs/git-ignored.ts';
+import { markdownFiles } from './lib/docs/scan.ts';
 import { type BadWaiver, badWaivers, reportWaivers, waiverReason } from './lib/docs/waivers.ts';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const DEFAULT_PROJECT_ROOT = resolve(__dirname, '..');
-
-/** Directories to exclude from scanning, matched by basename at any depth */
-const EXCLUDE_DIRS = new Set([
-	'.aidd',
-	'.claude',
-	'.git',
-	'.github',
-	'backups',
-	'coverage',
-	'data',
-	'dist',
-	'logs',
-	'node_modules',
-	'screenshots',
-]);
-
-/**
- * Directories excluded by their path from the project root rather than by basename.
- *
- * These are out of scope, not waived. The distinction matters: a waiver says a known violation is
- * tolerated, and nothing here is a violation of anything. `cli/src/prompts/snapshots/` holds prompt
- * text delivered verbatim to an AI agent, and its links name files in the project being audited.
- * They are not this repository's links and were never meant to resolve here, the same way
- * `node_modules` markdown is not this repository's documentation.
- *
- * Anchored by path because the basename is too common to exclude fleetwide: `snapshots` matched
- * anywhere would silence a real docs directory that happened to share the name.
- */
-const EXCLUDE_PATHS = ['cli/src/prompts/snapshots'];
 
 /** Prefixes that indicate an external or non-file link */
 const EXTERNAL_PREFIXES = ['http://', 'https://', 'mailto:', 'data:', 'tel:'];
@@ -67,37 +39,6 @@ interface BrokenLink {
 	line: number;
 	linkText: string;
 	target: string;
-}
-
-/**
- * Drops the files git ignores. A doc-link checker has no business validating links inside
- * gitignored scratch or vendored trees: they are not shipped, and their markdown is frequently
- * third-party and malformed.
- */
-function dropGitIgnored(projectRoot: string, files: string[]): string[] {
-	const relatives = files.map((file) => toPosixRelative(projectRoot, file));
-	const ignored = gitIgnored(projectRoot, relatives);
-	return files.filter((_, index) => !ignored.has(relatives[index]!));
-}
-
-/**
- * Recursively discover all .md files under a directory, excluding specified dirs.
- */
-function findMarkdownFiles(dir: string, projectRoot: string): string[] {
-	const results: string[] = [];
-
-	for (const entry of readdirSync(dir, { withFileTypes: true })) {
-		if (entry.isDirectory()) {
-			if (EXCLUDE_DIRS.has(entry.name)) continue;
-			const full = join(dir, entry.name);
-			if (EXCLUDE_PATHS.includes(toPosixRelative(projectRoot, full))) continue;
-			results.push(...findMarkdownFiles(full, projectRoot));
-		} else if (entry.isFile() && entry.name.endsWith('.md')) {
-			results.push(join(dir, entry.name));
-		}
-	}
-
-	return results;
 }
 
 /**
@@ -206,10 +147,38 @@ function checkFile(
 	return { broken, waivers: badWaivers(filePath, lines, used) };
 }
 
+/**
+ * Every path whose content or presence can change this gate's verdict, from the project root with
+ * forward slashes, sorted: the markdown files it scans, each link target that resolves, and every
+ * tracked .gitignore, which decides what is scanned and which targets count. A target outside the
+ * root passes by existing just as one inside does, so it is listed too, starting `../`. A target
+ * that is a directory passes by existing, whatever it holds, so it is named with a trailing `/`:
+ * its presence is the input, not its content. A cache keyed on these instead of on every markdown
+ * file replays only what the gate would decide again. A target that does not resolve is absent
+ * because the gate fails on it, and a failure is not replayed.
+ */
+export function collectDocsInputs(projectRoot = DEFAULT_PROJECT_ROOT): string[] {
+	const files = markdownFiles(projectRoot);
+	const inputs = new Set([
+		...files.map((file) => toPosixRelative(projectRoot, file)),
+		...trackedGitignores(projectRoot),
+	]);
+	const addTarget = (relativeTarget: string): boolean => {
+		// The root itself: a link to `.` always resolves.
+		if (relativeTarget === '') return false;
+		const stat = statSync(resolve(projectRoot, relativeTarget), { throwIfNoEntry: false });
+		if (stat?.isFile() === true) inputs.add(relativeTarget);
+		else if (stat?.isDirectory() === true) inputs.add(`${relativeTarget}/`);
+		return false;
+	};
+	for (const file of files) checkFile(file, projectRoot, addTarget);
+	return [...inputs].sort();
+}
+
 export function runDocs(projectRoot = DEFAULT_PROJECT_ROOT): number {
 	console.log('Checking documentation links...\n');
 
-	const mdFiles = dropGitIgnored(projectRoot, findMarkdownFiles(projectRoot, projectRoot));
+	const mdFiles = markdownFiles(projectRoot);
 
 	// A pass over zero files is a pass earned by looking at nothing, and this gate is delivered to
 	// repositories whose layouts it does not know in advance. Every carrier has at least a README,

@@ -210,6 +210,12 @@ statically decidable rules. It reads `package.json`, follows every `check*` task
 allowlist's `gates` map declares to the `.ts` file it runs, follows `bun run <task>` references
 transitively, and applies the rules to each file's source.
 
+It reads that source with patterns, not a parser, and so do the other source-reading gates
+smokestack delivers. Each pattern is a deliberate approximation: it enforces a rule where the rule
+shows in the text, and a construct the pattern cannot see is a known limit of the gate, not a pass
+it has earned. When a limit is found, it is recorded against the gate in smokestack's records and
+fixed there, never patched in a delivered copy.
+
 | ID    | Rule           | Statically enforced                                                        |
 | ----- | -------------- | -------------------------------------------------------------------------- |
 | `GC1` | Entry shape    | Yes: exported `run*`, `import.meta.main` guard, no module-scope statements |

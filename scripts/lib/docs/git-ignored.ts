@@ -37,3 +37,18 @@ export function gitIgnored(projectRoot: string, relatives: string[]): Set<string
 	if (result.exitCode !== 0) return new Set();
 	return new Set(result.stdout.toString().split('\0').filter(Boolean));
 }
+
+/**
+ * Every tracked .gitignore at any depth, from the project root with forward slashes. They decide
+ * both answers above, so a cache keyed on what the gate reads must include them. Empty when git
+ * could not answer, which is also when `gitIgnored` falls open and they decide nothing.
+ */
+export function trackedGitignores(projectRoot: string): string[] {
+	const result = Bun.spawnSync(['git', 'ls-files', '-z', '--', ':(glob)**/.gitignore'], {
+		cwd: projectRoot,
+		stderr: 'ignore',
+		windowsHide: true,
+	});
+	if (result.exitCode !== 0) return [];
+	return result.stdout.toString().split('\0').filter(Boolean);
+}

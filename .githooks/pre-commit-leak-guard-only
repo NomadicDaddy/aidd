@@ -13,11 +13,12 @@
 # other carrier's, scanning the same staged index diff. Only the static checks are absent, and those
 # were never the reason this hook exists.
 #
-# Installed by aidd/scripts/install-leak-guard.ts, which picks between the two hooks by reading the
-# target's package.json. Once a repository defines both names, re-running the installer replaces
-# this file with the full hook.
+# Installed by smokestack's scripts/install-leak-guard.ts, which picks between the two hooks by
+# reading the target's package.json. Once a repository defines both names, re-running the installer
+# replaces this file with the full hook.
 #
-# Keep this file byte-identical across every repository that carries it.
+# smokestack owns this file and delivers it with `bun run shared-core:write`. Change it in
+# smokestack; every repository that takes it holds a byte-identical copy.
 
 # Find bash by absolute path and put its directory first, then start over under it. Looking bash up
 # on PATH is what broke this hook: on Windows System32 holds the WSL launcher under the same name,

@@ -82,6 +82,19 @@ const CALL_LINE_LIMIT = 200;
 /** The code character before which a `/` opens a regular expression rather than dividing. */
 const BEFORE_REGEX = '(,=:[!&|?{};+-*%<>~^';
 
+/**
+ * The keywords after which a `/` opens a regular expression, as in `return /'/`. `of` is left out
+ * on purpose: it is only a keyword inside `for (… of …)`, and anywhere else it is an ordinary name,
+ * so `of / 2` divides (Morticia #13529). A regex directly after `for (x of` is the rarer case.
+ */
+const KEYWORDS_BEFORE_REGEX =
+	/(?:^|[^\w$.])(?:await|case|delete|do|else|in|instanceof|new|return|throw|typeof|void|yield)\s*$/;
+
+/** Whether the code just before `index` ends with one of those keywords, not a property name. */
+function keywordBefore(text: string, index: number): boolean {
+	return KEYWORDS_BEFORE_REGEX.test(text.slice(Math.max(0, index - 64), index));
+}
+
 /** The index just past the regular expression literal opening at `start`, or `start + 1`. */
 function regexEnd(text: string, start: number): number {
 	let inClass = false;
@@ -130,7 +143,10 @@ function codeMask(text: string): boolean[] {
 		} else if (char === '/' && next === '*') {
 			const end = text.indexOf('*/', i + 2);
 			i = end === -1 ? text.length : end + 1;
-		} else if (char === '/' && (previous === '' || BEFORE_REGEX.includes(previous))) {
+		} else if (
+			char === '/' &&
+			(previous === '' || BEFORE_REGEX.includes(previous) || keywordBefore(text, i))
+		) {
 			i = regexEnd(text, i) - 1;
 			previous = '/';
 		} else if (char === "'" || char === '"' || char === '`') {
@@ -149,20 +165,32 @@ function codeMask(text: string): boolean[] {
 	return mask;
 }
 
+/** A call's text through its closing parenthesis, and the same text with only its code kept. */
+interface CallText {
+	/** Strings, comments and regular expressions blanked, so a comment cannot pass for an option. */
+	code: string;
+	raw: string;
+}
+
 /** The text of the call starting at `column` of line `index`, through its closing parenthesis. */
-function callText(lines: string[], index: number, column: number): string {
+function callText(lines: string[], index: number, column: number): CallText {
 	const text = [
 		(lines[index] ?? '').slice(column),
 		...lines.slice(index + 1, index + CALL_LINE_LIMIT),
 	].join('\n');
 	const code = codeMask(text);
 	let depth = 0;
+	let end = text.length;
 	for (let i = 0; i < text.length; i++) {
 		if (!code[i]) continue;
 		if (text[i] === '(') depth++;
-		else if (text[i] === ')' && --depth === 0) return text.slice(0, i + 1);
+		else if (text[i] === ')' && --depth === 0) {
+			end = i + 1;
+			break;
+		}
 	}
-	return text;
+	const raw = text.slice(0, end);
+	return { code: raw.replace(/[^]/g, (char, i: number) => (code[i] ? char : ' ')), raw };
 }
 
 /**
@@ -173,14 +201,14 @@ function callText(lines: string[], index: number, column: number): string {
  * on a later line and `windowsHide` after a long argument list are both inside it, and a call
  * written inside a string is text, not a call. The violation is reported at the call, once.
  */
-function directGitSpawns(lines: string[], index: number): string[] {
+function directGitSpawns(lines: string[], index: number): CallText[] {
 	const line = lines[index] ?? '';
 	const code = codeMask(line);
-	const calls: string[] = [];
+	const calls: CallText[] = [];
 	for (const call of line.matchAll(SPAWN_CALL)) {
 		if (!code[call.index]) continue;
 		const text = callText(lines, index, call.index);
-		if (GIT_FIRST.test(text)) calls.push(text);
+		if (GIT_FIRST.test(text.raw)) calls.push(text);
 	}
 	return calls;
 }
@@ -194,7 +222,7 @@ function checkFile(projectRoot: string, filePath: string): Violation[] {
 
 	for (let index = 0; index < lines.length; index++) {
 		const unhidden = directGitSpawns(lines, index).some(
-			(call) => !/windowsHide:\s*true/.test(call),
+			(call) => !/windowsHide:\s*true/.test(call.code),
 		);
 		if (unhidden) {
 			violations.push({

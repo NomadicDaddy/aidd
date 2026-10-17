@@ -237,12 +237,14 @@ export async function hashDependencies(
 	dependencies: string[],
 	allowGeneratedOutput = false,
 	context?: SmokeCacheEvaluationContext,
+	// check:docs: the gate named each path it read, so a link into data/ or logs/ stays an input.
+	keepListed = false,
 ): Promise<null | string> {
 	const hash = createHash('sha256');
 	const normalizedDependencies = [
 		...new Set(dependencies.map((file) => file.replaceAll('\\', '/'))),
 	]
-		.filter((file) => !isIgnored(file, allowGeneratedOutput))
+		.filter((file) => keepListed || !isIgnored(file, allowGeneratedOutput))
 		.sort();
 
 	for (const dependency of normalizedDependencies) {
@@ -293,5 +295,6 @@ export async function hashStepDependencies(
 		await collectDependencies(projectRoot, step, context),
 		isGeneratedOutputStep(step),
 		context,
+		step === 'check:docs',
 	);
 }

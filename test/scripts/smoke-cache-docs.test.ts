@@ -67,6 +67,19 @@ describe('check:docs cache key', () => {
 		expect(await canSkipStep(root, 'check:docs')).toBe(false);
 	});
 
+	// Roger (90e075ed, Medium): the hasher dropped every path under data/, logs/ and the other
+	// excluded folders, so a linked data/ file could vanish with the key unchanged.
+	test('misses when a linked file under an excluded folder such as data/ is deleted', async () => {
+		const root = await docsProject();
+		await mkdir(join(root, 'data'), { recursive: true });
+		await writeFile(join(root, 'data', 'sample.json'), '{}\n');
+		await writeFile(join(root, 'README.md'), '[data](data/sample.json)\n');
+		await recordStepSuccess(root, 'check:docs', 123);
+		expect(await canSkipStep(root, 'check:docs')).toBe(true);
+		await rm(join(root, 'data', 'sample.json'));
+		expect(await canSkipStep(root, 'check:docs')).toBe(false);
+	});
+
 	test('still replays after a write the gate never reads', async () => {
 		const root = await recorded();
 		await mkdir(join(root, '.aidd'), { recursive: true });

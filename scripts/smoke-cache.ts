@@ -116,6 +116,7 @@ async function hashCacheDependencies(
 					await collectCacheDependencies(projectRoot, step, entry, coveredFiles, context),
 					isGeneratedOutputStep(step),
 					context?.dependencies,
+					step === 'check:docs',
 				);
 	if (hash === null) return null;
 	const key = `bun@${Bun.version}:${hash}`;

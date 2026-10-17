@@ -81,6 +81,20 @@ describe('check:docs cache key', () => {
 		expect(await canSkipStep(root, 'check:docs')).toBe(false);
 	});
 
+	// Morticia #13898: a new markdown file the gate scans, carrying a broken link, must rerun it.
+	test('misses when a scanned markdown file with a broken link is added', async () => {
+		const root = await recorded();
+		await writeFile(join(root, 'docs', 'new.md'), '[gone](missing.md)\n');
+		expect(await canSkipStep(root, 'check:docs')).toBe(false);
+	});
+
+	test('the key covers the hasher, so a change to how inputs are hashed retires old entries', async () => {
+		const root = await recorded();
+		await mkdir(join(root, 'scripts', 'lib', 'smoke-cache'), { recursive: true });
+		await writeFile(join(root, 'scripts', 'lib', 'smoke-cache', 'collect.ts'), '// changed\n');
+		expect(await canSkipStep(root, 'check:docs')).toBe(false);
+	});
+
 	test('still replays after a write the gate never reads', async () => {
 		const root = await recorded();
 		await mkdir(join(root, '.aidd'), { recursive: true });

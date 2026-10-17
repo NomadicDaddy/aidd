@@ -90,11 +90,15 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 	// resolves, the tracked .gitignore files) comes from the gate itself at run time: collect.ts adds
 	// collectDocsInputs through smoke-cache/docs.ts, so a new doc root or a non-markdown target is
 	// an input without this list naming it.
+	// The hasher's own files too (Morticia #13898): a fix to how the list is hashed must retire
+	// entries recorded under the old rule.
 	'check:docs': [
 		'package.json',
 		'scripts/check-docs.ts',
 		'scripts/lib/docs/*.ts',
+		'scripts/lib/smoke-cache/collect.ts',
 		'scripts/lib/smoke-cache/docs.ts',
+		'scripts/smoke-cache.ts',
 	],
 	'check:env-spread': [
 		'backend/src/**/*.{ts,tsx,js,mjs,cjs}',

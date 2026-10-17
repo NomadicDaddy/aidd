@@ -4,6 +4,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { canSkipStep, recordStepSuccess } from '../../scripts/smoke-cache.ts';
+import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
 
@@ -63,7 +64,7 @@ describe('check:docs cache key', () => {
 
 	test('misses when a linked directory is removed, though none of its files was an input', async () => {
 		const root = await recorded();
-		await rm(join(root, 'licenses'), { force: true, recursive: true });
+		await removeTempTree(join(root, 'licenses'));
 		expect(await canSkipStep(root, 'check:docs')).toBe(false);
 	});
 

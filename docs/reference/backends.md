@@ -221,7 +221,7 @@ rest is decided once, when a launch picks its backend.
   pick: a resting one exits with code 2 and names the alternative; add `--ignore-rest` to run it
   anyway.
 
-Set and end rests in **Settings → Run engine → Provider Rest**, or from the CLI:
+Set and end rests in **Settings → Run Engine → Provider Rest**, or from the CLI:
 
 ```powershell
 bun run start -- rest

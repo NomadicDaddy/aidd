@@ -174,7 +174,9 @@ The Profile tab's audit preview returns that `reason` with each audit it applies
 ### Surfaces
 
 There are two surfaces, `web-frontend` and `database`. The mapping's `surfaces` block names the
-packages that evidence each, and `requiresSurface` names the audits that need one:
+packages that evidence each, and `requiresSurface` names the audits that need one. In this excerpt
+`requiresSurface` is complete and each surface shows three of its packages; the mapping lists many
+more:
 
 ```jsonc
 {
@@ -205,7 +207,8 @@ A surface is present when either kind of evidence is found, and the detector
   so neither is required. Evidence reads `index.html under public/`.
 
 The file scan runs only for a surface no manifest settled. It is breadth-first from the project
-root with no depth limit, reads at most 5,000 directory entries, and never enters `node_modules`,
+root with no depth limit, stops once it has read 5,000 directory entries (it reads each directory
+whole, so the last one can take the count past 5,000), and never enters `node_modules`,
 `vendor`, `dist`, `build`, `out`, `coverage`, `test`, `tests`, `__tests__`, `fixtures`, `docs`,
 `examples`, `scripts`, `config`, or any directory whose name starts with a dot.
 

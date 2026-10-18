@@ -230,7 +230,8 @@ Start `04-result.webm` only after the selected pipeline reaches a terminal statu
 
 1. Show the completed pipeline in the Runs feed.
 2. Select **Full report**.
-3. Hold on the pipeline summary: status, project, duration, progress, and execution intent.
+3. Hold on the pipeline summary: status, duration and skill directive intent, with the project
+   named in the page header. A one-step recipe such as `codebase-analysis` shows no progress metric.
 4. Expand the executed step and show its real output summary, including the analysis-report path
    when the agent produced one.
 

@@ -8,7 +8,7 @@ import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
 
-// Record audit-qc-pipeline-1791780754 (check-docs cache key): check:docs is keyed on what the gate
+// Record smoke-cache-key-closure, check:docs criteria #1-#7: check:docs is keyed on what the gate
 // itself says it read (collectDocsInputs, smokestack v0.5.6), not on every markdown file. Each test
 // first asserts the unchanged tree replays, as a positive control.
 

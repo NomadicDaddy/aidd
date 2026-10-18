@@ -151,17 +151,23 @@ export async function ensureHistoryGuard(
 
 	const hooksDir = join(projectDir, '.githooks');
 
+	// Kept like the commit hook. Rewriting a guarded project's push hook and guard bodies from this
+	// install's scaffold, and staging them, put three unasked-for hook edits in beazley.org's and
+	// summon's index on 2026-10-17/18 (#14410, #14567): every aidd run on a repository re-delivered
+	// whatever aidd's scaffold held that day. Updating hooks a project already has belongs to the
+	// fleet sync, which smokestack owns.
 	const push = await installHook(projectDir, source, hooksDir, {
 		guards: GUARDS,
 		hook: HOOK,
+		keepExisting: true,
 		marker: MARKER,
 		sourceFile: HOOK,
 	});
 	// Report what actually happened. Returning 'installed' unconditionally would let a read-only
 	// checkout, a locked index, or a git too old for --chmod look identical to success — and the
-	// entire point of this guard is that a silent no-op is the worst outcome. 'kept' is unreachable
-	// here — the push spec sets no `keepExisting` — and is folded into 'installed' rather than added
-	// to GuardOutcome, so callers keep one vocabulary for "this project is guarded".
+	// entire point of this guard is that a silent no-op is the worst outcome. 'kept' is folded into
+	// 'installed' rather than added to GuardOutcome, so callers keep one vocabulary for "this
+	// project is guarded".
 	if (push !== 'installed' && push !== 'kept') return push;
 
 	const configured2 = await git(projectDir, ['config', 'core.hooksPath', '.githooks']);

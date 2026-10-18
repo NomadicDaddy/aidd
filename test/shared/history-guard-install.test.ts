@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
-import { mkdir, symlink, writeFile } from 'node:fs/promises';
+import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import { ensureHistoryGuard } from '../../shared/src/metadata/history-guard.ts';
@@ -196,6 +196,32 @@ describe('ensureHistoryGuard', () => {
 		// sourcing a script that is not there, which under `set -euo pipefail` fails every commit.
 		expect(existsSync(join(dir, '.githooks', 'leak-guard.sh'))).toBe(true);
 		expect(staged).toContain('.githooks/leak-guard.sh');
+	});
+
+	test('leaves an existing push hook and its guard bodies alone, and stages none of them', async () => {
+		// 2026-10-17/18: the push spec rewrote every guard body from aidd's scaffold and staged it, so
+		// each aidd run on beazley.org and summon left three hook edits in their index (#14410, #14567).
+		// A body already on disk is the fleet sync's to update; only a missing one is healed here.
+		const dir = await makeRepo('kept-push');
+		expect(await ensureHistoryGuard(dir, AIDD_ROOT)).toBe('installed');
+
+		// The project's own older hook and guard, in its index as a commit would leave them.
+		const hooksDir = join(dir, '.githooks');
+		const wrapper = '#!/usr/bin/env bash\n# aidd history guard, older wrapper\n';
+		const body = '#!/usr/bin/env bash\n# an older force-push guard\n';
+		await writeFile(join(hooksDir, 'pre-push'), wrapper);
+		await writeFile(join(hooksDir, 'force-push-guard.sh'), body);
+		git(dir, ['add', '.githooks/pre-push', '.githooks/force-push-guard.sh']);
+		await rm(join(hooksDir, 'screenshot-guard.sh'));
+
+		expect(await ensureHistoryGuard(dir, AIDD_ROOT)).toBe('installed');
+		expect(readFileSync(join(hooksDir, 'pre-push'), 'utf8')).toBe(wrapper);
+		expect(readFileSync(join(hooksDir, 'force-push-guard.sh'), 'utf8')).toBe(body);
+		expect(git(dir, ['show', ':.githooks/pre-push'])).toBe(wrapper.trim());
+		expect(git(dir, ['show', ':.githooks/force-push-guard.sh'])).toBe(body.trim());
+		// The one missing body is healed, and disk and index agree again.
+		expect(existsSync(join(hooksDir, 'screenshot-guard.sh'))).toBe(true);
+		expect(git(dir, ['diff', '--name-only'])).toBe('');
 	});
 
 	test('refuses to clobber a foreign pre-commit, and says which hook it refused', async () => {

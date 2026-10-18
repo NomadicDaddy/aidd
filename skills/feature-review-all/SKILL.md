@@ -32,11 +32,12 @@ feature-review-all [--apps <app,...>] [--dry-run] [--report-only]
 
     `bun run aidd-tools -- features:review-sweep [flags]`
 
-2. Let the helper read the first existing workspace index candidate (`AGENTS.md`, then
-   `CLAUDE.md`). It discovers apps from Markdown table rows whose second column is an absolute
-   `d:` location, then applies `--apps` when supplied.
+2. Let the helper discover the apps: every folder directly under the applications root, named by
+   its folder, then narrowed to `--apps` when supplied. It reads no workspace index file.
 
-3. Exclude `.old` directories and apps with no `.aidd/features` tree.
+3. The helper leaves out any folder whose name contains `.old`, any folder with no
+   `.aidd/features` tree, and any linked git worktree, which is a second checkout of a repository
+   already listed under its own name.
 
 4. For every targeted app, let the helper perform the mechanical pass:
     - inventory counts and baseline git status capture

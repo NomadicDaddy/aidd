@@ -13,11 +13,13 @@ interface HookSpec {
 	/**
 	 * Deliver this hook only where none exists yet, instead of overwriting one of ours in place.
 	 *
-	 * Set for the commit hook and deliberately not for the push hook, because their source and
-	 * destination relate differently. `pre-push` installs from the scaffold copy of the SAME file, so
-	 * overwriting one of ours is how a guard fix reaches a scaffolded project. `pre-commit` installs
-	 * from `pre-commit-leak-guard-only` — a deliberately LESSER variant of the file it lands on — so
-	 * the same overwrite is a downgrade.
+	 * Set for both hooks. The push hook kept being overwritten on the reasoning that it installs
+	 * from the scaffold copy of the SAME file, so an overwrite is how a guard fix reaches a project.
+	 * In practice it re-delivered whatever aidd's scaffold held that day and staged it in every
+	 * project aidd ran on: three unasked-for hook edits in beazley.org's and summon's index on
+	 * 2026-10-17/18 (#14410, #14567). The commit hook has a second reason: it installs from
+	 * `pre-commit-leak-guard-only`, a deliberately LESSER variant of the file it lands on, so an
+	 * overwrite is a downgrade.
 	 *
 	 * `marker` cannot tell the two variants apart: it is `bash .githooks/leak-guard.sh`, and both
 	 * carry that line because both run the same guard first. So from 2026-08-09 every aidd run

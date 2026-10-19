@@ -1,3 +1,4 @@
+import { FEATURE_STATUSES } from 'aidd-shared/metadata/features';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -17,15 +18,14 @@ export const AGGREGATE_REPORT_PATH = path.join(
 export const SUPPORTED_DEPTH = 'full-backlog-light-completed';
 export const SUPPORTED_FIX_MODE = 'aggressive';
 
-export const VALID_STATUSES = new Set([
-	'backlog',
-	'completed',
+// Every canonical status, so a status added to aidd is never reported as invalid here (deferred
+// was), plus the legacy values the sweep still meets in older records.
+export const VALID_STATUSES = new Set<string>([
+	...FEATURE_STATUSES,
 	'failed',
-	'in_progress',
 	'pending',
 	'running',
 	'verified',
-	'waiting_approval',
 ]);
 export const BACKLOG_STATUSES = new Set(['backlog', 'failed', 'in_progress', 'pending', 'running']);
 export const COMPLETED_STATUSES = new Set(['completed', 'verified']);

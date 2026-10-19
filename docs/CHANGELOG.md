@@ -2,6 +2,55 @@
 
 All notable public aidd releases are documented here.
 
+## [3.6.0] - 2026-10-19
+
+### Added
+
+- Provider rest: a resting backend starts no new runs until its rest ends, and runs already going are never switched. Anyone can rest a backend from Settings > Run Engine > Provider Rest or `aidd rest set|clear`, and claude-code, codex and grok also rest on their own when a rate limit reports its reset time. A default or standing launch (schedules, recipe steps, the Director, audits, project creation) moves to the first free substitute and the run shows "Substituted"; a launch where a person picked the backend offers "Relaunch on <substitute>" or "Run anyway", and on the CLI `--cli` naming a resting backend exits 2 unless `--ignore-rest` is given. A direct CLI run that was moved keeps the reason in its run log, its heartbeat record, the live Runs view and its finished row.
+- A fifth feature status, deferred, for scope the owner has set aside. A run never selects a deferred record, it does not hold its milestone open, and a feature that depends on one stays dependency-blocked. Only a person sets or clears it: the panel can defer a backlog or waiting-approval record and return it to backlog, refuses either while a run is active in the project, and aidd restores any record an agent moved into or out of deferred, including on a timeout exit. An audit that sees a deferred finding again does not file it as a recurrence.
+- Deferred records are left out of a project's feature total, its percentage and each milestone's fraction, and are counted beside them on the roadmap card, the milestones table, the projects table and card, the project card's milestone chips and the dashboard row. A milestone holding only deferred records shows its deferred count alone instead of 0/0.
+- `aidd stage --project-dir <dir> [--skill <id>]` copies a project's contract files into `.aidd` exactly as a run would, then stops: no provider, no feature claim, no history-guard install, nothing written to the project root and no blueprint placeholders seeded.
+- An audit can require a surface, a web frontend or a database, so LIGHTHOUSE, FRONTEND and WEB_DESIGN_GUIDELINES no longer apply to command-line tools and DATABASE and SCHEMA_CONSTRAINTS no longer apply to projects with no database. Evidence comes from declared packages or from a file scan; a scan that hits its entry budget or an unreadable directory rules nothing out, so the audit still applies and is marked undecided. Every reader of applicability (audit selection, the catalogue, maturity scoring, Director priority and the profile preview) decides through one resolver, and an explicit per-project requirement or exclusion still wins.
+- The Profile tab's Applicable audits card gives each audit one line saying why it is on or off: the reason it does not apply, the surface found and its evidence, or, in amber, that it applies only because detection could not finish.
+- A review-only skill run returns its report and aidd saves it to `.aidd/reports/<skill>-<date>.md`, never replacing a file aidd did not write (it falls back to `-aidd`, then `-aidd-2` to `-aidd-5`). A review-only run that returns no report, or whose report cannot be saved, is recorded as incomplete and exits 1.
+- `feature-review` takes a status scope. The default is unchanged; a wider scope checks records of work under way or done against the code and gives each one verdict (current, stale, status wrong or cannot tell), rewriting only backlog records.
+- `check:function-size` joins `smoke:qc` beside the 300-line file gate. It counts functions over cyclomatic complexity 7 and over 40 lines across cli, backend, shared and frontend source and fails any change that raises either count above the committed baseline. It is the same gate Spernakit runs, measured with a syntax-only ESLint pass.
+- `bun run aidd-client` and `bun run features:backfill-timestamps` are registered package scripts and documented.
+
+### Changed
+
+- Upgrading: migrations 0012 and 0013 run on first start. 0012 adds a column recording a run's backend substitution and 0013 adds the stopping state and stop request time for pipeline sessions; every existing row reads as no substitution and no stop requested, so no stored data changes meaning.
+- The README names its author and links the beazley.org writing about aidd.
+- Audit mode gives each agent session exactly one audit and works through the selection in order. An audit whose session fails or whose report is rejected twice is dropped from the run and named in its summary. A credentials, quota or launch failure of the backend as a whole never counts against an audit, and four failed sessions in a row across different audits end the run as an error, naming the backend as the likely cause. A run that gave up on some audits and finished others is a partial success.
+- An audit that could not be performed still writes its report, marked so that every freshness reader passes over it: the audit stays stale and its findings are kept, and such a report never replaces a real report written the same day. Older reports whose status line says skipped are treated the same way.
+- A feature's priority is its own. The run-end reconcile no longer sets every roadmap feature's priority to its milestone's number, the milestone planner no longer writes priority, and the panel's row Priority selector edits the feature's own P1 to P5 instead of acting as a second milestone picker.
+- Session Stop on a pipeline session lets its runs end at their iteration boundary and shows the session as stopping until they do; while it is stopping, the button becomes Force stop, which kills the runs' process trees, including a run linked or re-attached after the force stop.
+- Agents are told in every prompt never to pipe a gate, since a pipeline reports the exit code of its last command.
+- Audits: CODE_QUALITY skips the 300-line rule and the missing `check:max-lines` finding when `.aidd/project.md` records an owner waiver, and quotes the waiving line; TS_STANDARDS says the TypeScript 6.0.3 hold covers every repository.
+- Skills: `consolidate-features` carries every criterion of a record it folds, with its measured values, keeps a record whose criteria it cannot map, and never commits its own helper scripts; `deployment-readiness` no longer writes a placeholder deploy script, and aidd's own placeholder `deploy` script is gone; `update-roadmap` no longer promises milestone priority propagation; `devdiary-update` writes to beazley.org/devdiary, takes its watermark from a Covered through line, and formats each diary file with that repository's Prettier after checking it is not ignored.
+- The feature-review sweep finds applications again by walking the folders under the applications root that carry feature records, and each report lists the records whose own files were committed to after the record was last edited. The per-application report is named `feature-review-all-<date>.md`.
+- The advisory sweep and dev diary discovery cover D:\applications, D:\infra, D:\scripts and D:\amiga, dropping the retired D:\public. A sweep narrowed with `--root` names each default root it skipped, and one that read nothing still prints what it covered.
+- Bun 1.4.3 is the minimum runtime. Tooling and workspace dependencies were updated (eslint 10.12, typescript-eslint 8.71, prettier 3.9.10, knip 6.41, vite 8.3.4, @tanstack/react-query 5.104, zod 4.6.6, pino 10.4, bun-pty 0.5.1 and others); TypeScript stays on 6.0.3. The licence table names the version each workspace declares rather than the root's.
+- Took smokestack v0.3.0 through v0.5.7. Smokestack now owns the shared gate, hook and sync files and this repository declares what it takes in `smokestack.lock`; the `install:history-guard` and `install:leak-guard` scripts moved there with it. Files delivered from smokestack no longer count toward this repository's coverage figures.
+- Documentation: the README page list, prerequisites, contributor gates and deployment notes were corrected; the vocabulary defines Ingest and Register as the two actions of the Ingest Existing lane; the deployment and release docs say `start:web` stops the aidd panel on its port by default and how to run a second checkout beside it; the walkthrough recording runbook moved into the reference docs; the audit applicability and provider rest pages match the code.
+
+### Fixed
+
+- The feature-review sweep accepts the deferred status. It kept its own status list and reported every deferred record as invalid; it now takes the canonical list.
+- Runs and pipelines: a read-only run no longer claims commits or feature completions another session made while it ran, and its AI summary sees only its own commits; an audit-findings sweep works only the audit findings the project page counted, not ordinary backlog records; a scheduled occurrence whose run is still queued stays running instead of finalizing as failed; a scheduled run's source reads Scheduled, not Web.
+- The CLI's interview mode reads `questions.md` with the panel's parser, so a wrapped question stays whole and the CLI's question count and numbering match the panel's.
+- An audit catalog root with no `audits/` directory is an error instead of silently making every audit apply to every project.
+- Native agent: the bash tool's `timeout_ms` is bounded before spawning; a cancelled run reaches in-flight tool subprocesses and kills their whole process tree, reporting "cleanup incomplete" when it cannot confirm the tree is gone; a timeout or abort notice is no longer cut off by long command output.
+- Gates: the step cache is keyed on the Bun version; `build:analyze` is keyed on the revision, `dist` and both reports and replays a pass only over a report its check would accept; the Prettier cache is keyed on the lockfile, config and frontend stylesheets; `self-contained` scans only tracked and not-ignored files and reruns when any scanned root changes; `check:docs` is keyed on exactly the files and link targets it reads, including targets under excluded folders and its own hashing code.
+- A project's existing pre-push hook and guards are kept rather than rewritten and staged on every aidd run; only a missing one is delivered.
+- The shared hooks find bash by path, so a PATH that lists the WSL launcher first no longer breaks every commit.
+
+### Security
+
+- The leak guard fails closed when a private pattern is not a valid expression, and a refusal names each file and counts lines per pattern kind without printing the refused content. A key refusal names only the file where the rule fired.
+- The run ledger, `runs.jsonl`, is scrubbed for secrets like the iteration artifacts.
+- The startup public-interface self-test probes IPv6 interfaces as well as IPv4.
+
 ## [3.5.0] - 2026-10-08
 
 ### Added

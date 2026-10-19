@@ -246,3 +246,8 @@ audit.
 - Reporting a vulnerability: [SECURITY.md](SECURITY.md).
 - What stays on your machine: [PRIVACY.md](PRIVACY.md).
 - License: [FSL-1.1-ALv2](LICENSE) (Functional Source License; converts to Apache 2.0 after two years).
+
+## Author
+
+Built by [Phillip Beazley](https://beazley.org/). How aidd came out of leaving coding agents to work
+on their own: [How I Leave Coding Agents Running for Hours](https://beazley.org/p/running-coding-agents-unattended/).

@@ -23,10 +23,25 @@
  * indistinguishable from an `[OK]` over a clean 300.
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { exit } from 'node:process';
 
-const DEFAULT_PROJECT_ROOT = resolve(import.meta.dir, '..');
+/**
+ * The repository this file is delivered into: the parent of the nearest `scripts` directory above
+ * it. Not "one level up", so the answer holds whether the file sits in scripts/ or deeper. With no
+ * such directory it refuses rather than answer the drive root, which would put the whole drive in
+ * scope.
+ */
+function repositoryRoot(dir: string): string {
+	let at = resolve(dir);
+	while (basename(at) !== 'scripts') {
+		if (dirname(at) === at) throw new Error(`no scripts directory above ${resolve(dir)}`);
+		at = dirname(at);
+	}
+	return dirname(at);
+}
+
+const DEFAULT_PROJECT_ROOT = repositoryRoot(import.meta.dir);
 const REPORTS_SUBDIR = '.aidd/audit-reports';
 
 const ISO_DATE = /\b(\d{4}-\d{2}-\d{2})\b/g;

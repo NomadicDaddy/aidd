@@ -18,7 +18,7 @@
  */
 
 import { existsSync, readFileSync, statSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 
@@ -26,8 +26,22 @@ import { gitIgnored, toPosixRelative, trackedGitignores } from './lib/docs/git-i
 import { markdownFiles } from './lib/docs/scan.ts';
 import { type BadWaiver, badWaivers, reportWaivers, waiverReason } from './lib/docs/waivers.ts';
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
-const DEFAULT_PROJECT_ROOT = resolve(__dirname, '..');
+/**
+ * The repository this file is delivered into: the parent of the nearest `scripts` directory above
+ * it. Not "one level up", so the answer holds whether the file sits in scripts/ or deeper. With no
+ * such directory it refuses rather than answer the drive root, which would put the whole drive in
+ * scope.
+ */
+function repositoryRoot(dir: string): string {
+	let at = resolve(dir);
+	while (basename(at) !== 'scripts') {
+		if (dirname(at) === at) throw new Error(`no scripts directory above ${resolve(dir)}`);
+		at = dirname(at);
+	}
+	return dirname(at);
+}
+
+const DEFAULT_PROJECT_ROOT = repositoryRoot(fileURLToPath(new URL('.', import.meta.url)));
 
 /** Prefixes that indicate an external or non-file link */
 const EXTERNAL_PREFIXES = ['http://', 'https://', 'mailto:', 'data:', 'tel:'];

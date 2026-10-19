@@ -14,7 +14,7 @@
  * longer describes anything -- both have a case here.
  */
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { exit } from 'node:process';
 
 import { CONFORMING, discovering, VIOLATING } from './lib/gate/fixtures.ts';
@@ -32,7 +32,22 @@ function assert(condition: boolean, message: string): void {
 	checks++;
 }
 
-const repoRoot = join(import.meta.dir, '..');
+/**
+ * The repository this file is delivered into: the parent of the nearest `scripts` directory above
+ * it. Not "one level up", so the answer holds whether the file sits in scripts/ or deeper. With no
+ * such directory it refuses rather than answer the drive root, which would put the whole drive in
+ * scope.
+ */
+function repositoryRoot(dir: string): string {
+	let at = resolve(dir);
+	while (basename(at) !== 'scripts') {
+		if (dirname(at) === at) throw new Error(`no scripts directory above ${resolve(dir)}`);
+		at = dirname(at);
+	}
+	return dirname(at);
+}
+
+const repoRoot = repositoryRoot(import.meta.dir);
 const fixtureParent = join(repoRoot, 'tmp');
 mkdirSync(fixtureParent, { recursive: true });
 const fixtureRoot = mkdtempSync(join(fixtureParent, 'gate-conventions-'));

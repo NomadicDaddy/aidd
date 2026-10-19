@@ -24,10 +24,25 @@
  *   bun scripts/check-git-window-hide.ts
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { exit } from 'node:process';
 
-const DEFAULT_PROJECT_ROOT = join(import.meta.dir, '..');
+/**
+ * The repository this file is delivered into: the parent of the nearest `scripts` directory above
+ * it. Not "one level up", so the answer holds whether the file sits in scripts/ or deeper. With no
+ * such directory it refuses rather than answer the drive root, which would put the whole drive in
+ * scope.
+ */
+function repositoryRoot(dir: string): string {
+	let at = resolve(dir);
+	while (basename(at) !== 'scripts') {
+		if (dirname(at) === at) throw new Error(`no scripts directory above ${resolve(dir)}`);
+		at = dirname(at);
+	}
+	return dirname(at);
+}
+
+const DEFAULT_PROJECT_ROOT = repositoryRoot(import.meta.dir);
 const SCAN_ROOTS = [
 	'backend/src',
 	'cli/src',
@@ -215,7 +230,8 @@ function directGitSpawns(lines: string[], index: number): CallText[] {
 
 function checkFile(projectRoot: string, filePath: string): Violation[] {
 	const relativePath = relative(projectRoot, filePath).replace(/\\/g, '/');
-	if (relativePath === 'scripts/check-git-window-hide.ts') return [];
+	// This checker itself, wherever under scripts/ it is delivered: its patterns name git spawns.
+	if (/^scripts\/(?:.+\/)?check-git-window-hide\.ts$/u.test(relativePath)) return [];
 
 	const lines = readFileSync(filePath, 'utf-8').split(/\r?\n/);
 	const violations: Violation[] = [];

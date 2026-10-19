@@ -29,7 +29,7 @@
  *   bun run check:destructive-confirmation
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { basename, dirname, join, relative, resolve } from 'node:path';
 import { exit } from 'node:process';
 import { fileURLToPath } from 'node:url';
 
@@ -43,8 +43,22 @@ import {
 	WAIVER_MARKER,
 } from './lib/destructive/waivers.ts';
 
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
-const DEFAULT_PROJECT_ROOT = resolve(__dirname, '..');
+/**
+ * The repository this file is delivered into: the parent of the nearest `scripts` directory above
+ * it. Not "one level up", so the answer holds whether the file sits in scripts/ or deeper. With no
+ * such directory it refuses rather than answer the drive root, which would put the whole drive in
+ * scope.
+ */
+function repositoryRoot(dir: string): string {
+	let at = resolve(dir);
+	while (basename(at) !== 'scripts') {
+		if (dirname(at) === at) throw new Error(`no scripts directory above ${resolve(dir)}`);
+		at = dirname(at);
+	}
+	return dirname(at);
+}
+
+const DEFAULT_PROJECT_ROOT = repositoryRoot(fileURLToPath(new URL('.', import.meta.url)));
 
 const SKIP_DIRS = new Set(['.aidd', '.git', 'coverage', 'data', 'dist', 'logs', 'node_modules']);
 

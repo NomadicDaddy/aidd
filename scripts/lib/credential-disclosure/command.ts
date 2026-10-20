@@ -1,7 +1,7 @@
 import { tokenizeShell } from '../../../shared/src/agent/tools/shell-policy-tokens.ts';
 import { searchReturnedOnlyFlags } from './flag-search.ts';
-import { loopVariableIsRead, stripInertHeredocs } from './inert-text.ts';
-import { isNonDisclosingInspection } from './inspection-output.ts';
+import { loopVariableIsRead, maskInertHereStrings, stripInertHeredocs } from './inert-text.ts';
+import { isNonDisclosingInspection, reportedMissing } from './inspection-output.ts';
 import { credentialLabel } from './paths.ts';
 import { liftSubstitutions } from './substitution.ts';
 
@@ -136,9 +136,11 @@ export function commandCredentialLabel(
 	substituted = false,
 ): string | undefined {
 	if (isNonDisclosingInspection(rawCommand, returnedOutput)) return undefined;
-	// A path inside a heredoc that is written to a file as data was never opened. `2>&1` names no
-	// file, and its `&` would otherwise split the command it belongs to away from its own pipe.
-	const lifted = liftSubstitutions(stripInertHeredocs(rawCommand).replace(/\s*2>&1/g, ''));
+	// A path inside a heredoc or a PowerShell here-string that is written to a file as data was never
+	// opened. `2>&1` names no file, and its `&` would otherwise split the command it belongs to away
+	// from its own pipe.
+	const inert = stripInertHeredocs(maskInertHereStrings(rawCommand));
+	const lifted = liftSubstitutions(inert.replace(/\s*2>&1/g, ''));
 	for (const inner of lifted.inner) {
 		const label = commandCredentialLabel(inner, returnedOutput, true);
 		if (label) return label;
@@ -146,6 +148,7 @@ export function commandCredentialLabel(
 	const command = lifted.outer;
 	const allPipelines = pipelines(command);
 	const allSegments = allPipelines.flat();
+	const commandWords = tokenizeShell(command).map((token) => token.text);
 	for (const pipeline of allPipelines) {
 		const output = tokenizeShell(pipeline.at(-1) ?? '').map((token) => token.text);
 		const input = tokenizeShell(pipeline[0] ?? '')[0]?.text.toLowerCase();
@@ -251,6 +254,12 @@ export function commandCredentialLabel(
 				if (
 					label === 'dotenv' &&
 					(filteredPipeline || filtersDotenvValues(executable, tokens))
+				)
+					continue;
+				// The reader said the file was not there, so it returned none of it.
+				if (
+					label &&
+					reportedMissing(program, argument, commandWords, command, returnedOutput)
 				)
 					continue;
 				if (label) return label;

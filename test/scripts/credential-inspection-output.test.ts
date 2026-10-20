@@ -145,3 +145,55 @@ describe('credential inspection result provenance', () => {
 			expect(scan(aclCommand, output)).toHaveLength(1);
 	});
 });
+
+// run_1792502439169 (2026-10-20): one statement of a compound search named the project-relative
+// `.aidd/config.json`, which the project does not have. rg reported it missing and every returned
+// line came from the other statements, yet the command's nonempty output was charged to that read.
+describe('credential read that the reader reported missing', () => {
+	const config = '{\n\t"token": "fixture-value-that-is-not-a-real-secret"\n}';
+	const missing = 'The system cannot find the file specified. (os error 2)';
+
+	test('a search whose credential operand rg reported missing returned none of it', () => {
+		const command = String.raw`"C:\Program Files\PowerShell\7\pwsh.exe" -NoProfile -Command "rg -n 'recovery|staged' test/cli -g '*.ts'; rg -n 'useWorktrees' config.json config .aidd/config.json -g '*.json'; rg --files audits | rg 'CONCURRENCY'; git log --oneline -3 -- backend/src/server.ts"`;
+		const output = [
+			'test/cli/recovery.test.ts:12:\ttest("staged recovery", () => {',
+			`rg: .aidd/config.json: ${missing}`,
+			'abc1234 fix(server): close the listener on shutdown',
+		].join('\n');
+		expect(scan(command, output)).toEqual([]);
+		expect(
+			scan(
+				'cd ~ && cat .aidd/config.json',
+				'cat: .aidd/config.json: No such file or directory',
+			),
+		).toEqual([]);
+	});
+
+	test('a read that returned content is still a disclosure', () => {
+		expect(scan('cat ~/.aidd/config.json', config)).toHaveLength(1);
+		expect(scan('rg token ~/.aidd/config.json', config.split('\n')[1]!)).toHaveLength(1);
+		expect(scan('Get-Content $env:USERPROFILE/.aidd/config.json', config)).toHaveLength(1);
+		// The relative spelling is not excused: after `cd ~` it names the user config, and only the
+		// reader's own report, absent here, shows that nothing came back.
+		expect(scan('cd ~ && cat .aidd/config.json', config)).toHaveLength(1);
+	});
+
+	test("a report that is not the reader's own, or covers only one of two reads, is no evidence", () => {
+		const report = 'cat: ~/.aidd/config.json: No such file or directory';
+		// The command prints the report itself.
+		expect(
+			scan(`cat ~/.aidd/config.json; echo '${report}'`, `${config}\n${report}`),
+		).toHaveLength(1);
+		// Another program's report says nothing about this read.
+		expect(scan('cat ~/.aidd/config.json', `grep${report.slice(3)}\n${config}`)).toHaveLength(
+			1,
+		);
+		// The second search ran from home, where the file exists.
+		expect(
+			scan(
+				'rg -n token .aidd/config.json src; cd ~; rg -n token .aidd/config.json src',
+				`rg: .aidd/config.json: ${missing}\n.aidd/config.json:2:${config.split('\n')[1]!}`,
+			),
+		).toHaveLength(1);
+	});
+});

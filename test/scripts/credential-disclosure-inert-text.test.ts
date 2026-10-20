@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { commandCredentialLabel } from '../../scripts/lib/credential-disclosure/command.ts';
+import { maskInertHereStrings } from '../../scripts/lib/credential-disclosure/inert-text.ts';
 
 // On 2026-10-01 the gate reported four disclosures in one audit run and none of them was a read.
 // The sandbox audit had written lists of probe command STRINGS into fixture files with a quoted
@@ -91,5 +92,68 @@ describe('credential-disclosure: a credential path that is only text', () => {
 	test('an unquoted heredoc with no terminator is still judged', () => {
 		const command = 'cat > out.txt <<EOF\n$(cat ~/.aidd/config.json)';
 		expect(commandCredentialLabel(command, 'x')).toBe('aidd user config');
+	});
+});
+
+// run_1792502439169 (2026-10-20): a codex sandbox audit wrote a bun test into a temporary file with
+// a PowerShell here-string, and the test asserted that the shell policy refuses `cat` of the user
+// config. The path was text in the file it wrote; the gate read it as a read, because codex wraps
+// the script in bash quotes and the `\"` in the body sent every quote reader the wrong way.
+describe('credential-disclosure: a PowerShell here-string written to a file', () => {
+	const pwsh = String.raw`"C:\Program Files\PowerShell\7\pwsh.exe" -NoProfile -Command`;
+
+	test('a here-string piped to Set-Content is data, not a read', () => {
+		const command = [
+			`${pwsh} '$testPath = Join-Path $env:TEMP '"'probe.test.ts'`,
+			"@'",
+			"import {test,expect} from 'bun:test';",
+			"import {checkBashWorkspacePolicy as policy} from './shell-policy.ts';",
+			"test('the home config is refused',()=>{",
+			String.raw` expect(policy('cat \""'$HOME/.aidd/config.json"'"',one)).toContain('ERROR:');`,
+			'});',
+			`'@ | Set-Content -LiteralPath "'$testPath`,
+			"bun test $testPath'",
+		].join('\n');
+		const output = '1 pass\n0 fail\nRan 1 test across 1 file. [120.00ms]';
+		expect(commandCredentialLabel(command)).toBeUndefined();
+		expect(commandCredentialLabel(command, output)).toBeUndefined();
+	});
+
+	test('a here-string redirected or sent to Out-File, or a @" one with nothing to expand, is data', () => {
+		for (const command of [
+			`${pwsh} "@'\ncat ~/.aidd/config.json\n'@ | Out-File list.txt"`,
+			`${pwsh} "@'\ncat ~/.aidd/config.json\n'@ > list.txt"`,
+			`${pwsh} '@"\nGet-Content ~/.aidd/config.json\n"@ | Set-Content list.txt'`,
+		])
+			expect(commandCredentialLabel(command, 'x')).toBeUndefined();
+	});
+
+	// The same shapes, when they do open the file, must still be reported.
+	test('a read after the here-string is still judged', () => {
+		const command = `${pwsh} "@'\nnotes\n'@ | Out-File x; cat ~/.aidd/config.json"`;
+		expect(commandCredentialLabel(command, '{}')).toBe('aidd user config');
+	});
+
+	test('a here-string that runs a command, or is run, is left in place', () => {
+		for (const command of [
+			// PowerShell runs a `$(...)` subexpression in a @" body.
+			`${pwsh} '@"\n$(Get-Content ~/.aidd/config.json)\n"@ | Set-Content x'`,
+			// Bash runs a `$(...)` in its double quotes before PowerShell sees the @' body.
+			`${pwsh} "@'\n$(cat ~/.aidd/config.json)\n'@ | Set-Content x"`,
+			`${pwsh} "@'\nGet-Content ~/.aidd/config.json\n'@ | Invoke-Expression"`,
+			`${pwsh} "@'\nGet-Content ~/.aidd/config.json\n'@"`,
+		])
+			expect(maskInertHereStrings(command)).toBe(command);
+		const expanded = `${pwsh} "@'\n$(cat ~/.aidd/config.json)\n'@ | Set-Content x"`;
+		expect(commandCredentialLabel(expanded, 'x')).toBe('aidd user config');
+	});
+
+	test('here-string lines outside a pwsh script argument are not a here-string', () => {
+		const command =
+			'printf "\n@\'\n"; cat ~/.aidd/config.json; printf "\n\'@ | Set-Content x\n"';
+		expect(commandCredentialLabel(command, '{}')).toBe('aidd user config');
+		const split =
+			"printf '@'\"'\"'\n'; cat ~/.aidd/config.json; printf '\n'\"'\"'@ | Out-File x'";
+		expect(commandCredentialLabel(split, '{}')).toBe('aidd user config');
 	});
 });

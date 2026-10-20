@@ -116,6 +116,40 @@ function echoedLiteral(line: string, command: string): boolean {
 	return printed.test(command);
 }
 
+/** A reader's own report that an operand does not exist: GNU wording, or Windows through rg. */
+const MISSING_FILE =
+	/^(rg|grep|cat)(?:\.exe)?: (.+): (?:No such file or directory|The system cannot find the (?:file|path) specified\.)(?: \(os error \d+\))?$/;
+
+/**
+ * True when `program` itself reported `operand` missing, once for every time `words` names it.
+ *
+ * Whether a credential path names the store depends on the working directory, and the command
+ * cannot always show that: a bare `.aidd/config.json` is a project's metadata path in a project and
+ * the user config after `cd ~`, or in an agent started in the home directory. So the spelling never
+ * excuses a read; the reader's report does, because a reader that found no file returned none of
+ * it. A report the command prints from its own text is no evidence, and a path named twice needs
+ * two reports, since one of the reads may have run where the file exists.
+ */
+export function reportedMissing(
+	program: string,
+	operand: string,
+	words: string[],
+	command: string,
+	output: unknown,
+): boolean {
+	if (typeof output !== 'string') return false;
+	const reports = outputLines(output).filter((line) => {
+		const report = MISSING_FILE.exec(line);
+		return (
+			report !== null &&
+			report[1] === program.replace(/\.exe$/, '') &&
+			report[2] === operand &&
+			!command.includes(line)
+		);
+	});
+	return reports.length > 0 && reports.length >= words.filter((word) => word === operand).length;
+}
+
 /**
  * A compound command's nonempty stdout does not prove that its credential operand returned data.
  * Keep the exception evidence-based: numbered search results must all name noncredential files,

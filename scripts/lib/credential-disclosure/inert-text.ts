@@ -87,6 +87,98 @@ export function stripInertHeredocs(command: string): string {
 	return kept.join('\n');
 }
 
+interface BashCharacter {
+	readonly char: string;
+	readonly offset: number;
+	/** How bash read it: `escaped` follows a backslash, `none` is outside every quote. */
+	readonly state: 'double' | 'escaped' | 'none' | 'single';
+}
+
+/** The characters bash passes on from `text`, each with its offset and how it was quoted. */
+function bashCharacters(text: string): BashCharacter[] {
+	const characters: BashCharacter[] = [];
+	let quote: '"' | "'" | undefined;
+	for (let offset = 0; offset < text.length; offset++) {
+		const char = text[offset]!;
+		const next = text[offset + 1];
+		if (quote === "'") {
+			if (char === quote) quote = undefined;
+			else characters.push({ char, offset, state: 'single' });
+		} else if (char === '\\' && next === '\n') offset++;
+		else if (char === '\\' && (quote === undefined || '"$\\`'.includes(next ?? '-'))) {
+			if (next !== undefined)
+				characters.push({ char: next, offset: ++offset, state: 'escaped' });
+		} else if (quote === '"') {
+			if (char === quote) quote = undefined;
+			else characters.push({ char, offset, state: 'double' });
+		} else if (char === '"' || char === "'") quote = char;
+		else characters.push({ char, offset, state: 'none' });
+	}
+	return characters;
+}
+
+/** Cmdlets that write their pipeline input to a file without interpreting it. */
+const HERE_STRING_WRITER = /^\s*(?:\|\s*(?:Add-Content|Out-File|Set-Content)\b|>{1,2})/i;
+
+/** What precedes a PowerShell script argument in its simple command, as bash reads it. */
+const POWERSHELL_SCRIPT_OWNER =
+	/(?:^|[\s/\\])(?:powershell|pwsh)(?:\.exe)?\s(?:.*\s)?-(?:c|command)\s+$/is;
+
+/** True when the bash word holding `start` is the script argument of `pwsh -Command`. */
+function inPowerShellScript(characters: BashCharacter[], start: number): boolean {
+	const unquoted = (index: number, pattern: RegExp): boolean =>
+		characters[index]?.state === 'none' && pattern.test(characters[index]!.char);
+	let word = start;
+	while (word > 0 && !unquoted(word - 1, /[\s;|&]/)) word--;
+	let statement = word;
+	while (statement > 0 && !unquoted(statement - 1, /[\n;|&]/)) statement--;
+	const owner = characters
+		.slice(statement, word)
+		.map(({ char }) => char)
+		.join('');
+	return POWERSHELL_SCRIPT_OWNER.test(owner);
+}
+
+/**
+ * Masks the body of a PowerShell here-string that a `pwsh -Command` script only writes to a file,
+ * as {@link stripInertHeredocs} drops a bash heredoc's. Codex wraps each PowerShell script in bash
+ * quotes, and the quote readers here, which do not read backslashes as bash does, misread them
+ * around a `\"` in the body; so the here-string is found in bash's own reading of the command and
+ * only then masked in the raw text. The mask keeps every quote and backslash, so each later reading
+ * is in the same quote after the terminator as it was before, and judges what follows unchanged.
+ *
+ * Narrow on purpose: the `@'` or `@"` stands alone on its line inside the script argument of
+ * `pwsh -Command`, the terminator opens its line and pipes or redirects into a file writer, and the
+ * whole here-string is inside bash's quotes. A body bash would expand (`$(` or a backtick in its
+ * double quotes) and a `@"` body with a `$(` subexpression run commands, so both stay judged.
+ */
+export function maskInertHereStrings(command: string): string {
+	const characters = bashCharacters(command);
+	const script = characters.map(({ char }) => char).join('');
+	// By UTF-16 unit, as the offsets are; a spread would split by code point.
+	const masked = command.split('');
+	for (const opener of script.matchAll(/(?<=^|\n)[ \t]*@(['"])\r?\n/g)) {
+		const quote = opener[1]!;
+		const start = opener.index + opener[0].indexOf('@');
+		const terminator = new RegExp(`\\n${quote}@`).exec(script.slice(start));
+		if (terminator === null) continue;
+		const end = start + terminator.index + terminator[0].length;
+		const after = script.slice(end).split('\n')[0] ?? '';
+		if (!HERE_STRING_WRITER.test(after) || !inPowerShellScript(characters, start)) continue;
+		const region = characters.slice(start, end);
+		const expands = region.some(
+			({ char, state }, index) =>
+				state === 'none' ||
+				(state === 'double' &&
+					(char === '`' || (char === '$' && region[index + 1]?.char === '('))),
+		);
+		if (expands || (quote === '"' && script.slice(start, end).includes('$('))) continue;
+		for (let offset = region[0]!.offset; offset <= region.at(-1)!.offset; offset++)
+			if (!'\'"\\\n'.includes(masked[offset]!)) masked[offset] = '_';
+	}
+	return masked.join('');
+}
+
 /** True when some command opens a file named through the loop variable. */
 export function loopVariableIsRead(name: string, segments: string[]): boolean {
 	const references = [`$${name}`, `\${${name}`];

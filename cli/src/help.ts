@@ -16,8 +16,8 @@ Subcommands:
 
 Key options:
   --cli native|ollama|lmstudio|openai|claude-code|opencode|kilocode|codex|cline|grok
-  --project-dir DIR           project to operate on (required for every run mode; there is no
-                              default; the control panel is bun run start:web)
+  --project-dir DIR           project to operate on (required for a project run, with no default;
+                              --director does not take it; the panel is bun run start:web)
   --spec FILE
   --stop-before-implementation
       finish initializer/onboarding after the persisted blueprint; do not start feature coding

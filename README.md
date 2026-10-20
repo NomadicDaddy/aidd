@@ -94,9 +94,9 @@ bun run start -- --project-dir C:\path\to\your-app --audit SECURITY
 bun run start -- --web
 ```
 
-- Every run mode requires `--project-dir`. It has no default, so a bare `bun run start` exits
-  with `--project-dir is required` instead of starting a run. The control panel is
-  `bun run start:web`.
+- A project run requires `--project-dir`. It has no default, so a bare `bun run start` exits
+  with `--project-dir is required` instead of starting a run. `--director` works across the
+  fleet and does not take it. The control panel is `bun run start:web`.
 
 ## Workflows
 

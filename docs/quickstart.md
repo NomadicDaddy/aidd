@@ -51,9 +51,10 @@ bun run start -- --version   # matches the checked-in VERSION file
 
 ## First CLI run (metadata checks)
 
-Every CLI command is `bun run start -- <flags>`. Every run mode targets `--project-dir`, and the
+Every CLI command is `bun run start -- <flags>`. A project run targets `--project-dir`, and the
 flag has no default: a bare `bun run start` with no `--project-dir` exits with
-`--project-dir is required` instead of starting a run. The control panel is `bun run start:web`.
+`--project-dir is required` instead of starting a run. `--director` works across the fleet and
+does not take it. The control panel is `bun run start:web`.
 Start by checking a project's `.aidd/` metadata. These commands do not change application code:
 
 ```powershell

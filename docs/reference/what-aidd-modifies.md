@@ -1,8 +1,8 @@
 # What aidd Can Modify
 
 aidd is a local tool. It runs on your machine, works against the project folder named by
-`--project-dir` (a run refuses to start without the flag; it does not fall back to the current
-directory), and talks to an AI backend you configure. This page describes its file
+`--project-dir` (a project run refuses to start without the flag; it does not fall back to the
+current directory), and talks to an AI backend you configure. This page describes its file
 changes, Git operations, shell access, and network activity.
 
 Most managed writes go to the selected project, aidd's runtime data, or user configuration.

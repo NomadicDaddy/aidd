@@ -104,7 +104,7 @@ All notable public aidd releases are documented here.
 ### Security
 
 - An agent process can no longer rewrite or delete remote history: a pre-push guard, armed only while `AIDD_AGENT` is set, refuses a non-fast-forward push and a remote deletion, and the native shell policy denies every force-push spelling up front. The guard is delivered to every repository in the estate by the shared-core sync.
-- Dependencies resolved past their advisories: hono 4.13.7, `@modelcontextprotocol/sdk`, proxy-addr, source-map-js and smol-toml. `bun audit` reports no vulnerabilities at this release.
+- Dependencies resolved past their advisories: hono 4.13.11 (GHSA-5r4p-p66f-jhc7: `serveStatic` decoded a request path twice; aidd's MCP server uses only the stdio transport, so it never loaded `serveStatic`), `@modelcontextprotocol/sdk`, proxy-addr, source-map-js and smol-toml. `bun audit` reports no vulnerabilities at this release.
 
 ## [3.4.0] - 2026-09-29
 

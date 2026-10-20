@@ -7,7 +7,7 @@ calls, and a catalog of those goes stale the day a hook changes.
 
 ## Defaults
 
-Every query inherits the `QueryClient` defaults in `frontend/src/App.tsx`:
+Every query inherits the `QueryClient` defaults in `frontend/src/queryClient.ts`:
 
 | Setting                | Value   |
 | ---------------------- | ------- |
@@ -28,7 +28,7 @@ exhaustive against `WebSocketEventType` by construction — `assertHandled(event
 `default` arm makes `eventType` `never`, so adding an event to the contract breaks the build until a
 case is added. That is what stops an uncovered event from being "fixed" by re-introducing polling.
 
-Two events have no cache effect and say so in place: `ack` and `connected` are transport frames
+Three events have no cache effect and say so in place: `ack` and `connected` are transport frames
 handled in `useWebSocket`, and `run_output` is consumed directly by `useRunLiveOutput`, which
 appends to React state rather than to a query.
 
@@ -45,14 +45,15 @@ request flipping a row to "Stopping…" — do so from local state, not from the
 
 **3. Conditional polling.** A few queries poll, and each one polls only while something is active:
 
-| Query                                                                     | Interval | Condition                       |
-| ------------------------------------------------------------------------- | -------- | ------------------------------- |
-| `['runs', …]` lists, `['runs','active-count']`                            | 15 s     | a run is `running`              |
-| `['pipeline-sessions','active-count']`, `['pipeline-session-report', id]` | 3 s      | a session is `queued`/`running` |
-| `['scheduled-tasks']`                                                     | 30 s     | always                          |
-| `['scheduled-tasks', id, 'executions', n]`                                | 15 s     | always                          |
-| `['system-metrics']`                                                      | 5 s      | always                          |
-| `['web-vitals-summary']`                                                  | 30 s     | always                          |
+| Query                                      | Interval | Condition                                    |
+| ------------------------------------------ | -------- | -------------------------------------------- |
+| `['runs', …]` lists                        | 15 s     | a run is `queued`/`running`                  |
+| `['pipeline-sessions','active-count']`     | 15 s     | the count is above zero                      |
+| `['pipeline-session-report', id]`          | 3 s      | the session is `queued`/`running`/`stopping` |
+| `['scheduled-tasks']`                      | 30 s     | always                                       |
+| `['scheduled-tasks', id, 'executions', n]` | 15 s     | always                                       |
+| `['system-metrics']`                       | 5 s      | always                                       |
+| `['web-vitals-summary']`                   | 30 s     | always                                       |
 
 Every conditional poller sets `refetchIntervalInBackground: false`, so a hidden tab stops polling.
 Polling is a fallback for socket loss and for the nav badges, not the refresh path — a new poll
@@ -67,8 +68,9 @@ live region, once, when the whole multi-query refresh settles.
 
 React Query invalidation is a prefix match, element by element, and the key layout depends on it:
 
-- `['runs']` covers every runs list and `['runs','active-count']`. A per-project runs query is
-  keyed `['runs', projectPath, scope]` specifically so `run_status` invalidation reaches it.
+- `['runs']` covers every runs list, including the one the active-run badge reads. A per-project
+  runs query is keyed `['runs', projectPath, scope]` specifically so `run_status` invalidation
+  reaches it.
 - `['pipeline-session-report']` with no id invalidates every loaded report.
 - `['director', 'fleet']` is two elements. Invalidating `['director']` instead would over-broaden
   to the director profile and chat keys, so the fleet key is named in full.
@@ -93,7 +95,9 @@ and the reason belongs next to the omission.
 
 1. Pick a key whose prefix already receives the invalidation you need, or add the key to the event
    handler that produces its data.
-2. If you add it to a handler, add it to `handleReconnect` too.
+2. Nothing else is needed for reconnect: the reconnect set is derived from the event declarations
+   in `frontend/src/hooks/realtimeInvalidationKeys.ts`, so a key added there is refetched on
+   reconnect too.
 3. Reach for `refetchInterval` only when there is no event that produces the data, and gate it on an
    active-work predicate with `refetchIntervalInBackground: false`.
 4. Register the query with the page's `DataFreshness` sources so the operator can see its age and

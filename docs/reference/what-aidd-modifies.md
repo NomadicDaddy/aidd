@@ -1,8 +1,8 @@
 # What aidd Can Modify
 
 aidd is a local tool. It runs on your machine, works against the project folder named by
-`--project-dir` (the current directory when the flag is omitted, which is the aidd checkout itself
-under `bun run start`), and talks to an AI backend you configure. This page describes its file
+`--project-dir` (a run refuses to start without the flag; it does not fall back to the current
+directory), and talks to an AI backend you configure. This page describes its file
 changes, Git operations, shell access, and network activity.
 
 Most managed writes go to the selected project, aidd's runtime data, or user configuration.
@@ -60,8 +60,9 @@ application code unchanged. They can still write metadata, reports, and run reco
 `.prettierrc`, `eslint.config.js`, `package.json`, and a `frontend/` skeleton. Those bundled starter
 files do not replace existing files. Operator-configured `sharedDirs` and `sharedFiles` are
 different: their copies can overwrite matching files. Shared directories land by basename at the
-fresh project's root; shared files use a project-relative target or the source filename at the
-root. A run's write allowlist, when present, limits those targets.
+fresh project's root, during initializer-phase runs only. Shared files are copied on every run
+except validation runs, audits included, to a project-relative target or the source filename at
+the root. A run's write allowlist, when present, limits those targets.
 
 Deploy configuration (a `Dockerfile`, `wrangler.toml`, CI workflow, …) is never emitted
 autonomously. It comes only from the `deployment-readiness` skill — a code-changing

@@ -17,8 +17,8 @@ locations, remote binding, updates, uninstall — see [deployment.md](./referenc
   external-CLI backends, where aidd degrades gracefully without it.
 - **Platform support**: Windows 11 + PowerShell 7 is the primary development platform and the
   only one with browser-smoke coverage. Linux runs the full quality gate (`smoke:qc` and the
-  test suite) on every push in CI, so it is exercised continuously. macOS has no automated
-  coverage; it is expected to work but is verified only by hand.
+  test suite) in CI on pushes to `main`, on `v*.*.*` tags and on pull requests to `main`.
+  macOS has no automated coverage; it is expected to work but is verified only by hand.
 - No `.env` files: all configuration is JSON (`~/.aidd/config.json` and per-project
   `.aidd/`). Credentials are the exception and belong in environment variables rather than in
   the config file — see
@@ -51,11 +51,10 @@ bun run start -- --version   # matches the checked-in VERSION file
 
 ## First CLI run (metadata checks)
 
-Every CLI command is `bun run start -- <flags>`. Every mode targets `--project-dir`, and the flag
-defaults to the current working directory. `bun run start` runs from the aidd repository root, so
-a bare `bun run start` with no `--project-dir` starts a coding run against the aidd checkout
-itself; the control panel is `bun run start:web`. Start by checking a project's `.aidd/`
-metadata. These commands do not change application code:
+Every CLI command is `bun run start -- <flags>`. Every run mode targets `--project-dir`, and the
+flag has no default: a bare `bun run start` with no `--project-dir` exits with
+`--project-dir is required` instead of starting a run. The control panel is `bun run start:web`.
+Start by checking a project's `.aidd/` metadata. These commands do not change application code:
 
 ```powershell
 bun run start -- --project-dir C:\path\to\my-app --check-features

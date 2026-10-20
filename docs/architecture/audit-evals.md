@@ -89,7 +89,7 @@ committed file is always one that passed when it was recorded.
 `bun run check:audit-evals` does not call a CLI, Provider, or Model. It validates the catalog against
 the fixture tree and runnable Audit catalog, scans fixture metadata for answer disclosure, verifies
 the attested manifest, definition, and file hashes, and enforces the floors. Its summary line names
-the measured and unmeasured Audits apart, for example `1 of 43 audits measured, 46 audit files
+the measured and unmeasured Audits apart, for example `1 of 44 audits measured, 47 audit files
 hash-checked`. It is part of `smoke:qc`; cache inputs include the Audit catalog, committed eval
 inputs, and scorer/checker sources, so any Audit definition or harness change re-runs the gate.
 

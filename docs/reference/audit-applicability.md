@@ -296,7 +296,8 @@ operator is forced to fix the file rather than silently inherit "no overrides."
 
 `bun run check:audit-profile-mapping` (wired into `smoke:qc`) checks:
 
-- The mapping parses and matches the JSON schema.
+- The mapping parses and passes the TypeScript normalizer
+  (`shared/src/contracts/audit-profile-mapping-normalize.ts`); there is no separate JSON Schema.
 - Every `rule.audits[]` entry corresponds to a runnable, non-reference `.md` file in
   `audits/` (except `*`).
 - Every `rule.match` facet key is a valid `ProjectAssuranceProfile` field.
@@ -348,6 +349,8 @@ The seeded global mapping (`audits/audit-profile-mapping.json`) carries these ba
   tool. The opt-in is only as durable as the overrides file: a repository that ignores `.aidd/`
   (aidd itself does) keeps it per checkout, so a fresh clone runs no agent audits until its
   operator opts in again. Nothing infers agent use automatically.
+- `non-derived-skip-spernakit` disables `SPERNAKIT` when `derivesFromTemplate == none`: the audit
+  measures drift from the template, so only apps derived from it run it.
 - `distributes-require-licensing-*` (three rules) require `LICENSING` for a live project that
   publishes binary release archives, publishes a container image, or ships a packaged CLI binary,
   whatever its exposure: distributing a build carries its dependencies' license obligations.

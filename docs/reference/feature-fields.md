@@ -72,7 +72,8 @@ A `deferred` record is kept with its spec and its milestone, but it is not work:
   count.
 - It is out of the progress figures the panel shows: the project's feature total, its percentage,
   and each milestone's fraction are measured against planned work, with the deferred count shown
-  beside them. A milestone whose only record is deferred reads 0 of 0.
+  beside them. A milestone whose only record is deferred shows the deferred count alone
+  ("1 deferred"), with no fraction.
 - It does not hold its milestone open: the roadmap gate treats a milestone whose only unfinished
   records are deferred as done.
 - A feature that depends on a deferred record stays dependency-blocked, because the dependency is
@@ -119,8 +120,9 @@ The schema passes through extra fields so features can carry richer context. Com
 | `spernakit_version`   | `string`             | Marks a feature as template-owned. Preserve it in derived copies: it records the release where ownership originated, not the latest template version. App-owned features and remediation records must not add it.                                                                                                                                                                                                                                                    |
 | `shippedVersion`      | `string`             | Internal project version this feature's current state shipped in. Stamped by the `document-changes` skill alongside a dated revision note in `notes`. The milestone auto-place repair backfills it on completed features that never got stamped, using the app's current `package.json` version — inferred provenance, recorded as such in a dated `notes` entry.                                                                                                    |
 
-Records completed before `completedAt` existed, and records missing `createdAt`, can be backfilled
-from the runs ledger, revision notes and `updatedAt`. Preview with
+Records completed before `completedAt` existed, and records missing `createdAt`, can be backfilled.
+`completedAt` comes from the runs ledger, then the earliest dated revision note, then `updatedAt`;
+`createdAt` comes from `aiddReport.createdAt`, then the runs ledger. Preview with
 `bun run features:backfill-timestamps -- --project-dir=<path> --dry-run`, then run it without
 `--dry-run`. The script rewrites each changed `feature.json` with 2-space JSON, so finish with the
 step it prints: `bunx prettier --write --ignore-path /dev/null ".aidd/features/*/feature.json"`,
@@ -135,8 +137,7 @@ apps. Prefer `spec` and `affectedFiles` for new feature files.
 
 The schema is passthrough, so other context fields are valid too;
 [sample-feature-full.json](./sample-feature-full.json) additionally exercises `assignedTo`,
-`complexity`, `imagePaths`, `tags`, `textFilePaths`, and `notes` (where completed
-audit/remediation work records its resolution).
+`complexity`, `imagePaths`, `tags`, and `textFilePaths`.
 
 ## Audit Finding Fields
 

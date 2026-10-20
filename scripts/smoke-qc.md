@@ -11,8 +11,9 @@ outside the numbered lists is hand-written and is left alone by the generator.
 ## Full gate (`bun run smoke:qc`)
 
 Ordered by ascending expected time-to-first-failure, so a doomed tree fails as early as it can:
-sub-second checks first, then format/typecheck/lint, then the test suite, and last the builds and
-the two steps that read build output. Results are cached per step in `scripts/smoke-cache.json`
+sub-second checks first, then format/typecheck/lint, then the test suite, and last the frontend
+build, the three steps that read its output, the leak-guard, credential-disclosure and shared-core
+checks, and the analysis build. Results are cached per step in `scripts/smoke-cache.json`
 against a hash of that step's declared inputs, so an unchanged step is skipped rather than rerun.
 Steps whose inputs are outside this repository (`check:shared-core`) or are runtime state
 (`check-application` and selected audit/database checks) are uncacheable and always run.
@@ -138,7 +139,8 @@ The inner-loop gate: formatting, line limit, types, and lint. No test suite, no 
 checks. Run it repeatedly while fixing errors, then run the full gate once before committing.
 
 Its order is measured rather than intuited (cost ÷ P(fail), with the numbers recorded in
-`scripts/lib/smoke-qc/fast-subset.ts`), so it does not match the full gate's order. `lint` is
+`scripts/lib/smoke-qc/fast-subset.ts`). It happens to keep the four steps in the same relative
+order as the full gate. `lint` is
 replaced here by `lint:fast`, which uses ESLint's `--cache`; the replacement records under its own
 cache key so a fast pass can never satisfy the full gate's uncached `lint`.
 

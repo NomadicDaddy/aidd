@@ -68,7 +68,8 @@ Coding-like modes read `.aidd/features/*/feature.json`, then apply:
 - `--filter-by FIELD --filter VALUE`
 - dependency gating, where every dependency must resolve to a known feature that is `completed`
   with `passes: true`; a dependency reference that matches no record blocks the feature
-- status gating, where `completed`, `passes: true`, and `waiting_approval` records are skipped
+- status gating, where `completed`, `passes: true`, `waiting_approval`, and `deferred` records are
+  skipped
 
 Eligible candidates sort `in_progress` first, then by ascending `priority` (records without one
 sort last), then by feature directory. Audit findings are skipped in normal coding unless

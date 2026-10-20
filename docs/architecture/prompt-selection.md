@@ -51,6 +51,7 @@ Ineligible features are filtered out before ranking (`selectFeatureCandidates` i
 
 - Features with `passes: true` or `status: completed` are skipped.
 - `waiting_approval` features are skipped.
+- `deferred` features are skipped.
 - Audit-finding features are skipped unless the run targets one explicitly (`--feature audit-…`,
   or `--filter-by id --filter audit-…`) or opts into the sweep with `--audit-findings [SOURCE]`.
 - A feature with unmet dependencies is skipped until every dependency is `status: completed` **and**

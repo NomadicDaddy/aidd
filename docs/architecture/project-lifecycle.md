@@ -113,8 +113,8 @@ gate (see §8) and, if blocked, returns a no-work result. `selectFeatureCandidat
 (`shared/src/metadata/features/query.ts`) then filters and ranks the backlog:
 
 - **Filter**: drop features where `passes === true`, where `status === 'completed'`, where
-  `status === 'waiting_approval'`, or whose dependencies aren't all satisfied. Audit findings
-  are excluded unless `includeAudit` is set (see §7).
+  `status === 'waiting_approval'`, where `status === 'deferred'`, or whose dependencies aren't
+  all satisfied. Audit findings are excluded unless `includeAudit` is set (see §7).
 - **Sort**: `in_progress` first (so started work resumes), then ascending numeric
   `priority` (default 999), then feature directory as a stable tiebreak.
 
@@ -159,7 +159,8 @@ remediation recipes set `includeAudit` to make them selectable. Reports are writ
 before any feature is selected. It **blocks all coding** if the roadmap is malformed: any
 feature unmapped to a milestone (`unmapped_features`) or referencing a non-existent one
 (`invalid_milestone_mapping`). When valid, `firstIncompleteMilestone` picks the active
-milestone (the first in order with any feature where `passes !== true`) and only features in
+milestone (the first in order with any feature where `passes !== true` that is not
+`deferred`, per `isFeatureOutstanding`) and only features in
 that milestone are eligible. This makes progression sequential: a milestone must complete
 before the next opens, and the gate enforces it in the orchestrator rather than via prompt
 instructions. `roadmapScopedQuery` in coding mode wraps this gate. A _missing_ `roadmap.json`

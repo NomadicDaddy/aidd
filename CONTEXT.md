@@ -15,7 +15,8 @@ A pluggable execution engine that runs an agent session: one of `native`, `ollam
 _Avoid_: Backend (doc-only synonym; the code and flags say "cli"), agent, engine.
 
 **Provider**:
-The OpenAI-compatible API a CLI talks to (used by the in-process `native`/`ollama`/`lmstudio` CLIs).
+The OpenAI-compatible API a CLI talks to (used by the in-process
+`native`/`ollama`/`lmstudio`/`openai` CLIs).
 _Avoid_: Backend, vendor.
 
 **Model**:
@@ -63,7 +64,8 @@ executor runs the execution stage (defaults to the overseer).
 
 **Feature**:
 A unit of tracked work, stored as `.aidd/features/<id>/feature.json`; the directory name must equal
-`id`. Has `status` (`backlog` | `in_progress` | `completed` | `waiting_approval`) and `passes`.
+`id`. Has `status` (`backlog` | `in_progress` | `completed` | `waiting_approval` | `deferred`) and
+`passes`.
 _Avoid_: Ticket, issue, story.
 
 **Audit finding**:
@@ -82,7 +84,8 @@ version. A roadmap axis, unrelated to Phase or Maturity stage.
 _Avoid_: Release, sprint, phase.
 
 **Dependency**:
-A Feature id that must have `passes: true` before a dependent Feature may be selected.
+A Feature id that must be `completed` with `passes: true` before a dependent Feature may be
+selected.
 
 ### Project assessment (three independent axes)
 
@@ -202,14 +205,14 @@ A Mode/flow that asks project-onboarding questions; answers persist to `.aidd/re
 
 **Direct AI**:
 A config-gated capability (`directAi`) where the web backend calls an OpenAI-compatible Provider
-in-process for lightweight "surfaces" (Director cycle, Chat, project recommendation) and returns
-structured JSON instead of spawning a Run/CLI.
+in-process for lightweight "surfaces" (Director cycle, Chat, project recommendation, run
+summaries) and returns structured JSON instead of spawning a Run/CLI.
 _Avoid_: Native (that's a CLI), inline AI.
 
 ## Relationships
 
 - A **Run** contains one or more **Iterations**; each Iteration invokes one **CLI**.
-- A **CLI** (native/ollama/lmstudio) talks to a **Provider** running a **Model**.
+- A **CLI** (native/ollama/lmstudio/openai) talks to a **Provider** running a **Model**.
 - A **Run** operates in exactly one **Mode**.
 - A **Director** **Cycle** emits zero or more **Suggestions**; a project-scoped Suggestion
   launches a **Run**.
@@ -235,8 +238,8 @@ _Avoid_: Native (that's a CLI), inline AI.
 >
 > **Dev:** "So `--cli native`: native is a CLI even though nothing spawns?"
 > **Domain expert:** "Right. 'CLI' is the headword for the execution engine regardless of whether
-> it spawns an external tool. native, ollama, and lmstudio run in-process against a **Provider**; the others
-> shell out. Docs sometimes say 'backend'; same thing."
+> it spawns an external tool. native, ollama, lmstudio, and openai run in-process against a
+> **Provider**; the others shell out. Docs sometimes say 'backend'; same thing."
 
 ## Flagged ambiguities
 

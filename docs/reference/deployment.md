@@ -50,7 +50,7 @@ the `web` object:
 | `web.hostname`       | `127.0.0.1`                             | Bind hostname. Non-loopback requires `allowRemote`.                |
 | `web.port`           | `3210`                                  | Bind port. Overridable per launch with `--port`.                   |
 | `web.allowRemote`    | `false`                                 | Allows non-loopback hostnames when `true`.                         |
-| `web.allowedOrigins` | none                                    | Extra browser origins trusted when remote access is on.            |
+| `web.allowedOrigins` | none                                    | Extra browser origins trusted, whatever `allowRemote` is set to.   |
 | `web.allowedRoots`   | `[applicationsRoot]` or runtime parent  | Filesystem roots the backend may read project metadata from.       |
 | `web.dataDir`        | `data` under the runtime base directory | SQLite, run logs, and web runtime data root.                       |
 | `web.authToken`      | none                                    | Access token for the web API; required when `allowRemote` is true. |
@@ -111,11 +111,12 @@ The panel binds loopback (`127.0.0.1`) by default and refuses non-loopback hostn
 }
 ```
 
-- When `allowRemote` is enabled, an Origin allowlist is enforced on `/api/*` and `/ws`; a request
-  whose `Origin` header does not match the configured listener (or a recognized loopback alias) is
-  rejected with HTTP 403. The WebSocket origin check is enforced regardless of `allowRemote`.
-- `allowedOrigins` is additive: the effective allowlist always includes the active listener origin
-  and loopback aliases. List stable machine names or fixed LAN IPs here.
+- An Origin allowlist is enforced on `/api/*` and `/ws` for every panel, whatever `allowRemote` is
+  set to; a request that sends an `Origin` header outside the allowlist (the listener, its loopback
+  aliases, interface origins and `allowedOrigins`) is rejected with HTTP 403.
+- `allowedOrigins` is additive: the effective allowlist always includes the active listener origin,
+  plus the loopback aliases when the listener is a loopback or wildcard address. List stable
+  machine names or fixed LAN IPs here.
 - When `hostname` is `0.0.0.0` or `::`, detected local network interface origins are trusted
   automatically.
 - Keep `web.authToken` set for every exposed listener; the web backend refuses to start when

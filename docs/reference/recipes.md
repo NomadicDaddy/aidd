@@ -126,7 +126,7 @@ Resync aidd's derived audit definitions with their source skills, then review ev
 
 This recipe maintains aidd itself, not a managed application, so it takes no `application` parameter. Step 1 pulls the Vercel-derived audits (`COMPOSITION_PATTERNS`, `REACT_BEST_PRACTICES`, `WEB_DESIGN_GUIDELINES`) back in line with their upstream source skills and continues on failure when those sources are unreachable; step 2 then reviews every audit under `audits/` against report history and the skills that feed it.
 
-This recipe is deliberately **not** metadata-only. Both skills write `<aidd-root>/audits/{NAME}.md`, which is outside the `.aidd/` allowlist that metadata-only sessions enforce: `managedStepHandler` would pass `--write-allowlist .aidd` to the run and the `stepRunner` backstop would then diff the worktree, revert every audit edit, and fail the step. Marking this recipe metadata-only makes it undo its own output.
+This recipe is deliberately **not** metadata-only. Both skills write `<aidd-root>/audits/{NAME}.md`, which is outside the `.aidd/` allowlist that metadata-only sessions enforce: `managedStepHandler` would pass `--write-allowlist .aidd` to the run and the `stepRunner` backstop would then diff the worktree, name every audit edit as a violation, and fail the step. Nothing is reverted, but marking this recipe metadata-only makes it fail on its own output.
 
 ### bug2feature
 

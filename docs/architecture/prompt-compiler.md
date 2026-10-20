@@ -32,8 +32,9 @@ Sections are joined with a `\n\n---\n\n` separator. Empty fragments are skipped.
 1. **Base / source prompt** (`compileBasePrompt`), chosen by mode:
     - `interview` → `compileInterviewPrompt`, unless the plan carries a custom directive (the
       generate-questions step does), in which case the directive wins.
-    - `audit` → `compileAuditPrompt` (with the audit names resolved from the plan, and the
-      project-context digest when one was loaded)
+    - `audit` → `compileAuditPrompt` (with the single audit named by the plan's `auditName`
+      variable, since one session audits one thing, and the project-context digest when one was
+      loaded)
     - a custom directive (`--prompt` / `--skill`) → `compileDirective`
       (read-only when `customDirectiveReadonly`)
     - otherwise the `phase` fragment; for coding runs a non-empty **project-context digest**

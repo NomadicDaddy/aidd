@@ -58,8 +58,9 @@ statement.
   [configuration](docs/reference/configuration.md)). Git is optional only on Linux/macOS and
   for the external-CLI backends, where aidd degrades gracefully without it.
 - **Windows 11 + PowerShell 7** is the primary platform and the only one with browser-smoke
-  coverage. **Linux** runs the full quality gate and test suite in CI on every push. **macOS** has
-  no automated coverage; it is expected to work but is verified only by hand.
+  coverage. **Linux** runs the full quality gate and test suite in CI on pushes to `main`, on
+  `v*.*.*` tags and on pull requests to `main`. **macOS** has no automated coverage; it is
+  expected to work but is verified only by hand.
 
 ## Install & quickstart
 
@@ -93,9 +94,9 @@ bun run start -- --project-dir C:\path\to\your-app --audit SECURITY
 bun run start -- --web
 ```
 
-- `--project-dir` defaults to the current directory, and `bun run start` runs from the aidd
-  repository root: a bare `bun run start` starts a coding run against the aidd checkout itself.
-  The control panel is `bun run start:web`.
+- Every run mode requires `--project-dir`. It has no default, so a bare `bun run start` exits
+  with `--project-dir is required` instead of starting a run. The control panel is
+  `bun run start:web`.
 
 ## Workflows
 

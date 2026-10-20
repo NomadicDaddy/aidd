@@ -62,8 +62,8 @@ redirects there, and `/pipeline-sessions/:id` is the per-session report. An embe
 
 Web recipes are loaded from `recipes/*.json` by `RecipeService`; recipe ids are derived from
 filenames. `PipelineService` launches every recipe as a persisted pipeline session, records step
-results, links aidd-backed steps to managed runs, and reconciles stale queued/running sessions on
-startup because live execution state is in memory.
+results, links aidd-backed steps to managed runs, and reconciles stale queued/running/stopping
+sessions on startup because live execution state is in memory.
 
 `ScheduledTaskService` stores task definitions, project references, and occurrence snapshots in
 SQLite. A DB-worker command claims each due timestamp and advances its cadence atomically. The

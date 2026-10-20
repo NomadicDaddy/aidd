@@ -37,12 +37,27 @@ export function expandsAtRuntime(target: string): boolean {
 	return /[$`]/.test(target);
 }
 
+/**
+ * The path bash itself opens for a token: outside quotes a backslash escapes the next character
+ * and is dropped, so `.\.` is the parent directory `..` even though win32 path rules read the same
+ * text as `.` then `.`. Only a reading that gains a `..` segment matters here; a quoted Windows
+ * path such as `D:\x\y` has no such segment and keeps its own reading alone.
+ */
+function bashParentReading(target: string): null | string {
+	if (!target.includes('\\')) return null;
+	const reading = target.replace(/\\(.)/gsu, '$1');
+	return reading.split('/').includes('..') ? reading : null;
+}
+
 export function isPathWithinWorkspaceRoot(
 	target: string,
 	root: string,
 	platform: NodeJS.Platform = process.platform,
 ): boolean {
 	if (target === '') return true;
+	const bashReading = bashParentReading(target);
+	if (bashReading !== null && !isPathWithinWorkspaceRoot(bashReading, root, platform))
+		return false;
 	const normalized = normalizePosixDrivePath(target, platform);
 	// A `$` that reaches here is literal: the containment sweep expands every reference the
 	// command binds and denies the ones it cannot (see `shell-policy-expansion.ts`), so

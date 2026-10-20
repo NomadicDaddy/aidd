@@ -57,6 +57,25 @@ describe('bash policy contains relative path escapes', () => {
 		);
 		expect(denial('dd if=inside.txt of=../outside.txt')).toContain('outside workspace');
 	});
+
+	// Bash drops an unquoted backslash, so `.\.` is the parent directory, while win32 path rules
+	// read the same text as `.` then `.` (audit-agent-tool-sandbox-1792504387, Phillip #16789).
+	for (const command of [
+		'cat .\\./outside.txt',
+		'cat .\\./.\\./etc/shadow',
+		'cd .\\.; cat outside.txt',
+		'echo hi > .\\./outside.txt',
+	]) {
+		test(`a backslash-split parent segment is caught: ${command}`, () => {
+			// cd and redirect targets keep their own, more specific denial wording.
+			expect(denial(command)).toMatch(/outside workspace|escape workspace/);
+		});
+	}
+
+	test('a quoted Windows path inside the workspace keeps its own reading', () => {
+		if (process.platform !== 'win32') return;
+		expect(checkBashWorkspacePolicy('cat "D:\\projects\\app\\src\\a.ts"', cwd)).toBeNull();
+	});
 });
 
 describe('bash policy denies home references the tool environment actually supplies', () => {

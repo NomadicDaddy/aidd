@@ -150,4 +150,22 @@ describe('shell workspace policy - destructive git, what bash and git do to the 
 	])('allows %s', (command) => {
 		expect(verdict(command)).toBeNull();
 	});
+
+	// The last of `--cached` and `--no-cached` wins, so `--cached` alone does not make an rm safe
+	// (audit-git-destructive-safety-1792505776, Phillip #16789). Each deleted files and an edit in
+	// a throwaway repository.
+	test.each([
+		'git rm --cached --no-cached -rf .',
+		'git rm --no-cached --cached --no-cached -rf .',
+		'git rm --cached --no-ca -rf .',
+	])('denies a whole-tree rm whose --cached is negated: %s', (command) => {
+		expect(verdict(command)).toContain('destructive git');
+	});
+
+	test.each(['git rm --no-cached --cached -rf .', 'git rm --cach -r .'])(
+		'allows a whole-tree rm that ends with --cached on: %s',
+		(command) => {
+			expect(verdict(command)).toBeNull();
+		},
+	);
 });

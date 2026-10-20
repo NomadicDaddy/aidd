@@ -39,6 +39,21 @@ function hasOption(args: string[], ...names: string[]): boolean {
 	return args.some((arg) => names.some((name) => isOption(arg, name)));
 }
 
+/**
+ * Whether a boolean option is on once git has read it: the last of `--name` and `--no-name`
+ * wins, abbreviations included. `git rm --cached --no-cached -rf .` deletes files, although
+ * `--cached` appears in it.
+ */
+function lastSettingOn(args: string[], name: string): boolean {
+	const negated = `--no-${name.slice(2)}`;
+	let on = false;
+	for (const arg of args) {
+		if (isOption(arg, negated)) on = false;
+		else if (isOption(arg, name)) on = true;
+	}
+	return on;
+}
+
 interface ReadOptions {
 	/** Long options and anything else before `--` that was not consumed as a value. */
 	long: string[];
@@ -183,8 +198,8 @@ export function isDestructive(subcommand: string, args: string[], root: string):
 			return restoreDiscards(read, args, root);
 		case 'rm':
 			// `--cached` only unstages. Without it, a forced or recursive removal of the whole
-			// tree deletes every edited file.
-			if (hasOption(read.long, '--cached')) return false;
+			// tree deletes every edited file. A later `--no-cached` turns it off again.
+			if (lastSettingOn(read.long, '--cached')) return false;
 			return (forces || read.short.has('r')) && namesWholeTree(args, root);
 		case 'switch':
 			return forces || hasOption(read.long, '--discard-changes');

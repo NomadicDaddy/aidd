@@ -53,6 +53,9 @@ All notable public aidd releases are documented here.
 - The leak guard fails closed when a private pattern is not a valid expression, and a refusal names each file and counts lines per pattern kind without printing the refused content. A key refusal names only the file where the rule fired.
 - The run ledger, `runs.jsonl`, is scrubbed for secrets like the iteration artifacts.
 - The startup public-interface self-test probes IPv6 interfaces as well as IPv4.
+- The native agent's bash workspace check reads a path as bash opens it. A backslash in `.\.` no longer hides a parent directory, a backslash-newline line continuation is joined first, and on Windows `..\` counts as the parent too. `git rm --cached --no-cached` no longer slips past the destructive git check, because the last of the two options decides.
+- `check:credential-disclosure` no longer reports a PowerShell here-string written to a file, or a read whose own program reported the file missing, as a disclosure. A missing-file report excuses a read only when every line of the output is accounted for, so a report planted in another file's content excuses nothing.
+- Known and accepted for this release: four findings from the 2026-10-20 security audits stay open at reduced severity. Any loopback caller can use the panel's working-tree discard and terminal endpoints when no token is configured. Git and administrative subprocesses inherit aidd's own two tokens. Orphan-worktree cleanup discards a failed run's unmerged work, as the opt-in worktree design states.
 - Known and accepted for this release: an agent tool's executable code can still reach outside the bash workspace boundary. The finding (audit-agent-tool-sandbox) stays open while the sandbox build is shelved; the owner accepted releasing 3.6.0 with it open.
 
 ## [3.5.0] - 2026-10-08

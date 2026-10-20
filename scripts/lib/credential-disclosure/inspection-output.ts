@@ -121,7 +121,45 @@ const MISSING_FILE =
 	/^(rg|grep|cat)(?:\.exe)?: (.+): (?:No such file or directory|The system cannot find the (?:file|path) specified\.)(?: \(os error \d+\))?$/;
 
 /**
- * True when `program` itself reported `operand` missing, once for every time `words` names it.
+ * The output lines the command's numbered searches account for: each names a noncredential file,
+ * or is the command's own printed literal. Undefined when the command has no numbered search, or
+ * a search drops or rewrites the filename that attributes a line.
+ */
+function numberedSearchLine(command: string): ((line: string) => boolean) | undefined {
+	if (!/(?:^|[\s"'])rg\s+-n\b/.test(command)) return undefined;
+	// These switches remove or rewrite the filename provenance used below. Each search carries only
+	// its own statement's switches, so a later `Get-ChildItem -Force` is not rg's `-o`, and every
+	// search in the command is judged, not only the first.
+	const dropsProvenance =
+		/(?:^|\s)(?:--(?:no-filename|replace|only-matching|json)|-[A-Za-z]*[hor][A-Za-z]*)(?:\s|=|$)/;
+	if (searchStatements(command).some((statement) => dropsProvenance.test(statement)))
+		return undefined;
+	return (line) => {
+		if (echoedLiteral(line, command)) return true;
+		const path = /^(.+?):\d+:/.exec(line)?.[1];
+		return path !== undefined && credentialLabel(path) === undefined;
+	};
+}
+
+/** A statement that runs `git log --oneline`, and the line it prints: a short hash and a subject. */
+const GIT_LOG_ONELINE = /\bgit(?:\.exe)?\s(?:[^;|&\n]*\s)?log\s(?:[^;|&\n]*\s)?--oneline\b/;
+const LOG_LINE = /^[0-9a-f]{7,40} \S.*$/;
+
+/** Statements that list file names, and the line they print: a bare relative path. */
+const LISTS_FILES = [
+	/\brg(?:\.exe)?\s(?:[^;|&\n]*\s)?--files\b/,
+	/\bgit(?:\.exe)?\s(?:[^;|&\n]*\s)?ls-files\b/,
+	/(?:^|[\s;|&("'])find\s/,
+	// `ls -l` prints owners, sizes and dates beside each name, so only a plain listing counts.
+	/(?:^|[\s;|&("'])ls(?=$|[\s;|&)"'])(?![^;|&\n]*\s-[A-Za-z]*l)/,
+];
+// A file name ends in a short extension; a bare token, a base64 key line or a JWT does not, and
+// each of those is a whole credential file's content with none of the excluded characters.
+const BARE_PATH = /^(?![-/]|[A-Za-z]:)[^\s"'`:{}=,[\]]+\.[A-Za-z0-9]{1,8}$/;
+
+/**
+ * True when `program` itself reported `operand` missing, once for every time `words` names it, and
+ * nothing else in the output can be the file's content.
  *
  * Whether a credential path names the store depends on the working directory, and the command
  * cannot always show that: a bare `.aidd/config.json` is a project's metadata path in a project and
@@ -129,6 +167,23 @@ const MISSING_FILE =
  * excuses a read; the reader's report does, because a reader that found no file returned none of
  * it. A report the command prints from its own text is no evidence, and a path named twice needs
  * two reports, since one of the reads may have run where the file exists.
+ *
+ * A report is only a line of text, and another file the command prints can hold the same line, so
+ * `cat ~/.aidd/config.json; cat planted.txt` could pair a real read with a planted report. A real
+ * read prints the file, so the report excuses the read only when every output line is accounted
+ * for, and any other line may be the file's content and keeps the read judged. A line is accounted
+ * for when it is one of these:
+ *
+ * - a missing-file report by a program the command runs for an operand it names;
+ * - a line the numbered-search exception accepts;
+ * - a `git log --oneline` line, when the command runs one;
+ * - a bare relative path, when the command runs a file listing ({@link LISTS_FILES}).
+ *
+ * The last two are taken only where the command runs the program that prints that shape, because
+ * the shape alone is no evidence: a planted file can hold it. Neither shape can carry a config's
+ * content. A config line holds a quoted key, a `:` and usually braces or a comma, while a log line
+ * starts with a bare hex hash and a path line has no quote, `:`, brace, `=` or comma and ends in a
+ * file extension, which a bare token or key line of another store does not.
  */
 export function reportedMissing(
 	program: string,
@@ -138,14 +193,30 @@ export function reportedMissing(
 	output: unknown,
 ): boolean {
 	if (typeof output !== 'string') return false;
-	const reports = outputLines(output).filter((line) => {
-		const report = MISSING_FILE.exec(line);
+	const lines = outputLines(output);
+	const reportOf = (line: string): null | RegExpExecArray =>
+		command.includes(line) ? null : MISSING_FILE.exec(line);
+	const programs = new Set(
+		words.map((word) =>
+			(word.split(/[/\\]/).at(-1) ?? word).toLowerCase().replace(/\.exe$/, ''),
+		),
+	);
+	const searchLine = numberedSearchLine(command);
+	const logs = GIT_LOG_ONELINE.test(command);
+	const lists = LISTS_FILES.some((listing) => listing.test(command));
+	const accounted = lines.every((line) => {
+		const report = reportOf(line);
+		if (report !== null) return programs.has(report[1]!) && words.includes(report[2]!);
 		return (
-			report !== null &&
-			report[1] === program.replace(/\.exe$/, '') &&
-			report[2] === operand &&
-			!command.includes(line)
+			(searchLine?.(line) ?? false) ||
+			(logs && LOG_LINE.test(line)) ||
+			(lists && BARE_PATH.test(line))
 		);
+	});
+	if (!accounted) return false;
+	const reports = lines.filter((line) => {
+		const report = reportOf(line);
+		return report?.[1] === program.replace(/\.exe$/, '') && report[2] === operand;
 	});
 	return reports.length > 0 && reports.length >= words.filter((word) => word === operand).length;
 }
@@ -168,17 +239,6 @@ export function isNonDisclosingInspection(command: string, output: unknown): boo
 	)
 		return false;
 	if (/\bGet-Acl\b/i.test(command)) return aclOutput(lines);
-	if (!/(?:^|[\s"'])rg\s+-n\b/.test(command)) return false;
-	// These switches remove or rewrite the filename provenance used below. Each search carries only
-	// its own statement's switches, so a later `Get-ChildItem -Force` is not rg's `-o`, and every
-	// search in the command is judged, not only the first.
-	const dropsProvenance =
-		/(?:^|\s)(?:--(?:no-filename|replace|only-matching|json)|-[A-Za-z]*[hor][A-Za-z]*)(?:\s|=|$)/;
-	if (searchStatements(command).some((statement) => dropsProvenance.test(statement)))
-		return false;
-	return lines.every((line) => {
-		if (echoedLiteral(line, command)) return true;
-		const path = /^(.+?):\d+:/.exec(line)?.[1];
-		return path !== undefined && credentialLabel(path) === undefined;
-	});
+	const searchLine = numberedSearchLine(command);
+	return searchLine !== undefined && lines.every(searchLine);
 }

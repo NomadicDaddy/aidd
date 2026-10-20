@@ -152,21 +152,63 @@ describe('credential inspection result provenance', () => {
 describe('credential read that the reader reported missing', () => {
 	const config = '{\n\t"token": "fixture-value-that-is-not-a-real-secret"\n}';
 	const missing = 'The system cannot find the file specified. (os error 2)';
+	const missingConfig = 'cat: ~/.aidd/config.json: No such file or directory';
+
+	const search = String.raw`"C:\Program Files\PowerShell\7\pwsh.exe" -NoProfile -Command "rg -n 'recovery|staged' test/cli -g '*.ts'; rg -n 'guard|token' backend/src/server.ts; rg -n 'useWorktrees' config.json config .aidd/config.json -g '*.json'"`;
+	const searchOutput = [
+		'test/cli/recovery.test.ts:12:\ttest("staged recovery", () => {',
+		`rg: config.json: ${missing}`,
+		`rg: config: ${missing}`,
+		`rg: .aidd/config.json: ${missing}`,
+		'backend/src/server.ts:40:\tconst token = readBearer(request);',
+	].join('\n');
+
+	// The full 2026-10-20 command also listed files and the log; the listing command and `git log
+	// --oneline` each account for the lines of their own shape.
+	const listed = `${search.slice(0, -1)}; rg --files audits | rg 'CONCURRENCY'; git log --oneline -2 -- backend/src/server.ts"`;
+	const logLines =
+		'abc1234 fix(server): close the listener on shutdown\n0fedcba feat: add a route';
+	const listedOutput = `${searchOutput}\naudits\\ORCHESTRATOR_CONCURRENCY.md\n${logLines}`;
 
 	test('a search whose credential operand rg reported missing returned none of it', () => {
-		const command = String.raw`"C:\Program Files\PowerShell\7\pwsh.exe" -NoProfile -Command "rg -n 'recovery|staged' test/cli -g '*.ts'; rg -n 'useWorktrees' config.json config .aidd/config.json -g '*.json'; rg --files audits | rg 'CONCURRENCY'; git log --oneline -3 -- backend/src/server.ts"`;
-		const output = [
-			'test/cli/recovery.test.ts:12:\ttest("staged recovery", () => {',
-			`rg: .aidd/config.json: ${missing}`,
-			'abc1234 fix(server): close the listener on shutdown',
-		].join('\n');
-		expect(scan(command, output)).toEqual([]);
+		expect(scan(search, searchOutput)).toEqual([]);
+		expect(scan(listed, listedOutput)).toEqual([]);
 		expect(
 			scan(
 				'cd ~ && cat .aidd/config.json',
 				'cat: .aidd/config.json: No such file or directory',
 			),
 		).toEqual([]);
+	});
+
+	// Morticia and Roger (#16856): a report is only a line of text, and a file the command prints can
+	// hold it. A real read prints the file, so an output line nothing accounts for keeps it judged.
+	test('a planted report beside content that nothing accounts for is no evidence', () => {
+		const command = 'cat ~/.aidd/config.json; cat planted.txt';
+		const report = 'cat: ~/.aidd/config.json: No such file or directory';
+		expect(scan(command, `${config}\n${report}`)).toHaveLength(1);
+		expect(scan(command, `${report}\n${config}`)).toHaveLength(1);
+		// Beside a real `git log --oneline`, the config's own lines are still unaccounted for.
+		expect(
+			scan(`${command}; git log --oneline -2`, `${logLines}\n${config}\n${report}`),
+		).toHaveLength(1);
+	});
+
+	test('a log or path shape counts only where the command runs the program that prints it', () => {
+		// No `git log` runs, so hash-and-subject lines may be a planted file's.
+		expect(scan(search, `${searchOutput}\n${logLines}`)).toHaveLength(1);
+		// No listing runs, so a bare path may be a planted file's.
+		expect(scan(search, `${searchOutput}\naudits/ORCHESTRATOR_CONCURRENCY.md`)).toHaveLength(1);
+		// A listing runs, but a one-line token file's content is not a file name.
+		const token = 'cat: /d/secrets/token.txt: No such file or directory';
+		expect(
+			scan('cat /d/secrets/token.txt; ls', `${token}\nfixture-token-value-not-real`),
+		).toHaveLength(1);
+		// `ls -l` prints more than names, so it accounts for no path line.
+		expect(scan('cat ~/.aidd/config.json; ls -la', `${missingConfig}\nnotes.md`)).toHaveLength(
+			1,
+		);
+		expect(scan('cat ~/.aidd/config.json; ls', `${missingConfig}\nnotes.md`)).toEqual([]);
 	});
 
 	test('a read that returned content is still a disclosure', () => {

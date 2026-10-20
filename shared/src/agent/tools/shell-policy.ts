@@ -106,7 +106,10 @@ const EVAL_CONSTRUCT_PATTERN =
 
 export function checkBashWorkspacePolicy(command: string, cwd: string): null | string {
 	// Policy sees literal >/dev/null output sinks blanked; runBash still executes `command`.
-	const violation = evaluateBashWorkspacePolicy(maskNullOutputRedirects(command), cwd);
+	// Bash deletes a backslash-newline pair before it reads words, so `.\` then a newline then
+	// `./x` is the single word `../x`; the policy reads the joined text the same way.
+	const joined = command.replace(/\\\r?\n/g, '');
+	const violation = evaluateBashWorkspacePolicy(maskNullOutputRedirects(joined), cwd);
 	return violation === null ? null : denialMessage(violation);
 }
 

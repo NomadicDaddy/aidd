@@ -72,6 +72,17 @@ describe('bash policy contains relative path escapes', () => {
 		});
 	}
 
+	// Morticia's review of a552abc: bash joins a backslash-newline before reading words, and on
+	// Windows `.\.\\x` reaches the tool as `..\x`, which opens the parent.
+	test('a parent segment joined by a line continuation is caught', () => {
+		expect(denial('cat .\\\n./outside.txt')).toContain('references path outside workspace');
+	});
+
+	test('a parent segment spelled with an escaped backslash separator is caught on win32', () => {
+		if (process.platform !== 'win32') return;
+		expect(denial('cat .\\.\\\\outside.txt')).toContain('references path outside workspace');
+	});
+
 	test('a quoted Windows path inside the workspace keeps its own reading', () => {
 		if (process.platform !== 'win32') return;
 		expect(checkBashWorkspacePolicy('cat "D:\\projects\\app\\src\\a.ts"', cwd)).toBeNull();

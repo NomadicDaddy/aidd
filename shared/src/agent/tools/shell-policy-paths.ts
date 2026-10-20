@@ -41,12 +41,15 @@ export function expandsAtRuntime(target: string): boolean {
  * The path bash itself opens for a token: outside quotes a backslash escapes the next character
  * and is dropped, so `.\.` is the parent directory `..` even though win32 path rules read the same
  * text as `.` then `.`. Only a reading that gains a `..` segment matters here; a quoted Windows
- * path such as `D:\x\y` has no such segment and keeps its own reading alone.
+ * path such as `D:\x\y` has no such segment and keeps its own reading alone. On win32 the reading
+ * is split on both separators, because Git Bash hands `..\x` (from `.\.\\x`) to tools that open
+ * the parent directory.
  */
-function bashParentReading(target: string): null | string {
+function bashParentReading(target: string, platform: NodeJS.Platform): null | string {
 	if (!target.includes('\\')) return null;
 	const reading = target.replace(/\\(.)/gsu, '$1');
-	return reading.split('/').includes('..') ? reading : null;
+	const separators = platform === 'win32' ? /[\\/]/ : /\//;
+	return reading.split(separators).includes('..') ? reading : null;
 }
 
 export function isPathWithinWorkspaceRoot(
@@ -55,7 +58,7 @@ export function isPathWithinWorkspaceRoot(
 	platform: NodeJS.Platform = process.platform,
 ): boolean {
 	if (target === '') return true;
-	const bashReading = bashParentReading(target);
+	const bashReading = bashParentReading(target, platform);
 	if (bashReading !== null && !isPathWithinWorkspaceRoot(bashReading, root, platform))
 		return false;
 	const normalized = normalizePosixDrivePath(target, platform);

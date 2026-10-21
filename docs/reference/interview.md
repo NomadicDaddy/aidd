@@ -44,10 +44,13 @@ section containing a question mark as one question, skipping sections titled "Le
 The project detail **Interview** tab (`frontend/src/pages/projects/detail/InterviewTab.tsx`)
 shows answered/total with a completion bar, lists unanswered questions as collapsed rows that
 expand into an answer box (filterable by priority, searchable by prompt text, 12 per page),
-and renders answered questions read-only. It reads inline web answers and follows canonical
-`responses/responseN.md` links from a CLI progress table. Submitting an answer rewrites
-`.aidd/responses.md` into the inline web format while preserving every linked answer it read; it
-does not delete or write anything under `.aidd/responses/`.
+and renders answered questions read-only. The tab and the CLI keep answers the same way: each
+in `.aidd/responses/responseN.md`, N being the question's place in `questions.md`, with
+`.aidd/responses.md` as the progress table over them (`shared/src/interview/response-files.ts`).
+The tab reads every `responseN.md` present, linked or not, and binds a file whose `## Question`
+is plain text by its number. Submitting an answer writes its file and rewrites the table, the same
+table a CLI run would write. An answer an earlier panel kept inline in `responses.md` is still
+read, and the next save moves it into its file; nothing under `.aidd/responses/` is deleted.
 
 API (`backend/src/routes/projects.ts`, served by
 `backend/src/services/interviewService.ts`):

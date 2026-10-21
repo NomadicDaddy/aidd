@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { parseResponses } from '../../backend/src/services/interview/responsesFile.ts';
@@ -77,16 +77,19 @@ describe('legacy interview responses', () => {
 	test('parses linked CLI documents without mistaking table snippets for answers', () => {
 		expect(parseResponses(LEGACY_INDEX, legacyDocuments())).toEqual([
 			{
+				file: 'responses/response1.md',
 				priority: 'HIGH',
 				prompt: 'What is the primary goal of this project?',
 				response: 'Build a focused product for developers.',
 			},
 			{
+				file: 'responses/response1.md',
 				priority: 'MED',
 				prompt: 'What is the target audience?',
 				response: 'Build a focused product for developers.',
 			},
 			{
+				file: 'responses/response2.md',
 				priority: 'LOW',
 				prompt: 'What color scheme do you prefer?',
 				response: 'Blue and slate.',
@@ -117,6 +120,96 @@ describe('legacy interview responses', () => {
 			expect(byId.get('q-1')?.response).toBe('Build a focused product for developers.');
 			expect(byId.get('q-2')?.response).toBe('Build a focused product for developers.');
 			expect(byId.get('q-3')?.response).toBe('Slate with accessible contrast.');
+		} finally {
+			await removeTempTree(dir);
+		}
+	});
+
+	test('refuses to overwrite an older document that answers another question', async () => {
+		// q-2's file would be response2.md, but that older document answers q-3, and q-2's own
+		// answer lives in response1.md with q-1's. Nothing may be overwritten or written.
+		const dir = await setupLegacyProject();
+		try {
+			const metadataDir = join(dir, '.aidd');
+			const before = await Promise.all(
+				['responses.md', 'responses/response1.md', 'responses/response2.md'].map((path) =>
+					readFile(join(metadataDir, ...path.split('/')), 'utf8'),
+				),
+			);
+			let refusal = '';
+			try {
+				await submitProjectInterviewAnswer(dir, { answer: 'Everyone.', questionId: 'q-2' });
+			} catch (error) {
+				refusal = error instanceof Error ? error.message : String(error);
+			}
+			expect(refusal).toContain(
+				'responses/response2.md holds an answer recorded for another',
+			);
+			const after = await Promise.all(
+				['responses.md', 'responses/response1.md', 'responses/response2.md'].map((path) =>
+					readFile(join(metadataDir, ...path.split('/')), 'utf8'),
+				),
+			);
+			expect(after).toEqual(before);
+			expect((await getProjectInterviewDetail(dir)).answered).toBe(3);
+		} finally {
+			await removeTempTree(dir);
+		}
+	});
+
+	test('binds a current CLI document, whose question is plain text, by its number', async () => {
+		// The CLI writes `## Question` as the question's text with no priority bullet, and the
+		// agent that writes the file may not copy it exactly ("Q1: " dropped here). The file's
+		// number is the question's place in questions.md, which the CLI and the panel share.
+		const dir = await testTempDir('interview-numbered-');
+		try {
+			const metadataDir = join(dir, '.aidd');
+			await mkdir(join(metadataDir, 'responses'), { recursive: true });
+			await writeFile(
+				join(metadataDir, 'questions.md'),
+				'- **[CRITICAL]** Q1: What is v1?\n- **[HIGH]** Q2: Who reads it?\n- **[NICE]** Q3: Why?\n',
+				'utf8',
+			);
+			await writeFile(
+				join(metadataDir, 'responses.md'),
+				[
+					'| 1 | Q1: What is v1? | Done | [response1.md](responses/response1.md) |',
+					'| 2 | Q2: Who reads it? | Pending | - |',
+					'| 3 | Q3: Why? | Done | [response3.md](responses/response3.md) |',
+					'',
+				].join('\n'),
+				'utf8',
+			);
+			await writeFile(
+				join(metadataDir, 'responses', 'response1.md'),
+				responseDocument(['What is v1?'], 'A working panel.'),
+				'utf8',
+			);
+			await writeFile(
+				join(metadataDir, 'responses', 'response3.md'),
+				responseDocument(['Q3: Why?'], 'Because.'),
+				'utf8',
+			);
+
+			const detail = await getProjectInterviewDetail(dir);
+			expect(detail.answered).toBe(2);
+			expect(detail.unanswered.map((question) => question.id)).toEqual(['q-2']);
+
+			// A panel save keeps both CLI answers rather than dropping what it could not bind.
+			const updated = await submitProjectInterviewAnswer(dir, {
+				answer: 'Phillip.',
+				questionId: 'q-2',
+			});
+			const byId = new Map(
+				updated.answeredQuestions.map((question) => [question.id, question.response]),
+			);
+			expect(byId).toEqual(
+				new Map([
+					['q-1', 'A working panel.'],
+					['q-2', 'Phillip.'],
+					['q-3', 'Because.'],
+				]),
+			);
 		} finally {
 			await removeTempTree(dir);
 		}

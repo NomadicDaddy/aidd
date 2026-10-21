@@ -1,9 +1,17 @@
+import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { readTextOrNull } from '../fsHelpers.ts';
 import { parseQuestions, QUESTION_BULLET_LINE } from './questionsFile.ts';
 
 export interface ParsedResponseEntry {
+	/** The `responses/responseN.md` the answer was read from; absent for an inline answer. */
+	file?: string;
+	/**
+	 * Set only for a CLI response document whose question carries no priority bullet: the N of
+	 * `responseN.md`, the question's place in questions.md, which the CLI and the panel share.
+	 */
+	number?: number;
 	priority: string;
 	prompt: string;
 	response: string;
@@ -16,9 +24,10 @@ export interface ParsedResponseEntry {
  */
 const RESPONSE_LINE = /^\s+Response:(?:\s(.*))?$/;
 const FENCE_OPEN_LINE = /^\s*(~{3,})\s*$/;
-const TILDE_ONLY_LINE = /^\s*(~+)\s*$/;
 const BODY_INDENT = '  ';
 const LINKED_RESPONSE_PATH = /\]\((responses\/(response[1-9]\d*\.md))\)/g;
+const CANONICAL_RESPONSE_PATH = /^responses\/response[1-9]\d*\.md$/;
+const RESPONSE_FILE_NAME = /^response[1-9]\d*\.md$/;
 const QUESTION_SECTION = /^##\s+Question\s*$/i;
 const RESPONSE_SECTION = /^##\s+Response\s*$/i;
 
@@ -111,6 +120,15 @@ function linkedResponsePaths(content: string): string[] {
 	return paths;
 }
 
+/**
+ * The N of `responses/responseN.md`; the link grammar guarantees the digits are there.
+ * @param path A canonical linked response path.
+ * @returns The document's question number.
+ */
+function responseNumber(path: string): number {
+	return Number(/response([1-9]\d*)\.md$/.exec(path)?.[1]);
+}
+
 function sectionBody(lines: string[], start: number, end: number): string {
 	let first = start;
 	let last = end;
@@ -119,7 +137,17 @@ function sectionBody(lines: string[], start: number, end: number): string {
 	return lines.slice(first, last).join('\n');
 }
 
-function parseLinkedResponseDocument(content: string): ParsedResponseEntry[] {
+/**
+ * The entries one linked document answers. An older CLI copied the question's priority bullet into
+ * `## Question`, and those are matched by priority and prompt. The current CLI writes the
+ * question's plain text there, which the agent may not copy exactly, so such a document is bound
+ * by its number instead.
+ * @param content The linked document's Markdown.
+ * @param file Its canonical `responses/responseN.md` path.
+ * @returns The answered entries it holds, none when it has no answer.
+ */
+function parseLinkedResponseDocument(content: string, file: string): ParsedResponseEntry[] {
+	const number = responseNumber(file);
 	const lines = content.split('\n').map((line) => line.replace(/\r$/, ''));
 	const questionIndex = lines.findIndex((line) => QUESTION_SECTION.test(line));
 	const responseIndex = lines.findIndex(
@@ -129,7 +157,13 @@ function parseLinkedResponseDocument(content: string): ParsedResponseEntry[] {
 
 	const response = sectionBody(lines, responseIndex + 1, lines.length);
 	if (response.length === 0) return [];
-	return parseQuestions(sectionBody(lines, questionIndex + 1, responseIndex)).map((question) => ({
+	const questionText = sectionBody(lines, questionIndex + 1, responseIndex);
+	const bullets = parseQuestions(questionText);
+	if (bullets.length === 0) {
+		return [{ file, number, priority: '', prompt: questionText, response }];
+	}
+	return bullets.map((question) => ({
+		file,
 		priority: question.priority,
 		prompt: question.prompt,
 		response,
@@ -137,16 +171,17 @@ function parseLinkedResponseDocument(content: string): ParsedResponseEntry[] {
 }
 
 function responseKey(entry: ParsedResponseEntry): string {
+	if (entry.number !== undefined) return `#${entry.number}`;
 	return `${entry.priority}\u0000${entry.prompt}`;
 }
 
 /**
- * Parse both response formats that aidd writes.
+ * Parse the answers a project holds.
  *
- * Current web answers live inline in `responses.md`. CLI interview mode writes a progress table
- * whose completed rows link to `responses/responseN.md`; callers provide those linked documents so
- * every priority bullet covered by a response document resolves to its recorded answer. Inline
- * entries win if both formats happen to contain the same question during a migration.
+ * The CLI and the panel both keep each answer in `responses/responseN.md` and write `responses.md`
+ * as a progress table linking them; callers provide those documents. A `responses.md` written by
+ * the panel before that held its answers inline, and those are still read, so the next save can
+ * move them into their files. Inline entries win if both forms hold the same question.
  * @param content Raw `responses.md` text.
  * @param linkedDocuments Canonical relative response paths mapped to their Markdown content.
  * @returns Answered entries in file order.
@@ -156,88 +191,59 @@ export function parseResponses(
 	linkedDocuments: ReadonlyMap<string, string> = new Map(),
 ): ParsedResponseEntry[] {
 	const byQuestion = new Map<string, ParsedResponseEntry>();
-	for (const path of linkedResponsePaths(content)) {
+	// The index may not link every answer file (the CLI counts a question answered when its file
+	// exists), so a canonical document passed in is read whether or not the index names it.
+	const documentPaths = [...linkedDocuments.keys()].filter((path) =>
+		CANONICAL_RESPONSE_PATH.test(path),
+	);
+	for (const path of new Set([...linkedResponsePaths(content), ...documentPaths])) {
 		const document = linkedDocuments.get(path);
 		if (document === undefined) continue;
-		for (const entry of parseLinkedResponseDocument(document)) {
+		for (const entry of parseLinkedResponseDocument(document, path)) {
 			byQuestion.set(responseKey(entry), entry);
 		}
 	}
+	const inline = new Map<string, ParsedResponseEntry>();
 	for (const entry of parseInlineResponses(content)) {
-		byQuestion.set(responseKey(entry), entry);
+		inline.set(responseKey(entry), entry);
+		byQuestion.delete(responseKey(entry));
 	}
-	return [...byQuestion.values()];
+	// Bind order: an inline answer, then a current numbered file, then an older bullet document.
+	// A numbered file is matched by position, so it would otherwise take a question an inline answer
+	// holds, and it is newer than any bullet document, which would otherwise shadow it.
+	const documents = [...byQuestion.values()];
+	return [
+		...inline.values(),
+		...documents.filter((entry) => entry.number !== undefined),
+		...documents.filter((entry) => entry.number === undefined),
+	];
 }
 
 /**
- * Load only canonical CLI response links rooted under the selected project's metadata directory.
- * The strict link grammar prevents a Markdown link from turning this compatibility reader into an
- * arbitrary filesystem read.
+ * Load the canonical answer files under the selected project's metadata directory: those the index
+ * links and any other `responses/responseN.md` present. The strict name grammar prevents a Markdown
+ * link from turning this reader into an arbitrary filesystem read.
  * @param metadataDir The selected project's `.aidd` directory.
- * @param content Raw `responses.md` text.
- * @returns Parsed inline and linked responses.
+ * @param content Raw `responses.md` text, empty when the file is missing.
+ * @returns Parsed inline and file responses.
  */
 export async function parseResponsesFromDisk(
 	metadataDir: string,
 	content: string,
 ): Promise<ParsedResponseEntry[]> {
+	const present = await readdir(join(metadataDir, 'responses')).catch(() => [] as string[]);
+	const paths = new Set([
+		...linkedResponsePaths(content),
+		...present
+			.filter((name) => RESPONSE_FILE_NAME.test(name))
+			.map((name) => `responses/${name}`),
+	]);
 	const documents = new Map<string, string>();
 	await Promise.all(
-		linkedResponsePaths(content).map(async (path) => {
+		[...paths].map(async (path) => {
 			const document = await readTextOrNull(join(metadataDir, ...path.split('/')));
 			if (document !== null) documents.set(path, document);
 		}),
 	);
 	return parseResponses(content, documents);
-}
-
-/**
- * Pick a fence long enough that no line of the body can close the block early.
- *
- * `readFencedBlock` closes on a line whose trimmed form equals the opening fence, so a fence one
- * tilde longer than the longest tilde-only line in the body is unambiguous.
- * @param response The answer body about to be fenced.
- * @returns The fence token to open and close the block with.
- */
-function fenceFor(response: string): string {
-	let longest = 0;
-	for (const line of response.split('\n')) {
-		const match = TILDE_ONLY_LINE.exec(line);
-		if (match) longest = Math.max(longest, (match[1] ?? '').length);
-	}
-	return '~'.repeat(Math.max(3, longest + 1));
-}
-
-function canUseSingleLine(response: string): boolean {
-	return response.length > 0 && !response.includes('\n') && response.trim() === response;
-}
-
-/**
- * Render `responses.md` from the answered entries, in question order.
- *
- * Carriage returns are normalized here because the parser strips a trailing CR from every line:
- * this is the one place a file is written, so normalizing here is what guarantees every emitted
- * answer is one the parser reads back unchanged.
- * @param entries The answered entries to write, already ordered.
- * @returns The complete file text.
- */
-export function serializeResponses(entries: readonly ParsedResponseEntry[]): string {
-	const lines: string[] = [];
-	for (const entry of entries) {
-		const response = entry.response.replace(/\r\n?/g, '\n');
-		lines.push(`- **[${entry.priority}]** ${entry.prompt}`);
-		if (canUseSingleLine(response)) {
-			lines.push(`  Response: ${response}`);
-		} else {
-			const fence = fenceFor(response);
-			lines.push('  Response:');
-			lines.push(`${BODY_INDENT}${fence}`);
-			for (const bodyLine of response.split('\n')) {
-				lines.push(bodyLine.length === 0 ? '' : `${BODY_INDENT}${bodyLine}`);
-			}
-			lines.push(`${BODY_INDENT}${fence}`);
-		}
-		lines.push('');
-	}
-	return lines.join('\n');
 }

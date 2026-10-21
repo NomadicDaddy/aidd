@@ -2,6 +2,12 @@ import type { AgentRunResult } from 'aidd-shared/orchestrator/result';
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { parseQuestionBullets } from 'aidd-shared/interview/question-bullets';
+import {
+	questionTitle,
+	renderInterviewIndex,
+	renderResponseDocument,
+	responseFileName,
+} from 'aidd-shared/interview/response-files';
 import { METADATA_DIR, metadataPath } from 'aidd-shared/metadata/paths';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
@@ -90,18 +96,10 @@ export function responseFromStructuredResult(
 		.filter((event) => event.type === 'assistant_text')
 		.map((event) => event.chunk)
 		.join('');
-	return [
-		`# Question ${question.number}: ${questionTitle(question.text)}`,
-		'',
-		'## Question',
-		'',
-		question.text,
-		'',
-		'## Response',
-		'',
+	return renderResponseDocument(
+		question,
 		assistantText.trim() || 'No structured interview response was provided.',
-		'',
-	].join('\n');
+	);
 }
 
 export async function writeInterviewResponse(responsePath: string, content: string): Promise<void> {
@@ -115,30 +113,14 @@ export async function writeInterviewIndex(
 ): Promise<void> {
 	const metadataDir = metadataPath(projectDir);
 	const responsesDir = join(metadataDir, 'responses');
-	const rows: string[] = [];
-	let doneCount = 0;
+	const answered = new Set<number>();
 	for (const question of questions) {
-		const responseName = `response${question.number}.md`;
-		const done = await exists(join(responsesDir, responseName));
-		if (done) doneCount++;
-		rows.push(
-			`| ${question.number} | ${truncateQuestion(question.text)} | ${done ? 'Done' : 'Pending'} | ${
-				done ? `[${responseName}](responses/${responseName})` : '-'
-			} |`,
-		);
+		if (await exists(join(responsesDir, responseFileName(question.number)))) {
+			answered.add(question.number);
+		}
 	}
-	const index = [
-		'# Interview Responses',
-		'',
-		'| # | Question | Status | Response |',
-		'|---|----------|--------|----------|',
-		...rows,
-		'',
-		`**Progress:** ${doneCount} / ${questions.length} questions answered`,
-		'',
-	].join('\n');
 	await mkdir(metadataDir, { recursive: true });
-	await writeFile(join(metadataDir, 'responses.md'), index);
+	await writeFile(join(metadataDir, 'responses.md'), renderInterviewIndex(questions, answered));
 }
 
 export async function exists(path: string): Promise<boolean> {
@@ -151,24 +133,7 @@ export async function exists(path: string): Promise<boolean> {
 }
 
 export function interviewResponsePath(projectDir: string, questionNumber: number): string {
-	return metadataPath(projectDir, 'responses', `response${questionNumber}.md`);
-}
-
-function questionTitle(question: string): string {
-	return (
-		question
-			.split(/\r?\n/)[0]
-			?.replace(/^##\s*/, '')
-			.trim() || 'Question'
-	);
-}
-
-function truncateQuestion(question: string): string {
-	const text = question
-		.replace(/^##\s*/, '')
-		.trim()
-		.replaceAll('|', '\\|');
-	return text.length > 80 ? `${text.slice(0, 77)}...` : text;
+	return metadataPath(projectDir, 'responses', responseFileName(questionNumber));
 }
 
 export function stringValue(value: unknown): string | undefined {

@@ -57,10 +57,13 @@ describe('interviewService', () => {
 				'What is the primary goal of this project?',
 			);
 
-			const responsesPath = join(dir, '.aidd', 'responses.md');
-			const responsesContent = await readFile(responsesPath, 'utf8');
-			expect(responsesContent).toContain('**[HIGH]**');
-			expect(responsesContent).toContain('Response: To build a great product.');
+			const responsesContent = await readFile(join(dir, '.aidd', 'responses.md'), 'utf8');
+			expect(responsesContent).toContain('[response1.md](responses/response1.md)');
+			const response1 = await readFile(
+				join(dir, '.aidd', 'responses', 'response1.md'),
+				'utf8',
+			);
+			expect(response1).toContain('## Response\n\nTo build a great product.\n');
 		} finally {
 			await cleanupTempProject(dir);
 		}

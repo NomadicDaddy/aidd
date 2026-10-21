@@ -1,5 +1,10 @@
+import {
+	renderInterviewIndex,
+	renderResponseDocument,
+	responseFileName,
+} from 'aidd-shared/interview/response-files';
 import { metadataPath } from 'aidd-shared/metadata/paths';
-import { writeFile } from 'node:fs/promises';
+import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type {
@@ -12,7 +17,7 @@ import type { ParsedResponseEntry } from './interview/responsesFile.ts';
 
 import { readTextOrNull } from './fsHelpers.ts';
 import { parseQuestions } from './interview/questionsFile.ts';
-import { parseResponsesFromDisk, serializeResponses } from './interview/responsesFile.ts';
+import { parseResponsesFromDisk } from './interview/responsesFile.ts';
 
 function questionMatchKey(priority: string, prompt: string): string {
 	const normalizedPrompt = prompt
@@ -32,7 +37,9 @@ function questionMatchKey(priority: string, prompt: string): string {
  * responses.md and questions.md are independent index spaces (responses.md only
  * holds answered questions), so a positional join silently misbinds answers when
  * the lists diverge. Resolve each response to a not-yet-matched question by its
- * (priority, prompt) signature and key the result by `question.id`.
+ * (priority, prompt) signature and key the result by `question.id`. A CLI document whose question
+ * carries no bullet is the exception: its number is its place in questions.md itself, not in
+ * responses.md, so it binds to that question directly.
  * @param questions
  * @param parsed
  * @returns A map from question id to its matching response entry.
@@ -44,6 +51,14 @@ function resolveResponsesById(
 	const byId = new Map<string, ParsedResponseEntry>();
 	const consumed = new Set<string>();
 	for (const entry of parsed) {
+		if (entry.number !== undefined) {
+			const question = questions[entry.number - 1];
+			if (question && !consumed.has(question.id)) {
+				consumed.add(question.id);
+				byId.set(question.id, entry);
+			}
+			continue;
+		}
 		const key = questionMatchKey(entry.priority, entry.prompt);
 		const question = questions.find(
 			(q) => !consumed.has(q.id) && questionMatchKey(q.priority, q.prompt) === key,
@@ -74,9 +89,7 @@ export async function getProjectInterviewDetail(
 	}
 	const questions = parseQuestions(questionsContent);
 
-	const parsedResponses = responsesContent
-		? await parseResponsesFromDisk(metadataDir, responsesContent)
-		: [];
+	const parsedResponses = await parseResponsesFromDisk(metadataDir, responsesContent ?? '');
 	const responsesById = resolveResponsesById(questions, parsedResponses);
 
 	const answeredQuestions: AnsweredInterviewQuestionDto[] = [];
@@ -136,26 +149,49 @@ export async function submitProjectInterviewAnswer(
 	}
 
 	const responsesPath = join(metadataDir, 'responses.md');
-	const existing = await readTextOrNull(responsesPath);
-	const parsedResponses = existing ? await parseResponsesFromDisk(metadataDir, existing) : [];
+	const existing = (await readTextOrNull(responsesPath)) ?? '';
+	const parsedResponses = await parseResponsesFromDisk(metadataDir, existing);
 	const responsesById = resolveResponsesById(questions, parsedResponses);
-
+	const previousFile = responsesById.get(question.id)?.file;
 	responsesById.set(question.id, {
 		priority: question.priority,
 		prompt: question.prompt,
 		response: trimmedAnswer,
 	});
 
-	// Rewrite the whole file from the parsed entries, so every answer this save did not touch is
-	// re-emitted from what the parser read rather than from a lossy summary of it.
-	const entries: ParsedResponseEntry[] = [];
-	for (const q of questions) {
+	// Every answer lives in responses/responseN.md, as the CLI keeps it, and responses.md is the
+	// index over those files: the CLI rewrites that index from the files, so an answer kept only
+	// inline would be erased by its next run. Answers already in a file stay where they are. This
+	// answer, and any answer still inline, go to their question's file, which must be empty or
+	// already hold that answer: an older document there may answer other questions, and it is
+	// never overwritten. Everything is checked before anything is written.
+	const responsesDir = join(metadataDir, 'responses');
+	const present = new Set(await readdir(responsesDir).catch(() => [] as string[]));
+	const indexed = questions.map((q, index) => ({ number: index + 1, text: q.prompt }));
+	const answered = new Set<number>();
+	const writes: { content: string; name: string }[] = [];
+	for (const [index, q] of questions.entries()) {
 		const entry = responsesById.get(q.id);
-		if (entry)
-			entries.push({ priority: q.priority, prompt: q.prompt, response: entry.response });
+		const indexedQuestion = indexed[index];
+		if (!entry || !indexedQuestion) continue;
+		answered.add(indexedQuestion.number);
+		const isThisAnswer = q.id === question.id;
+		if (!isThisAnswer && entry.file !== undefined) continue;
+		const name = responseFileName(indexedQuestion.number);
+		const source = isThisAnswer ? previousFile : entry.file;
+		if (present.has(name) && source !== `responses/${name}`) {
+			throw new Error(
+				`responses/${name} holds an answer recorded for another question, so it was not ` +
+					`overwritten; move it before answering question ${String(indexedQuestion.number)} here`,
+			);
+		}
+		writes.push({ content: renderResponseDocument(indexedQuestion, entry.response), name });
 	}
-
-	await writeFile(responsesPath, serializeResponses(entries), 'utf8');
+	await mkdir(responsesDir, { recursive: true });
+	for (const { content, name } of writes) {
+		await writeFile(join(responsesDir, name), content, 'utf8');
+	}
+	await writeFile(responsesPath, renderInterviewIndex(indexed, answered), 'utf8');
 
 	return await getProjectInterviewDetail(projectDir);
 }

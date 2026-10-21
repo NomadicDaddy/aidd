@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import {
@@ -95,6 +95,32 @@ describe('editing an answer whose document answers other questions too', () => {
 			);
 			expect(await answers(dir)).toEqual(before);
 		} finally {
+			await removeTempTree(dir);
+		}
+	});
+
+	test('moves the other answers before replacing the document, so a failed write loses none', async () => {
+		// Morticia #18210: if the replaced document were written first and a later write failed,
+		// q-2's only copy would be gone. A read-only document makes the saved write fail.
+		const dir = await projectWith({ 'responses/response1.md': SHARED });
+		const shared = join(dir, '.aidd', 'responses', 'response1.md');
+		try {
+			await chmod(shared, 0o444);
+			let failed = false;
+			try {
+				await submitProjectInterviewAnswer(dir, {
+					answer: 'Ship a CLI.',
+					questionId: 'q-1',
+				});
+			} catch {
+				failed = true;
+			}
+			expect(failed).toBe(true);
+			const moved = await readFile(join(dir, '.aidd', 'responses', 'response2.md'), 'utf8');
+			expect(moved).toContain('Build a focused product for developers.');
+			expect(await readFile(shared, 'utf8')).toBe(SHARED);
+		} finally {
+			await chmod(shared, 0o644);
 			await removeTempTree(dir);
 		}
 	});

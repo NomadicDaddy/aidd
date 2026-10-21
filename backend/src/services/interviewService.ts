@@ -273,8 +273,15 @@ async function writeAnswerFiles(
 	const present = new Set(await readdir(responsesDir).catch(() => [] as string[]));
 	const indexed = questions.map((q, index) => ({ number: index + 1, text: q.prompt }));
 	const { answered, writes } = planAnswerFiles(indexed, questions, responsesById, present, saved);
+	// The saved answer's file is written last: when it replaces an older document that also held
+	// other answers, those are already safe in their own files if a later write fails.
+	const savedName = responseFileName(questions.findIndex((q) => q.id === saved.id) + 1);
+	const ordered = [
+		...writes.filter((write) => write.name !== savedName),
+		...writes.filter((write) => write.name === savedName),
+	];
 	await mkdir(responsesDir, { recursive: true });
-	for (const { content, name } of writes) {
+	for (const { content, name } of ordered) {
 		await writeFile(join(responsesDir, name), content, 'utf8');
 	}
 	await writeFile(

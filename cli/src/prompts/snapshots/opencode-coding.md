@@ -186,11 +186,24 @@ file. A gate's pass is its own exit code, never a pipeline's.
 
 **Always safe (encouraged):**
 
-- `git checkout -- <file>` (single file rollback)
+- `git checkout -- <file>` on a file you changed yourself in this session (single file rollback)
 - `git status`, `git diff`, `git log` (read-only)
 - Reading files
 - Testing in local environment
 - Browser automation
+
+### Changes You Did Not Make
+
+The person who started this run, and their teammates, may keep working in this repository while
+you run. A change you did not make yourself belongs to them: a file that was already uncommitted
+when you started, or one that changes or is committed while you work. That holds even when it looks
+like a side effect of a command you ran, such as a dependency version moving in `package.json`.
+
+- Never revert, restore, check out, move, delete, stage or commit such a change. Running the
+  project's formatter over it is fine.
+- If you are not sure you made a change, treat it as one you did not make.
+- If it blocks your work or a gate, stop working around it and report it by path.
+- Name every such change you noticed in your final summary.
 
 ### Untrusted Content Boundary
 
@@ -1330,13 +1343,15 @@ remain uncommitted.
 
 #### 11.2 Ensure Clean State
 
-- No uncommitted changes (`git status` should be clean)
+- None of your own changes left uncommitted (`git status` may still list changes you did not make)
 - No broken features
 - All quality checks passing
 - App in working state
 
-**If uncommitted changes exist:** Run the fast checks, stage, and commit them first; then confirm
-with the full `smoke:qc` and amend in any fixes (Step 10.4) before exiting.
+**If your own changes are uncommitted:** Run the fast checks, stage those paths by name, and commit
+them first; then confirm with the full `smoke:qc` and amend in any fixes (Step 10.4) before
+exiting. Leave changes you did not make exactly as they are (HARD CONSTRAINTS, Changes You Did Not
+Make).
 
 #### 11.3 End Session
 

@@ -617,8 +617,9 @@ jq '{id, status, passes}' .aidd/features/<selected-feature-id>/feature.json
 #### 10.3 Stop Cleanly
 
 1. Ensure no uncommitted changes (`git status` should be clean)
-2. If uncommitted changes exist: run the fast checks, stage, and commit; then confirm with the
-   full `smoke:qc` and amend in any fixes (Step 9.4)
+2. If your own changes are uncommitted: run the fast checks, stage those paths by name, and
+   commit; then confirm with the full `smoke:qc` and amend in any fixes (Step 9.4). Leave changes
+   you did not make exactly as they are.
 3. Report the selected feature's completed or blocked state
 4. **End the session immediately**; follow environment-specific session termination (see environment-specific reference)
 

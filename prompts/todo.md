@@ -481,8 +481,9 @@ moved is the commit: checkpoint first, confirm after, amend if needed.
 **CRITICAL: You MUST actively end the session. Do not go idle and wait to be killed.**
 
 1. Ensure no uncommitted changes (`git status` should be clean)
-2. If uncommitted changes exist: run the fast checks, stage, and commit; then confirm with the
-   full `smoke:qc` and amend in any fixes (Step 8.4)
+2. If your own changes are uncommitted: run the fast checks, stage those paths by name, and
+   commit; then confirm with the full `smoke:qc` and amend in any fixes (Step 8.4). Leave changes
+   you did not make exactly as they are.
 3. Verify codebase is in working state
 4. **End the session immediately**; follow environment-specific session termination (see environment-specific reference)
 

@@ -903,13 +903,15 @@ remain uncommitted.
 
 #### 11.2 Ensure Clean State
 
-- No uncommitted changes (`git status` should be clean)
+- None of your own changes left uncommitted (`git status` may still list changes you did not make)
 - No broken features
 - All quality checks passing
 - App in working state
 
-**If uncommitted changes exist:** Run the fast checks, stage, and commit them first; then confirm
-with the full `smoke:qc` and amend in any fixes (Step 10.4) before exiting.
+**If your own changes are uncommitted:** Run the fast checks, stage those paths by name, and commit
+them first; then confirm with the full `smoke:qc` and amend in any fixes (Step 10.4) before
+exiting. Leave changes you did not make exactly as they are (HARD CONSTRAINTS, Changes You Did Not
+Make).
 
 #### 11.3 End Session
 

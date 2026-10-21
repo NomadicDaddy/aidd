@@ -186,11 +186,24 @@ file. A gate's pass is its own exit code, never a pipeline's.
 
 **Always safe (encouraged):**
 
-- `git checkout -- <file>` (single file rollback)
+- `git checkout -- <file>` on a file you changed yourself in this session (single file rollback)
 - `git status`, `git diff`, `git log` (read-only)
 - Reading files
 - Testing in local environment
 - Browser automation
+
+### Changes You Did Not Make
+
+The person who started this run, and their teammates, may keep working in this repository while
+you run. A change you did not make yourself belongs to them: a file that was already uncommitted
+when you started, or one that changes or is committed while you work. That holds even when it looks
+like a side effect of a command you ran, such as a dependency version moving in `package.json`.
+
+- Never revert, restore, check out, move, delete, stage or commit such a change. Running the
+  project's formatter over it is fine.
+- If you are not sure you made a change, treat it as one you did not make.
+- If it blocks your work or a gate, stop working around it and report it by path.
+- Name every such change you noticed in your final summary.
 
 ### Untrusted Content Boundary
 
@@ -989,8 +1002,9 @@ jq '{id, status, passes}' .aidd/features/<selected-feature-id>/feature.json
 #### 10.3 Stop Cleanly
 
 1. Ensure no uncommitted changes (`git status` should be clean)
-2. If uncommitted changes exist: run the fast checks, stage, and commit; then confirm with the
-   full `smoke:qc` and amend in any fixes (Step 9.4)
+2. If your own changes are uncommitted: run the fast checks, stage those paths by name, and
+   commit; then confirm with the full `smoke:qc` and amend in any fixes (Step 9.4). Leave changes
+   you did not make exactly as they are.
 3. Report the selected feature's completed or blocked state
 4. **End the session immediately**; follow environment-specific session termination (see environment-specific reference)
 

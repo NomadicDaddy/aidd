@@ -8,6 +8,7 @@ import {
 	featureSearch,
 } from '../../scripts/lib/crawltest/feature-filter-controls.ts';
 import {
+	featureRowControlsVisible,
 	featureRowSourceLabel,
 	filterValueForLabel,
 } from '../../scripts/lib/crawltest/feature-table.ts';
@@ -139,5 +140,21 @@ describe('crawltest project feature filters', () => {
 			'Feature: runs',
 		);
 		expect(featureTableSource).toContain('(${featureRowSourceLabel})(cells[5])');
+	});
+
+	// 2026-10-20: the second v3.6.0 capture failed because the controls were looked for once, while
+	// the filtered table was still rendering (it took 1-2 s on a seeded panel).
+	test('waits for a visible row control rather than sampling once', () => {
+		const visible = (controls: Control[]) =>
+			runInNewContext(featureRowControlsVisible, {
+				document: { querySelectorAll: () => controls },
+				getComputedStyle: () => ({ visibility: 'visible' }),
+				HTMLElement: Control,
+			}) as boolean;
+
+		expect(visible([])).toBe(false);
+		expect(visible([new Select(false)])).toBe(false);
+		expect(visible([new Select(false), new Select(true)])).toBe(true);
+		expect(featureTableSource).toContain('.waitForFunction(featureRowControlsVisible, {');
 	});
 });

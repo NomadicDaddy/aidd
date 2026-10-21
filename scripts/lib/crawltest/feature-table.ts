@@ -76,6 +76,13 @@ export const featureRowSourceLabel = `(cell) => {
 	return (wrapper?.firstElementChild ?? wrapper)?.textContent?.trim() ?? '';
 }`;
 
+/** True while at least one row mutation control in the feature table is visible. */
+export const featureRowControlsVisible = `[
+	'select[aria-label^="Status for"]',
+	'button[aria-label^="Approve "]',
+	'button[aria-label^="Delete "]',
+].some((selector) => Array.from(document.querySelectorAll(selector)).some(${visibleFeatureControl}))`;
+
 async function actionableFeatureFilterTarget(
 	page: Page,
 ): Promise<{ source: string; status: string } | null> {
@@ -163,17 +170,18 @@ export async function assertProjectFeatureFilters(page: Page, route: string): Pr
 			"new URLSearchParams(location.search).has('featureStatus') && new URLSearchParams(location.search).has('featureSource')",
 			{ timeout: FEATURE_FILTER_TIMEOUT_MS },
 		);
+		// The filtered table renders after the URL updates: on a seeded panel it took 1-2 seconds,
+		// so a single look found no table and failed the v3.6.0 capture. Wait for a visible control;
+		// only filters that hide every control for the whole timeout fail.
 		const controlsVisible = target
-			? Boolean(
-					await page.evaluate(`(() => {
-						return [
-						'select[aria-label^="Status for"]',
-						'button[aria-label^="Approve "]',
-						'button[aria-label^="Delete "]',
-						].some((selector) => Array.from(document.querySelectorAll(selector))
-							.some(${visibleFeatureControl}));
-					})()`),
-				)
+			? await page
+					.waitForFunction(featureRowControlsVisible, {
+						timeout: FEATURE_FILTER_TIMEOUT_MS,
+					})
+					.then(
+						() => true,
+						() => false,
+					)
 			: true;
 		if (!controlsVisible) {
 			errors.push(`${route} feature filters hid all row mutation controls`);

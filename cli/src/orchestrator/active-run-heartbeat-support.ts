@@ -9,6 +9,7 @@ import {
 	EXT_RUN_ID_ENV,
 	EXT_RUN_INITIATOR_ENV,
 	EXT_RUN_SOURCE_ENV,
+	isCliActiveRunSource,
 	type RunInitiator,
 } from 'aidd-shared/metadata/active-runs';
 import { metadataPath } from 'aidd-shared/metadata/paths';
@@ -143,11 +144,12 @@ export interface ExternalRunContext {
 /**
  * Read the launcher's handoff out of the environment.
  *
- * Source stays narrowed to the two surfaces that actually spawn a detached CLI child; 'scheduled'
- * reaches the row through the launcher, not through this variable. The initiator is read
- * separately rather than derived from the source because that is the whole point of the field: a
- * 'web' child can be a run somebody launched or an auto-chained follow-up, and only the launcher
- * knows which.
+ * Source takes any recorded run source the launcher names. The backend's detached spawn hands
+ * over the run's own source, so a scheduled run says 'scheduled' here; narrowing to 'web' and
+ * 'director' made every scheduled run's ledger line and active-run record claim 'cli'. 'cli' itself
+ * is the default when nothing launched this process. The initiator is read separately rather than
+ * derived from the source because that is the whole point of the field: a 'web' child can be a run
+ * somebody launched or an auto-chained follow-up, and only the launcher knows which.
  */
 export function resolveExternalRunContext(
 	env: NodeJS.ProcessEnv = process.env,
@@ -160,6 +162,6 @@ export function resolveExternalRunContext(
 		...(initiator ? { initiator } : {}),
 		...(logPath ? { logPath } : {}),
 		...(runId ? { runId } : {}),
-		...(source === 'web' || source === 'director' ? { source } : {}),
+		...(isCliActiveRunSource(source) ? { source } : {}),
 	};
 }

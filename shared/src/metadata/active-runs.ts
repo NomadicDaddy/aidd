@@ -30,6 +30,7 @@ export { activeRunFilePath, activeRunsDir } from './active-runs/locate.ts';
 export {
 	asRunInitiator,
 	type CliActiveRunSource,
+	isCliActiveRunSource,
 	type RunInitiator,
 } from './active-runs/provenance.ts';
 export {

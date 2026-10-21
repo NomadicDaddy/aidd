@@ -93,4 +93,15 @@ describe('CLI runs', () => {
 			'initiator',
 		);
 	});
+
+	test('a scheduled child keeps its source instead of claiming to be a CLI launch', () => {
+		// The backend's detached spawn hands every child its run's own source. Narrowing this to
+		// 'web' and 'director' wrote 'cli' into each scheduled run's ledger line and active-run record.
+		for (const source of ['director', 'scheduled', 'web'] as const) {
+			expect(resolveExternalRunContext({ [EXT_RUN_SOURCE_ENV]: source }).source).toBe(source);
+		}
+		expect(resolveExternalRunContext({ [EXT_RUN_SOURCE_ENV]: 'telegram' })).not.toHaveProperty(
+			'source',
+		);
+	});
 });

@@ -1,4 +1,5 @@
 import {
+	type IndexedQuestion,
 	renderInterviewIndex,
 	renderResponseDocument,
 	responseFileName,
@@ -127,6 +128,103 @@ export async function getProjectInterviewProgress(
 	return { answered: detail.answered, total: detail.total };
 }
 
+/** The question being saved, and the file its previous answer was read from, if any. */
+interface SavedAnswer {
+	id: string;
+	previousFile: string | undefined;
+}
+
+interface AnswerFilePlan {
+	answered: Set<number>;
+	writes: { content: string; name: string }[];
+}
+
+/**
+ * Which answer files a save writes, checked in full before anything is written.
+ *
+ * Every answer lives in responses/responseN.md, as the CLI keeps it, and responses.md is the index
+ * over those files: the CLI rewrites that index from the files, so an answer kept only inline would
+ * be erased by its next run. Answers already in a file stay where they are. The saved answer, and
+ * any answer still inline, go to their question's file, which must be empty or already hold that
+ * answer: an older document there may answer other questions, and it is never overwritten. When
+ * the saved answer replaces its own older document, the other answers that document held move to
+ * their own files first, under the same rule.
+ * @param indexed Every question with its number, in questions.md order.
+ * @param questions The same questions, for their ids.
+ * @param responsesById Every bound answer, the saved one included.
+ * @param present The file names already in responses/.
+ * @param saved The saved question's id and the file its previous answer came from.
+ * @returns The answered numbers for the index and the files to write.
+ */
+function planAnswerFiles(
+	indexed: readonly IndexedQuestion[],
+	questions: readonly ProjectInterviewQuestionDto[],
+	responsesById: ReadonlyMap<string, ParsedResponseEntry>,
+	present: ReadonlySet<string>,
+	saved: SavedAnswer,
+): AnswerFilePlan {
+	const plan: AnswerFilePlan = { answered: new Set(), writes: [] };
+	const replaced = replacedDocument(indexed, questions, saved);
+	for (const [index, q] of questions.entries()) {
+		const entry = responsesById.get(q.id);
+		const indexedQuestion = indexed[index];
+		if (!entry || !indexedQuestion) continue;
+		plan.answered.add(indexedQuestion.number);
+		const isSaved = q.id === saved.id;
+		if (!isSaved && staysInItsFile(entry, replaced)) continue;
+		const name = responseFileName(indexedQuestion.number);
+		assertFileFree(name, present, isSaved ? saved.previousFile : entry.file);
+		plan.writes.push({
+			content: renderResponseDocument(indexedQuestion, entry.response),
+			name,
+		});
+	}
+	return plan;
+}
+
+/**
+ * The document a save overwrites with the saved answer: its previous source, when that is the
+ * saved question's own file. An older document there may answer other questions too, and those
+ * answers must move to their own files first.
+ * @param indexed Every question with its number.
+ * @param questions The same questions, for their ids.
+ * @param saved The saved question and its previous source.
+ * @returns The replaced document's path, or undefined when nothing is replaced.
+ */
+function replacedDocument(
+	indexed: readonly IndexedQuestion[],
+	questions: readonly ProjectInterviewQuestionDto[],
+	saved: SavedAnswer,
+): string | undefined {
+	const number = indexed[questions.findIndex((q) => q.id === saved.id)]?.number;
+	if (number === undefined) return undefined;
+	const own = `responses/${responseFileName(number)}`;
+	return saved.previousFile === own ? own : undefined;
+}
+
+/**
+ * An answer in a file stays there, unless the save replaces that file.
+ * @param entry The bound answer.
+ * @param replaced The document the save overwrites, if any.
+ * @returns Whether the answer is left where it is.
+ */
+function staysInItsFile(entry: ParsedResponseEntry, replaced: string | undefined): boolean {
+	return entry.file !== undefined && entry.file !== replaced;
+}
+
+function assertFileFree(
+	name: string,
+	present: ReadonlySet<string>,
+	source: string | undefined,
+): void {
+	if (!present.has(name) || source === `responses/${name}`) return;
+	const number = /\d+/.exec(name)?.[0] ?? name;
+	throw new Error(
+		`responses/${name} holds an answer recorded for another question, so it was not ` +
+			`overwritten; move it before answering question ${number} here`,
+	);
+}
+
 export async function submitProjectInterviewAnswer(
 	projectDir: string,
 	body: { answer: string; questionId: string },
@@ -148,8 +246,7 @@ export async function submitProjectInterviewAnswer(
 		throw new Error('Answer must not be empty');
 	}
 
-	const responsesPath = join(metadataDir, 'responses.md');
-	const existing = (await readTextOrNull(responsesPath)) ?? '';
+	const existing = (await readTextOrNull(join(metadataDir, 'responses.md'))) ?? '';
 	const parsedResponses = await parseResponsesFromDisk(metadataDir, existing);
 	const responsesById = resolveResponsesById(questions, parsedResponses);
 	const previousFile = responsesById.get(question.id)?.file;
@@ -159,39 +256,30 @@ export async function submitProjectInterviewAnswer(
 		response: trimmedAnswer,
 	});
 
-	// Every answer lives in responses/responseN.md, as the CLI keeps it, and responses.md is the
-	// index over those files: the CLI rewrites that index from the files, so an answer kept only
-	// inline would be erased by its next run. Answers already in a file stay where they are. This
-	// answer, and any answer still inline, go to their question's file, which must be empty or
-	// already hold that answer: an older document there may answer other questions, and it is
-	// never overwritten. Everything is checked before anything is written.
+	await writeAnswerFiles(metadataDir, questions, responsesById, {
+		id: question.id,
+		previousFile,
+	});
+	return await getProjectInterviewDetail(projectDir);
+}
+
+async function writeAnswerFiles(
+	metadataDir: string,
+	questions: readonly ProjectInterviewQuestionDto[],
+	responsesById: ReadonlyMap<string, ParsedResponseEntry>,
+	saved: SavedAnswer,
+): Promise<void> {
 	const responsesDir = join(metadataDir, 'responses');
 	const present = new Set(await readdir(responsesDir).catch(() => [] as string[]));
 	const indexed = questions.map((q, index) => ({ number: index + 1, text: q.prompt }));
-	const answered = new Set<number>();
-	const writes: { content: string; name: string }[] = [];
-	for (const [index, q] of questions.entries()) {
-		const entry = responsesById.get(q.id);
-		const indexedQuestion = indexed[index];
-		if (!entry || !indexedQuestion) continue;
-		answered.add(indexedQuestion.number);
-		const isThisAnswer = q.id === question.id;
-		if (!isThisAnswer && entry.file !== undefined) continue;
-		const name = responseFileName(indexedQuestion.number);
-		const source = isThisAnswer ? previousFile : entry.file;
-		if (present.has(name) && source !== `responses/${name}`) {
-			throw new Error(
-				`responses/${name} holds an answer recorded for another question, so it was not ` +
-					`overwritten; move it before answering question ${String(indexedQuestion.number)} here`,
-			);
-		}
-		writes.push({ content: renderResponseDocument(indexedQuestion, entry.response), name });
-	}
+	const { answered, writes } = planAnswerFiles(indexed, questions, responsesById, present, saved);
 	await mkdir(responsesDir, { recursive: true });
 	for (const { content, name } of writes) {
 		await writeFile(join(responsesDir, name), content, 'utf8');
 	}
-	await writeFile(responsesPath, renderInterviewIndex(indexed, answered), 'utf8');
-
-	return await getProjectInterviewDetail(projectDir);
+	await writeFile(
+		join(metadataDir, 'responses.md'),
+		renderInterviewIndex(indexed, answered),
+		'utf8',
+	);
 }

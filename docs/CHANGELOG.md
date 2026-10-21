@@ -46,6 +46,7 @@ All notable public aidd releases are documented here.
 - Native agent: the bash tool's `timeout_ms` is bounded before spawning; a cancelled run reaches in-flight tool subprocesses and kills their whole process tree, reporting "cleanup incomplete" when it cannot confirm the tree is gone; a timeout or abort notice is no longer cut off by long command output.
 - Gates: the step cache is keyed on the Bun version; `build:analyze` is keyed on the revision, `dist` and both reports and replays a pass only over a report its check would accept; the Prettier cache is keyed on the lockfile, config and frontend stylesheets; `self-contained` scans only tracked and not-ignored files and reruns when any scanned root changes; `check:docs` is keyed on exactly the files and link targets it reads, including targets under excluded folders and its own hashing code.
 - A project's existing pre-push hook and guards are kept rather than rewritten and staged on every aidd run; only a missing one is delivered.
+- A hook aidd installs is executable on disk as well as in the index. The scaffold's copies are stored without the exec bit, so on Linux and macOS git skipped the new pre-commit and pre-push hooks until the next checkout.
 - The shared hooks find bash by path, so a PATH that lists the WSL launcher first no longer breaks every commit.
 
 ### Security

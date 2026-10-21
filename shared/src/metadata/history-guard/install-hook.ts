@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readFile } from 'node:fs/promises';
+import { chmod, copyFile, mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 // The mechanics of putting one hook into a project: what a hook is made of (HookSpec), how git
@@ -105,7 +105,12 @@ export async function installHook(
 			await copyFile(guardSource, guardPath);
 			delivered.push(guard);
 		}
-		if (!keep) await copyFile(hookSource, hookPath);
+		if (!keep) {
+			await copyFile(hookSource, hookPath);
+			// The scaffold source is recorded 100644 and the copy keeps that mode, so on POSIX the hook
+			// on disk would not run, and would differ from the +x index entry staged below.
+			await chmod(hookPath, 0o755);
+		}
 	} catch {
 		return 'skipped';
 	}

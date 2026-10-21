@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
@@ -174,6 +174,13 @@ describe('ensureHistoryGuard', () => {
 		expect(staged).toContain('.githooks/pre-commit');
 		expect(staged).toContain('.githooks/leak-guard.sh');
 		expect(git(dir, ['ls-files', '-s', '.githooks/pre-commit']).split(/\s+/)[0]).toBe('100755');
+		// The file on disk is what git runs. Windows has no exec bit to check; on POSIX a hook copied
+		// from the 100644 scaffold source is skipped by git unless it is made executable there too.
+		if (process.platform !== 'win32') {
+			for (const name of ['pre-commit', 'pre-push']) {
+				expect(statSync(join(dir, '.githooks', name)).mode & 0o111).toBe(0o111);
+			}
+		}
 	});
 
 	test('keeps an existing pre-commit that already carries the marker — it may be the richer variant', async () => {

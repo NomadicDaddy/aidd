@@ -47,6 +47,7 @@ All notable public aidd releases are documented here.
 - Gates: the step cache is keyed on the Bun version; `build:analyze` is keyed on the revision, `dist` and both reports and replays a pass only over a report its check would accept; the Prettier cache is keyed on the lockfile, config and frontend stylesheets; `self-contained` scans only tracked and not-ignored files and reruns when any scanned root changes; `check:docs` is keyed on exactly the files and link targets it reads, including targets under excluded folders and its own hashing code.
 - A project's existing pre-push hook and guards are kept rather than rewritten and staged on every aidd run; only a missing one is delivered.
 - A hook aidd installs is executable on disk as well as in the index. The scaffold's copies are stored without the exec bit, so on Linux and macOS git skipped the new pre-commit and pre-push hooks until the next checkout.
+- The release screenshot crawl reads a feature row's Source as the label the Source filter offers. It used the cell's whole text, which for a feature row is every option of its Source select, so a panel with editable features failed the capture.
 - The shared hooks find bash by path, so a PATH that lists the WSL launcher first no longer breaks every commit.
 
 ### Security

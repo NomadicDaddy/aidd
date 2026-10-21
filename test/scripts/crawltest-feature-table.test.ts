@@ -7,7 +7,10 @@ import {
 	featureFilterSelect,
 	featureSearch,
 } from '../../scripts/lib/crawltest/feature-filter-controls.ts';
-import { filterValueForLabel } from '../../scripts/lib/crawltest/feature-table.ts';
+import {
+	featureRowSourceLabel,
+	filterValueForLabel,
+} from '../../scripts/lib/crawltest/feature-table.ts';
 
 const featureTableSource = readFileSync(
 	resolve(import.meta.dir, '../../scripts/lib/crawltest/feature-table.ts'),
@@ -101,5 +104,40 @@ describe('crawltest project feature filters', () => {
 		expect(filterValueForLabel(options, 'Audit: Complication')).toBe('Audit: COMPLICATION');
 		expect(filterValueForLabel(options, 'Missing')).toBe('');
 		expect(featureTableSource).toContain("label: option.textContent?.trim() ?? ''");
+	});
+
+	// 2026-10-20: the v3.6.0 release capture failed on a seeded panel because the row's Source was
+	// read as the cell's whole textContent, which matches no filter label for any row with controls.
+	test('reads a row Source as the label the Source filter offers', () => {
+		const sourceOf = (cell: unknown) =>
+			runInNewContext(`(${featureRowSourceLabel})(cell)`, { cell }) as string;
+		const featureRow = (value: string, text: string) => ({
+			querySelector: () => ({ selectedOptions: [{ textContent: text }], value }),
+			textContent: 'No categoryAgent toolsRuns',
+		});
+		const labelledRow = (label: string, note: string) => ({
+			firstElementChild: {
+				firstElementChild: { textContent: label },
+				textContent: label + note,
+			},
+			querySelector: () => null,
+			textContent: label + note,
+		});
+
+		expect(sourceOf(featureRow('runs', 'Runs'))).toBe('Feature: Runs');
+		expect(sourceOf(featureRow('', 'No category'))).toBe('Feature backlog');
+		expect(sourceOf(labelledRow('Audit: Agent tool sandbox', 'Audit provenance'))).toBe(
+			'Audit: Agent tool sandbox',
+		);
+		expect(sourceOf(labelledRow('Remediation', 'Remediation identity'))).toBe('Remediation');
+
+		const options = [
+			{ label: 'Feature: Runs', value: 'Feature: runs' },
+			{ label: 'Feature backlog', value: 'Feature backlog' },
+		];
+		expect(filterValueForLabel(options, sourceOf(featureRow('runs', 'Runs')))).toBe(
+			'Feature: runs',
+		);
+		expect(featureTableSource).toContain('(${featureRowSourceLabel})(cells[5])');
 	});
 });

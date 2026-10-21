@@ -60,6 +60,22 @@ async function featureRowCount(page: Page): Promise<number> {
 	)) as number;
 }
 
+/**
+ * The Source cell's text is not the label the Source filter offers. A feature row holds a select,
+ * whose textContent is every option run together, and an audit or remediation row puts a
+ * provenance line under its label. Read what the filter lists instead: "Feature: <selected
+ * option>", "Feature backlog" for an empty category, or the first line of any other row.
+ */
+export const featureRowSourceLabel = `(cell) => {
+	const select = cell?.querySelector('select');
+	if (select) {
+		if (!select.value) return 'Feature backlog';
+		return 'Feature: ' + (select.selectedOptions?.[0]?.textContent?.trim() ?? '');
+	}
+	const wrapper = cell?.firstElementChild;
+	return (wrapper?.firstElementChild ?? wrapper)?.textContent?.trim() ?? '';
+}`;
+
 async function actionableFeatureFilterTarget(
 	page: Page,
 ): Promise<{ source: string; status: string } | null> {
@@ -68,7 +84,7 @@ async function actionableFeatureFilterTarget(
 		for (const row of rows) {
 			const cells = Array.from(row.querySelectorAll('td'));
 			const status = cells[1]?.textContent?.trim() ?? '';
-			const source = cells[5]?.textContent?.trim() ?? '';
+			const source = (${featureRowSourceLabel})(cells[5]);
 			const hasControls =
 				row.querySelector('select[aria-label^="Status for"]') !== null ||
 				row.querySelector('button[aria-label^="Approve "]') !== null ||

@@ -1057,7 +1057,8 @@ git status --short
 
 If a tracked selected feature file is still modified after the commit, amend the commit or make a
 follow-up commit for the same feature before emitting `AIDD_RESULT`. For an ignored feature file,
-validate its on-disk contents and emit the marker once no source changes remain uncommitted.
+validate its on-disk contents and emit the marker once none of your own source changes remain
+uncommitted. Changes you did not make stay as they are.
 
 ---
 

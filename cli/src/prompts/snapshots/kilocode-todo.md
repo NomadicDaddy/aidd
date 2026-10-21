@@ -954,7 +954,8 @@ moved is the commit: checkpoint first, confirm after, amend if needed.
 
 **CRITICAL: You MUST actively end the session. Do not go idle and wait to be killed.**
 
-1. Ensure no uncommitted changes (`git status` should be clean)
+1. Ensure none of your own changes are left uncommitted (`git status` may still list changes you
+   did not make)
 2. If your own changes are uncommitted: run the fast checks, stage those paths by name, and
    commit; then confirm with the full `smoke:qc` and amend in any fixes (Step 8.4). Leave changes
    you did not make exactly as they are.

@@ -1044,7 +1044,7 @@ git commit -m "chore(aidd): onboard project"
 - [ ] README.md updated/created with accurate information
 - [ ] Git repository initialized/updated with commits
 - [ ] No corrupted files
-- [ ] No uncommitted changes
+- [ ] None of your own changes left uncommitted (changes you did not make stay as they are)
 
 #### 9.2 Run Verification Commands
 
@@ -1064,7 +1064,7 @@ find .aidd/features/ -name "feature.json" | wc -l
 git status
 git log -1
 
-# Verify no uncommitted changes
+# Verify none of your own changes are left uncommitted; changes you did not make stay as they are
 git diff
 ```
 

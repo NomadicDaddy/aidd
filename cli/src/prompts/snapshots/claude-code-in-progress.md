@@ -605,7 +605,7 @@ satisfied dependencies. Do not inspect the inventory to choose a replacement.
 it already passes, or a dependency is incomplete:**
 
 1. Do **NOT** fall back to coding mode and do **NOT** select another feature.
-2. Ensure the working tree is clean; commit any legitimate Step 3 fix-ups through the normal quality gates first.
+2. Ensure none of your own changes are left uncommitted; commit any legitimate Step 3 fix-ups through the normal quality gates first, and leave changes you did not make exactly as they are.
 3. Report the exact reason the selected feature cannot proceed.
 4. End the session immediately **without emitting `AIDD_RESULT`** (no feature was selected). aidd records a clean no-work stop and applies its no-work backoff.
 
@@ -1035,7 +1035,8 @@ jq '{id, status, passes}' .aidd/features/<selected-feature-id>/feature.json
 
 #### 10.3 Stop Cleanly
 
-1. Ensure no uncommitted changes (`git status` should be clean)
+1. Ensure none of your own changes are left uncommitted (`git status` may still list changes you
+   did not make)
 2. If your own changes are uncommitted: run the fast checks, stage those paths by name, and
    commit; then confirm with the full `smoke:qc` and amend in any fixes (Step 9.4). Leave changes
    you did not make exactly as they are.

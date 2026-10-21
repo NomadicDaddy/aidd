@@ -856,7 +856,7 @@ git log -1
 - [ ] README.md created with comprehensive content
 - [ ] Git initialized and initial commit made
 - [ ] No corrupted files
-- [ ] No uncommitted changes
+- [ ] None of your own changes left uncommitted (changes you did not make stay as they are)
 
 #### 9.2 Run Verification Commands
 
@@ -874,7 +874,7 @@ find .aidd/features -name 'feature.json' -exec sh -c 'jq type "$1" | grep -q obj
 git status
 git log -1
 
-# Verify no uncommitted changes
+# Verify none of your own changes are left uncommitted; changes you did not make stay as they are
 git diff
 
 # Verify the project is launchable: a generic project must expose a `dev` script
@@ -892,7 +892,8 @@ bun run smoke:qc
 **If verification fails:**
 
 1. Identify specific issue
-2. Fix the problem
+2. Fix the problem if it lies in your own changes; if it comes from a change you did not make,
+   leave that change as it is and report it by path (HARD CONSTRAINTS, Changes You Did Not Make)
 3. Re-run verification
 4. Document in CHANGELOG.md
 

@@ -78,7 +78,7 @@ describe('news digest advisories', () => {
 describe('news digest releases', () => {
 	test('keeps releases inside the window and reports a failing repo', async () => {
 		const fetchFn = routes({
-			'https://api.github.com/repos/oven-sh/bun/releases?per_page=15': {
+			'https://api.github.com/repos/oven-sh/bun/releases?per_page=100': {
 				body: [
 					{ published_at: '2026-10-21T10:00:00Z', tag_name: 'bun-v1.4.4' },
 					{ published_at: '2026-10-01T10:00:00Z', tag_name: 'bun-v1.4.3' },
@@ -95,6 +95,52 @@ describe('news digest releases', () => {
 		expect(bun?.inWindow.map((release) => release.tag)).toEqual(['bun-v1.4.4']);
 		expect(bun?.latestStable?.tag).toBe('bun-v1.4.4');
 		expect(node?.error).toBe('HTTP 404');
+	});
+
+	// Roger on 526a9ec8: one page of 15 dropped releases behind it in a wide window or busy repo.
+	const BUN = 'https://api.github.com/repos/oven-sh/bun/releases?per_page=100';
+	const release = (day: string, tag: string) => ({
+		published_at: `${day}T10:00:00Z`,
+		tag_name: tag,
+	});
+
+	test('follows every page, even past an old release, to the last one', async () => {
+		// Page one already holds a release older than the window. A reader that stopped there
+		// would miss v2 on page two, which was published inside the window.
+		const fetchFn = routes({
+			[BUN]: {
+				body: [release('2026-10-21', 'v3'), release('2026-09-01', 'v1')],
+				link: `<${BUN}&page=2>; rel="next"`,
+			},
+			[`${BUN}&page=2`]: { body: [release('2026-10-15', 'v2')] },
+		});
+		const [bun] = await fetchStackReleases(
+			'2026-10-10T00:00:00Z',
+			'2026-10-22T00:00:00Z',
+			fetchFn,
+			{},
+			['oven-sh/bun'],
+		);
+		expect(bun?.error).toBeUndefined();
+		expect(bun?.inWindow.map((r) => r.tag)).toEqual(['v3', 'v2']);
+	});
+
+	test('reports an error rather than a short list when the pages never end', async () => {
+		const endless: FetchFn = (url) =>
+			Promise.resolve(
+				new Response(JSON.stringify([release('2026-10-21', url)]), {
+					headers: { link: `<${url}x>; rel="next"` },
+				}),
+			);
+		const [bun] = await fetchStackReleases(
+			'2026-10-01T00:00:00Z',
+			'2026-10-22T00:00:00Z',
+			endless,
+			{},
+			['oven-sh/bun'],
+		);
+		expect(bun?.error).toBe('more than 20 pages of releases');
+		expect(bun?.inWindow).toEqual([]);
 	});
 });
 

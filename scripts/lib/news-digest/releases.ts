@@ -2,7 +2,7 @@
  * GitHub releases of the stack the fleet builds on, published inside the digest's window. The
  * digest reports official release notes from here rather than from secondhand coverage.
  */
-import { type FetchFn, githubHeaders } from './fetch.ts';
+import { type FetchFn, githubHeaders, nextLink } from './fetch.ts';
 
 export const STACK_REPOS = [
 	'biomejs/biome',
@@ -59,6 +59,9 @@ function summarize(repo: string, releases: RawRelease[], start: number, end: num
 	};
 }
 
+/** Pages read per repo before the listing is called too long to answer completely. */
+const MAX_PAGES = 20;
+
 async function repoReleases(
 	repo: string,
 	window: { end: number; start: number },
@@ -66,11 +69,22 @@ async function repoReleases(
 	env: NodeJS.ProcessEnv,
 ): Promise<RepoReleases> {
 	try {
-		const url = `https://api.github.com/repos/${repo}/releases?per_page=15`;
-		const response = await fetchFn(url, { headers: githubHeaders(env) });
-		if (response.status !== 200)
-			return { error: `HTTP ${response.status}`, inWindow: [], repo };
-		const releases = (await response.json()) as RawRelease[];
+		// Follow the Link header to the last page. GitHub does not promise that later pages hold
+		// only older publication dates (a long-lived draft can be published late), so stopping
+		// early on an old release could drop one from the window (Roger on 526a9ec8).
+		const releases: RawRelease[] = [];
+		let url: null | string = `https://api.github.com/repos/${repo}/releases?per_page=100`;
+		for (let page = 0; url !== null; page++) {
+			if (page === MAX_PAGES) {
+				return { error: `more than ${MAX_PAGES} pages of releases`, inWindow: [], repo };
+			}
+			const response = await fetchFn(url, { headers: githubHeaders(env) });
+			if (response.status !== 200)
+				return { error: `HTTP ${response.status}`, inWindow: [], repo };
+			const batch = (await response.json()) as RawRelease[];
+			releases.push(...batch);
+			url = nextLink(response.headers.get('link'));
+		}
 		return summarize(repo, releases, window.start, window.end);
 	} catch (err) {
 		return {

@@ -84,6 +84,11 @@ export async function diffWriteViolations(
 	for (const [path, status] of baseline.entries) {
 		if (current.has(path)) continue;
 		if (isPathAllowlisted(path, allowlist)) continue;
+		// A baseline-dirty path the run committed is clean because it is in a commit, not because
+		// it was discarded. Reporting it as discarded told the operator that files staged before
+		// the run, then swept into the run's commit, were "deleted and NOT recoverable" while they
+		// sat committed on disk (bbs-load-tester's .githooks, 2026-10-21).
+		if (byPath.get(path)?.committed === true) continue;
 		byPath.set(path, {
 			committed: false,
 			destructivelyDiscarded: true,

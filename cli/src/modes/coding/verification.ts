@@ -30,6 +30,24 @@ const blockedVerificationPatterns = [
 	/\bhuman (?:should|must|needs to) verify\b/i,
 ];
 
+// A line that says outright that no live, browser or UI check is owed (a docs-only change, say) is
+// not an admission that one was skipped, even when it also repeats the run's own note that live
+// verification is unavailable. rollshift 05025fa (2026-10-22) parked a statically verified
+// project.md correction on "no browser pass is owed ... live UI verification is blocked".
+const noLiveVerificationOwedPatterns = [
+	/\bno (?:live |browser |runtime |manual |ui |UI )*(?:pass|verification|check)(?:es)? (?:is |was )?(?:owed|needed|required)\b/i,
+	/\b(?:live |browser |runtime |ui |UI )?(?:verification|pass|check) (?:is|was) not (?:owed|needed|required)\b/i,
+];
+
+function admitsSkippedVerification(line: string): null | RegExpExecArray {
+	if (noLiveVerificationOwedPatterns.some((pattern) => pattern.test(line))) return null;
+	for (const pattern of blockedVerificationPatterns) {
+		const match = pattern.exec(line);
+		if (match) return match;
+	}
+	return null;
+}
+
 /**
  * Scan the agent's own prose (assistant_text events only — never tool output or raw logs) for an
  * admission that the feature's live verification was blocked or skipped. Returns the matched
@@ -55,14 +73,12 @@ export function detectBlockedVerificationAdmission(
 	for (const event of events.slice(lastToolIndex + 1)) {
 		if (event.type !== 'assistant_text') continue;
 		for (const line of event.chunk.split('\n')) {
-			for (const pattern of blockedVerificationPatterns) {
-				const match = pattern.exec(line);
-				if (match) {
-					return {
-						excerpt: line.trim().replace(/\s+/g, ' ').slice(0, 500),
-						phrase: match[0],
-					};
-				}
+			const match = admitsSkippedVerification(line);
+			if (match) {
+				return {
+					excerpt: line.trim().replace(/\s+/g, ' ').slice(0, 500),
+					phrase: match[0],
+				};
 			}
 		}
 	}

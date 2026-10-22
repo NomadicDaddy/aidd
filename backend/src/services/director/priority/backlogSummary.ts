@@ -22,12 +22,17 @@ export function summarizeBacklog(features: Feature[]): DirectorBacklogBreakdown 
 			!isAuditFinding(feature) &&
 			!feature.id.startsWith('remediation-'),
 	);
-	const readyRegular = regular.filter((feature) => dependenciesAreSatisfied(feature, features));
+	const ready = (items: Feature[]): Feature[] =>
+		items.filter((feature) => dependenciesAreSatisfied(feature, features));
+	const readyRegular = ready(regular);
+	// `top` becomes one runnable suggestion per record, so it carries only records whose
+	// dependencies are met; the counts still cover the whole backlog. A blocked remediation record
+	// offered as a suggestion launched a run that found nothing eligible (rollshift, 2026-10-22).
 	return {
 		audit: {
 			bySeverity: severityCounts(audit),
 			count: audit.length,
-			top: topItems(audit),
+			top: topItems(ready(audit)),
 		},
 		feature: {
 			blockedCount: regular.length - readyRegular.length,
@@ -37,7 +42,7 @@ export function summarizeBacklog(features: Feature[]): DirectorBacklogBreakdown 
 		},
 		remediation: {
 			count: remediation.length,
-			top: topItems(remediation),
+			top: topItems(ready(remediation)),
 		},
 	};
 }

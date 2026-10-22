@@ -137,6 +137,42 @@ describe('summarizeBacklog dependency readiness', () => {
 			'archive-cli-command-suite',
 		]);
 	});
+
+	// rollshift, 2026-10-22: a remediation record blocked by another backlog record became a
+	// suggestion, and its launched run found no eligible work.
+	test('offers only dependency-ready remediation and audit records, and still counts the rest', () => {
+		const backlog = summarizeBacklog([
+			{
+				dependencies: ['remediation-project-md'],
+				id: 'remediation-boot-wipe',
+				passes: false,
+				priority: 1,
+				status: 'backlog',
+				title: 'Boot profile write erases a preserved store',
+			},
+			{
+				id: 'remediation-project-md',
+				passes: false,
+				priority: 2,
+				status: 'backlog',
+				title: 'Project override still names IndexedDB drift',
+			},
+			{
+				auditSource: 'SECURITY',
+				dependencies: ['remediation-project-md'],
+				id: 'audit-blocked-1',
+				passes: false,
+				priority: 1,
+				status: 'backlog',
+				title: 'Blocked finding',
+			},
+		]);
+
+		expect(backlog.remediation.count).toBe(2);
+		expect(backlog.remediation.top.map((item) => item.id)).toEqual(['remediation-project-md']);
+		expect(backlog.audit.count).toBe(1);
+		expect(backlog.audit.top).toEqual([]);
+	});
 });
 
 describe('dedupDirectorSuggestions', () => {

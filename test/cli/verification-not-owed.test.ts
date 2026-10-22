@@ -1,3 +1,4 @@
+import type { SelectedWork } from 'aidd-shared/modes/types';
 import type { AgentRunResult } from 'aidd-shared/orchestrator/result';
 
 import { describe, expect, test } from 'bun:test';
@@ -48,7 +49,7 @@ describe('live verification is owed by the record, not the wording', () => {
 			['.aidd\\features\\x\\feature.json'],
 		]) {
 			const store = await storeWithRecord('doc', files, STATIC_SPEC);
-			expect(await recordOwesLiveVerification(store, ID)).toBe(false);
+			expect(await recordOwesLiveVerification(store, ID, undefined)).toBe(false);
 		}
 	});
 
@@ -63,7 +64,7 @@ describe('live verification is owed by the record, not the wording', () => {
 			undefined,
 		]) {
 			const store = await storeWithRecord('src', files, STATIC_SPEC);
-			expect(await recordOwesLiveVerification(store, ID)).toBe(true);
+			expect(await recordOwesLiveVerification(store, ID, undefined)).toBe(true);
 		}
 	});
 
@@ -73,7 +74,25 @@ describe('live verification is owed by the record, not the wording', () => {
 			['docs/guide.md'],
 			'1. Verify the guide renders in the browser with the new heading.',
 		);
-		expect(await recordOwesLiveVerification(store, ID)).toBe(true);
+		expect(await recordOwesLiveVerification(store, ID, undefined)).toBe(true);
+	});
+
+	// Morticia on c3dfb77: the agent can edit its own record mid-run, so the copy it was selected
+	// with counts too, and either copy owing wins.
+	test('trimming the record mid-run earns no exemption', async () => {
+		const store = await storeWithRecord('trimmed', ['.aidd/project.md'], STATIC_SPEC);
+		const selected = selectedRecord(['.aidd/project.md', 'src/store.ts'], STATIC_SPEC);
+		expect(await recordOwesLiveVerification(store, ID, selected)).toBe(true);
+		const reworded = selectedRecord(
+			['.aidd/project.md'],
+			'1. Verify it renders in the browser.',
+		);
+		expect(await recordOwesLiveVerification(store, ID, reworded)).toBe(true);
+	});
+
+	test('a ".." segment never counts as documentation', async () => {
+		const store = await storeWithRecord('dotdot', ['.aidd/../src/page.md'], STATIC_SPEC);
+		expect(await recordOwesLiveVerification(store, ID, undefined)).toBe(true);
 	});
 
 	test('the detector still reads every admission, mixed lines included', () => {
@@ -89,7 +108,17 @@ describe('live verification is owed by the record, not the wording', () => {
 	});
 });
 
-function completedWith(line: string): AgentRunResult {
+// The run's selected work carries the whole record as it was selected.
+function selectedRecord(affectedFiles: string[], spec: string): SelectedWork {
+	return {
+		data: { affectedFiles, id: ID, spec, status: 'in_progress' },
+		description: 'Selected',
+		id: ID,
+		kind: 'feature',
+	};
+}
+
+function completedWith(line: string, selected: SelectedWork): AgentRunResult {
 	return {
 		events: [
 			{
@@ -99,12 +128,7 @@ function completedWith(line: string): AgentRunResult {
 		],
 		exitCode: 0,
 		filesModified: [],
-		selectedWork: {
-			data: { status: 'in_progress' },
-			description: 'Selected',
-			id: ID,
-			kind: 'feature',
-		},
+		selectedWork: selected,
 		structuredResult: { featureId: ID, passes: true, status: 'completed' },
 		transcript: '',
 	};
@@ -113,25 +137,34 @@ function completedWith(line: string): AgentRunResult {
 describe('completion path for a blocked-verification admission', () => {
 	test('a static project.md record completes', async () => {
 		const store = await storeWithRecord('complete', ['.aidd/project.md'], STATIC_SPEC);
-		const evaluation = await evaluateFeatureCompletion(store, completedWith(ROLLSHIFT_LINE));
+		const selected = selectedRecord(['.aidd/project.md'], STATIC_SPEC);
+		const evaluation = await evaluateFeatureCompletion(
+			store,
+			completedWith(ROLLSHIFT_LINE, selected),
+		);
 		expect(evaluation.verificationBlockedParked).toBe(false);
 		expect(evaluation.shouldComplete).toBe(true);
 	});
 
 	test('a docs-path executable parks', async () => {
 		const store = await storeWithRecord('script', ['docs/example.ts'], STATIC_SPEC);
-		const evaluation = await evaluateFeatureCompletion(store, completedWith(ROLLSHIFT_LINE));
+		const selected = selectedRecord(['docs/example.ts'], STATIC_SPEC);
+		const evaluation = await evaluateFeatureCompletion(
+			store,
+			completedWith(ROLLSHIFT_LINE, selected),
+		);
 		expect(evaluation.verificationBlockedParked).toBe(true);
 		expect(evaluation.shouldComplete).toBe(false);
 	});
 
 	test('a documentation-only record that names a live check parks', async () => {
-		const store = await storeWithRecord(
-			'live',
-			['docs/guide.md'],
-			'1. Verify the guide renders in the browser.',
+		const liveSpec = '1. Verify the guide renders in the browser.';
+		const store = await storeWithRecord('live', ['docs/guide.md'], liveSpec);
+		const selected = selectedRecord(['docs/guide.md'], liveSpec);
+		const evaluation = await evaluateFeatureCompletion(
+			store,
+			completedWith(ROLLSHIFT_LINE, selected),
 		);
-		const evaluation = await evaluateFeatureCompletion(store, completedWith(ROLLSHIFT_LINE));
 		expect(evaluation.verificationBlockedParked).toBe(true);
 		expect(evaluation.shouldComplete).toBe(false);
 	});

@@ -72,7 +72,10 @@ export async function evaluateFeatureCompletion(
 		// feature's live verification was blocked or skipped is rejected and the feature routed to
 		// waiting_approval, never counted as a completion.
 		const admission = detectBlockedVerificationAdmission(result.events);
-		if (admission && (await recordOwesLiveVerification(store, selectedFeatureId))) {
+		if (
+			admission &&
+			(await recordOwesLiveVerification(store, selectedFeatureId, result.selectedWork))
+		) {
 			const parked = await parkBlockedVerificationFeature(
 				store,
 				selectedFeatureId,

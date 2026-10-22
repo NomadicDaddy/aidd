@@ -55,20 +55,37 @@ const liveCriterion =
  * was parked because its final line repeated the run's note that live UI verification was blocked,
  * and exempting by phrasing leaked real admissions on the same line (Morticia on 5e5d08e). It owes
  * none only when every affected file is documentation and no spec clause names a live check; a
- * record with no affectedFiles, or one that is gone, still owes it.
+ * record with no affectedFiles, or one that is gone, still owes it. Both the copy the run selected
+ * and the copy on disk afterwards are read, and either one owing wins, because the agent can edit
+ * its own record mid-run: trimming affectedFiles or rewording the spec earns nothing (Morticia on
+ * c3dfb77).
  * @param store The metadata store.
  * @param featureId The record the run selected.
- * @returns False only for a documentation-only record whose spec asks for no live check.
+ * @param selected The run's selected work, whose data is the record as it was selected.
+ * @returns False only when neither copy gives a reason to owe a live check.
  */
 export async function recordOwesLiveVerification(
 	store: AiddStore,
 	featureId: string,
+	selected: SelectedWork | undefined,
 ): Promise<boolean> {
-	const feature = await readFeatureIfPresent(store, featureId);
-	const files = feature?.affectedFiles;
+	// No selection copy means nothing to compare, not a record that owes; the disk copy decides.
+	if (selected?.kind === 'feature' && featureOwesLiveVerification(selected.data)) return true;
+	return featureOwesLiveVerification(await readFeatureIfPresent(store, featureId));
+}
+
+function featureOwesLiveVerification(feature: unknown): boolean {
+	const record = (feature ?? {}) as { affectedFiles?: unknown; spec?: unknown };
+	const files = record.affectedFiles;
 	if (!Array.isArray(files) || files.length === 0) return true;
-	if (liveCriterion.test(typeof feature?.spec === 'string' ? feature.spec : '')) return true;
-	return !files.every((file) => documentationFile.test(file.replace(/\\/g, '/')));
+	if (liveCriterion.test(typeof record.spec === 'string' ? record.spec : '')) return true;
+	return !files.every((file) => typeof file === 'string' && isDocumentationFile(file));
+}
+
+// A ".." segment can walk out of .aidd/ or docs/ (".aidd/../src/page.md"), so it never counts.
+function isDocumentationFile(file: string): boolean {
+	const path = file.replace(/\\/g, '/');
+	return !path.split('/').includes('..') && documentationFile.test(path);
 }
 
 /**

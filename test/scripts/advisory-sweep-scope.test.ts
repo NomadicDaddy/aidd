@@ -32,6 +32,8 @@ describe('advisory sweep scope', () => {
 		const narrowed = selectRoots(['d:\\APPLICATIONS']);
 		expect(narrowed.skipped.map((s) => s.root)).toEqual([
 			'D:\\amiga',
+			'D:\\applications.worktrees',
+			'D:\\bbs',
 			'D:\\infra',
 			'D:\\scripts',
 		]);
@@ -50,7 +52,8 @@ describe('advisory sweep scope', () => {
 			toolCheck: 'did not apply',
 		});
 		expect(formatRow(result)).toContain(
-			`roots: ${root} 1 files; skipped D:\\amiga ${SKIPPED}, D:\\infra ${SKIPPED}, ` +
+			`roots: ${root} 1 files; skipped D:\\amiga ${SKIPPED}, ` +
+				`D:\\applications.worktrees ${SKIPPED}, D:\\bbs ${SKIPPED}, D:\\infra ${SKIPPED}, ` +
 				`D:\\scripts ${SKIPPED} |`,
 		);
 		expect(formatRow({ ...result, skipped: [] })).not.toContain('skipped');
@@ -73,7 +76,8 @@ describe('advisory sweep scope', () => {
 		expect(formatRow(result)).toBe('2026-10-08 | FAILED: 0 files scanned');
 		expect(describeScope(result)).toBe(
 			`${empty} no npm surface + ${absent} UNSWEPT (root not readable); skipped ` +
-				`D:\\amiga ${SKIPPED}, D:\\applications ${SKIPPED}, D:\\infra ${SKIPPED}, ` +
+				`D:\\amiga ${SKIPPED}, D:\\applications ${SKIPPED}, ` +
+				`D:\\applications.worktrees ${SKIPPED}, D:\\bbs ${SKIPPED}, D:\\infra ${SKIPPED}, ` +
 				`D:\\scripts ${SKIPPED}`,
 		);
 

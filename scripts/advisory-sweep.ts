@@ -32,8 +32,17 @@ import {
 import { matchFile, scanRoot } from './lib/advisory-sweep/scan.ts';
 
 // Every repo-holding root (Phillip #8053). D:\amiga is not an application root, but it carries
-// an npm install surface of its own, so it is swept like the rest.
-const DEFAULT_ROOTS = ['D:\\amiga', 'D:\\applications', 'D:\\infra', 'D:\\scripts'];
+// an npm install surface of its own, so it is swept like the rest. D:\bbs is its own repository
+// with a bun.lock (#13615), and team worktrees live in D:\applications.worktrees (#13717); leaving
+// them out missed two real vite hits on 2026-10-21 (Carl #18607).
+const DEFAULT_ROOTS = [
+	'D:\\amiga',
+	'D:\\applications',
+	'D:\\applications.worktrees',
+	'D:\\bbs',
+	'D:\\infra',
+	'D:\\scripts',
+];
 const DEFAULT_SWEEPS_FILE = 'D:\\infra\\advisory-sweeps.md';
 // The control must be findable the way a real finding is: a declaration or a resolved lockfile
 // entry of its own. The earlier control, @ianvs/prettier-plugin-sort-imports, occurs only inside

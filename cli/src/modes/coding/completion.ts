@@ -8,6 +8,7 @@ import {
 	detectBlockedVerificationAdmission,
 	featureStatusAtSelection,
 	parkBlockedVerificationFeature,
+	recordOwesLiveVerification,
 	recordVerificationSelfPark,
 	trailingAgentExplanation,
 } from './verification.ts';
@@ -71,7 +72,7 @@ export async function evaluateFeatureCompletion(
 		// feature's live verification was blocked or skipped is rejected and the feature routed to
 		// waiting_approval, never counted as a completion.
 		const admission = detectBlockedVerificationAdmission(result.events);
-		if (admission) {
+		if (admission && (await recordOwesLiveVerification(store, selectedFeatureId))) {
 			const parked = await parkBlockedVerificationFeature(
 				store,
 				selectedFeatureId,

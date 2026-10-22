@@ -30,22 +30,45 @@ const blockedVerificationPatterns = [
 	/\bhuman (?:should|must|needs to) verify\b/i,
 ];
 
-// A line that says outright that no live, browser or UI check is owed (a docs-only change, say) is
-// not an admission that one was skipped, even when it also repeats the run's own note that live
-// verification is unavailable. rollshift 05025fa (2026-10-22) parked a statically verified
-// project.md correction on "no browser pass is owed ... live UI verification is blocked".
-const noLiveVerificationOwedPatterns = [
-	/\bno (?:live |browser |runtime |manual |ui |UI )*(?:pass|verification|check)(?:es)? (?:is |was )?(?:owed|needed|required)\b/i,
-	/\b(?:live |browser |runtime |ui |UI )?(?:verification|pass|check) (?:is|was) not (?:owed|needed|required)\b/i,
-];
-
 function admitsSkippedVerification(line: string): null | RegExpExecArray {
-	if (noLiveVerificationOwedPatterns.some((pattern) => pattern.test(line))) return null;
 	for (const pattern of blockedVerificationPatterns) {
 		const match = pattern.exec(line);
 		if (match) return match;
 	}
 	return null;
+}
+
+// A file that cannot carry live behaviour: prose or an .aidd record, in a place that holds only
+// documentation. Not every Markdown file (beazley.org renders posts/ and guides/ as pages,
+// Morticia on #19035), and not every file under docs/ or .aidd/ (a script there still runs,
+// Roger on #19037).
+const documentationFile =
+	/^(?:(?:\.aidd|docs)\/.*\.(?:md|txt)|\.aidd\/.*\.json|(?:README|CHANGELOG|AGENTS)\.md)$/i;
+
+// A spec clause that names a live check owes one, whatever its files are (Roger on #19037).
+const liveCriterion =
+	/\b(?:browser|rendered|runtime|end-to-end|e2e|screenshot|agent-browser|live (?:ui|page|site|run|check|verification|journey|server|app))\b/i;
+
+/**
+ * Whether the selected record can owe live verification. The record decides, not the agent's
+ * wording: rollshift 05025fa (2026-10-22), a statically verified correction to .aidd/project.md,
+ * was parked because its final line repeated the run's note that live UI verification was blocked,
+ * and exempting by phrasing leaked real admissions on the same line (Morticia on 5e5d08e). It owes
+ * none only when every affected file is documentation and no spec clause names a live check; a
+ * record with no affectedFiles, or one that is gone, still owes it.
+ * @param store The metadata store.
+ * @param featureId The record the run selected.
+ * @returns False only for a documentation-only record whose spec asks for no live check.
+ */
+export async function recordOwesLiveVerification(
+	store: AiddStore,
+	featureId: string,
+): Promise<boolean> {
+	const feature = await readFeatureIfPresent(store, featureId);
+	const files = feature?.affectedFiles;
+	if (!Array.isArray(files) || files.length === 0) return true;
+	if (liveCriterion.test(typeof feature?.spec === 'string' ? feature.spec : '')) return true;
+	return !files.every((file) => documentationFile.test(file.replace(/\\/g, '/')));
 }
 
 /**

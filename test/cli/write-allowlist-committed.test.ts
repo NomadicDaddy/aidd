@@ -64,6 +64,50 @@ describe('write-allowlist guard - a baseline-staged file the run commits', () =>
 		expect(await Bun.file(join(dir, '.githooks', 'pre-push')).exists()).toBe(true);
 	});
 
+	// Morticia's Low on 4d5fcf17: a file untracked at baseline (`??`) has no unstaged part to lose
+	// once the run commits it.
+	test('an untracked baseline file the run commits whole is not reported as discarded', async () => {
+		const dir = await makeRepo('aidd-wal-untracked-committed-');
+		await writeFile(join(dir, 'notes.txt'), 'operator notes\n', 'utf8');
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+
+		await git(dir, 'add', 'notes.txt');
+		await git(dir, 'commit', '-m', 'the run commits the untracked file');
+
+		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
+		if (!violations) throw new Error('Expected violations diff');
+		expect(violations).toEqual([
+			{ committed: true, destructivelyDiscarded: false, path: 'notes.txt', untracked: false },
+		]);
+		expect(describeWriteGuardRevert(violations, [], 'shared')).not.toContain('discarded');
+	});
+
+	// Roger's converse (#18582): `MM` at baseline, and the run stages the rest and commits it all,
+	// so the commit holds exactly what was on disk and nothing was lost.
+	test('an MM file the run commits whole is not reported as discarded', async () => {
+		const dir = await makeRepo('aidd-wal-mm-whole-');
+		await writeFile(join(dir, 'tracked.ts'), 'staged edit\n', 'utf8');
+		await git(dir, 'add', 'tracked.ts');
+		await writeFile(join(dir, 'tracked.ts'), 'staged edit\nunstaged edit\n', 'utf8');
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+
+		await git(dir, 'add', 'tracked.ts');
+		await git(dir, 'commit', '-m', 'the run commits all of it');
+
+		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
+		if (!violations) throw new Error('Expected violations diff');
+		expect(violations).toEqual([
+			{
+				committed: true,
+				destructivelyDiscarded: false,
+				path: 'tracked.ts',
+				untracked: false,
+			},
+		]);
+	});
+
 	// Morticia's Low on c5a4972c: with staged and unstaged edits at baseline (`MM`), the commit
 	// holds only the staged part, so a later discard of the rest is a loss the guard must report.
 	test('still reports the unstaged edits a discard lost after the commit', async () => {

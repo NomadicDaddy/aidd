@@ -1,3 +1,6 @@
+import { statSync } from 'node:fs';
+import { join } from 'node:path';
+
 async function readProcessText(stream: ReadableStream<Uint8Array>): Promise<string> {
 	return new Response(stream).text();
 }
@@ -31,6 +34,40 @@ export async function pathExistsInTree(
 	path: string,
 ): Promise<boolean> {
 	return (await gitCapture(projectDir, ['cat-file', '-e', `${tree}:${path}`])) !== null;
+}
+
+// The blob id git would store for each path that is a regular file on disk now, keyed by path.
+// A path that is missing or not a file is left out, so "absent" compares equal to "absent".
+export async function worktreeBlobs(
+	projectDir: string,
+	paths: Iterable<string>,
+): Promise<Map<string, string>> {
+	const files = [...paths].filter(
+		(path) =>
+			!path.includes('\n') &&
+			statSync(join(projectDir, path), { throwIfNoEntry: false })?.isFile(),
+	);
+	const blobs = new Map<string, string>();
+	if (files.length === 0) return blobs;
+	try {
+		const proc = Bun.spawn(['git', 'hash-object', '--stdin-paths'], {
+			cwd: projectDir,
+			stderr: 'pipe',
+			stdin: new TextEncoder().encode(`${files.join('\n')}\n`),
+			stdout: 'pipe',
+			windowsHide: true,
+		});
+		const [stdout, code] = await Promise.all([readProcessText(proc.stdout), proc.exited]);
+		if (code !== 0) return blobs;
+		const ids = stdout.split('\n');
+		files.forEach((path, index) => {
+			const id = ids[index]?.trim();
+			if (id) blobs.set(path, id);
+		});
+	} catch {
+		return blobs;
+	}
+	return blobs;
 }
 
 export async function gitStatusEntries(projectDir: string): Promise<Map<string, string> | null> {

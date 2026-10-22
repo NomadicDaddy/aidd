@@ -1,6 +1,11 @@
 import type { WriteGuardSnapshot, WriteViolation } from './write-allowlist/types.ts';
 
-import { committedPathsSince, gitHead, gitStatusEntries } from './write-allowlist/git.ts';
+import {
+	committedPathsSince,
+	gitHead,
+	gitStatusEntries,
+	worktreeBlobs,
+} from './write-allowlist/git.ts';
 
 // Shared write-allowlist guard: snapshot the worktree before a step/backend runs,
 // diff after, and revert anything written outside the allowlisted relative paths.
@@ -20,7 +25,8 @@ export async function captureWriteGuardSnapshot(
 ): Promise<null | WriteGuardSnapshot> {
 	const entries = await gitStatusEntries(projectDir);
 	if (entries === null) return null;
-	return { entries, head: await gitHead(projectDir) };
+	const blobs = await worktreeBlobs(projectDir, entries.keys());
+	return { blobs, entries, head: await gitHead(projectDir) };
 }
 
 function normalizeAllowEntry(entry: string): string {
@@ -75,7 +81,7 @@ export async function diffWriteViolations(
 			untracked: false,
 		});
 	}
-	addDiscardedViolations(byPath, baseline, current, allowlist);
+	await addDiscardedViolations(projectDir, byPath, baseline, current, allowlist);
 	return [...byPath.values()].sort((left, right) => left.path.localeCompare(right.path));
 }
 
@@ -85,31 +91,32 @@ export async function diffWriteViolations(
 // bash workspace policy never fires, and they make the tree CLEANER — so the dirty-path
 // diff finds nothing. Flagging these paths as violations lets the caller block
 // or report the loss of uncommitted operator work outside the allowlist.
-function addDiscardedViolations(
+//
+// A path clean now holds what HEAD holds, so it lost something only if its baseline content is not
+// that. Deciding by content, not by status code, keeps a path the run committed whole (staged-only,
+// untracked, or `MM` with the rest staged too) from being reported as discarded: that told the
+// operator files staged before the run were "deleted and NOT recoverable" while they sat committed
+// on disk (bbs-load-tester's .githooks, 2026-10-21). A path partly committed and then discarded
+// still differs, and is still reported.
+async function addDiscardedViolations(
+	projectDir: string,
 	byPath: Map<string, WriteViolation>,
 	baseline: WriteGuardSnapshot,
 	current: Map<string, string>,
 	allowlist: string[],
-): void {
-	for (const [path, status] of baseline.entries) {
-		if (current.has(path) || isPathAllowlisted(path, allowlist)) continue;
-		const violation = discardedViolation(path, status, byPath.get(path)?.committed === true);
-		if (violation) byPath.set(path, violation);
+): Promise<void> {
+	const candidates = [...baseline.entries.keys()].filter(
+		(path) => !current.has(path) && !isPathAllowlisted(path, allowlist),
+	);
+	const now = await worktreeBlobs(projectDir, candidates);
+	for (const path of candidates) {
+		if (baseline.blobs.get(path) === now.get(path)) continue;
+		const status = baseline.entries.get(path) ?? '';
+		byPath.set(path, discardedViolation(path, status, byPath.get(path)?.committed === true));
 	}
 }
 
-// A baseline-dirty path the run committed may be clean only because it is in a commit. When its
-// baseline dirt was all staged, the commit holds all of it and nothing was discarded; reporting it
-// as discarded told the operator that files staged before the run were "deleted and NOT
-// recoverable" while they sat committed on disk (bbs-load-tester's .githooks, 2026-10-21). When it
-// also had unstaged edits (`MM`, `AM`), the commit holds only the staged part, and the unstaged
-// edits are gone: that loss is still reported.
-function discardedViolation(
-	path: string,
-	status: string,
-	committed: boolean,
-): null | WriteViolation {
-	if (committed && status[1] === ' ') return null;
+function discardedViolation(path: string, status: string, committed: boolean): WriteViolation {
 	return {
 		committed,
 		destructivelyDiscarded: true,

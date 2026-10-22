@@ -2,7 +2,7 @@
 /**
  * advisory-sweep.ts
  *
- * The daily digest's advisory lockfile check as one deterministic step: walks the duty's four
+ * The daily digest's advisory lockfile check as one deterministic step: walks the duty's default
  * roots for manifests and lockfiles (never node_modules), matches each package the advisories
  * named as a dependency key or lockfile entry (never a substring), proves the match with a
  * positive control, prints the one row the directive's step 11e specifies, and with --append

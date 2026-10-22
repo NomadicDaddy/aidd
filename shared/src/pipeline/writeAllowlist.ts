@@ -75,36 +75,52 @@ export async function diffWriteViolations(
 			untracked: false,
 		});
 	}
-	// Destructive detection: a baseline-dirty path that is no longer dirty (not in the
-	// current status) was discarded by something like `git reset --hard`, `git checkout .`,
-	// `git restore .`, or `git clean -fdx`. These commands take no path argument so the
-	// bash workspace policy never fires, and they make the tree CLEANER — so the dirty-path
-	// diff above finds nothing. Flagging these paths as violations lets the caller block
-	// or report the loss of uncommitted operator work outside the allowlist.
-	for (const [path, status] of baseline.entries) {
-		if (current.has(path)) continue;
-		if (isPathAllowlisted(path, allowlist)) continue;
-		// A baseline-dirty path the run committed may be clean only because it is in a commit.
-		// When its baseline dirt was all staged, the commit holds all of it and nothing was
-		// discarded; reporting it as discarded told the operator that files staged before the run
-		// were "deleted and NOT recoverable" while they sat committed on disk (bbs-load-tester's
-		// .githooks, 2026-10-21). When it also had unstaged edits (`MM`, `AM`), the commit holds
-		// only the staged part, and the unstaged edits are gone: that loss is still reported.
-		const committed = byPath.get(path)?.committed === true;
-		if (committed && status[1] === ' ') continue;
-		byPath.set(path, {
-			committed,
-			destructivelyDiscarded: true,
-			path,
-			// Whether any committed version exists is read from the baseline status, which is the
-			// only evidence there is: a path untracked (`??`) or newly added (`A`) at baseline had
-			// none, so its discard deleted the file outright, unless the run committed it. This was
-			// `false` unconditionally, and the loss message then promised a committed version that
-			// did not exist.
-			untracked: !committed && (status === '??' || status.startsWith('A')),
-		});
-	}
+	addDiscardedViolations(byPath, baseline, current, allowlist);
 	return [...byPath.values()].sort((left, right) => left.path.localeCompare(right.path));
+}
+
+// Destructive detection: a baseline-dirty path that is no longer dirty (not in the
+// current status) was discarded by something like `git reset --hard`, `git checkout .`,
+// `git restore .`, or `git clean -fdx`. These commands take no path argument so the
+// bash workspace policy never fires, and they make the tree CLEANER — so the dirty-path
+// diff finds nothing. Flagging these paths as violations lets the caller block
+// or report the loss of uncommitted operator work outside the allowlist.
+function addDiscardedViolations(
+	byPath: Map<string, WriteViolation>,
+	baseline: WriteGuardSnapshot,
+	current: Map<string, string>,
+	allowlist: string[],
+): void {
+	for (const [path, status] of baseline.entries) {
+		if (current.has(path) || isPathAllowlisted(path, allowlist)) continue;
+		const violation = discardedViolation(path, status, byPath.get(path)?.committed === true);
+		if (violation) byPath.set(path, violation);
+	}
+}
+
+// A baseline-dirty path the run committed may be clean only because it is in a commit. When its
+// baseline dirt was all staged, the commit holds all of it and nothing was discarded; reporting it
+// as discarded told the operator that files staged before the run were "deleted and NOT
+// recoverable" while they sat committed on disk (bbs-load-tester's .githooks, 2026-10-21). When it
+// also had unstaged edits (`MM`, `AM`), the commit holds only the staged part, and the unstaged
+// edits are gone: that loss is still reported.
+function discardedViolation(
+	path: string,
+	status: string,
+	committed: boolean,
+): null | WriteViolation {
+	if (committed && status[1] === ' ') return null;
+	return {
+		committed,
+		destructivelyDiscarded: true,
+		path,
+		// Whether any committed version exists is read from the baseline status, which is the
+		// only evidence there is: a path untracked (`??`) or newly added (`A`) at baseline had
+		// none, so its discard deleted the file outright, unless the run committed it. This was
+		// `false` unconditionally, and the loss message then promised a committed version that
+		// did not exist.
+		untracked: !committed && (status === '??' || status.startsWith('A')),
+	};
 }
 
 export function formatViolationPaths(violations: WriteViolation[], limit = 8): string {

@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
@@ -134,5 +134,32 @@ describe('write-allowlist guard - a baseline-staged file the run commits', () =>
 		const text = describeWriteGuardRevert(violations, [], 'shared');
 		expect(text).toContain('uncommitted edits were discarded and are NOT restored');
 		expect(text).not.toContain('NOT recoverable');
+	});
+
+	// Roger's Medium and Morticia's Low on 1c433ff3: a baseline file that could not be hashed is
+	// unverifiable, not absent, so deleting it must still be reported.
+	test('a file whose baseline hash failed is reported when the run deletes it', async () => {
+		const dir = await makeRepo('aidd-wal-unhashed-');
+		// A required clean filter that always fails makes `git hash-object` refuse the file.
+		await git(dir, 'config', 'filter.broken.clean', 'false');
+		await git(dir, 'config', 'filter.broken.required', 'true');
+		await writeFile(join(dir, '.gitattributes'), 'scratch.txt filter=broken\n', 'utf8');
+		await writeFile(join(dir, 'scratch.txt'), 'operator scratch\n', 'utf8');
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+		expect(baseline.blobs.get('scratch.txt')).toBeNull();
+
+		await rm(join(dir, 'scratch.txt'));
+
+		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
+		if (!violations) throw new Error('Expected violations diff');
+		expect(violations).toEqual([
+			{
+				committed: false,
+				destructivelyDiscarded: true,
+				path: 'scratch.txt',
+				untracked: true,
+			},
+		]);
 	});
 });

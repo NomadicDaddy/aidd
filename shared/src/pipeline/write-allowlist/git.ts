@@ -38,17 +38,29 @@ export async function pathExistsInTree(
 
 // The blob id git would store for each path that is a regular file on disk now, keyed by path.
 // A path that is missing or not a file is left out, so "absent" compares equal to "absent".
+// A file that exists but could not be hashed maps to null, never to "absent": treating an
+// unreadable file as absent let a deleted file compare equal to a failed baseline hash and hid the
+// loss (Roger and Morticia on 1c433ff3). A caller must treat null on either side as a change.
 export async function worktreeBlobs(
 	projectDir: string,
 	paths: Iterable<string>,
-): Promise<Map<string, string>> {
+): Promise<Map<string, null | string>> {
 	const files = [...paths].filter(
-		(path) =>
-			!path.includes('\n') &&
-			statSync(join(projectDir, path), { throwIfNoEntry: false })?.isFile(),
+		(path) => statSync(join(projectDir, path), { throwIfNoEntry: false })?.isFile() === true,
 	);
-	const blobs = new Map<string, string>();
-	if (files.length === 0) return blobs;
+	const blobs = new Map<string, null | string>(files.map((path) => [path, null]));
+	// --stdin-paths reads one path per line, so a name with a newline in it cannot be asked for.
+	const hashable = files.filter((path) => !path.includes('\n'));
+	const ids = await hashObjects(projectDir, hashable);
+	hashable.forEach((path, index) => {
+		const id = ids?.[index]?.trim();
+		if (id) blobs.set(path, id);
+	});
+	return blobs;
+}
+
+async function hashObjects(projectDir: string, files: string[]): Promise<null | string[]> {
+	if (files.length === 0) return [];
 	try {
 		const proc = Bun.spawn(['git', 'hash-object', '--stdin-paths'], {
 			cwd: projectDir,
@@ -58,16 +70,10 @@ export async function worktreeBlobs(
 			windowsHide: true,
 		});
 		const [stdout, code] = await Promise.all([readProcessText(proc.stdout), proc.exited]);
-		if (code !== 0) return blobs;
-		const ids = stdout.split('\n');
-		files.forEach((path, index) => {
-			const id = ids[index]?.trim();
-			if (id) blobs.set(path, id);
-		});
+		return code === 0 ? stdout.split('\n') : null;
 	} catch {
-		return blobs;
+		return null;
 	}
-	return blobs;
 }
 
 export async function gitStatusEntries(projectDir: string): Promise<Map<string, string> | null> {

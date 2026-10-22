@@ -13,8 +13,9 @@ export type WriteGuardCheckout = 'isolated' | 'shared';
 export interface WriteGuardSnapshot {
 	/** Work-tree blob id per baseline-dirty path that was a file on disk at baseline. Whether a
 	 * path that is clean afterwards lost anything is a question about content, not status: it did
-	 * only if this blob is no longer what the path holds. */
-	blobs: Map<string, string>;
+	 * only if this blob is no longer what the path holds. null marks a file that could not be
+	 * hashed: it is unverifiable, not absent, and is never taken to be unchanged. */
+	blobs: Map<string, null | string>;
 	/** Porcelain status line per path (XY codes), for paths dirty at baseline. */
 	entries: Map<string, string>;
 	/** HEAD sha at baseline (undefined for a repo with no commits yet). Backends that

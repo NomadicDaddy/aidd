@@ -110,10 +110,16 @@ async function addDiscardedViolations(
 	);
 	const now = await worktreeBlobs(projectDir, candidates);
 	for (const path of candidates) {
-		if (baseline.blobs.get(path) === now.get(path)) continue;
+		if (sameContent(baseline.blobs.get(path), now.get(path))) continue;
 		const status = baseline.entries.get(path) ?? '';
 		byPath.set(path, discardedViolation(path, status, byPath.get(path)?.committed === true));
 	}
+}
+
+// undefined is a path that was not a file (absent), null one that could not be hashed. Absent on
+// both sides is unchanged; anything unhashed on either side is not known to be, so it is reported.
+function sameContent(before: null | string | undefined, after: null | string | undefined): boolean {
+	return before !== null && after !== null && before === after;
 }
 
 function discardedViolation(path: string, status: string, committed: boolean): WriteViolation {

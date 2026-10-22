@@ -57,9 +57,9 @@ function cacheValue(): ProjectListingCacheValue {
 				staleThresholdDays: 30,
 			},
 			backlog: {
-				audit: { bySeverity: {}, count: 0, top: [] },
+				audit: { blockedCount: 0, bySeverity: {}, count: 0, readyCount: 0, top: [] },
 				feature: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
-				remediation: { count: 0, top: [] },
+				remediation: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
 			},
 			priorityHealth: {
 				band: 'healthy',

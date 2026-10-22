@@ -109,9 +109,9 @@ const emptyAuditHealth: DirectorAuditHealth = {
 
 function backlogWithRemediation(count: number): DirectorBacklogBreakdown {
 	return {
-		audit: { bySeverity: {}, count: 0, top: [] },
+		audit: { blockedCount: 0, bySeverity: {}, count: 0, readyCount: 0, top: [] },
 		feature: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
-		remediation: { count, top: [] },
+		remediation: { blockedCount: 0, count, readyCount: count, top: [] },
 	};
 }
 

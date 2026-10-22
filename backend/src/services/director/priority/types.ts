@@ -47,8 +47,10 @@ export interface DirectorBacklogItemSummary {
 
 export interface DirectorBacklogBreakdown {
 	audit: {
+		blockedCount: number;
 		bySeverity: Record<string, number>;
 		count: number;
+		readyCount: number;
 		top: DirectorBacklogItemSummary[];
 	};
 	feature: {
@@ -58,7 +60,9 @@ export interface DirectorBacklogBreakdown {
 		top: DirectorBacklogItemSummary[];
 	};
 	remediation: {
+		blockedCount: number;
 		count: number;
+		readyCount: number;
 		top: DirectorBacklogItemSummary[];
 	};
 }

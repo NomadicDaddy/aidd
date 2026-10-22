@@ -24,15 +24,20 @@ export function summarizeBacklog(features: Feature[]): DirectorBacklogBreakdown 
 	);
 	const ready = (items: Feature[]): Feature[] =>
 		items.filter((feature) => dependenciesAreSatisfied(feature, features));
+	const readyAudit = ready(audit);
 	const readyRegular = ready(regular);
-	// `top` becomes one runnable suggestion per record, so it carries only records whose
-	// dependencies are met; the counts still cover the whole backlog. A blocked remediation record
-	// offered as a suggestion launched a run that found nothing eligible (rollshift, 2026-10-22).
+	const readyRemediation = ready(remediation);
+	// Each bucket's `top` and readyCount drive runnable suggestions, so they cover only records
+	// whose dependencies are met; `count` still covers the whole backlog for health. A blocked
+	// remediation record offered as a suggestion launched a run that found nothing eligible
+	// (rollshift, 2026-10-22).
 	return {
 		audit: {
+			blockedCount: audit.length - readyAudit.length,
 			bySeverity: severityCounts(audit),
 			count: audit.length,
-			top: topItems(ready(audit)),
+			readyCount: readyAudit.length,
+			top: topItems(readyAudit),
 		},
 		feature: {
 			blockedCount: regular.length - readyRegular.length,
@@ -41,8 +46,10 @@ export function summarizeBacklog(features: Feature[]): DirectorBacklogBreakdown 
 			top: topItems(readyRegular),
 		},
 		remediation: {
+			blockedCount: remediation.length - readyRemediation.length,
 			count: remediation.length,
-			top: topItems(ready(remediation)),
+			readyCount: readyRemediation.length,
+			top: topItems(readyRemediation),
 		},
 	};
 }

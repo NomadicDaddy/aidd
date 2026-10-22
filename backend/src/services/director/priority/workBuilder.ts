@@ -67,12 +67,15 @@ export function buildProjectWork(
 	}
 	const suppressBacklog = profileSuppressesBacklog(project);
 	const auditPolicy = auditBacklogPolicy(project, backlog.audit.bySeverity);
-	if (auditsEnabled && !suppressBacklog && backlog.audit.count > 0 && auditPolicy.include) {
+	// Like the feature bucket below, a backlog bucket is offered only while some record in it can
+	// run; `count` is the ready number so a rollup's "+N more" never counts blocked records.
+	if (auditsEnabled && !suppressBacklog && backlog.audit.readyCount > 0 && auditPolicy.include) {
 		work.push({
 			evidence: {
 				auditBacklogCount: backlog.audit.count,
+				blockedCount: backlog.audit.blockedCount,
 				bySeverity: backlog.audit.bySeverity,
-				count: backlog.audit.count,
+				count: backlog.audit.readyCount,
 				maturityDeferred: maturityDefersAudits(project),
 				maturityStage: project.metadata.maturity.currentStageId,
 				profile: profileEvidence(project),
@@ -83,7 +86,7 @@ export function buildProjectWork(
 			projectId: project.routeId,
 			projectName: project.name,
 			rank: 0,
-			reason: `${project.name} has ${backlog.audit.count} audit backlog item(s). ${auditPolicy.reason}`,
+			reason: `${project.name} has ${backlog.audit.count} audit backlog item(s), with ${backlog.audit.readyCount} dependency-ready. ${auditPolicy.reason}`,
 			riskLevel: auditPolicy.riskLevel,
 			suggestedArgs: { filterBy: 'id', filterValue: 'audit-*' },
 			suggestedRecipe: 'remediate-audit-findings',
@@ -91,10 +94,12 @@ export function buildProjectWork(
 			title: `${project.name}: resolve audit backlog`,
 		});
 	}
-	if (!suppressBacklog && backlog.remediation.count > 0) {
+	const readyRemediationCount = backlog.remediation.readyCount;
+	if (!suppressBacklog && readyRemediationCount > 0) {
 		work.push({
 			evidence: {
-				count: backlog.remediation.count,
+				blockedCount: backlog.remediation.blockedCount,
+				count: readyRemediationCount,
 				profile: profileEvidence(project),
 				remediationBacklogCount: backlog.remediation.count,
 				sourcePriority: topPriority(backlog.remediation.top),
@@ -103,8 +108,8 @@ export function buildProjectWork(
 			projectId: project.routeId,
 			projectName: project.name,
 			rank: 0,
-			reason: `${project.name} has ${backlog.remediation.count} remediation backlog item(s).`,
-			riskLevel: backlog.remediation.count > 2 ? 'HIGH' : 'MEDIUM',
+			reason: `${project.name} has ${backlog.remediation.count} remediation backlog item(s), with ${readyRemediationCount} dependency-ready.`,
+			riskLevel: readyRemediationCount > 2 ? 'HIGH' : 'MEDIUM',
 			suggestedArgs: { filterBy: 'id', filterValue: 'remediation-*' },
 			suggestedRecipe: 'remediate-bugs',
 			taskType: 'remediation_backlog',

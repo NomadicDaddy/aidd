@@ -95,9 +95,9 @@ function makeBacklog(
 	}> = {},
 ): DirectorBacklogBreakdown {
 	return {
-		audit: { bySeverity: {}, count: 0, top: [] },
+		audit: { blockedCount: 0, bySeverity: {}, count: 0, readyCount: 0, top: [] },
 		feature: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
-		remediation: { count: 0, top: [] },
+		remediation: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
 		...overrides,
 	};
 }
@@ -112,7 +112,7 @@ const emptyAuditHealth: DirectorAuditHealth = {
 
 function auditBacklogItem(project: ProjectSummaryDto, bySeverity: Record<string, number>) {
 	const backlog = makeBacklog({
-		audit: { bySeverity, count: 1, top: [] },
+		audit: { blockedCount: 0, bySeverity, count: 1, readyCount: 1, top: [] },
 	});
 	const work = buildProjectWork(project, backlog, emptyAuditHealth, true);
 	return work.find((item) => item.taskType === 'audit_backlog');
@@ -144,7 +144,15 @@ describe('director onboarding intake suggestion', () => {
 		// established audit work sorted ahead of the intake nudge.
 		const work = buildProjectWork(
 			project,
-			makeBacklog({ audit: { bySeverity: { high: 1 }, count: 1, top: [] } }),
+			makeBacklog({
+				audit: {
+					blockedCount: 0,
+					bySeverity: { high: 1 },
+					count: 1,
+					readyCount: 1,
+					top: [],
+				},
+			}),
 			emptyAuditHealth,
 			true,
 		);
@@ -261,5 +269,31 @@ describe('director audit-work maturity deferral', () => {
 
 		expect(maintenance?.evidence.maturityDeferred).toBe(true);
 		expect(maintenance?.evidence.profileAdjustment).toContain('deferred_premature_maturity');
+	});
+});
+
+// Morticia's Low on 86c6dd4: an all-blocked bucket's aggregate launched a run with nothing to do.
+describe('director backlog buckets need a dependency-ready record', () => {
+	const project = makeProject({ profile: fullHardeningProfile, stage: 'engaged' });
+	const bucket = (readyCount: number) => ({ blockedCount: 2 - readyCount, count: 2, readyCount });
+	const tasks = (readyCount: number) =>
+		buildProjectWork(
+			project,
+			makeBacklog({
+				audit: { ...bucket(readyCount), bySeverity: { high: 2 }, top: [] },
+				remediation: { ...bucket(readyCount), top: [] },
+			}),
+			emptyAuditHealth,
+			true,
+		).map((item) => item.taskType);
+
+	test('an all-blocked audit or remediation bucket offers nothing', () => {
+		expect(tasks(0)).not.toContain('audit_backlog');
+		expect(tasks(0)).not.toContain('remediation_backlog');
+	});
+
+	test('one ready record brings the bucket back', () => {
+		expect(tasks(1)).toContain('audit_backlog');
+		expect(tasks(1)).toContain('remediation_backlog');
 	});
 });

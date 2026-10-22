@@ -29,8 +29,10 @@ export interface FleetSummaryProject {
 	};
 	backlog: {
 		audit: {
+			blockedCount: number;
 			bySeverity: Record<string, number>;
 			count: number;
+			readyCount: number;
 			top: {
 				auditSeverity?: string;
 				id: string;
@@ -45,7 +47,9 @@ export interface FleetSummaryProject {
 			top: { id: string; priority: null | number; title: string }[];
 		};
 		remediation: {
+			blockedCount: number;
 			count: number;
+			readyCount: number;
 			top: { id: string; priority: null | number; title: string }[];
 		};
 	};

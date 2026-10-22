@@ -22,35 +22,26 @@ export function summarizeBacklog(features: Feature[]): DirectorBacklogBreakdown 
 			!isAuditFinding(feature) &&
 			!feature.id.startsWith('remediation-'),
 	);
-	const ready = (items: Feature[]): Feature[] =>
-		items.filter((feature) => dependenciesAreSatisfied(feature, features));
-	const readyAudit = ready(audit);
-	const readyRegular = ready(regular);
-	const readyRemediation = ready(remediation);
-	// Each bucket's `top` and readyCount drive runnable suggestions, so they cover only records
-	// whose dependencies are met; `count` still covers the whole backlog for health. A blocked
-	// remediation record offered as a suggestion launched a run that found nothing eligible
-	// (rollshift, 2026-10-22).
 	return {
-		audit: {
-			blockedCount: audit.length - readyAudit.length,
-			bySeverity: severityCounts(audit),
-			count: audit.length,
-			readyCount: readyAudit.length,
-			top: topItems(readyAudit),
-		},
-		feature: {
-			blockedCount: regular.length - readyRegular.length,
-			count: regular.length,
-			readyCount: readyRegular.length,
-			top: topItems(readyRegular),
-		},
-		remediation: {
-			blockedCount: remediation.length - readyRemediation.length,
-			count: remediation.length,
-			readyCount: readyRemediation.length,
-			top: topItems(readyRemediation),
-		},
+		audit: { ...bucket(audit, features), bySeverity: severityCounts(audit) },
+		feature: bucket(regular, features),
+		remediation: bucket(remediation, features),
+	};
+}
+
+// A bucket's `top` and readyCount drive runnable suggestions, so they cover only records whose
+// dependencies are met; `count` still covers the whole backlog for health. A blocked remediation
+// record offered as a suggestion launched a run that found nothing eligible (rollshift, 2026-10-22).
+function bucket(
+	items: Feature[],
+	all: Feature[],
+): { blockedCount: number; count: number; readyCount: number; top: DirectorBacklogItemSummary[] } {
+	const ready = items.filter((feature) => dependenciesAreSatisfied(feature, all));
+	return {
+		blockedCount: items.length - ready.length,
+		count: items.length,
+		readyCount: ready.length,
+		top: topItems(ready),
 	};
 }
 

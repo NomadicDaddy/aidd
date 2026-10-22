@@ -21,7 +21,13 @@ import { exit } from 'node:process';
 import { parseArgs } from 'node:util';
 
 import { fetchAdvisories, formatAdvisoryLine } from './lib/news-digest/advisories.ts';
-import { type FetchFn, fetchText, htmlToText, parseFeed } from './lib/news-digest/fetch.ts';
+import {
+	boundedFetch,
+	type FetchFn,
+	fetchText,
+	htmlToText,
+	parseFeed,
+} from './lib/news-digest/fetch.ts';
 import { fetchStackReleases } from './lib/news-digest/releases.ts';
 import {
 	addItems,
@@ -154,7 +160,7 @@ async function runPage(
 export async function runDigestCommand(
 	positionals: string[],
 	options: DigestOptions,
-	fetchFn: FetchFn = fetch,
+	fetchFn: FetchFn = boundedFetch(),
 	print: Print = (line) => console.log(line),
 ): Promise<number> {
 	const [command, argument] = positionals;

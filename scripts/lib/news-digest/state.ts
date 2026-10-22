@@ -3,7 +3,7 @@
  * first reported on an earlier day is never reported again; one first reported today came from an
  * earlier run of the same day and stays. Entries older than seven days are pruned.
  */
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, rename, writeFile } from 'node:fs/promises';
 
 export interface DigestItem {
 	firstReported: string;
@@ -37,8 +37,12 @@ export async function readState(path: string): Promise<DigestState> {
 	return { ...parsed, items: Array.isArray(parsed.items) ? parsed.items : [] };
 }
 
+// Written beside the target and renamed over it, so a run killed mid-write leaves the previous
+// state whole instead of a truncated file every later run fails to parse.
 export async function writeState(path: string, state: DigestState): Promise<void> {
-	await writeFile(path, `${JSON.stringify(state, null, '\t')}\n`, 'utf8');
+	const temp = `${path}.${process.pid}.tmp`;
+	await writeFile(temp, `${JSON.stringify(state, null, '\t')}\n`, 'utf8');
+	await rename(temp, path);
 }
 
 /** Items first reported before `day`: the ones a digest written on `day` must not repeat. */

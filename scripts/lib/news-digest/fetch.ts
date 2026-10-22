@@ -27,6 +27,49 @@ export function nextLink(link: null | string): null | string {
 	return /<([^>]+)>;\s*rel="next"/.exec(link)?.[1] ?? null;
 }
 
+const FETCH_TIMEOUT_MS = 30_000;
+const MAX_RESPONSE_BYTES = 5_000_000;
+
+/**
+ * A fetch that gives up after `timeoutMs` (headers and body together) and refuses a body larger
+ * than `maxBytes`, so one stalled or runaway host fails its command instead of hanging the
+ * scheduled digest.
+ */
+export function boundedFetch(
+	inner: FetchFn = fetch,
+	timeoutMs = FETCH_TIMEOUT_MS,
+	maxBytes = MAX_RESPONSE_BYTES,
+): FetchFn {
+	return async (url, init) => {
+		const response = await inner(url, { ...init, signal: AbortSignal.timeout(timeoutMs) });
+		const reader = response.body?.getReader();
+		if (!reader) return response;
+		const chunks: Uint8Array[] = [];
+		let size = 0;
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) break;
+			size += value.byteLength;
+			if (size > maxBytes) {
+				await reader.cancel();
+				throw new Error(`Response from ${url} is larger than ${maxBytes} bytes`);
+			}
+			chunks.push(value);
+		}
+		const body = new Uint8Array(size);
+		let offset = 0;
+		for (const chunk of chunks) {
+			body.set(chunk, offset);
+			offset += chunk.byteLength;
+		}
+		return new Response(body, {
+			headers: response.headers,
+			status: response.status,
+			statusText: response.statusText,
+		});
+	};
+}
+
 /** Fetch a page as a browser would ask for it, and fail loudly on anything but a 2xx. */
 export async function fetchText(url: string, fetchFn: FetchFn, accept: string): Promise<string> {
 	const response = await fetchFn(url, { headers: { accept, 'user-agent': BROWSER_AGENT } });
@@ -44,10 +87,16 @@ const ENTITIES: Record<string, string> = {
 	'&quot;': '"',
 };
 
+const MAX_CODE_POINT = 0x10ffff;
+
 function decodeEntities(text: string): string {
 	return text
 		.replace(/&(?:#39|amp|apos|gt|lt|nbsp|quot);/g, (entity) => ENTITIES[entity] ?? entity)
-		.replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)));
+		.replace(/&#(\d+);/g, (entity, code: string) => {
+			// Beyond Unicode, String.fromCodePoint throws, and one bad entity would fail the page.
+			const point = Number(code);
+			return point <= MAX_CODE_POINT ? String.fromCodePoint(point) : entity;
+		});
 }
 
 /** Readable text from an HTML page: scripts, styles and tags removed, whitespace collapsed. */

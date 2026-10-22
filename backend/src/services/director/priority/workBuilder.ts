@@ -190,6 +190,57 @@ function artifactIssueSummary(
 	};
 }
 
+// Health-only items for audit and remediation buckets whose every record waits on an unmet
+// dependency. buildProjectWork offers only buckets that can run, so without these a project with
+// open but blocked findings scored healthy (Morticia on 81c6abb). They carry no recipe and are
+// passed to buildPriorityHealth only, never offered as suggestions. A dependency id that names no
+// record counts as unmet, so a mistyped or deleted dependency shows up here as well.
+export function buildBlockedBacklogHealthWork(
+	project: ProjectSummaryDto,
+	backlog: DirectorBacklogBreakdown,
+	auditsEnabled: boolean,
+): DirectorPrioritizedWork[] {
+	if (profileSuppressesBacklog(project)) return [];
+	const blocked: DirectorPrioritizedWork[] = [];
+	const auditPolicy = auditBacklogPolicy(project, backlog.audit.bySeverity);
+	if (auditsEnabled && auditPolicy.include && allBlocked(backlog.audit)) {
+		blocked.push(
+			blockedItem(project, 'audit_backlog', backlog.audit.count, auditPolicy.riskLevel),
+		);
+	}
+	if (allBlocked(backlog.remediation)) {
+		blocked.push(
+			blockedItem(project, 'remediation_backlog', backlog.remediation.count, 'MEDIUM'),
+		);
+	}
+	return blocked;
+}
+
+function allBlocked(bucket: { count: number; readyCount: number }): boolean {
+	return bucket.count > 0 && bucket.readyCount === 0;
+}
+
+function blockedItem(
+	project: ProjectSummaryDto,
+	taskType: 'audit_backlog' | 'remediation_backlog',
+	count: number,
+	riskLevel: DirectorRiskLevel,
+): DirectorPrioritizedWork {
+	const label = taskType === 'audit_backlog' ? 'audit' : 'remediation';
+	return {
+		evidence: { blockedCount: count, count, profile: profileEvidence(project), readyCount: 0 },
+		projectId: project.routeId,
+		projectName: project.name,
+		rank: 0,
+		reason: `${project.name} has ${count} ${label} backlog item(s), all blocked by unmet dependencies.`,
+		riskLevel,
+		suggestedArgs: null,
+		suggestedRecipe: null,
+		taskType,
+		title: `${project.name}: ${label} backlog blocked by dependencies`,
+	};
+}
+
 function profileSuppressesBacklog(project: ProjectSummaryDto): boolean {
 	return project.metadata.profile.bucket === 'prototype_archive';
 }

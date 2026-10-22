@@ -20,7 +20,11 @@ export {
 import { checkAuditHealth } from './director/priority/auditHealth.ts';
 import { summarizeBacklog } from './director/priority/backlogSummary.ts';
 import { buildPriorityHealth, sortPrioritizedWork } from './director/priority/priorityHealth.ts';
-import { buildProjectWork, expandTargetedWork } from './director/priority/workBuilder.ts';
+import {
+	buildBlockedBacklogHealthWork,
+	buildProjectWork,
+	expandTargetedWork,
+} from './director/priority/workBuilder.ts';
 export { expandTargetedWork, sortPrioritizedWork };
 export async function buildDirectorProjectPriority(
 	project: ProjectSummaryDto,
@@ -42,8 +46,12 @@ export async function buildDirectorProjectPriority(
 		}),
 	]);
 	const backlog = summarizeBacklog(features);
-	const work = buildProjectWork(project, backlog, auditHealth, options.auditsEnabled ?? true);
-	const priorityHealth = buildPriorityHealth(work);
+	const auditsEnabled = options.auditsEnabled ?? true;
+	const work = buildProjectWork(project, backlog, auditHealth, auditsEnabled);
+	const priorityHealth = buildPriorityHealth([
+		...work,
+		...buildBlockedBacklogHealthWork(project, backlog, auditsEnabled),
+	]);
 	return { auditHealth, backlog, priorityHealth, work };
 }
 
@@ -53,7 +61,10 @@ export function applyDirectorAuditPolicy(
 	auditsEnabled: boolean,
 ): DirectorProjectPrioritySummary {
 	const work = buildProjectWork(project, summary.backlog, summary.auditHealth, auditsEnabled);
-	const priorityHealth = buildPriorityHealth(work);
+	const priorityHealth = buildPriorityHealth([
+		...work,
+		...buildBlockedBacklogHealthWork(project, summary.backlog, auditsEnabled),
+	]);
 	return { ...summary, priorityHealth, work };
 }
 

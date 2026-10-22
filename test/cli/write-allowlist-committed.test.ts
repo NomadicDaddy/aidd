@@ -63,4 +63,32 @@ describe('write-allowlist guard - a baseline-staged file the run commits', () =>
 		expect(text).not.toContain('NOT recoverable');
 		expect(await Bun.file(join(dir, '.githooks', 'pre-push')).exists()).toBe(true);
 	});
+
+	// Morticia's Low on c5a4972c: with staged and unstaged edits at baseline (`MM`), the commit
+	// holds only the staged part, so a later discard of the rest is a loss the guard must report.
+	test('still reports the unstaged edits a discard lost after the commit', async () => {
+		const dir = await makeRepo('aidd-wal-mixed-committed-');
+		await writeFile(join(dir, 'tracked.ts'), 'staged edit\n', 'utf8');
+		await git(dir, 'add', 'tracked.ts');
+		await writeFile(join(dir, 'tracked.ts'), 'staged edit\nunstaged edit\n', 'utf8');
+		const baseline = await captureWriteGuardSnapshot(dir);
+		if (!baseline) throw new Error('Expected git snapshot');
+
+		await git(dir, 'commit', '-m', 'the run commits the staged part');
+		await git(dir, 'checkout', '--', 'tracked.ts');
+
+		const violations = await diffWriteViolations(dir, ['.aidd'], baseline);
+		if (!violations) throw new Error('Expected violations diff');
+		expect(violations).toEqual([
+			{
+				committed: true,
+				destructivelyDiscarded: true,
+				path: 'tracked.ts',
+				untracked: false,
+			},
+		]);
+		const text = describeWriteGuardRevert(violations, [], 'shared');
+		expect(text).toContain('uncommitted edits were discarded and are NOT restored');
+		expect(text).not.toContain('NOT recoverable');
+	});
 });

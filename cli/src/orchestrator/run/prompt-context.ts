@@ -88,7 +88,7 @@ export class IterationPromptContext {
 	private readonly rootDir: string;
 	private readonly runId: string | undefined;
 	private windDownNote: string | undefined;
-	private readonly writeAllowlist: readonly string[] | undefined;
+	private readonly writeAllowlistOption: { writeAllowlist?: readonly string[] };
 
 	constructor(
 		projectDir: string,
@@ -99,7 +99,8 @@ export class IterationPromptContext {
 		this.projectDir = projectDir;
 		this.rootDir = rootDir;
 		this.runId = runId;
-		this.writeAllowlist = writeAllowlist;
+		// Fixed for the run, so it is decided once here rather than on every compile.
+		this.writeAllowlistOption = writeAllowlist ? { writeAllowlist } : {};
 		this.appUrl = process.env[EXT_APP_URL_ENV];
 	}
 
@@ -150,7 +151,7 @@ export class IterationPromptContext {
 			...(this.appUrl ? { appUrl: this.appUrl, appUrlStatus } : {}),
 			...(carryoverNote ? { carryoverNote } : {}),
 			...(leasedFeatures.length > 0 ? { leasedFeatures } : {}),
-			...(this.writeAllowlist ? { writeAllowlist: this.writeAllowlist } : {}),
+			...this.writeAllowlistOption,
 		});
 	}
 }

@@ -13,7 +13,11 @@
  *   article <url> [--chars N]                   readable text of one page
  *   state known --date <YYYY-MM-DD>             URLs first reported before that day
  *   state add --date <YYYY-MM-DD> --file <json> record that day's items once, prune > 7 days
- *   validate --date <YYYY-MM-DD>                check that day's digest file
+ *   validate --date <YYYY-MM-DD>                check that day's digest file in news\
+ *   archive --date <YYYY-MM-DD>                 move news\ daily files > 7 days old to news\archive\
+ *
+ * The daily digests live in news\ under the digest folder, and the state file stays at its root
+ * (Phillip #20641).
  */
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -21,6 +25,7 @@ import { exit } from 'node:process';
 import { parseArgs } from 'node:util';
 
 import { fetchAdvisories, formatAdvisoryLine } from './lib/news-digest/advisories.ts';
+import { archiveOldDigests } from './lib/news-digest/archive.ts';
 import {
 	boundedFetch,
 	type FetchFn,
@@ -40,6 +45,9 @@ import {
 import { validateDigest } from './lib/news-digest/validate.ts';
 
 export const DIGEST_DIR = 'D:\\applications\\.news-digest';
+
+/** The subfolder of the digest folder that holds the daily `<YYYYMMDD>.md` files. */
+const NEWS_DIR = 'news';
 
 export interface DigestOptions {
 	chars?: string | undefined;
@@ -123,9 +131,18 @@ async function runState(
 	return 0;
 }
 
+async function runArchive(options: DigestOptions, dir: string, print: Print): Promise<number> {
+	const day = assertDay(required(options.date, 'date'));
+	const result = await archiveOldDigests(join(dir, NEWS_DIR), day);
+	for (const name of result.moved) print(`moved ${name} to ${NEWS_DIR}/archive/`);
+	for (const name of result.skipped) print(`left ${name}: ${NEWS_DIR}/archive/ already has it`);
+	print(`archived ${result.moved.length}, left ${result.skipped.length}`);
+	return result.skipped.length === 0 ? 0 : 1;
+}
+
 async function runValidate(options: DigestOptions, dir: string, print: Print): Promise<number> {
 	const day = assertDay(required(options.date, 'date'));
-	const file = join(dir, `${day.replaceAll('-', '')}.md`);
+	const file = join(dir, NEWS_DIR, `${day.replaceAll('-', '')}.md`);
 	const problems = validateDigest(await readFile(file, 'utf8'), day);
 	for (const problem of problems) print(`FAIL ${problem}`);
 	if (problems.length === 0) print(`OK ${file}`);
@@ -168,6 +185,8 @@ export async function runDigestCommand(
 	switch (command) {
 		case 'advisories':
 			return await runAdvisories(options, fetchFn, print);
+		case 'archive':
+			return await runArchive(options, dir, print);
 		case 'article':
 		case 'feed':
 			return await runPage(command, argument, options, fetchFn, print);

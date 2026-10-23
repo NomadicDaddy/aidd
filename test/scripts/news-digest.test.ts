@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { FetchFn } from '../../scripts/lib/news-digest/fetch.ts';
@@ -223,11 +223,12 @@ describe('news digest validate', () => {
 		]);
 	});
 
-	test('the command reads the day file and records state in the digest folder', async () => {
+	test('the command reads the day file from news/ and records state at the root', async () => {
 		const dir = await testTempDir('aidd-news-digest-');
 		roots.push(dir);
+		await mkdir(join(dir, 'news'));
 		await writeFile(
-			join(dir, '20261021.md'),
+			join(dir, 'news', '20261021.md'),
 			digest(0, 0, '2026-10-21 | advisory query: none'),
 		);
 		await writeFile(
@@ -247,5 +248,52 @@ describe('news digest validate', () => {
 		expect(saved.items).toHaveLength(1);
 		expect(saved.items[0]?.firstReported).toBe('2026-10-21');
 		expect(out).toContain('added 1, already recorded 0, pruned 0');
+	});
+});
+
+describe('news digest archive', () => {
+	test('moves daily files older than seven days into news/archive/ and keeps the rest', async () => {
+		const dir = await testTempDir('aidd-news-digest-');
+		roots.push(dir);
+		const news = join(dir, 'news');
+		await mkdir(join(news, 'archive'), { recursive: true });
+		for (const day of ['20261014', '20261015', '20261016', '20261023']) {
+			await writeFile(join(news, `${day}.md`), day);
+		}
+		await writeFile(join(news, 'notes.txt'), 'not a daily file');
+		const out: string[] = [];
+		const print = (line: string): void => void out.push(line);
+		expect(await runDigestCommand(['archive'], { date: '2026-10-23', dir }, fetch, print)).toBe(
+			0,
+		);
+		expect((await readdir(join(news, 'archive'))).sort()).toEqual([
+			'20261014.md',
+			'20261015.md',
+		]);
+		expect((await readdir(news)).sort()).toEqual([
+			'20261016.md',
+			'20261023.md',
+			'archive',
+			'notes.txt',
+		]);
+		expect(await readFile(join(news, 'archive', '20261014.md'), 'utf8')).toBe('20261014');
+		expect(out).toContain('archived 2, left 0');
+	});
+
+	test('leaves a file the archive already has, and says so', async () => {
+		const dir = await testTempDir('aidd-news-digest-');
+		roots.push(dir);
+		const news = join(dir, 'news');
+		await mkdir(join(news, 'archive'), { recursive: true });
+		await writeFile(join(news, '20261001.md'), 'new copy');
+		await writeFile(join(news, 'archive', '20261001.md'), 'archived copy');
+		const out: string[] = [];
+		const print = (line: string): void => void out.push(line);
+		expect(await runDigestCommand(['archive'], { date: '2026-10-23', dir }, fetch, print)).toBe(
+			1,
+		);
+		expect(await readFile(join(news, '20261001.md'), 'utf8')).toBe('new copy');
+		expect(await readFile(join(news, 'archive', '20261001.md'), 'utf8')).toBe('archived copy');
+		expect(out).toContain('left 20261001.md: news/archive/ already has it');
 	});
 });

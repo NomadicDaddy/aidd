@@ -89,8 +89,10 @@ export function recordToolCall(acc: EventAccumulator, event: ToolCallEvent): voi
 	acc.pendingCommand = command;
 }
 
-// A result that answers a final-check command records that check's status; an exit code is
-// authoritative, otherwise the output is read for one.
+// A result that answers a final-check command records that check's status. A non-zero exit code is
+// a failure. A zero one is the shell line's, not necessarily the gate's (`gate; echo; tail` exits
+// with the tail's status), so the output's own verdict comes first and the zero decides only when
+// the output gives none (Morticia and Roger on deeper's Director run, iteration 038).
 function recordFinalCheck(
 	acc: EventAccumulator,
 	command: string,
@@ -99,11 +101,9 @@ function recordFinalCheck(
 ): void {
 	const check = classifyFinalCheckCommand(command);
 	const status =
-		exitCode === undefined
-			? finalCheckStatusFromOutput(text)
-			: exitCode === 0
-				? 'passed'
-				: 'failed';
+		exitCode !== undefined && exitCode !== 0
+			? 'failed'
+			: (finalCheckStatusFromOutput(text) ?? (exitCode === 0 ? 'passed' : undefined));
 	if (check !== undefined && status !== undefined) acc.finalChecks[check] = status;
 	acc.pendingCommand = undefined;
 }

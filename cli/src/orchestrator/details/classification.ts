@@ -28,22 +28,49 @@ export function classifyErrorText(text: string): IterationErrorType | undefined 
 	return undefined;
 }
 
-const passedExitPattern =
-	/(?:(?:^|\n)\s*(?:Exit code|\[exit code):?\s*0\]?|\bexited with code 0\b|\(exit\s+0\)|\bexit status\s+0\b)/i;
-const failedExitPattern =
-	/(?:(?:^|\n)\s*(?:Exit code|\[exit code):?\s*(?!0\b)\d+\]?|\bexited with code\s+(?!0\b)\d+\b|\(exit\s+(?!0\b)\d+\)|\bexit status\s+(?!0\b)\d+\b)/i;
-const failMarkerPattern = /(?:^|\n)\s*\[FAIL\]\b/;
-const passMarkerPattern = /(?:^|\n)\s*\[PASS\]\b/;
+// The exit status a backend appends for the whole shell line. For `gate; echo; tail` it is the
+// tail's, so a zero here says nothing about the gate and only a non-zero one is a verdict.
+const wrapperExitPattern = /^\s*(?:Exit code|\[exit code):?\s*(\d+)\]?\s*$/i;
+// A marker is followed by a space or the line end: `\[FAIL\]\b` never matched `[FAIL] name`,
+// because there is no word boundary between `]` and a space.
+const failedLinePattern =
+	/^\s*\[FAIL\](?=\s|$)|\bexited with code\s+(?!0\b)\d+\b|\b\d+ step\(s\) failed\b|\(exit\s+(?!0\b)\d+\)|\bexit status\s+(?!0\b)\d+\b/i;
+const passedLinePattern =
+	/^\s*\[PASS\](?=\s|$)|\bexited with code 0\b|\(exit\s+0\)|\bexit status\s+0\b|\bcompleted successfully\b|\bqc passed\b/i;
+
+type LineVerdict = 'failed' | 'passed' | 'wrapper-zero' | undefined;
+
+function lineVerdict(line: string): LineVerdict {
+	const wrapper = wrapperExitPattern.exec(line);
+	if (wrapper) return wrapper[1] === '0' ? 'wrapper-zero' : 'failed';
+	if (failedLinePattern.test(line)) return 'failed';
+	return passedLinePattern.test(line) ? 'passed' : undefined;
+}
+
+/**
+ * The output's own verdict: its last verdict-bearing line decides, read from the end. Passing gate
+ * output can carry [FAIL] lines from negative fixtures earlier on, so no single line anywhere may
+ * decide; the runner's closing summary is last. A trailing zero wrapper exit is skipped (deeper's
+ * Director run, iteration 038: `smoke:qc …; echo; tail` failed with `exited with code 1` and still
+ * ended `[exit code: 0]`), and counts as a pass only when nothing else in the output gives one.
+ */
+function outputVerdict(text: string): 'failed' | 'passed' | undefined {
+	const lines = text.split('\n');
+	let wrapperZero = false;
+	for (let index = lines.length - 1; index >= 0; index--) {
+		const verdict = lineVerdict(lines[index] ?? '');
+		if (verdict === 'wrapper-zero') wrapperZero = true;
+		else if (verdict !== undefined) return verdict;
+	}
+	return wrapperZero ? 'passed' : undefined;
+}
 
 function commandOutputPassed(text: string): boolean {
-	if (failMarkerPattern.test(text)) return false;
-	if (passedExitPattern.test(text)) return true;
-	return passMarkerPattern.test(text) && !failedExitPattern.test(text);
+	return outputVerdict(text) === 'passed';
 }
 
 export function commandOutputFailed(text: string): boolean {
-	if (failedExitPattern.test(text)) return true;
-	return failMarkerPattern.test(text);
+	return outputVerdict(text) === 'failed';
 }
 
 /** Whether the output carries a definitive pass/fail verdict for the command that produced it.
@@ -70,9 +97,7 @@ export function classifyFinalCheckCommand(command: string): keyof FinalCheckSumm
 }
 
 export function finalCheckStatusFromOutput(text: string): FinalCheckStatus | undefined {
-	if (commandOutputPassed(text)) return 'passed';
-	if (commandOutputFailed(text)) return 'failed';
-	return undefined;
+	return outputVerdict(text);
 }
 
 export function commandMatchesErrorType(command: string, type: IterationErrorType): boolean {

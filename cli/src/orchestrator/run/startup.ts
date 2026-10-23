@@ -66,7 +66,12 @@ export async function initializeOrchestratorRun(
 		},
 		kind: 'ready',
 		mode: createModeHandler(plan),
-		promptContext: new IterationPromptContext(runRepoDir(plan), deps.rootDir, acc.runId),
+		promptContext: new IterationPromptContext(
+			runRepoDir(plan),
+			deps.rootDir,
+			acc.runId,
+			plan.writeAllowlist,
+		),
 		runStartedAtMs,
 	};
 }

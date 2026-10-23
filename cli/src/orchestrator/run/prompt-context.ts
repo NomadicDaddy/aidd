@@ -88,11 +88,18 @@ export class IterationPromptContext {
 	private readonly rootDir: string;
 	private readonly runId: string | undefined;
 	private windDownNote: string | undefined;
+	private readonly writeAllowlist: readonly string[] | undefined;
 
-	constructor(projectDir: string, rootDir: string, runId?: string) {
+	constructor(
+		projectDir: string,
+		rootDir: string,
+		runId?: string,
+		writeAllowlist?: readonly string[],
+	) {
 		this.projectDir = projectDir;
 		this.rootDir = rootDir;
 		this.runId = runId;
+		this.writeAllowlist = writeAllowlist;
 		this.appUrl = process.env[EXT_APP_URL_ENV];
 	}
 
@@ -143,6 +150,7 @@ export class IterationPromptContext {
 			...(this.appUrl ? { appUrl: this.appUrl, appUrlStatus } : {}),
 			...(carryoverNote ? { carryoverNote } : {}),
 			...(leasedFeatures.length > 0 ? { leasedFeatures } : {}),
+			...(this.writeAllowlist ? { writeAllowlist: this.writeAllowlist } : {}),
 		});
 	}
 }

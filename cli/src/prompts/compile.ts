@@ -25,6 +25,7 @@ import { type LeasedFeatureNotice, renderLeasedFeatures } from './compile/leased
 import { renderCodingPriorContext } from './compile/prior-context.ts';
 import { compileResultContract } from './compile/result-contract.ts';
 import { readFragment, stringVariable } from './compile/shared.ts';
+import { renderWriteAllowlist } from './compile/write-allowlist.ts';
 
 export interface PromptCompilerOptions {
 	/** Set when this project gitignores `.aidd/`, so the launch context can say the metadata is
@@ -47,6 +48,8 @@ export interface PromptCompilerOptions {
 	leasedFeatures?: readonly LeasedFeatureNotice[];
 	projectDir?: string;
 	rootDir: string;
+	/** The run's --write-allowlist, stated up front so the agent knows the limit before it writes. */
+	writeAllowlist?: readonly string[];
 }
 
 function sourcePath(plan: PromptPlan): string | undefined {
@@ -136,6 +139,8 @@ export async function compilePrompt(
 	// about which records it may not touch at all because another live run owns them.
 	const leasedFeatures = renderLeasedFeatures(options.leasedFeatures ?? []);
 	if (leasedFeatures) text += `\n\n---\n\n${leasedFeatures}`;
+	const writeAllowlist = renderWriteAllowlist(options.writeAllowlist ?? []);
+	if (writeAllowlist) text += `\n\n---\n\n${writeAllowlist}`;
 	// Immediately before the result contract, whose scope guard reads against `required_by`. Coding
 	// modes attach the selected feature's neighborhood; audits attach whole-project topology. Each
 	// renders empty without its data, so both are safe to try on every mode.

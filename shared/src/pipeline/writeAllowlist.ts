@@ -29,7 +29,7 @@ export async function captureWriteGuardSnapshot(
 	return { blobs, entries, head: await gitHead(projectDir) };
 }
 
-function normalizeAllowEntry(entry: string): string {
+export function normalizeAllowEntry(entry: string): string {
 	return entry
 		.replace(/\\/g, '/')
 		.replace(/^\.?\//, '')

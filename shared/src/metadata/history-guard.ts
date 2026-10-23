@@ -64,14 +64,35 @@ export const COMMIT_GUARDS = ['leak-guard.sh'];
 const COMMIT_MARKER = 'bash .githooks/leak-guard.sh';
 
 export type GuardOutcome =
+	| 'aidd-ignored'
 	| 'foreign-commit-hook'
 	| 'foreign-hook'
 	| 'foreign-hooks-path'
 	| 'installed'
 	| 'no-source'
 	| 'not-a-repo'
+	| 'removed-by-project'
 	| 'skipped'
 	| 'write-allowlist';
+
+/**
+ * Why a repository that does not track the push hook should be left without one, if it should.
+ * A repository that ignores `.aidd/` cannot commit `.aidd` history, so there is nothing to guard;
+ * one whose own history deleted the hook decided against it, and a stale local core.hooksPath
+ * still naming `.githooks` is not consent to put it back. A Director run on github-profile
+ * (2026-10-23) re-installed and staged six hook files that Phillip's own commit 8bf69bf had removed
+ * from that public repository.
+ */
+async function guardDeclined(projectDir: string): Promise<GuardOutcome | undefined> {
+	const tracked = await git(projectDir, ['ls-files', '--', `.githooks/${HOOK}`]);
+	if (tracked.ok && tracked.stdout !== '') return undefined;
+	// A path inside .aidd/features: fresh scaffolds ignore some .aidd subfolders, never this one.
+	const ignored = await git(projectDir, ['check-ignore', '-q', '.aidd/features/feature.json']);
+	if (ignored.ok) return 'aidd-ignored';
+	const removal = ['log', '-1', '--format=%H', '--diff-filter=D', '--', `.githooks/${HOOK}`];
+	const removed = await git(projectDir, removal);
+	return removed.ok && removed.stdout !== '' ? 'removed-by-project' : undefined;
+}
 
 export interface EnsureHistoryGuardOptions {
 	/**
@@ -118,6 +139,9 @@ export async function ensureHistoryGuard(
 	// project owns is refused as someone else's.
 	const prefix = await git(projectDir, ['rev-parse', '--show-prefix']);
 	if (!prefix.ok || prefix.stdout !== '') return 'not-a-repo';
+
+	const declined = await guardDeclined(projectDir);
+	if (declined !== undefined) return declined;
 
 	// The scaffold is the single source: it is what a fresh project is built from, whereas the
 	// repo-root .githooks/ is aidd's own.

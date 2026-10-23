@@ -32,11 +32,12 @@ export function classifyErrorText(text: string): IterationErrorType | undefined 
 // tail's, so a zero here says nothing about the gate and only a non-zero one is a verdict.
 const wrapperExitPattern = /^\s*(?:Exit code|\[exit code):?\s*(\d+)\]?\s*$/i;
 // A marker is followed by a space or the line end: `\[FAIL\]\b` never matched `[FAIL] name`,
-// because there is no word boundary between `]` and a space.
+// because there is no word boundary between `]` and a space. A bare `exit: N` line is an agent's
+// `echo "exit: $?"` after a redirected gate, so it carries the gate's own status (Morticia #19774).
 const failedLinePattern =
-	/^\s*\[FAIL\](?=\s|$)|\bexited with code\s+(?!0\b)\d+\b|\b\d+ step\(s\) failed\b|\(exit\s+(?!0\b)\d+\)|\bexit status\s+(?!0\b)\d+\b/i;
+	/^\s*\[FAIL\](?=\s|$)|^\s*exit:\s*(?!0\b)\d+\s*$|\bexited with code\s+(?!0\b)\d+\b|\b\d+ step\(s\) failed\b|\(exit\s+(?!0\b)\d+\)|\bexit status\s+(?!0\b)\d+\b/i;
 const passedLinePattern =
-	/^\s*\[PASS\](?=\s|$)|\bexited with code 0\b|\(exit\s+0\)|\bexit status\s+0\b|\bcompleted successfully\b|\bqc passed\b/i;
+	/^\s*\[PASS\](?=\s|$)|^\s*exit:\s*0\s*$|\bexited with code 0\b|\(exit\s+0\)|\bexit status\s+0\b|\bcompleted successfully\b|\bqc passed\b/i;
 
 type LineVerdict = 'failed' | 'passed' | 'wrapper-zero' | undefined;
 

@@ -66,6 +66,13 @@ describe('a final check reads the gate, not the wrapper', () => {
 		expect(finalCheckStatusFromOutput(PASSING_GATE_WITH_NEGATIVE_FIXTURE)).toBe('passed');
 	});
 
+	// Morticia #19774: `smoke:qc > log 2>&1; echo "exit: $?"` with no tail prints only the echo
+	// and then the wrapper's zero.
+	test('an echoed `exit: N` after a redirected gate is the gate verdict', () => {
+		expect(finalCheckStatusFromOutput('exit: 1\n\n[exit code: 0]')).toBe('failed');
+		expect(finalCheckStatusFromOutput('exit: 0\n\n[exit code: 0]')).toBe('passed');
+	});
+
 	test('[FAIL] and [PASS] markers followed by a name are recognised', () => {
 		expect(finalCheckStatusFromOutput('[FAIL] check:function-size')).toBe('failed');
 		expect(finalCheckStatusFromOutput('[PASS] build:analyze 18.6s')).toBe('passed');

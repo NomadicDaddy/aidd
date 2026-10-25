@@ -3,32 +3,22 @@
  * check-artifact-parity.ts
  *
  * Enforces: DATA-001 and DATA-005 -- docs/reference/artifacts.md is the complete catalog of
- * every `.aidd/` path aidd recognizes, scaffolding/.gitignore is its derived projection, and
- * artifact health stays observable from code and metadata rather than by inspection.
+ * every `.aidd/` path aidd recognizes, and scaffolding/.gitignore never lets any of it be committed
+ * (Phillip #21448: .aidd/ is untracked in every repository).
  *
- * Four failures are caught:
- *   1. class/rule disagreement — a committed row that an ignore rule matches (it
- *      would never be committed), or a non-committed row with no rule (it would be
- *      committed silently). The second is how runs.jsonl came to be tracked in six
- *      applications despite the catalog calling it `runtime`.
- *   2. redundant rules — the documented invariant is EXACTLY one matching rule.
- *   3. orphan rule — an ignore rule with no catalog row, i.e. an artifact being
- *      hidden that nothing documents.
- *   4. unparseable row — a row whose Artifact cell is not exactly one backticked
- *      path. Such rows are silently skipped by any validator, which defeats the
- *      point of having one.
- *
- * There is deliberately no class for artifacts aidd does not write — a rule kept only to hide
- * files nobody produces is indistinguishable from drift, and it defeats the orphan-rule check above.
+ * Failures caught:
+ *   1. no wholesale rule — the scaffold must ignore `/.aidd/` itself.
+ *   2. a repeated wholesale rule, or any per-path `.aidd/...` rule beside it. Either is redundant,
+ *      and redundancy hides which line is load-bearing: deleting one would silently change nothing.
+ *   3. unknown class — a row's class must still be one the catalog defines, because the class
+ *      carries the artifact-check level (required/recommended/optional) and the secret warning.
+ *   4. unparseable row — a row whose Artifact cell is not exactly one backticked path. Such rows
+ *      are silently skipped by any validator, which defeats the point of having one.
  *
  * Scope and limits — this check proves LESS than "the catalog is correct":
- *   - It compares the catalog to the scaffold. It CANNOT prove the catalog lists
- *     every path aidd touches; a path handled in code but absent from both files is
- *     invisible to it. Adding a row is still a manual step when adding a writer.
- *   - It does not inspect per-application .gitignore files, nor enumerate .aidd/
- *     in managed applications, so it cannot see an unclassified file on disk.
- *   - Its gitignore matching approximates the shapes the scaffold uses; it is not
- *     a full gitignore implementation.
+ *   - It CANNOT prove the catalog lists every path aidd touches; a path handled in code but absent
+ *     from the catalog is invisible to it. Adding a row is still a manual step when adding a writer.
+ *   - It does not inspect per-application .gitignore files; check:fleet-aidd-entries does that.
  *
  * The detection logic is exported as a pure function so test/scripts/artifact-parity.test.ts
  * can exercise each failure mode against synthetic inputs. A checker whose own failure
@@ -42,8 +32,17 @@ const ROOT = resolve(import.meta.dir, '..');
 const CATALOG = resolve(ROOT, 'docs', 'reference', 'artifacts.md');
 const SCAFFOLD = resolve(ROOT, 'scaffolding', '.gitignore');
 
-const COMMITTED = new Set(['optional', 'recommended', 'required', 'tracked']);
-const NOT_COMMITTED = new Set(['generated', 'runtime', 'secret']);
+const CLASSES = new Set([
+	'generated',
+	'optional',
+	'recommended',
+	'required',
+	'runtime',
+	'secret',
+	'tracked',
+]);
+/** The one scaffold rule for aidd metadata, after parseScaffold drops the root anchor. */
+const WHOLESALE = '.aidd/';
 
 interface CatalogRow {
 	class: string;
@@ -77,18 +76,6 @@ export const parseScaffold = (text: string): string[] =>
 		.filter((l) => l.startsWith('.aidd/') || l.startsWith('/.aidd/'))
 		.map((l) => l.replace(/^\//, ''));
 
-/** Approximates gitignore matching for the shapes the scaffold actually uses. */
-export const matches = (path: string, rule: string): boolean => {
-	const r = rule.replace(/\/$/, '');
-	const p = path.replace(/\/$/, '');
-	if (rule.endsWith('/')) return p === r || p.startsWith(`${r}/`);
-	if (rule.includes('*')) {
-		const rx = new RegExp(`^${r.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`);
-		return rx.test(p);
-	}
-	return p === r || p.startsWith(`${r}/`);
-};
-
 export function findParityProblems(
 	catalogText: string,
 	scaffoldText: string,
@@ -106,39 +93,27 @@ export function findParityProblems(
 	}
 
 	for (const row of rows) {
-		if (!COMMITTED.has(row.class) && !NOT_COMMITTED.has(row.class)) {
+		if (!CLASSES.has(row.class)) {
 			problems.push(
 				`${catalogLabel}:${row.line} — \`${row.path}\` has unknown class \`${row.class}\`.`,
-			);
-			continue;
-		}
-		const matching = rules.filter((r) => matches(row.path, r));
-		const committed = COMMITTED.has(row.class);
-		const ruleList = matching.map((r) => `\`${r}\``).join(', ');
-		if (committed && matching.length > 0) {
-			problems.push(
-				`${catalogLabel}:${row.line} — \`${row.path}\` is \`${row.class}\` (committed) but ${scaffoldLabel} hides it via ${ruleList}. It would never be committed.`,
-			);
-		} else if (!committed && matching.length === 0) {
-			problems.push(
-				`${catalogLabel}:${row.line} — \`${row.path}\` is \`${row.class}\` (not committed) but no ${scaffoldLabel} rule matches it. It would be committed silently.`,
-			);
-		} else if (!committed && matching.length > 1) {
-			// The documented invariant is EXACTLY one rule. Overlapping rules are not a Git error, but
-			// they mean deleting one rule silently changes nothing — so the next author cannot tell
-			// which rule is load-bearing, and drift hides behind the redundancy.
-			problems.push(
-				`${catalogLabel}:${row.line} — \`${row.path}\` is matched by ${matching.length} rules (${ruleList}). The invariant is exactly one; remove the redundant rule.`,
 			);
 		}
 	}
 
-	for (const rule of rules) {
-		if (!rows.some((row) => matches(row.path, rule))) {
-			problems.push(
-				`${scaffoldLabel} — rule \`${rule}\` has no row in the catalog. Add one to docs/reference/artifacts.md, or drop the rule.`,
-			);
-		}
+	const wholesale = rules.filter((rule) => rule === WHOLESALE);
+	if (wholesale.length === 0) {
+		problems.push(
+			`${scaffoldLabel} — no \`/${WHOLESALE}\` rule. .aidd/ is never committed (Phillip #21448), so the scaffold must ignore it wholesale.`,
+		);
+	} else if (wholesale.length > 1) {
+		problems.push(
+			`${scaffoldLabel} — \`/${WHOLESALE}\` appears ${wholesale.length} times. The invariant is exactly one; remove the repeat.`,
+		);
+	}
+	for (const rule of rules.filter((candidate) => candidate !== WHOLESALE)) {
+		problems.push(
+			`${scaffoldLabel} — rule \`${rule}\` is redundant: .aidd/ is ignored wholesale, so a per-path rule only hides which line is load-bearing. Remove it.`,
+		);
 	}
 
 	return problems;

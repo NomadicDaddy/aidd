@@ -7,35 +7,11 @@ ps_modules/
 
 # aidd / agent-generated artifacts
 #
-# Derived from the artifact catalog in docs/reference/artifacts.md: this block lists exactly the
-# rows classed runtime/generated/secret, and nothing else. Everything else under .aidd/ is
-# a durable blueprint and is committed on purpose. Add a row there before adding a rule here.
+# aidd's project metadata lives on disk and is never committed (docs/reference/artifacts.md). It
+# holds generated reports, run state and secrets as well as the blueprint, and a repository that
+# tracks any of it eventually has history to scrub.
 .agents/
-
-# generated — reproducible by re-running the producer
-.aidd/_common/
-.aidd/.artifacts-check.json
-.aidd/audit-reports/
-.aidd/audits/
-.aidd/docs/
-.aidd/feature-review-report.md
-.aidd/remediation-review.md
-.aidd/reports/
-.aidd/response-review.md
-.aidd/runtime/
-.aidd/screenshots/
-.aidd/skills/
-
-# runtime — meaningful only for the run that wrote it
-.aidd/active-runs/
-.aidd/findings-ledger.jsonl
-.aidd/iterations/
-.aidd/runs.jsonl
-.aidd/.stop
-.aidd/tmp/
-
-# secret — holds provider API keys, web.authToken, botToken; never commit
-.aidd/aidd.config.json
+/.aidd/
 
 .claude/
 .codex/

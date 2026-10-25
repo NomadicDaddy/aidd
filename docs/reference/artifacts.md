@@ -16,47 +16,38 @@ how they are refreshed, but they are not checked by `--check-artifacts`.
 
 **This table is the complete catalog: every `.aidd/` path aidd recognizes has exactly one row.**
 That is broader than "paths aidd writes" — `aidd.config.json` is only ever read by aidd (the
-matching writer targets the user config), and `roadmap.md` is hand-authored. If aidd
-starts recognizing a new path, it
-gets a row here first. `scaffolding/.gitignore` is then a _derived_ file — the mechanical
-projection of the non-committed classes — not an independently maintained list.
+matching writer targets the user config), and `roadmap.md` is hand-authored. If aidd starts
+recognizing a new path, it gets a row here first.
 
-`bun run check:artifact-parity` enforces the invariant below. Note what it cannot do: it compares
-this table to the ignore file, so it cannot prove the table lists every path aidd touches. A path
-handled in code but absent from both files is invisible to it. Adding the row remains a manual step
-when adding a writer or reader.
+**No `.aidd/` path is ever committed, in any repository** (Phillip, 2026-10-24, #21448). Project
+metadata lives on disk only. aidd reads and writes it there and never needs it from Git: not for a
+run, a fresh clone or CI. A repository that tracks any of it ends up with history to scrub, and the
+blueprint sits beside generated reports, run state and secrets that must never be published.
+`scaffolding/.gitignore` therefore ignores `/.aidd/` wholesale with one rule, and
+`bun run check:artifact-parity` enforces exactly that: one wholesale rule, no per-path `.aidd/`
+rules beside it, and a known class on every row. It cannot prove the table lists every path aidd
+touches; adding the row remains a manual step when adding a writer or reader.
+`bun run check:fleet-aidd-entries` checks the same rule in every repository on disk.
 
-The two files are therefore not literal mirrors, and should not be. A `tracked` artifact belongs
-in this catalog and must be **absent** from the ignore file; that absence is what commits it.
-Parity means _every artifact has a row_, and _the ignore file contains exactly the rows whose class
-is not committed_ — nothing more, nothing less.
+The class no longer decides Git disposition. It records what the artifact is:
 
-Each class states the artifact's **Git disposition**:
+| Class                               | Meaning                                                                  |
+| ----------------------------------- | ------------------------------------------------------------------------ |
+| `required`/`recommended`/`optional` | Durable blueprint, and checked by `--check-artifacts`.                   |
+| `tracked`                           | Durable blueprint, not part of the assertion catalog.                    |
+| `runtime`                           | Meaningful only for the run that wrote it.                               |
+| `generated`                         | Reproducible by re-running its producer.                                 |
+| `secret`                            | Confidential: may hold provider API keys, `web.authToken` or `botToken`. |
 
-| Class                               | Committed? | Ignore rule | Meaning                                                                                        |
-| ----------------------------------- | ---------- | ----------- | ---------------------------------------------------------------------------------------------- |
-| `required`/`recommended`/`optional` | yes        | must not    | Durable blueprint, and checked by `--check-artifacts`.                                         |
-| `tracked`                           | yes        | must not    | Durable blueprint, not part of the assertion catalog.                                          |
-| `runtime`                           | no         | must        | Meaningful only for the run that wrote it.                                                     |
-| `generated`                         | no         | must        | Reproducible by re-running its producer.                                                       |
-| `secret`                            | no         | must        | Confidential. Ignored because publishing it leaks credentials, not because it is reproducible. |
+Prompts update required metadata on disk, never commit it, and never force-add a path the target's
+ignore rules match. A completion marker may follow an ignored-metadata-only update when no source
+changes remain uncommitted. A repository that still tracks `.aidd/` from before #21448 keeps its
+files on disk when it stops tracking them (`git rm -r --cached .aidd`); its history still holds the
+old commits until someone deliberately scrubs it, and the pre-push history guard refuses to publish
+them.
 
-Committed artifacts are committed **in managed applications only**. An application with its own
-push remote ignores `.aidd/` wholesale, because publishing the blueprint is worse than losing the
-co-versioning it buys.
-
-Prompts must therefore treat this table as a default disposition, not permission to override the
-target repository. They update required metadata on disk in both profiles, commit it only when Git
-already tracks it, and never force-add a path matched by the target's ignore rules. A completion
-marker may follow an ignored-metadata-only update when no source changes remain uncommitted.
-
-`secret` is deliberately distinct from `generated`: a lost `generated` file can be regenerated,
-whereas the harm from a committed `secret` is disclosure and is not undone by deleting the file
-afterward. Never reclassify a `secret` row to make it committable.
-
-**The invariant:** a committed row must have no matching rule in `scaffolding/.gitignore`; a
-`runtime`/`generated`/`secret` row must have exactly one. A rule with no row, or a row
-with no rule, is drift — both have happened, and both went unnoticed for months.
+`secret` stays a separate class from `generated`: a lost `generated` file can be regenerated,
+whereas the harm from a disclosed `secret` is not undone by deleting the file afterward.
 
 The check result records `phase`, `preOnboarding`, and `staleThresholdDays` (30) alongside the
 per-artifact statuses. Missing **required** artifacts are informational until the project reaches

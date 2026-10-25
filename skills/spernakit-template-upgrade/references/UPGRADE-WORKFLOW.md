@@ -311,27 +311,24 @@ For each modified file (status `M`) that is template-managed, first check `.temp
 
 #### 7a.0. Ignore Files (`.gitignore`, `.prettierignore`): scaffold-sourced, NEVER root
 
-**Do not `cp` these from `<spernakit-root>/`.** Spernakit's own root ignore files carry the **local-only** profile: Spernakit has a published remote, so it hides `.aidd/` wholesale with a blanket `/.aidd/` rule and a `# release excludes` (`docs/internal/`) block. Derived apps are the opposite. They have no remote, so their `.aidd/` blueprint must be **tracked and co-versioned** with the code under a managed **denylist**. Copying Spernakit's root `.gitignore` into a derived app is precisely what reverted managed apps to blanket `/.aidd/` and hid their blueprints. This mirrors `init.ps1`, which already excludes both files from the root copy and seeds them from `scaffolding/`.
+**Do not `cp` these from `<spernakit-root>/`.** Spernakit's own root ignore files carry its publish-time `# release excludes` (`docs/internal/`) block, which has no meaning in a derived app. This mirrors `init.ps1`, which already excludes both files from the root copy and seeds them from `scaffolding/`.
 
-**The template source for these two files is `<spernakit-root>/scaffolding/`, not the repo root.** The managed `.aidd` denylist block in `scaffolding/.gitignore` is a projection of aidd's artifact catalog (only the runtime/generated/secret rows are ignored; every durable blueprint is committed).
+**The template source for these two files is `<spernakit-root>/scaffolding/`, not the repo root.** `.aidd/` is never committed in any repository (Phillip #21448), so the aidd block in a derived app's `.gitignore` is the single wholesale `/.aidd/` rule from aidd's `scaffolding/.gitignore`, with no per-path `.aidd/` rules beside it.
 
 **Strategy: three-way merge that preserves app-specific rules:**
 
 1. The app's `.gitignore` legitimately carries app-specific rules (`data/`, `benchmarks/`, `config/*.json`, app databases, etc.). Never clobber them. Do **not** `cp scaffolding/.gitignore` over the app file.
 2. Reconcile only the **aidd block** and any general template hygiene rules. Replace the app's `# aidd / agent-generated artifacts` block with the current `scaffolding/.gitignore` aidd block verbatim, leaving all app-specific sections intact.
-3. **Forbidden in a derived app:** if the merge would introduce either, drop it:
-    - A blanket `/.aidd/` (or unanchored `.aidd/`) rule. It hides durable blueprints and defeats co-versioning.
-    - The `# release excludes` / `docs/internal/` block. That is Spernakit's own publish-time exclusion and has no meaning in a derived app.
+3. **Forbidden in a derived app:** the `# release excludes` / `docs/internal/` block. That is Spernakit's own publish-time exclusion and has no meaning in a derived app; drop it if the merge would introduce it.
 4. Apply the same reconciliation to `.prettierignore` against `scaffolding/.prettierignore`.
 5. After merging, verify from aidd:
     ```bash
     bun run --cwd <aidd-root> check:fleet-aidd-entries
     ```
-    It must report zero problems for this app: every committed-class `.aidd/` entry tracked, every runtime/generated/secret entry ignored. Stage any newly-visible durable blueprints (`git add` the Track-class files; never the ignored ones).
+    It must report zero problems for this app: nothing under `.aidd/` tracked, a rule covering `.aidd/`, and every top-level entry classified. If the app still tracks `.aidd/` from before #21448, untrack it with `git rm -r --cached .aidd` in its own commit; the files stay on disk.
 
-If `scaffolding/` does not exist at the target tag, use the current aidd artifact catalog
-(`<aidd-root>/docs/reference/artifacts.md`) as the source of truth for the denylist. Never introduce
-a blanket rule.
+If `scaffolding/` does not exist at the target tag, use aidd's own `scaffolding/.gitignore`: its
+aidd block is the single `/.aidd/` rule.
 
 #### 7a. Pure Template Files (no domain customization expected)
 

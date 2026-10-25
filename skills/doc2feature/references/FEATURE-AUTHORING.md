@@ -2,6 +2,9 @@
 
 Use this contract only after `doc2feature` confirms that at least one claim is actionable.
 
+A record describes a lasting capability or a defect against one. A claim whose fix is a single
+change that leaves no requirement behind gets no record: a one-off change to content, data or metadata (move or reschedule drafts, compress or delete an image, fix a set of paths, rename a field, tidy a config) is never a feature record. Report it for the owner instead.
+
 ## Contents
 
 - [JSON shape](#json-shape)

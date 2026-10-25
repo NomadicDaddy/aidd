@@ -118,4 +118,5 @@ change the application implementation.
       when applicable
     - Create `.aidd/features/*/feature.json` remediation entries only for confirmed actionable
       issues when the invocation explicitly asks for durable backlog output; reconcile against
-      existing records first and follow the referenced severity contract
+      existing records first and follow the referenced severity contract. A clean-slug record must
+      describe a lasting capability: a one-off change to content, data or metadata (move or reschedule drafts, compress or delete an image, fix a set of paths, rename a field, tidy a config) is never a feature record

@@ -23,7 +23,8 @@ feature-review [app] [--status backlog|all|<status>[,<status>...]]
   `all` puts every record that is not template-owned in scope, whatever its status. A
   comma-separated list (`in_progress,completed`) names the statuses exactly. Records in scope that
   are not backlog get the record accuracy check (3h) and are reported only; nothing in this skill
-  rewrites them (see Fix Constraints).
+  rewrites them (see Fix Constraints), apart from removing one-off records under Fix Rule 15. To
+  clear one-off records that are already done, run with `--status all`.
 - The resolved project must contain `.aidd/features/` with feature.json files.
 
 ## Workflow
@@ -129,8 +130,8 @@ Summarize conventions discovered. This context is used for all subsequent checks
 
 ### Phase 3: Analyze Each Feature
 
-For every backlog feature in scope, run checks 3a to 3g. For every other record in scope, run 3a
-and 3h only: 3b to 3g judge a specification that has not been built yet, and applying them to work
+For every backlog feature in scope, run checks 3a to 3g and 3i. For every other record in scope,
+run 3a, 3h and 3i only: 3b to 3g judge a specification that has not been built yet, and applying them to work
 that is under way or done produces noise. Classify each issue found:
 
 | Severity          | Meaning                                                                       |
@@ -286,6 +287,12 @@ Rules for this check:
   them. A file that was renamed or split, with the behavior intact, is a **MINOR** note.
 - Report **cannot tell** honestly. A record you did not check is never **current**.
 
+#### 3i. Not a Feature (every record in scope)
+
+A one-off change to content, data or metadata recorded as a feature. Read
+[the not-a-feature contract](references/NOT-A-FEATURE.md) before this check; it holds the test, Fix
+Rule 15 and the report section.
+
 ### Phase 4: Cross-Feature Analysis
 
 After analyzing all features individually, check across features:
@@ -371,6 +378,8 @@ rewrite records, so such a run ends its work at this phase and goes to Phase 7's
 
 List every record that is not **current**. Give the **current** ones as a count and a list of ids.
 
+{the NOT A FEATURE section from references/NOT-A-FEATURE.md, when check 3i found any}
+
 ### Cross-Feature Issues
 
 - {description of any inter-feature conflicts or gaps}
@@ -409,6 +418,7 @@ After presenting the report, automatically rewrite every feature.json that has i
 12. **Remediation review findings**: If a remediation review was loaded and flagged concrete spec improvements for a feature (missing defaults, unverified claims confirmed false, references to nonexistent scripts), apply those fixes directly. If the review recommended a priority change with clear reasoning, update the priority. Do not auto-fix items that require a product decision; leave those as report-only observations.
 13. **Cross-feature feedback-loop steps** (from 3b): Leave them in place. The implementing coding run closes the loop, not this review - do NOT pre-apply the amendment, and do NOT rewrite the step into a read-only verification. Fix only the genuinely-unexecutable cases flagged in 3b: correct a misnamed source feature id to the real one, or narrow a step that targets a source feature's `id`/`passes`/`status` down to `spec`/`notes` (and appended `dependencies`). If no source feature can be identified at all, say so in the report and leave the step for the implementer to park on - an unclosed feedback loop is a blocker the run must surface, not one this review should silently resolve. Never touch template features. Itemize every such correction in the Auto-Fix Summary.
 14. **Missing validation coverage** (from 3b): Append a spec line naming a mechanically checkable validation derived from Phase 2 conventions: the project's own quality-gate command(s) (test/lint/build scripts from package.json) scoped to the feature's files, or a concrete observable check (endpoint + expected status, file at path, schema field). Do not invent test frameworks or scripts the project lacks.
+15. **Not a feature** (from 3i): clear the record as the not-a-feature contract says.
 
 #### Fix Constraints
 
@@ -419,10 +429,10 @@ After presenting the report, automatically rewrite every feature.json that has i
 - **Maintain JSON formatting** with tabs for indentation (matching project convention)
 - **Do not change**: `id`, `status`, `passes`, `createdAt`, `completedAt`, `justFinishedAt`,
   `spernakit_version`
-- **Only backlog records are rewritten.** A wider `--status` scope widens what is checked and
+- **Only backlog records are rewritten**, except under Fix Rule 15. A wider `--status` scope widens what is checked and
   reported, never what is fixed: an `in_progress`, `waiting_approval` or `completed` record found
   stale or wrongly marked goes in the report with its correction, for the project's lead to apply.
-- **Completed features are out of scope for fixes**, with no exception. Fix Rule 13 does NOT amend them: source-feature `spec`/`notes` amendments belong to the coding run that ships the fix, not to this review. If a backlog spec depends on a contract being recorded on a completed feature, leave the step in place and report it — do not pre-apply it.
+- **Completed features are out of scope for fixes**, except their removal under Fix Rule 15. Fix Rule 13 does NOT amend them: source-feature `spec`/`notes` amendments belong to the coding run that ships the fix, not to this review. If a backlog spec depends on a contract being recorded on a completed feature, leave the step in place and report it — do not pre-apply it.
 - **Never modify template features**: Features with `spernakit_version` are template-owned and must not be auto-fixed in derived apps
 - **Update `updatedAt`** to current ISO timestamp on any modified feature
 - **Write valid JSON**: validate before writing

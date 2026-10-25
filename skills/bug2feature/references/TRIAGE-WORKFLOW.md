@@ -809,6 +809,7 @@ Run the aidd-local `feature-review` skill to validate spec quality, or begin imp
 - Request is already covered by an existing standalone entry in `.aidd/features/`
 - Request is already listed in `.aidd/roadmap.json` (reference the roadmap entry in the triage report)
 - Request requires stack capabilities that do not exist in the application
+- Request is a one-off change with no lasting requirement: a one-off change to content, data or metadata (move or reschedule drafts, compress or delete an image, fix a set of paths, rename a field, tidy a config) is never a feature record. Report it for the owner
 - Submission status is `resolved` or `closed`
 
 ### Priority mapping guidance

@@ -107,6 +107,8 @@ Before writing anything, read what the project already commits to:
 - A capability that only makes sense as several independently verifiable pieces → several records,
   wired to each other through `dependencies` in the order they must ship.
 - A revision of existing scope → edit the existing record in place.
+- A one-off change with no lasting requirement → no record. A feature record describes a capability
+  that has to keep holding; a one-off change to content, data or metadata (move or reschedule drafts, compress or delete an image, fix a set of paths, rename a field, tidy a config) is never a feature record. Do the change as a task or report it to the owner instead.
 
 Split when a piece can be verified on its own and shipped on its own. Do not split a single
 end-to-end wiring into layer-shaped fragments that cannot each be verified alone.

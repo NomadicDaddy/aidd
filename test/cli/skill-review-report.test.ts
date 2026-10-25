@@ -276,7 +276,8 @@ describe('the two record-review skills say where a report goes when the run may 
 		expect(body).toContain('The default is `backlog`');
 		expect(body).toContain('#### 3h. Record Accuracy');
 		expect(body).toContain('A record you did not check is never **current**.');
-		expect(body).toContain('**Only backlog records are rewritten.**');
+		expect(body).toContain('**Only backlog records are rewritten**, except under Fix Rule 15.');
+		expect(body).toContain('#### 3i. Not a Feature');
 		expect(body).toContain("return the same complete report through the run's result contract");
 	});
 

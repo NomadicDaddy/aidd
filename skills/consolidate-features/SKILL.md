@@ -92,8 +92,24 @@ For each completed remediation/audit feature, determine which base feature(s) it
 
 **Important**: A single remediation feature may map to multiple base features (if it fixed issues across several), and multiple remediation features may map to the same base feature. Build the full mapping before proceeding.
 
-**If a remediation feature cannot be mapped to any base feature**, preserve it and report the
-unresolved mapping rather than silently deleting it.
+**A completed finding never stays standing on its own.** If a completed remediation or audit
+feature cannot be mapped to any base feature, decide which of two kinds it is:
+
+1. **It sets a lasting requirement of the product** (behavior, a contract or a check that must
+   keep holding), and no feature owns that capability. Create one new feature for the capability,
+   under a clean slug in the project's own vocabulary, and fold the finding into it like any other
+   base feature. Do this only when the capability is real and prudent to track: a feature
+   invented just to hold one finding is not.
+2. **It was a one-off change to data, content or metadata** with no requirement that must keep
+   holding (a corrected path, a fixed record, an edited draft, a replaced or resized image). It
+   needs no feature record. Record what was done in the consolidation's `.aidd/CHANGELOG.md`
+   entry (the finding's id, its fingerprint when it has one, the change and its evidence) and
+   delete the record in Phase 4. Its fingerprint stays resolved: aidd records a `remediated`
+   ledger event when an audit finding's record completes, so a recurrence is still detected.
+
+If the honest answer is neither, because deciding needs the owner, ask the owner in the report
+with the record, the choice and your recommendation. Never keep a completed finding as the
+default.
 
 **Template feature protection (derived apps only)**: If a remediation maps to a feature that has `spernakit_version` and the target app is NOT `spernakit`, do NOT fold the remediation into it. Instead, flag it as "**UPSTREAM**: remediation targets template-owned feature `{id}`; fold this fix in the Spernakit repository via the aidd-local `consolidate-features` skill, then sync to derived apps via the aidd-local `spernakit-template-upgrade` skill." The remediation feature is left in place until the upstream fix lands.
 
@@ -159,27 +175,30 @@ For each base feature that has mapped remediation/audit findings:
 5. **Update `updatedAt`** to current ISO timestamp.
 
 6. **Write the criterion ledger and check it against the file.** For every record being folded,
-   list each of its numbered criteria with its outcome: `carried → {base-feature-id} #{n}` or
-   `process → {reason}`. Then re-read the base feature from disk and confirm, criterion by
-   criterion, that the cited base line contains every distinctive value of the original: each
-   number, viewport, timestamp, quoted string and file path. A requirement with no base line, or
-   whose values are not all present, is **unmapped**. Include the ledger in the final report.
+   list each of its numbered criteria with its outcome: `carried → {base-feature-id} #{n}`,
+   `process → {reason}`, or `one-off → CHANGELOG` for a criterion that only described a single
+   change to data, content or metadata (the Phase 2 rule). Then re-read the base feature from disk
+   and confirm, criterion by criterion, that the cited base line contains every distinctive value
+   of the original: each number, viewport, timestamp, quoted string and file path. A lasting
+   requirement with no base line, or whose values are not all present, is **unmapped**: carry it
+   into an owning feature (creating one under the Phase 2 rule when none exists), or record it as
+   a question for the owner. Include the ledger in the final report.
 
 ### Phase 4: Remove Standalone Features
 
 After successfully folding all specs:
 
-1. **Delete the remediation/audit feature directories** that were fully folded: every criterion in
-   the record's ledger is `carried` or `process`, with none unmapped. Remove the entire directory
-   (e.g., `rm -rf .aidd/features/remediation-20260311-build-config/`).
+1. **Delete every completed remediation/audit feature directory** whose criteria are all
+   `carried`, `process` or `one-off → CHANGELOG` in the Phase 3 ledger, including one folded into
+   a feature created under the Phase 2 rule. Remove the entire directory (e.g.,
+   `rm -rf .aidd/features/remediation-20260311-build-config/`).
 
-2. **Do NOT delete** remediation/audit features that:
-    - Have one or more unmapped criteria in the Phase 3 ledger. Keep the whole record and report
-      which criteria could not be carried and why; a partly folded record is still the only place
-      those requirements exist
+2. **The only remediation/audit features left in place** are ones that:
     - Are not completed and passing (`status` is not `completed` or `passes` is not `true`)
-    - Could not be mapped to any base feature (flagged in Phase 2)
     - Were flagged as UPSTREAM (target is a template-owned feature in a derived app)
+    - Wait on an owner decision raised in this run's report (Phase 2), named with the question
+      asked. This is a pending question, not a resting place: the next consolidation folds it once
+      the owner answers
 
 ### Phase 4a: Rename Poorly Named Features
 
@@ -276,8 +295,9 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
       highest number elsewhere in the document
     - Every edited `notes` value is an array that preserves all pre-existing note content; untouched
       missing/string/array shapes remain untouched
-    - Every deleted record has a complete Phase 3 ledger with no unmapped criterion, and every
-      `carried` line was confirmed against the base feature as it is on disk now. A deleted record
+    - Every deleted record has a complete Phase 3 ledger with no unmapped criterion, every
+      `carried` line was confirmed against the base feature as it is on disk now, and every
+      `one-off → CHANGELOG` line names its finding in this run's `.aidd/CHANGELOG.md` entry. A deleted record
       being cited by a surviving one proves only that it was mentioned, not that its requirements
       survived
     - No tracked file still cites a deleted record's id or path (Phase 5 step 5), or each remaining
@@ -292,8 +312,10 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
     - Features renamed (`feature-*` → clean slug): N
     - Features after consolidation: N
     - Base features updated: N (list each with ID)
-    - Unmapped findings preserved: N (list each)
-    - Findings kept for unmapped criteria: N (list each with the criteria that could not be carried)
+    - Features created for an unowned lasting requirement: N (list each with the findings it holds)
+    - One-off findings recorded in the changelog and removed: N (list each)
+    - Findings left waiting on an owner decision: N (list each with the question asked); a
+      completed finding is never left in place for any other reason
     - Criterion ledger for every folded record (Phase 3 step 6)
     - Validation: PASS/FAIL
 
@@ -337,8 +359,10 @@ Removed: {N} standalone remediation/audit directories
 Renamed: {N} feature-* directories to clean slugs
 Updated: {list of base feature IDs that were modified}
 Upstream: {list of remediations targeting template features; need the aidd-local consolidate-features skill for Spernakit}
-Skipped: {list of any unmapped or non-completed findings}
-Kept: {findings left in place because a criterion could not be carried, with those criteria}
+Created: {new features for unowned lasting requirements, with the findings each holds}
+One-off: {findings recorded in .aidd/CHANGELOG.md and removed}
+Skipped: {non-completed findings}
+Awaiting owner: {completed findings left for an owner decision, with the question asked}
 Validation: PASS
 Commit: {commit hash or "not committed: reason"}
 ```
@@ -351,7 +375,7 @@ Commit: {commit hash or "not committed: reason"}
 4. **Validation gate**: Never finish leaving a record you wrote unreadable — aidd's end-of-run feature-contract check is what reports it, and a failure there is your failure.
 5. **Formatting gate**: Format changed feature artifacts before validation and before committing.
 6. **Commit gate**: If consolidation changed files and the run was not `--dry-run`, commit the completed, validated bundle before final reporting unless the user explicitly opts out.
-7. **No data loss**: Base feature semantics must be preserved. Only append/refine spec content, never remove existing requirements. The same holds for the record being folded: each of its requirements is carried with its measured values, or the record stays.
+7. **No data loss**: Base feature semantics must be preserved. Only append/refine spec content, never remove existing requirements. The same holds for the record being folded: each lasting requirement is carried with its measured values into an owning feature (a new one under the Phase 2 rule if none exists), and each one-off change is named in the changelog, before the record is removed.
 8. **Dry-run safety**: When `--dry-run` is specified, report everything but modify nothing.
 9. **Template provenance**: Features with `spernakit_version` are template-owned. In derived apps, never modify, rename, delete, or fold into them. Fixes to template features must be upstreamed to the Spernakit repository. This principle is inert when no feature carries the field.
 10. **Stack independence**: Never decline a consolidation because of the target's stack, framework, or lack of Spernakit provenance. The corpus is the input; if `.aidd/features/` exists, the skill runs. If it genuinely does not exist, say so plainly instead of reporting a scope restriction.

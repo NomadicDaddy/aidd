@@ -375,7 +375,7 @@ Commit: {commit hash or "not committed: reason"}
 
 ## Principles
 
-1. **Traceability over speed**: Every remediation fix must be traceable to a base feature before deletion.
+1. **Traceability over speed**: Every completed finding must be traceable before deletion: to the base feature that now carries its requirements, to a new owning feature (Phase 2, case 1), or to the changelog entry that names a one-off change (Phase 2, case 2).
 2. **Nothing stays standing, nothing is lost**: a completed finding with no base feature gets a new owning feature, a changelog entry, or a question to the owner (Phase 2). Delete it only once its criterion ledger is complete.
 3. **Spec completeness**: Updated specs should be self-sufficient: a developer reading only the spec should produce correct code without needing remediation.
 4. **Validation gate**: Never finish leaving a record you wrote unreadable — aidd's end-of-run feature-contract check is what reports it, and a failure there is your failure.

@@ -126,7 +126,7 @@ export function buildProjectWork(
 			projectId: project.routeId,
 			projectName: project.name,
 			rank: 0,
-			reason: `${project.name} has ${backlog.unfolded.count} completed finding(s) still standing as records. Consolidation folds each into the feature it changed, or records a one-off change in the changelog, and removes the record.`,
+			reason: `${project.name} has ${backlog.unfolded.count} completed finding(s) still standing as records. Consolidation folds each into the feature it changed, or records a one-off change in the changelog, and removes the record. A finding left for an owner question or an upstream template fix still counts here until that is answered.`,
 			riskLevel: backlog.unfolded.count > 10 ? 'MEDIUM' : 'LOW',
 			suggestedArgs: null,
 			suggestedRecipe: 'feature-consolidation-document-changes',

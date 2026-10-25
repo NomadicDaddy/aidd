@@ -173,6 +173,31 @@ describe('advisory sweep row', () => {
 		expect(row.endsWith('| tool check: did not apply')).toBe(true);
 	});
 
+	// Carl (mail 99e2c081): the 2026-10-24 digest passed a --query that already began with the
+	// label, and that day's row read "advisory query: advisory query: https://...".
+	test('a query that already carries the label is written with it once', async () => {
+		const root = await fleet();
+		const sweep = (query: string) =>
+			runSweep({
+				control: '@ianvs/prettier-plugin-sort-imports',
+				date: '2026-10-24',
+				packages: [],
+				query,
+				roots: [root],
+				toolCheck: 'did not apply',
+			});
+		const bare = formatRow(await sweep('https://example.test/advisories'));
+		for (const labelled of [
+			'advisory query: https://example.test/advisories',
+			'  Advisory Query:https://example.test/advisories ',
+		]) {
+			const row = formatRow(await sweep(labelled));
+			expect(row).toBe(bare);
+			expect(row).toContain('| advisory query: https://example.test/advisories |');
+			expect(row).not.toContain('advisory query: advisory query');
+		}
+	});
+
 	test('a sweep that read nothing is the FAILED form, and a missing control is named', async () => {
 		const root = await testTempDir('aidd-advisory-sweep-empty-');
 		roots.push(root);

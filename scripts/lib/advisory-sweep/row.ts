@@ -74,6 +74,18 @@ export function describeScope(result: SweepResult): string {
 	return `${result.roots.map(describeRoot).join(' + ')}${skipped}`;
 }
 
+/** The label the row puts before the query. */
+const QUERY_LABEL = /^advisory query:\s*/i;
+
+/**
+ * The query as the row shows it. The row writes its own label, so a --query that already starts
+ * with that label loses one copy: the 2026-10-24 digest passed one and the row read "advisory
+ * query: advisory query: ..." (Carl, mail 99e2c081).
+ */
+function queryText(query: string): string {
+	return query.trim().replace(QUERY_LABEL, '').trim();
+}
+
 /**
  * The row text. A sweep that covered nothing at all is the FAILED form, never a clean one.
  * @param result The completed sweep.
@@ -93,7 +105,7 @@ export function formatRow(result: SweepResult): string {
 			: `${result.control.name} found in ${result.control.file}`;
 	return [
 		result.date,
-		`advisory query: ${result.query}`,
+		`advisory query: ${queryText(result.query)}`,
 		`roots: ${describeScope(result)}`,
 		`packages checked: ${packages}`,
 		`hits: ${hits}`,

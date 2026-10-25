@@ -139,15 +139,15 @@ are included in the distributed asset tree.
 ## Runtime dependency closure
 
 The tables above enumerate the direct production dependencies. Counting everything they
-pull in transitively, the runtime closure is **176** third-party
+pull in transitively, the runtime closure is **178** third-party
 packages (174 unique names). Development and build tooling is not part
 of it and is not counted here. Its license distribution is:
 
 | License      | Packages |
 | ------------ | -------- |
-| MIT          | 157      |
+| MIT          | 158      |
 | ISC          | 9        |
-| BSD-3-Clause | 3        |
+| BSD-3-Clause | 4        |
 | OFL-1.1      | 3        |
 | Apache-2.0   | 2        |
 | 0BSD         | 1        |

@@ -153,6 +153,7 @@ export async function runBackendStreamLoop(
 		transcript: events.map((e) => JSON.stringify(e)).join('\n'),
 	};
 	if (structuredResult) result.structuredResult = structuredResult;
+	if (loop !== undefined && loop.finalMessage !== '') result.finalMessage = loop.finalMessage;
 
 	return {
 		events,

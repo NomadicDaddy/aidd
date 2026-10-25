@@ -7,6 +7,7 @@ import type { OrchestratorProgressReporter } from './progress.ts';
 import type { OrchestratorDeps } from './run/types.ts';
 
 import { CompletionUsageDrain } from './completion-usage-drain.ts';
+import { createFinalMessageTracker } from './final-message.ts';
 import {
 	formatBackendStarted,
 	formatIdleWarningLine,
@@ -49,6 +50,8 @@ export interface BackendEventLoopResult {
 	closeStream: boolean;
 	completionCommittedDuringGrace: boolean;
 	completionFinalizedBeforeBackendExit: boolean;
+	/** What the agent said after its last tool call (final-message.ts); empty when unknown. */
+	finalMessage: string;
 }
 
 const completionMarkerGrace = 'completion_marker_grace' as const;
@@ -80,6 +83,7 @@ export async function consumeBackendStream(
 ): Promise<BackendEventLoopResult> {
 	const { completion, controller, envelope, events, progress, stream } = options;
 	const completionUsageDrain = new CompletionUsageDrain();
+	const finalMessage = createFinalMessageTracker();
 	let acceptedCompletionFeature: string | undefined;
 	let completionCommittedDuringGrace = false;
 	let completionFinalizedBeforeBackendExit = false;
@@ -148,6 +152,7 @@ export async function consumeBackendStream(
 
 		const event = stepResult.value;
 		completionUsageDrain.record(event);
+		finalMessage.observe(event);
 		// Live deltas are presentation-only duplicates of the turn's final assistant_text: they
 		// feed the observer (run-log tail) and progress, but persisting them in `events` would
 		// double the transcript and every marker/metrics scan over it.
@@ -171,6 +176,7 @@ export async function consumeBackendStream(
 		closeStream,
 		completionCommittedDuringGrace,
 		completionFinalizedBeforeBackendExit,
+		finalMessage: finalMessage.text(),
 		...(acceptedCompletionFeature !== undefined ? { acceptedCompletionFeature } : {}),
 	};
 }

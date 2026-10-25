@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { runOrchestrator } from '../../cli/src/orchestrator/orchestrator.ts';
 import { resolveRunPlan } from '../../cli/src/plan/resolve.ts';
 import { parseArgs } from '../../shared/src/args/index.ts';
+import { parseGrokBackendOutput } from '../../shared/src/backends/parsers/grok.ts';
 import { writeSkillReport } from '../../shared/src/metadata/skill-reports.ts';
 import { orchestratorExitCodes } from '../../shared/src/orchestrator/result.ts';
 import {
@@ -131,6 +132,79 @@ describe('a review-only skill run that ends without its result line', () => {
 		'keeps nothing for a run that was allowed to change the project',
 		async () => {
 			const run = await runWith('apply', 'apply-changes', reviewEvents([report]));
+			expect(run.exit).toBe(orchestratorExitCodes.missingResult);
+			expect(run.reports).toEqual([]);
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+});
+
+// Morticia L1 on fdf0847: Grok's parser streams text deltas beside its tool events, then emits the
+// whole run's text as one assistant_text after them all (grok.ts finalizeGrokBackend). Keeping the
+// text after the last tool event kept that narration, not the report.
+describe('the unconfirmed report is the final message whatever shape the backend reports in', () => {
+	test(
+		"Grok's own parser output keeps only the text after the last tool call",
+		async () => {
+			// Real Grok stdout envelopes, parsed by aidd's Grok parser: text deltas around one tool
+			// call, then the parser's own trailing assistant_text holding all of the run's text.
+			const stdout = [
+				{ data: 'Reading the records first. ', type: 'text' },
+				{
+					rawInput: { path: '.aidd/features' },
+					toolCallId: 't1',
+					toolName: 'read',
+					type: 'tool_call',
+				},
+				{
+					rawOutput: 'alpha, beta',
+					status: 'completed',
+					toolCallId: 't1',
+					type: 'tool_call_update',
+				},
+				{ data: '## Feature Review Report\n\n', type: 'text' },
+				{ data: 'One contradiction: `alpha` against `beta`.', type: 'text' },
+			]
+				.map((envelope) => JSON.stringify(envelope))
+				.join('\n');
+			const events = parseGrokBackendOutput(stdout, '', 0);
+			// The shape the finding is about: the aggregate text comes after every tool event.
+			const lastTool = events.findIndex((event) => event.type === 'tool_result');
+			expect(
+				events
+					.slice(lastTool)
+					.some(
+						(event) =>
+							event.type === 'assistant_text' &&
+							event.chunk.includes('Reading the records first.'),
+					),
+			).toBe(true);
+			if (!events.some((event) => event.type === 'done')) {
+				events.push({ exitCode: 0, filesModified: [], type: 'done' });
+			}
+			const run = await runWith('grok-shaped', 'review-only', events);
+			expect(run.exit).toBe(orchestratorExitCodes.missingResult);
+			expect(run.reports).toEqual([`${today()}-unconfirmed.md`]);
+			const saved = await readFile(join(run.reportsDir, run.reports[0] ?? ''), 'utf8');
+			expect(saved).toContain(report);
+			expect(saved).not.toContain('Reading the records first.');
+		},
+		slowOrchestratorTestTimeoutMs,
+	);
+
+	test(
+		'text that appears only once, after every tool event, is an aggregate and is not kept',
+		async () => {
+			// The parsers' fallback when no text parsed: the raw stdout as one assistant_text.
+			const run = await runWith('aggregate-only', 'review-only', [
+				{ args: { path: '.aidd/features' }, tool: 'read', type: 'tool_call' },
+				{ result: 'alpha, beta', tool: 'read', type: 'tool_result' },
+				{
+					chunk: '{"type":"tool_call"}\n{"type":"text","data":"..."}',
+					type: 'assistant_text',
+				},
+				{ exitCode: 0, filesModified: [], type: 'done' },
+			]);
 			expect(run.exit).toBe(orchestratorExitCodes.missingResult);
 			expect(run.reports).toEqual([]);
 		},

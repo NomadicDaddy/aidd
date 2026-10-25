@@ -17,6 +17,11 @@ export interface AgentRunResult {
 	events: AgentEvent[];
 	exitCode: number;
 	filesModified: string[];
+	/**
+	 * What the agent said after its last tool call, read in stream order (cli final-message.ts).
+	 * Absent when it said nothing after its tools or the stream gives no way to tell.
+	 */
+	finalMessage?: string;
 	selectedWork?: SelectedWork;
 	skipped?: boolean;
 	structuredResult?: Record<string, unknown>;

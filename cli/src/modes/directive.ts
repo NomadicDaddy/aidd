@@ -60,25 +60,13 @@ function incomplete(label: string, reason: string): ModeResult {
 }
 
 /**
- * What the agent said after its last tool call: for a review run, its report. Empty when it said
- * nothing after the work, so there is nothing to keep.
- */
-function finalMessage(result: AgentRunResult): string {
-	const chunks: string[] = [];
-	for (const event of [...result.events].reverse()) {
-		if (event.type === 'tool_call' || event.type === 'tool_result') break;
-		if (event.type === 'assistant_text' && event.chunk.trim() !== '')
-			chunks.unshift(event.chunk);
-	}
-	return chunks.join('\n');
-}
-
-/**
  * Keep the work of a review-only skill run that ended without its result line. The run stays
  * incomplete and is still recorded as missing its result (exit 73): it did not meet its contract,
  * and nothing may read it as a finished review. But a review that finished and only forgot the last
  * line has its findings in its final message, and losing them throws the run away. So that message
- * is saved as an unconfirmed report, under its own name and labelled as such.
+ * is saved as an unconfirmed report, under its own name and labelled as such. The message is what
+ * the agent said after its last tool call, read in stream order by the event loop
+ * (orchestrator/final-message.ts), not from the stored events, which have lost that order.
  */
 async function keepUnconfirmedReport(
 	context: ModeContext,
@@ -86,8 +74,8 @@ async function keepUnconfirmedReport(
 	result: AgentRunResult,
 	summary: string,
 ): Promise<ModeResult> {
-	const message = finalMessage(result);
-	if (message === '') return { complete: false, summary };
+	const message = result.finalMessage ?? '';
+	if (message.trim() === '') return { complete: false, summary };
 	const projectDir = context.findingLedgerStore?.projectDir ?? context.projectDir;
 	const runId = context.runId === undefined ? {} : { runId: context.runId };
 	try {

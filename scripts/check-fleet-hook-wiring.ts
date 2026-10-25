@@ -123,11 +123,13 @@ function inspectRepo(repo: string): { problems: string[]; wired: boolean } {
 
 	const hooksRel = configured === '' ? '.git/hooks' : configured;
 	const hooksDir = join(repo, hooksRel);
-	if (!existsSync(hooksDir)) return { problems, wired: false };
-
-	const hooks = readdirSync(hooksDir).filter(
-		(f) => EXECUTED.has(f) && statSync(join(hooksDir, f)).isFile(),
-	);
+	// A missing hooks directory is a repository with no hooks, not one to skip: returning here
+	// passed it on questions 5 and 6 as well (Roger on 75a6915).
+	const hooks = existsSync(hooksDir)
+		? readdirSync(hooksDir).filter(
+				(f) => EXECUTED.has(f) && statSync(join(hooksDir, f)).isFile(),
+			)
+		: [];
 
 	for (const hook of hooks) {
 		const body = readFileSync(join(hooksDir, hook), 'utf8');

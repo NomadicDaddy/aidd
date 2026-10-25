@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { inspectRepo } from '../../scripts/check-fleet-hook-wiring.ts';
@@ -50,6 +50,17 @@ describe('every repository runs the leak guard or declines it', () => {
 		const { problems } = inspectRepo(await repo('unguarded'));
 		expect(problems).toEqual([
 			expect.stringContaining('unguarded: no active pre-commit runs the leak guard'),
+		]);
+	});
+
+	test('a repository whose default hooks directory is missing is still reported', async () => {
+		const dir = await repo('no-hooks-dir');
+		await removeTempTree(join(dir, '.git', 'hooks'));
+		await rm(join(dir, '.gitignore'));
+		const { problems } = inspectRepo(dir);
+		expect(problems).toEqual([
+			expect.stringContaining('no-hooks-dir: no active pre-commit runs the leak guard'),
+			'no-hooks-dir: no ignore rule covers .env',
 		]);
 	});
 

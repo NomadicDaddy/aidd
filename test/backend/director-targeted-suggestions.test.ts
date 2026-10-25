@@ -114,23 +114,26 @@ describe('expandTargetedWork', () => {
 
 describe('summarizeBacklog dependency readiness', () => {
 	test('ranks only dependency-ready features as actionable next work', () => {
-		const backlog = summarizeBacklog([
-			{
-				dependencies: ['archive-cli-command-suite'],
-				id: 'archive-verification',
-				passes: false,
-				priority: 1,
-				status: 'backlog',
-				title: 'Read-only Archive Verification',
-			},
-			{
-				id: 'archive-cli-command-suite',
-				passes: false,
-				priority: 2,
-				status: 'backlog',
-				title: 'Archive CLI Command Suite',
-			},
-		]);
+		const backlog = summarizeBacklog(
+			[
+				{
+					dependencies: ['archive-cli-command-suite'],
+					id: 'archive-verification',
+					passes: false,
+					priority: 1,
+					status: 'backlog',
+					title: 'Read-only Archive Verification',
+				},
+				{
+					id: 'archive-cli-command-suite',
+					passes: false,
+					priority: 2,
+					status: 'backlog',
+					title: 'Archive CLI Command Suite',
+				},
+			],
+			false,
+		);
 
 		expect(backlog.feature).toMatchObject({ blockedCount: 1, count: 2, readyCount: 1 });
 		expect(backlog.feature.top.map((feature) => feature.id)).toEqual([
@@ -141,32 +144,35 @@ describe('summarizeBacklog dependency readiness', () => {
 	// rollshift, 2026-10-22: a remediation record blocked by another backlog record became a
 	// suggestion, and its launched run found no eligible work.
 	test('offers only dependency-ready remediation and audit records, and still counts the rest', () => {
-		const backlog = summarizeBacklog([
-			{
-				dependencies: ['remediation-project-md'],
-				id: 'remediation-boot-wipe',
-				passes: false,
-				priority: 1,
-				status: 'backlog',
-				title: 'Boot profile write erases a preserved store',
-			},
-			{
-				id: 'remediation-project-md',
-				passes: false,
-				priority: 2,
-				status: 'backlog',
-				title: 'Project override still names IndexedDB drift',
-			},
-			{
-				auditSource: 'SECURITY',
-				dependencies: ['remediation-project-md'],
-				id: 'audit-blocked-1',
-				passes: false,
-				priority: 1,
-				status: 'backlog',
-				title: 'Blocked finding',
-			},
-		]);
+		const backlog = summarizeBacklog(
+			[
+				{
+					dependencies: ['remediation-project-md'],
+					id: 'remediation-boot-wipe',
+					passes: false,
+					priority: 1,
+					status: 'backlog',
+					title: 'Boot profile write erases a preserved store',
+				},
+				{
+					id: 'remediation-project-md',
+					passes: false,
+					priority: 2,
+					status: 'backlog',
+					title: 'Project override still names IndexedDB drift',
+				},
+				{
+					auditSource: 'SECURITY',
+					dependencies: ['remediation-project-md'],
+					id: 'audit-blocked-1',
+					passes: false,
+					priority: 1,
+					status: 'backlog',
+					title: 'Blocked finding',
+				},
+			],
+			false,
+		);
 
 		expect(backlog.remediation.count).toBe(2);
 		expect(backlog.remediation.top.map((item) => item.id)).toEqual(['remediation-project-md']);

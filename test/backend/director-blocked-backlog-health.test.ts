@@ -40,6 +40,7 @@ function backlog(readyCount: number): DirectorBacklogBreakdown {
 		audit: { blockedCount: 0, bySeverity: {}, count: 0, readyCount: 0, top: [] },
 		feature: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
 		remediation: { blockedCount: 2 - readyCount, count: 2, readyCount, top: [] },
+		unfolded: { count: 0, top: [] },
 	};
 }
 

@@ -116,6 +116,24 @@ export function buildProjectWork(
 			title: `${project.name}: resolve remediation backlog`,
 		});
 	}
+	if (backlog.unfolded.count > 0) {
+		work.push({
+			evidence: {
+				count: backlog.unfolded.count,
+				profile: profileEvidence(project),
+				top: backlog.unfolded.top,
+			},
+			projectId: project.routeId,
+			projectName: project.name,
+			rank: 0,
+			reason: `${project.name} has ${backlog.unfolded.count} completed finding(s) still standing as records. Consolidation folds each into the feature it changed, or records a one-off change in the changelog, and removes the record.`,
+			riskLevel: backlog.unfolded.count > 10 ? 'MEDIUM' : 'LOW',
+			suggestedArgs: null,
+			suggestedRecipe: 'feature-consolidation-document-changes',
+			taskType: 'finding_consolidation',
+			title: `${project.name}: fold completed findings`,
+		});
+	}
 	const auditIssueCount = auditHealth.missing.length + auditHealth.stale.length;
 	if (auditsEnabled && !suppressBacklog && auditIssueCount > 0) {
 		const auditMaintenancePolicy = auditMaintenancePolicyForProfile(project, auditIssueCount);

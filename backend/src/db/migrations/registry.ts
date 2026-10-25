@@ -13,6 +13,7 @@ import init0010 from './0010_runs_status_queued.sql' with { type: 'text' };
 import init0011 from './0011_single_active_row_indexes.sql' with { type: 'text' };
 import init0012 from './0012_runs_backend_substitution.sql' with { type: 'text' };
 import init0013 from './0013_pipeline_session_stopping.sql' with { type: 'text' };
+import init0014 from './0014_suggestions_finding_consolidation.sql' with { type: 'text' };
 
 /**
  * Migration definitions bundled at module load time.
@@ -86,5 +87,9 @@ export const migrations: MigrationDefinition[] = [
 	{
 		sql: init0013,
 		version: '0013_pipeline_session_stopping',
+	},
+	{
+		sql: init0014,
+		version: '0014_suggestions_finding_consolidation',
 	},
 ];

@@ -13,6 +13,7 @@ const HEALTH_BAND_LABELS: Record<string, string> = {
 	audit_backlog: 'Audit findings pending',
 	audit_stale: 'Audits are stale',
 	feature_backlog: 'Feature backlog pending',
+	finding_consolidation: 'Completed findings to fold',
 	healthy: 'Healthy',
 	remediation_backlog: 'Remediations pending',
 };

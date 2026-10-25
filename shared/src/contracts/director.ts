@@ -11,6 +11,7 @@ export const directorTaskTypes = [
 	'dependency_hygiene',
 	'drift_detection',
 	'feature_completion',
+	'finding_consolidation',
 	'pr_followup',
 	'project_intake',
 	'remediation_backlog',

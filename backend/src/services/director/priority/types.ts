@@ -5,6 +5,9 @@ export const directorPriorityOrder = [
 	'artifact_maintenance',
 	'audit_backlog',
 	'remediation_backlog',
+	// Folding completed findings is cheap housekeeping that keeps the backlog honest; it follows
+	// the open backlogs and comes before audit refreshes, which would otherwise re-raise them.
+	'finding_consolidation',
 	'audit_maintenance',
 	'feature_completion',
 	// Intake is an additive nudge for un-analyzed onboarding projects; it does not preempt
@@ -19,6 +22,7 @@ export type DirectorPriorityBucket =
 	| 'audit_backlog'
 	| 'audit_stale'
 	| 'feature_backlog'
+	| 'finding_consolidation'
 	| 'healthy'
 	| 'remediation_backlog';
 
@@ -27,6 +31,7 @@ export type DirectorHealthBand =
 	| 'audit_backlog'
 	| 'audit_stale'
 	| 'feature_backlog'
+	| 'finding_consolidation'
 	| 'healthy'
 	| 'remediation_backlog';
 
@@ -63,6 +68,12 @@ export interface DirectorBacklogBreakdown {
 		blockedCount: number;
 		count: number;
 		readyCount: number;
+		top: DirectorBacklogItemSummary[];
+	};
+	/** Completed audit and remediation findings still standing as records, waiting to be folded
+	 * into the features they changed. Template-owned records in a derived app are not counted. */
+	unfolded: {
+		count: number;
 		top: DirectorBacklogItemSummary[];
 	};
 }
@@ -115,9 +126,10 @@ export interface DirectorProjectPrioritySummary {
 export const bucketRank: Record<DirectorPriorityTaskType, number> = {
 	artifact_maintenance: 0,
 	audit_backlog: 1,
-	audit_maintenance: 3,
-	feature_completion: 4,
-	project_intake: 5,
+	audit_maintenance: 4,
+	feature_completion: 5,
+	finding_consolidation: 3,
+	project_intake: 6,
 	remediation_backlog: 2,
 };
 
@@ -148,6 +160,11 @@ export const healthBands: Record<
 		band: 'feature_backlog',
 		bucket: 'feature_backlog',
 		scoreCeiling: 85,
+	},
+	finding_consolidation: {
+		band: 'finding_consolidation',
+		bucket: 'finding_consolidation',
+		scoreCeiling: 70,
 	},
 	// Intake shares the artifact health band (metadata not yet established) but is an
 	// additive low-urgency nudge, so it carries a high score ceiling.

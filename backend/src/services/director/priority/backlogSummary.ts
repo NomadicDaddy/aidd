@@ -3,12 +3,16 @@ import {
 	type Feature,
 	isAuditFinding,
 } from 'aidd-shared/metadata/features';
+import { isTemplateOwnedFeature } from 'aidd-shared/metadata/template-ownership';
 
 import type { DirectorBacklogBreakdown, DirectorBacklogItemSummary } from './types.ts';
 
 import { normalizeSeverity, numericPriority, numericPriorityOrNull } from './helpers.ts';
 
-export function summarizeBacklog(features: Feature[]): DirectorBacklogBreakdown {
+export function summarizeBacklog(
+	features: Feature[],
+	templateRepo: boolean,
+): DirectorBacklogBreakdown {
 	const audit = features.filter((feature) => isOpenBacklog(feature) && isAuditFinding(feature));
 	const remediation = features.filter(
 		(feature) =>
@@ -26,7 +30,26 @@ export function summarizeBacklog(features: Feature[]): DirectorBacklogBreakdown 
 		audit: { ...bucket(audit, features), bySeverity: severityCounts(audit) },
 		feature: bucket(regular, features),
 		remediation: bucket(remediation, features),
+		unfolded: unfoldedFindings(features, templateRepo),
 	};
+}
+
+// A completed finding has done its work once its change is folded into the feature it touched;
+// until consolidate-features runs, it stands as a record nobody will pick up. A derived app's
+// template-owned records are folded upstream in the template, so they are not this project's.
+function unfoldedFindings(
+	features: Feature[],
+	templateRepo: boolean,
+): { count: number; top: DirectorBacklogItemSummary[] } {
+	const unfolded = features.filter(
+		(feature) =>
+			feature.status === 'completed' &&
+			feature.passes === true &&
+			(isAuditFinding(feature) ||
+				(feature.directory ?? feature.id).startsWith('remediation-')) &&
+			!isTemplateOwnedFeature(feature, templateRepo),
+	);
+	return { count: unfolded.length, top: topItems(unfolded) };
 }
 
 // A bucket's `top` and readyCount drive runnable suggestions, so they cover only records whose

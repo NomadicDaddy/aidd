@@ -517,6 +517,7 @@ The fleet summary is a JSON object with this shape:
 		"artifact_maintenance",
 		"audit_backlog",
 		"remediation_backlog",
+		"finding_consolidation",
 		"audit_maintenance",
 		"feature_completion",
 		"project_intake"
@@ -641,9 +642,10 @@ First, walk `prioritizedWork[]` in ascending `rank`. Each item is already bucket
 1. `artifact_maintenance`
 2. `audit_backlog`
 3. `remediation_backlog`
-4. `audit_maintenance`
-5. `feature_completion`
-6. `project_intake`
+4. `finding_consolidation`
+5. `audit_maintenance`
+6. `feature_completion`
+7. `project_intake`
 
 Emit suggestions from this queue first. Use the related `projects[]` details only to make descriptions and reasoning clearer. Do not promote a lower-ranked item above a higher-ranked item because it has a higher `riskLevel`.
 
@@ -666,28 +668,29 @@ For signals not represented in `prioritizedWork[]` (external ones included), use
 
 ### Task Type Selection Matrix
 
-| Observable                                                                  | Task type              | Typical risk   |
-| --------------------------------------------------------------------------- | ---------------------- | -------------- |
-| `prioritizedWork[].taskType === 'artifact_maintenance'`                     | `artifact_maintenance` | MEDIUM / HIGH  |
-| `prioritizedWork[].taskType === 'audit_backlog'`                            | `audit_backlog`        | MEDIUM / HIGH  |
-| `prioritizedWork[].taskType === 'remediation_backlog'`                      | `remediation_backlog`  | MEDIUM / HIGH  |
-| `prioritizedWork[].taskType === 'audit_maintenance'`                        | `audit_maintenance`    | LOW / MEDIUM   |
-| `prioritizedWork[].taskType === 'feature_completion'`                       | `feature_completion`   | LOW / MEDIUM   |
-| `prioritizedWork[].taskType === 'project_intake'`                           | `project_intake`       | LOW            |
-| `signals[]` entry with `type: 'dependency_hygiene'`                         | `dependency_hygiene`   | LOW / MEDIUM   |
-| `signals[]` entry with `type: 'unused_code'`                                | `unused_code`          | LOW / MEDIUM   |
-| `auditFindings.bySeverity.critical > 0`                                     | `audit_remediation`    | HIGH           |
-| `auditFindings.bySeverity.high > 0`                                         | `audit_remediation`    | HIGH or MEDIUM |
-| `auditFindings.bySeverity.medium > 0` AND no higher findings                | `audit_remediation`    | MEDIUM         |
-| `lastRunResult.status === 'failed'` recent (<48h)                           | `smoke_test_failure`   | HIGH           |
-| `lastRunResult.status === 'failed'` stale (>48h)                            | `smoke_test_failure`   | MEDIUM         |
-| `featureCompletion < 0.5` AND `lastRunResult.completedAt` older than 7 days | `feature_completion`   | MEDIUM         |
-| `featureCompletion >= 0.5 && < 0.9` AND recent activity is absent           | `feature_completion`   | LOW            |
-| `signals[]` with `type: 'ci_failure'`                                       | `ci_failure`           | HIGH           |
-| `signals[]` with `type: 'pr_followup'`                                      | `pr_followup`          | LOW            |
-| `lastRunResult.completedAt` older than 14 days OR null                      | `stale_project`        | LOW or MEDIUM  |
-| `signals[]` with `type: 'code_quality_trend'`                               | `code_quality_trend`   | LOW            |
-| `signals[]` with `type: 'drift_detection'`                                  | `drift_detection`      | MEDIUM         |
+| Observable                                                                  | Task type               | Typical risk   |
+| --------------------------------------------------------------------------- | ----------------------- | -------------- |
+| `prioritizedWork[].taskType === 'artifact_maintenance'`                     | `artifact_maintenance`  | MEDIUM / HIGH  |
+| `prioritizedWork[].taskType === 'audit_backlog'`                            | `audit_backlog`         | MEDIUM / HIGH  |
+| `prioritizedWork[].taskType === 'remediation_backlog'`                      | `remediation_backlog`   | MEDIUM / HIGH  |
+| `prioritizedWork[].taskType === 'finding_consolidation'`                    | `finding_consolidation` | LOW / MEDIUM   |
+| `prioritizedWork[].taskType === 'audit_maintenance'`                        | `audit_maintenance`     | LOW / MEDIUM   |
+| `prioritizedWork[].taskType === 'feature_completion'`                       | `feature_completion`    | LOW / MEDIUM   |
+| `prioritizedWork[].taskType === 'project_intake'`                           | `project_intake`        | LOW            |
+| `signals[]` entry with `type: 'dependency_hygiene'`                         | `dependency_hygiene`    | LOW / MEDIUM   |
+| `signals[]` entry with `type: 'unused_code'`                                | `unused_code`           | LOW / MEDIUM   |
+| `auditFindings.bySeverity.critical > 0`                                     | `audit_remediation`     | HIGH           |
+| `auditFindings.bySeverity.high > 0`                                         | `audit_remediation`     | HIGH or MEDIUM |
+| `auditFindings.bySeverity.medium > 0` AND no higher findings                | `audit_remediation`     | MEDIUM         |
+| `lastRunResult.status === 'failed'` recent (<48h)                           | `smoke_test_failure`    | HIGH           |
+| `lastRunResult.status === 'failed'` stale (>48h)                            | `smoke_test_failure`    | MEDIUM         |
+| `featureCompletion < 0.5` AND `lastRunResult.completedAt` older than 7 days | `feature_completion`    | MEDIUM         |
+| `featureCompletion >= 0.5 && < 0.9` AND recent activity is absent           | `feature_completion`    | LOW            |
+| `signals[]` with `type: 'ci_failure'`                                       | `ci_failure`            | HIGH           |
+| `signals[]` with `type: 'pr_followup'`                                      | `pr_followup`           | LOW            |
+| `lastRunResult.completedAt` older than 14 days OR null                      | `stale_project`         | LOW or MEDIUM  |
+| `signals[]` with `type: 'code_quality_trend'`                               | `code_quality_trend`    | LOW            |
+| `signals[]` with `type: 'drift_detection'`                                  | `drift_detection`       | MEDIUM         |
 
 **Emit one suggestion for every entry in `prioritizedWork[]`, in rank order; do not skip any entry.** Entries come in two shapes; both must be emitted:
 
@@ -799,7 +802,7 @@ Use your CLI's native full-file write tool exactly once, with the target path `d
 2. `suggestions` MUST be an array (possibly empty).
 3. `fleetSummary` MUST be present with a `totalSuggestions` integer and a `byRisk` object (even if all three risk levels are 0).
 4. **`projectId`** is the project **slug** from `projects[].slug` (e.g., `"acme-monitor"`) OR `null` for fleet-wide suggestions. NEVER the numeric `projectId`. NEVER an invented slug.
-5. **`taskType`** MUST be one of exactly these 15 values:
+5. **`taskType`** MUST be one of exactly these 16 values:
     - `artifact_maintenance`
     - `audit_backlog`
     - `audit_maintenance`
@@ -809,6 +812,7 @@ Use your CLI's native full-file write tool exactly once, with the target path `d
     - `dependency_hygiene`
     - `drift_detection`
     - `feature_completion`
+    - `finding_consolidation`
     - `pr_followup`
     - `project_intake`
     - `remediation_backlog`
@@ -824,7 +828,7 @@ Use your CLI's native full-file write tool exactly once, with the target path `d
 12. **`confidence`** is nullable. Leave it `null` in Phase 1; the confidence gate is skipped when null and the aidd-web confidence scorer will compute a value post-parse.
 13. The `fleetSummary.totalSuggestions` MUST equal `suggestions.length`.
 14. The `fleetSummary.byRisk` counts MUST sum to `suggestions.length`.
-15. The `fleetSummary.byType` entries (if present) MUST match the distribution of `taskType` values in `suggestions`. Keys must be drawn from the 15 task types above.
+15. The `fleetSummary.byType` entries (if present) MUST match the distribution of `taskType` values in `suggestions`. Keys must be drawn from the 16 task types above.
 16. **`squadAssignment`** and `roleSequence` are NOT part of the director output contract. Do not emit them. aidd parses suggestions and silently discards any unknown top-level fields, so adding routing metadata has no effect on what gets launched.
 
 ### Good vs Bad `reasoning`
@@ -1025,7 +1029,7 @@ This is a valid, useful result. The parser treats it as a successful cycle; the 
 
 - **Input path**: `data/director/snapshot-fleet-summary.json` (read once, via native read-file tool)
 - **Output path**: `data/director/snapshot-output.json` (write once, via native full-file write tool)
-- **Task types (15 values)**: `artifact_maintenance`, `audit_backlog`, `audit_maintenance`, `audit_remediation`, `ci_failure`, `code_quality_trend`, `dependency_hygiene`, `drift_detection`, `feature_completion`, `pr_followup`, `project_intake`, `remediation_backlog`, `smoke_test_failure`, `stale_project`, `unused_code`
+- **Task types (16 values)**: `artifact_maintenance`, `audit_backlog`, `audit_maintenance`, `audit_remediation`, `ci_failure`, `code_quality_trend`, `dependency_hygiene`, `drift_detection`, `feature_completion`, `finding_consolidation`, `pr_followup`, `project_intake`, `remediation_backlog`, `smoke_test_failure`, `stale_project`, `unused_code`
 - **Risk levels (3 values)**: `LOW`, `MEDIUM`, `HIGH`
 - **Max suggestions per cycle**: 20
 - **projectId in suggestions**: **slug** (e.g., `"acme-monitor"`), not the numeric id, or `null` for fleet-wide

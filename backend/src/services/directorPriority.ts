@@ -45,7 +45,7 @@ export async function buildDirectorProjectPriority(
 				: {}),
 		}),
 	]);
-	const backlog = summarizeBacklog(features);
+	const backlog = summarizeBacklog(features, project.isSpernakitTemplate === true);
 	const auditsEnabled = options.auditsEnabled ?? true;
 	const work = buildProjectWork(project, backlog, auditHealth, auditsEnabled);
 	const priorityHealth = buildPriorityHealth([

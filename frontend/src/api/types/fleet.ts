@@ -52,6 +52,10 @@ export interface FleetSummaryProject {
 			readyCount: number;
 			top: { id: string; priority: null | number; title: string }[];
 		};
+		unfolded: {
+			count: number;
+			top: { id: string; priority: null | number; title: string }[];
+		};
 	};
 	completedCount: number;
 	dependencyBlockedCount: number;
@@ -97,6 +101,7 @@ export interface FleetSummary {
 		'artifact_maintenance',
 		'audit_backlog',
 		'remediation_backlog',
+		'finding_consolidation',
 		'audit_maintenance',
 		'feature_completion',
 		'project_intake',

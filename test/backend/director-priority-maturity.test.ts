@@ -98,6 +98,7 @@ function makeBacklog(
 		audit: { blockedCount: 0, bySeverity: {}, count: 0, readyCount: 0, top: [] },
 		feature: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
 		remediation: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
+		unfolded: { count: 0, top: [] },
 		...overrides,
 	};
 }

@@ -152,7 +152,7 @@ export const suggestions = sqliteTable(
 		check('ck_suggestions_risk_level', sql`${table.riskLevel} IN ('HIGH','LOW','MEDIUM')`),
 		check(
 			'ck_suggestions_task_type',
-			sql`${table.taskType} IN ('artifact_maintenance','audit_backlog','audit_maintenance','audit_remediation','ci_failure','code_quality_trend','dependency_hygiene','drift_detection','feature_completion','pr_followup','project_intake','remediation_backlog','smoke_test_failure','stale_project','unused_code')`,
+			sql`${table.taskType} IN ('artifact_maintenance','audit_backlog','audit_maintenance','audit_remediation','ci_failure','code_quality_trend','dependency_hygiene','drift_detection','feature_completion','finding_consolidation','pr_followup','project_intake','remediation_backlog','smoke_test_failure','stale_project','unused_code')`,
 		),
 		check(
 			'ck_suggestions_dismissed_by',

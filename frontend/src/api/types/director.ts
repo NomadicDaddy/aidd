@@ -20,6 +20,7 @@ export type DirectorTaskType =
 	| 'dependency_hygiene'
 	| 'drift_detection'
 	| 'feature_completion'
+	| 'finding_consolidation'
 	| 'pr_followup'
 	| 'project_intake'
 	| 'remediation_backlog'
@@ -234,6 +235,7 @@ export type DirectorPriorityTaskType =
 	| 'audit_backlog'
 	| 'audit_maintenance'
 	| 'feature_completion'
+	| 'finding_consolidation'
 	| 'project_intake'
 	| 'remediation_backlog';
 
@@ -242,6 +244,7 @@ export type DirectorPriorityBucket =
 	| 'audit_backlog'
 	| 'audit_stale'
 	| 'feature_backlog'
+	| 'finding_consolidation'
 	| 'healthy'
 	| 'remediation_backlog';
 
@@ -250,6 +253,7 @@ export type DirectorHealthBand =
 	| 'audit_backlog'
 	| 'audit_stale'
 	| 'feature_backlog'
+	| 'finding_consolidation'
 	| 'healthy'
 	| 'remediation_backlog';
 

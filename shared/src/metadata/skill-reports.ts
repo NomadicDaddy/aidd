@@ -36,6 +36,12 @@ async function mayReplace(path: string): Promise<boolean> {
 const FALLBACK_SUFFIXES = ['', '-aidd', '-aidd-2', '-aidd-3', '-aidd-4', '-aidd-5'];
 
 /**
+ * Where an unconfirmed report goes instead of the usual name, so it never replaces a report a run
+ * of the same skill handed back earlier that day.
+ */
+const UNCONFIRMED_SUFFIX = '-unconfirmed';
+
+/**
  * The first name that is free or already holds a report of aidd's. Every candidate gets the same
  * check, the fallbacks too: a person's file at `-aidd` is no more aidd's to replace than one at
  * the usual name. With every candidate taken by someone else's file the save fails, and the run is
@@ -45,12 +51,13 @@ async function freeReportPath(
 	projectDir: string,
 	skillId: string,
 	timestamp: Date,
+	base: string,
 ): Promise<string> {
 	for (const suffix of FALLBACK_SUFFIXES) {
-		const candidate = reportPath(projectDir, skillId, timestamp, suffix);
+		const candidate = reportPath(projectDir, skillId, timestamp, `${base}${suffix}`);
 		if (await mayReplace(candidate)) return candidate;
 	}
-	const usual = skillReportPath(projectDir, skillId, timestamp);
+	const usual = reportPath(projectDir, skillId, timestamp, base);
 	throw new Error(
 		`${FALLBACK_SUFFIXES.length} files that aidd did not save already hold the names it would use, from ${usual} on`,
 	);
@@ -66,17 +73,30 @@ async function freeReportPath(
  * same kind of name. A file aidd did not save is never replaced: the report then goes beside it as
  * `<skill>-YYYY-MM-DD-aidd.md` (or `-aidd-2` and on, if that is someone's too), and the returned
  * path says so.
+ *
+ * `unconfirmed` is for a run that ended without its result line, so it handed nothing back: the
+ * content is its final message, kept so the review's work is not lost. It goes to
+ * `<skill>-YYYY-MM-DD-unconfirmed.md`, and its first line says the result contract was not met.
  */
 export async function writeSkillReport(
 	projectDir: string,
 	skillId: string,
 	content: string,
-	options: { runId?: string; timestamp?: Date } = {},
+	options: { runId?: string; timestamp?: Date; unconfirmed?: boolean } = {},
 ): Promise<string> {
 	const timestamp = options.timestamp ?? new Date();
-	const path = await freeReportPath(projectDir, skillId, timestamp);
+	const unconfirmed = options.unconfirmed === true;
+	const path = await freeReportPath(
+		projectDir,
+		skillId,
+		timestamp,
+		unconfirmed ? UNCONFIRMED_SUFFIX : '',
+	);
 	const run = options.runId === undefined ? '' : ` run ${options.runId}`;
-	const provenance = `${PROVENANCE_PREFIX}${run} of skill ${skillId} at ${timestamp.toISOString()}. -->`;
+	const unmet = unconfirmed
+		? ' UNCONFIRMED: the run ended without its AIDD_RESULT line, so this is its final message, not a report it handed back.'
+		: '';
+	const provenance = `${PROVENANCE_PREFIX}${run} of skill ${skillId} at ${timestamp.toISOString()}.${unmet} -->`;
 	await mkdir(dirname(path), { recursive: true });
 	await writeFileAtomic(path, `${provenance}\n\n${content.trim()}\n`);
 	return path;

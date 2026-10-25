@@ -59,6 +59,64 @@ function incomplete(label: string, reason: string): ModeResult {
 	};
 }
 
+/**
+ * What the agent said after its last tool call: for a review run, its report. Empty when it said
+ * nothing after the work, so there is nothing to keep.
+ */
+function finalMessage(result: AgentRunResult): string {
+	const chunks: string[] = [];
+	for (const event of [...result.events].reverse()) {
+		if (event.type === 'tool_call' || event.type === 'tool_result') break;
+		if (event.type === 'assistant_text' && event.chunk.trim() !== '')
+			chunks.unshift(event.chunk);
+	}
+	return chunks.join('\n');
+}
+
+/**
+ * Keep the work of a review-only skill run that ended without its result line. The run stays
+ * incomplete and is still recorded as missing its result (exit 73): it did not meet its contract,
+ * and nothing may read it as a finished review. But a review that finished and only forgot the last
+ * line has its findings in its final message, and losing them throws the run away. So that message
+ * is saved as an unconfirmed report, under its own name and labelled as such.
+ */
+async function keepUnconfirmedReport(
+	context: ModeContext,
+	skillId: string,
+	result: AgentRunResult,
+	summary: string,
+): Promise<ModeResult> {
+	const message = finalMessage(result);
+	if (message === '') return { complete: false, summary };
+	const projectDir = context.findingLedgerStore?.projectDir ?? context.projectDir;
+	const runId = context.runId === undefined ? {} : { runId: context.runId };
+	try {
+		const path = await writeSkillReport(projectDir, skillId, message, {
+			...runId,
+			unconfirmed: true,
+		});
+		const shown = relative(projectDir, path).replaceAll('\\', '/');
+		return {
+			complete: false,
+			summary: `${summary}; its final message was kept as an unconfirmed report at ${shown}`,
+		};
+	} catch (err) {
+		return {
+			complete: false,
+			summary: `${summary}; its final message could not be kept: ${errorText(err)}`,
+		};
+	}
+}
+
+/** A review-only run whose backend finished cleanly but returned no result at all. */
+function endedWithoutResult(result: AgentRunResult): boolean {
+	return (
+		result.structuredResult === undefined &&
+		result.exitCode === orchestratorExitCodes.success &&
+		result.skipped !== true
+	);
+}
+
 function errorText(err: unknown): string {
 	return err instanceof Error ? err.message : String(err);
 }
@@ -104,8 +162,11 @@ export function createDirectiveMode(plan: RunPlan): ModeHandler {
 			const summary = result.skipped
 				? `${label} skipped`
 				: `${label} finished with exit code ${result.exitCode}`;
-			if (!complete || skillId === undefined || !savesReviewReport(plan)) {
-				return { complete, summary };
+			if (skillId === undefined || !savesReviewReport(plan)) return { complete, summary };
+			if (!complete) {
+				return endedWithoutResult(result)
+					? await keepUnconfirmedReport(context, skillId, result, summary)
+					: { complete, summary };
 			}
 			return await withSavedReport(context, skillId, result, { label, summary });
 		},

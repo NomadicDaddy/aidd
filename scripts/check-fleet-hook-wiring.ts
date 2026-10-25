@@ -15,12 +15,17 @@
  * installing the current one would fail every push; and a hook recorded 100644 by a
  * core.fileMode=false checkout is silently disabled the moment it is cloned to Linux.
  *
- * Five questions, per repository:
+ * Six questions, per repository:
  *   1. Does core.hooksPath name a directory that exists?
  *   2. Does every hook in the active directory call only scripts that are there?
  *   3. Is every hook recorded executable in the index, not just on this filesystem?
  *   4. If the leak guard is present, does an active pre-commit actually call it?
  *   5. Is `.env` covered by an ignore rule?
+ *   6. Does the repository run the leak guard at all, unless it declines with `.no-fleet-sync`?
+ *
+ * Questions 1-4 ask whether an installed guard fires; they pass a repository that has none. On
+ * 2026-10-25 every installed guard was reachable while commitwatch had no hook of any kind, so its
+ * commits went in unguarded (Roger, after #23144). Question 6 is the one that catches that.
  *
  * REPOSITORIES ARE DISCOVERED, NEVER LISTED, following check-fleet-aidd-entries.ts: every
  * hardcoded inventory in this effort went stale within hours, and the repository a list forgets is
@@ -84,7 +89,24 @@ export function parseHookWiringArgs(args: string[]): HookWiringOptions {
 	return { root: values.root === undefined ? resolve(AIDD_ROOT, '..') : resolve(values.root) };
 }
 
-/** The five answers for one repository, plus whether it has any hook git would execute. */
+/** Where the leak guard's body lives: the old shared layout, and smokestack's since v0.6.0. */
+const LEAK_GUARD_HOMES = ['.githooks/leak-guard.sh', 'scripts/smokestack/hooks/leak-guard.sh'];
+
+/** The marker a repository uses to decline the fleet's shared files, the leak guard included. */
+const DECLINES_FLEET_SYNC = '.no-fleet-sync';
+
+/** Whether the pre-commit git would run calls some leak-guard.sh. */
+const preCommitRunsLeakGuard = (repo: string, hooksRel: string): boolean => {
+	const live = join(repo, hooksRel, 'pre-commit');
+	return (
+		existsSync(live) &&
+		invokedScripts(readFileSync(live, 'utf8'), hooksRel).some((s) =>
+			s.endsWith('/leak-guard.sh'),
+		)
+	);
+};
+
+/** The six answers for one repository, plus whether it has any hook git would execute. */
 function inspectRepo(repo: string): { problems: string[]; wired: boolean } {
 	const problems: string[] = [];
 	const name = repo.split(/[\\/]/).pop()!;
@@ -136,18 +158,20 @@ function inspectRepo(repo: string): { problems: string[]; wired: boolean } {
 	// 4. The guard's own file being present says nothing about whether anything calls it. Check the
 	// hook git would actually run, which for a simple-git-hooks repository is under .git/hooks and
 	// carries the call the tool generated from package.json.
-	if (existsSync(join(repo, '.githooks', 'leak-guard.sh'))) {
-		const live = join(repo, hooksRel, 'pre-commit');
-		const calls =
-			existsSync(live) &&
-			invokedScripts(readFileSync(live, 'utf8'), hooksRel).some((s) =>
-				s.endsWith('/leak-guard.sh'),
-			);
-		if (!calls)
-			problems.push(
-				`${name}: leak-guard.sh is present but no active pre-commit calls it — the guard is installed and dead.`,
-			);
-	}
+	const guardPresent = LEAK_GUARD_HOMES.some((home) => existsSync(join(repo, home)));
+	const guardRuns = preCommitRunsLeakGuard(repo, hooksRel);
+	if (guardPresent && !guardRuns)
+		problems.push(
+			`${name}: leak-guard.sh is present but no active pre-commit calls it — the guard is installed and dead.`,
+		);
+
+	// 6. A repository with no guard at all passes 1-4, because none of them has anything to read.
+	// The pattern file names every private sibling on this machine, so any repository here can leak
+	// any other's literals; one left out is the incident the guard exists to prevent.
+	if (!guardPresent && !guardRuns && !existsSync(join(repo, DECLINES_FLEET_SYNC)))
+		problems.push(
+			`${name}: no active pre-commit runs the leak guard — every commit here is unguarded. Install it with smokestack's install-leak-guard.ts --only ${name}, or decline with ${DECLINES_FLEET_SYNC} and a reason.`,
+		);
 
 	// 5. The guard catches a secret on its way into a commit; the ignore rule keeps it out of the
 	// staged set in the first place. Neither substitutes for the other.
@@ -155,6 +179,8 @@ function inspectRepo(repo: string): { problems: string[]; wired: boolean } {
 
 	return { problems, wired: hooks.length > 0 };
 }
+
+export { inspectRepo };
 
 export function runFleetHookWiring(options: HookWiringOptions): number {
 	const repos = readdirSync(options.root, { withFileTypes: true })
@@ -179,8 +205,8 @@ export function runFleetHookWiring(options: HookWiringOptions): number {
 
 	if (problems.length === 0) {
 		console.log(
-			`[OK] fleet hook wiring — ${repos.length} repositories examined; every installed ` +
-				'guard is reachable and every .env is ignored.',
+			`[OK] fleet hook wiring — ${repos.length} repositories examined; every repository ` +
+				'runs the leak guard or declines it, every installed guard is reachable, and every .env is ignored.',
 		);
 		return 0;
 	}

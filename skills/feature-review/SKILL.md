@@ -432,7 +432,7 @@ After presenting the report, automatically rewrite every feature.json that has i
 - **Only backlog records are rewritten**, except under Fix Rule 15. A wider `--status` scope widens what is checked and
   reported, never what is fixed: an `in_progress`, `waiting_approval` or `completed` record found
   stale or wrongly marked goes in the report with its correction, for the project's lead to apply.
-- **Completed features are out of scope for fixes**, except their removal under Fix Rule 15. Fix Rule 13 does NOT amend them: source-feature `spec`/`notes` amendments belong to the coding run that ships the fix, not to this review. If a backlog spec depends on a contract being recorded on a completed feature, leave the step in place and report it — do not pre-apply it.
+- **Completed features are out of scope for fixes**, except under Fix Rule 15: removing a one-off record, or removing a mixed record's one-off steps. Fix Rule 13 does NOT amend them: source-feature `spec`/`notes` amendments belong to the coding run that ships the fix, not to this review. If a backlog spec depends on a contract being recorded on a completed feature, leave the step in place and report it — do not pre-apply it.
 - **Never modify template features**: Features with `spernakit_version` are template-owned and must not be auto-fixed in derived apps
 - **Update `updatedAt`** to current ISO timestamp on any modified feature
 - **Write valid JSON**: validate before writing

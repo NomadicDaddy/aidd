@@ -104,8 +104,11 @@ feature cannot be mapped to any base feature, decide which of two kinds it is:
    holding (a corrected path, a fixed record, an edited draft, a replaced or resized image). It
    needs no feature record. Record what was done in the consolidation's `.aidd/CHANGELOG.md`
    entry (the finding's id, its fingerprint when it has one, the change and its evidence) and
-   delete the record in Phase 4. Its fingerprint stays resolved: aidd records a `remediated`
-   ledger event when an audit finding's record completes, so a recurrence is still detected.
+   delete the record in Phase 4. Check `.aidd/findings-ledger.jsonl` for a `remediated` or
+   `dismissed` event on its fingerprint first. aidd writes `remediated` when a finding completes
+   through its own store, so a recurrence is detected later. A completion written by hand may have
+   none: then say in the changelog entry that the fingerprint has no resolution event, so a later
+   audit raises it as new. Never write the ledger yourself.
 
 If the honest answer is neither, because deciding needs the owner, ask the owner in the report
 with the record, the choice and your recommendation. Never keep a completed finding as the
@@ -128,7 +131,8 @@ For each base feature that has mapped remediation/audit findings:
 2. **Analyze what the remediation fixed**: read the remediation feature's `spec` and understand the corrective action.
 
     **Classify every numbered criterion of the record being folded**, one by one, before writing
-    anything. Each is exactly one of:
+    anything. Each is exactly one of the following; a one-off change (Phase 2, case 2) is the
+    third kind:
     - **Requirement**: something that must stay true of the product after the record is gone.
       Measured values, thresholds, named viewports, time-zone and date boundaries, counts,
       and "must not change" clauses are requirements, however specific they look.
@@ -136,6 +140,8 @@ For each base feature that has mapped remediation/audit findings:
       afterwards. Examples: "verify `bun run smoke:qc` exits 0", "re-capture every surface after
       the change", and the closing instruction that tells the coding run to amend the source
       feature. State the reason a criterion is process; when in doubt it is a requirement.
+    - **One-off**: a single change to data, content or metadata that leaves no requirement behind
+      (Phase 2, case 2). It is named in the changelog entry, not carried.
 
 3. **Update the base feature's `spec`** so that every **requirement** criterion is carried into it. The goal is that if the feature were re-implemented from scratch using only the spec, the remediation issue would not recur and its acceptance could be re-run.
 
@@ -370,7 +376,7 @@ Commit: {commit hash or "not committed: reason"}
 ## Principles
 
 1. **Traceability over speed**: Every remediation fix must be traceable to a base feature before deletion.
-2. **Conservative deletion**: Never delete a finding that can't be mapped. Flag it instead.
+2. **Nothing stays standing, nothing is lost**: a completed finding with no base feature gets a new owning feature, a changelog entry, or a question to the owner (Phase 2). Delete it only once its criterion ledger is complete.
 3. **Spec completeness**: Updated specs should be self-sufficient: a developer reading only the spec should produce correct code without needing remediation.
 4. **Validation gate**: Never finish leaving a record you wrote unreadable — aidd's end-of-run feature-contract check is what reports it, and a failure there is your failure.
 5. **Formatting gate**: Format changed feature artifacts before validation and before committing.

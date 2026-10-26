@@ -54,10 +54,19 @@ describe('--check-features roadmap validation', () => {
 					expect(stdout + stderr).toContain(
 						scenario.name === 'array milestones' ? 'milestones' : 'Invalid JSON',
 					);
+					const ledger = await readFile(join(dir, '.aidd/runs.jsonl'), 'utf8');
+					expect(ledger).toContain(
+						'1 contract issue(s); 1 feature file(s) checked; roadmap.json unreadable',
+					);
+					expect(ledger).not.toContain('invalid feature file(s)');
 				}
 				expect(await readFile(featurePath, 'utf8')).toBe(feature);
 				if (scenario.raw !== null)
 					expect(await readFile(roadmapPath, 'utf8')).toBe(scenario.raw);
+				else
+					await expect(readFile(roadmapPath, 'utf8')).rejects.toMatchObject({
+						code: 'ENOENT',
+					});
 			},
 			30_000,
 		);

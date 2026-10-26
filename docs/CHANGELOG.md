@@ -19,8 +19,7 @@ All notable public aidd releases are documented here.
 
 ### Fixed
 
-- `--check-features` now rejects an existing malformed or unreadable roadmap and reports its diagnostic. A missing roadmap remains optional, and validation leaves project metadata unchanged.
-
+- `--check-features` now rejects an existing malformed or unreadable roadmap and names it in the run summary. A missing roadmap remains optional, and validation leaves project metadata unchanged. The shared run checks also report the roadmap issue at run end and carry it into the next iteration's prompt.
 - Default test discovery stays inside aidd's maintained `test/` tree, so an isolated audit checkout under `data/worktrees/` cannot add another project's tests to aidd's gate. The preload and nested test/spec discovery remain covered by an executable fixture and a failing unbounded control.
 - The panel and CLI share numbered interview answer documents and the progress index. Saving a panel answer preserves other answers from older multi-question documents, refuses a file collision with another question's answer, and writes preserved answers before replacing the saved answer's original file.
 - An allowlisted run sees its writable paths in its first prompt. Its discard check distinguishes a committed staged file from lost pre-existing unstaged content, and an unreadable baseline cannot count as confirmed absence. Coding instructions require agents to leave concurrent changes they did not make alone.

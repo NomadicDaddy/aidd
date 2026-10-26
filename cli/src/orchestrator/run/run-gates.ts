@@ -57,10 +57,12 @@ export async function handlePreRunChecks(
 		const exitCode = result.valid
 			? orchestratorExitCodes.success
 			: orchestratorExitCodes.validationError;
-		const invalidCount = new Set(result.issues.map((issue) => issue.id)).size;
+		const roadmapDetail = result.issues.some((issue) => issue.path === '.aidd/roadmap.json')
+			? '; roadmap.json unreadable'
+			: '';
 		const summary = result.valid
 			? `feature validation passed: ${result.total} feature file(s) valid`
-			: `feature validation FAILED: ${invalidCount} invalid feature file(s) of ${result.total}`;
+			: `feature validation FAILED: ${result.issues.length} contract issue(s); ${result.total} feature file(s) checked${roadmapDetail}`;
 		return completePreRunCheck(move, exitCode, summary);
 	}
 

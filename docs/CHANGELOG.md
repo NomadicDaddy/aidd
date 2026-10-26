@@ -20,6 +20,7 @@ All notable public aidd releases are documented here.
 
 ### Fixed
 
+- Feature consolidation checks each finding's current completion state and byte snapshot before writing or deleting it, then checks the archived source during final validation. Reopened findings and changed review notes invalidate the old fold plan; matching acceptance criteria or a stale completion timestamp cannot make them eligible.
 - `--check-features` now rejects an existing malformed or unreadable roadmap and names it in the run summary. A missing roadmap remains optional, and validation leaves project metadata unchanged. The shared run checks also report the roadmap issue at run end and carry it into the next iteration's prompt.
 - Default test discovery stays inside aidd's maintained `test/` tree, so an isolated audit checkout under `data/worktrees/` cannot add another project's tests to aidd's gate. The preload and nested test/spec discovery remain covered by an executable fixture and a failing unbounded control.
 - The panel and CLI share numbered interview answer documents and the progress index. Saving a panel answer preserves other answers from older multi-question documents, refuses a file collision with another question's answer, and writes preserved answers before replacing the saved answer's original file.

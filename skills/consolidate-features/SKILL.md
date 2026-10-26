@@ -68,6 +68,25 @@ The goal is to ensure every fix, audit finding, and remediation spec is represen
    non-completed or non-passing record alone because it represents unfinished work, and never set
    or clear `deferred`: it marks scope the owner has set aside.
 
+    This filter applies to every phase, including creating a new owner, duplicate cleanup and
+    artifact rewrites. A historical `completedAt`, implementation note or matching spec does not
+    override current `status` and `passes`. Do not promote an open finding by treating it as a base
+    feature. An active-run listing does not prove nobody is editing the files manually.
+
+    **Capture each candidate's current eligibility and byte hash with the read-only guard:**
+
+    ```text
+    bun .aidd/skills/consolidate-features/scripts/check-fold-eligibility.ts --snapshot --source .aidd/features/<id>/feature.json
+    ```
+
+    Use the staged helper above; inside the aidd checkout its canonical location is
+    `skills/consolidate-features/scripts/check-fold-eligibility.ts`. An unreadable or missing helper
+    is a blocker, not permission to replace it with a spec-only check. Exit 0 and `eligible: true`
+    permit planning that candidate; retain its `sha256` in the working plan and criterion ledger.
+    Exit 1 means preserve and skip it. `--snapshot` captures discovery evidence only. Verification
+    omits that flag and requires `--expect-sha256`; both flags together or neither are refused.
+    The helper writes no file, including on `--dry-run`.
+
 4. **Report discovery summary**:
     - Total features found
     - Template features count (read-only in derived apps; modifiable in Spernakit itself)
@@ -119,6 +138,15 @@ default.
 ### Phase 3: Fold Specifications
 
 For each base feature that has mapped remediation/audit findings:
+
+**Revalidate before writing.** Run the helper on each live source with
+`--expect-sha256 <discovery-sha256>` immediately before any owner/spec/reference mutation. Any
+changed bytes, including changed notes with completion fields still true, invalidate that plan.
+Re-read and reclassify; preserve reopened or non-passing sources and their notes, and do not create
+a completed owner for them. Re-read an existing target too and preserve intervening edits. These
+checks are observations, not a lock: never infer exclusive ownership from them or an active-run
+listing. Require exit 0, `eligible: true` and `mode: verification`; never substitute a fresh
+`--snapshot` capture for that comparison or silently adopt its hash while using the old plan.
 
 1. **Read the base feature's current `spec`** field (the numbered acceptance criteria).
 
@@ -196,7 +224,12 @@ After successfully folding all specs:
 
 1. **Delete every completed remediation/audit feature directory** whose criteria are all
    `carried`, `process` or `one-off → CHANGELOG` in the Phase 3 ledger, including one folded into
-   a feature created under the Phase 2 rule. Remove the entire directory (e.g.,
+   a feature created under the Phase 2 rule. Before deletion, retain an exact byte copy of its
+   source under this run's `.aidd/reports/` directory. Check BOTH that archive and the live source
+   with the helper and `--expect-sha256 <discovery-sha256>` immediately before removal. Both must
+   still be completed, passing and unchanged. If either check refuses, keep the live finding and
+   its references, stop that candidate, and report any provisional edits; do not overwrite another
+   editor's changes to undo them or mark the fold complete. Remove an eligible directory (e.g.,
    `rm -rf .aidd/features/remediation-20260311-build-config/`).
 
 2. **The only remediation/audit features left in place** are ones that:
@@ -295,6 +328,11 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
 4. **If validation fails**: Fix the issues (common problems: missing required fields, invalid JSON, broken dependency references) and re-validate.
 
 5. **Check consistency**:
+    - Every folded source's archived bytes pass the helper with its discovery hash, current
+      `status: completed` and `passes: true`. Record this result beside its criterion ledger.
+      Comparing criteria alone cannot establish eligibility: an archived backlog finding can have
+      the same spec and a stale `completedAt`. A refused source is not a completed fold, even when
+      the new owner passes ordinary JSON validation
     - Every feature directory name should match its `feature.json` `id`
     - Every `dependencies` entry should point to an existing feature ID
     - Every appended criterion continues from the last numbered line in the pre-edit spec, not the

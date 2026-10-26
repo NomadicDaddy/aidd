@@ -1,0 +1,4 @@
+interface:
+    display_name: 'Feature consolidation'
+    short_description: 'Fold completed findings into lasting feature specs'
+    default_prompt: 'Use $consolidate-features to consolidate completed findings safely.'

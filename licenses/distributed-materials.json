@@ -193,6 +193,8 @@
 			"skills/commit-archaeology/SKILL.md",
 			"skills/commit-bundles/SKILL.md",
 			"skills/consolidate-features/SKILL.md",
+			"skills/consolidate-features/agents/openai.yaml",
+			"skills/consolidate-features/scripts/check-fold-eligibility.ts",
 			"skills/deepreview/SKILL.md",
 			"skills/dependencies/SKILL.md",
 			"skills/deployment-readiness/SKILL.md",

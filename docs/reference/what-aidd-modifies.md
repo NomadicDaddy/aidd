@@ -125,8 +125,9 @@ your project's own `deploy` script; aidd never stores or handles deploy credenti
   permissions; Bun's cache and Summon's Electron cache can be written outside the checkout. This is
   not host confinement: declared lifecycle scripts can also modify shared Git metadata such as hooks,
   so their effects need review when authorizing the audit. Projects without a root JS manifest skip
-  installation. Changed local Git configuration or effective hooks stop before the provider; only
-  fingerprints are recorded, and changes are not automatically reverted. Build output and live
+  installation. Changed local Git configuration, effective or common-directory hooks stop before the provider; only
+  fingerprints are recorded, and changes are not automatically reverted. Refs, packed refs, info files
+  and other worktree administration data are outside this inspection. Build output and live
   databases are not otherwise copied. Other measurement prerequisites still need authorization or
   matching retained evidence; disclose missing tools rather than claim a product defect or use the
   live tree. The explicit live-tree opt-out does not install dependencies.

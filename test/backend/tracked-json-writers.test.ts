@@ -189,6 +189,8 @@ const nonRepositoryPrettyJsonWriters = [
 	'backend/src/services/skillImports.ts',
 	'cli/src/metadata/log-cleaner.ts',
 	'cli/src/modes/director.ts',
+	// Runtime setup evidence under canonical gitignored .aidd/reports/, never a source definition.
+	'cli/src/orchestrator/run/audit-dependencies-evidence.ts',
 	'cli/src/prompts/compile.ts',
 	'shared/src/agent/client/simulation.ts',
 	'shared/src/metadata/active-runs.ts',

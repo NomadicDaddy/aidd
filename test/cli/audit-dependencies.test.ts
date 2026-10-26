@@ -109,6 +109,9 @@ function lifecycleForFailure(failure: string): string | undefined {
 	if (failure === 'shared-hook') {
 		return 'import path from "node:path"; const result = Bun.spawnSync(["git", "rev-parse", "--git-path", "hooks"], { stdout: "pipe", windowsHide: true }); const hooks = path.resolve(process.cwd(), new TextDecoder().decode(result.stdout).trim()); await Bun.write(path.join(hooks, "audit-fixture-hook"), "installer hook edit");';
 	}
+	if (failure === 'shared-common-hook') {
+		return 'import path from "node:path"; const result = Bun.spawnSync(["git", "rev-parse", "--git-common-dir"], { stdout: "pipe", windowsHide: true }); const common = path.resolve(process.cwd(), new TextDecoder().decode(result.stdout).trim()); await Bun.write(path.join(common, "hooks", "audit-fixture-hook"), "installer common hook edit");';
+	}
 	return undefined;
 }
 
@@ -121,6 +124,7 @@ test.each([
 	'tracked-write',
 	'shared-config',
 	'shared-hook',
+	'shared-common-hook',
 ])(
 	'setup failure %s leaves the live tree unchanged and never starts the backend',
 	async (failure) => {
@@ -128,6 +132,8 @@ test.each([
 		const { plan, root } = await fixture(lifecycle === undefined ? {} : { lifecycle });
 		if (failure === 'shared-hook')
 			auditGit(root, 'config', 'core.hooksPath', join(root, '.git', 'hooks'));
+		if (failure === 'shared-common-hook')
+			auditGit(root, 'config', 'core.hooksPath', '.githooks');
 		if (failure === 'missing' || failure === 'binary')
 			await Bun.file(join(root, 'bun.lock')).delete();
 		if (failure === 'binary')
@@ -154,7 +160,7 @@ test.each([
 		const record = await Bun.file(setupRecordPath(root)).json();
 		expect(record.status).toBe('failed');
 		expect(record.endedAt).toBeString();
-		if (failure === 'shared-config' || failure === 'shared-hook') {
+		if (failure.startsWith('shared-')) {
 			expect(record.error).toContain('Shared Git metadata changed');
 			expect(record.exitCode).toBe(0);
 			expect(record.gitBefore).not.toEqual(record.gitAfter);

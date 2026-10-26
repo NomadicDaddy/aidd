@@ -4,6 +4,7 @@ import { existsSync, lstatSync, readdirSync, readFileSync, readlinkSync } from '
 import { join, resolve } from 'node:path';
 
 export interface AuditGitSnapshot {
+	commonHooksSha256: string;
 	configSha256: string;
 	hooksSha256: string;
 }
@@ -58,17 +59,28 @@ export function readSetupGit(directory: string, args: string[], deadlineAtMs: nu
 
 /** Only fingerprints are retained. Git config can contain credentials or private URLs; never
  * print or persist its raw values. Hook symlinks are fingerprinted without following them. */
+function hashHookDirectory(hooksPath: string, budget: HookInspection): string {
+	const hash = createHash('sha256').update(`${hooksPath}\0`);
+	if (existsSync(hooksPath)) hashHooks(hash, hooksPath, budget);
+	else hash.update('missing');
+	return hash.digest('hex');
+}
+
 export function snapshotAuditGit(directory: string, deadlineAtMs: number): AuditGitSnapshot {
 	const config = readSetupGit(directory, ['config', '--local', '--list', '-z'], deadlineAtMs);
 	const hooks = readSetupGit(directory, ['rev-parse', '--git-path', 'hooks'], deadlineAtMs);
 	const hooksPath = resolve(directory, hooks.trim());
-	const hookHash = createHash('sha256').update(`${hooksPath}\0`);
-	if (existsSync(hooksPath))
-		hashHooks(hookHash, hooksPath, { bytes: 0, deadlineAtMs, entries: 0 });
-	else hookHash.update('missing');
+	const common = readSetupGit(directory, ['rev-parse', '--git-common-dir'], deadlineAtMs);
+	const commonHooksPath = resolve(directory, common.trim(), 'hooks');
+	const budget = { bytes: 0, deadlineAtMs, entries: 0 };
+	const hooksSha256 = hashHookDirectory(hooksPath, budget);
 	return {
+		commonHooksSha256:
+			commonHooksPath === hooksPath
+				? hooksSha256
+				: hashHookDirectory(commonHooksPath, budget),
 		configSha256: createHash('sha256').update(config).digest('hex'),
-		hooksSha256: hookHash.digest('hex'),
+		hooksSha256,
 	};
 }
 
@@ -76,6 +88,8 @@ export function assertAuditGitUnchanged(before: AuditGitSnapshot, after: AuditGi
 	const changed: string[] = [];
 	if (before.configSha256 !== after.configSha256) changed.push('local Git configuration');
 	if (before.hooksSha256 !== after.hooksSha256) changed.push('effective Git hooks');
+	if (before.commonHooksSha256 !== after.commonHooksSha256)
+		changed.push('common-directory Git hooks');
 	if (changed.length > 0) {
 		throw new Error(
 			`[audit-integrity-violation] Shared Git metadata changed during setup: ${changed.join(', ')}`,

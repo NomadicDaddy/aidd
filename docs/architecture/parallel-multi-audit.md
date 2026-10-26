@@ -33,10 +33,11 @@ and, for Summon, the Electron installer cache are expected host writes; the chec
 sandbox. It never reuses the live dependency tree, changes the lock or falls back to a live install.
 Lifecycle scripts can also affect shared Git metadata, such as a project's hook setup; review those
 declared script effects when authorizing the audit. The working directory does not confine them.
-Setup fingerprints local Git configuration and the effective hooks directory before and after
+Setup fingerprints local Git configuration, effective hooks and common-directory hooks before and after
 installation, without retaining config values. Hook symlinks are fingerprinted without reading their
 targets. A change stops before the provider and is recorded as
 an integrity violation; it is not automatically reverted or attributed solely to the installer.
+Refs, packed refs, info files and other worktree administration data are outside these fingerprints.
 Canonical `.aidd/reports/audit-setup/` records command, cwd, timestamps, actual exit and scrubbed output.
 Setup and execution share one configured run deadline, starting before worktree creation; setup consumes
 the execution budget rather than restarting it. Git inspection shares that deadline and is bounded by

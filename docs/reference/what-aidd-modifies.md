@@ -113,11 +113,23 @@ your project's own `deploy` script; aidd never stores or handles deploy credenti
   are discarded with the checkout, including on rollback. `--audit-live-tree` explicitly opts out and records a
   warning; an audit without a committed HEAD otherwise refuses to run. A worktree changes the
   agent's working directory; it does not restrict its account's access to other host paths.
-  Ignored dependencies such as `node_modules`, build output and live databases are not provisioned
-  in the audit checkout. aidd does not install them automatically. Measurement audits need separately
-  authorized disposable prerequisites or matching retained evidence; otherwise they must disclose
-  the execution limit and source-only coverage, rather than treat missing checkout tools as a
-  product defect or fall back to the live tree.
+  Before the agent starts, locked Bun projects receive one frozen dependency install in the checkout,
+  including dev dependencies, with `--backend=copyfile` to avoid writable cache hardlinks. An owned
+  temporary Bun config overrides production-only install without editing tracked configuration.
+  Missing/unsupported locks, conflicting package managers, escaping local dependencies, failed
+  installation, tracked edits or stop/timeout prevent provider execution. Setup and execution share
+  one deadline starting before worktree creation, so setup leaves only the remaining run budget.
+  Unconfirmed child cleanup retains the checkout against both CLI rollback and the orphan sweeper.
+  Setup evidence and scrubbed
+  output persist under live `.aidd/reports/audit-setup/`. Normal lifecycle scripts retain host account
+  permissions; Bun's cache and Summon's Electron cache can be written outside the checkout. This is
+  not host confinement: declared lifecycle scripts can also modify shared Git metadata such as hooks,
+  so their effects need review when authorizing the audit. Projects without a root JS manifest skip
+  installation. Changed local Git configuration or effective hooks stop before the provider; only
+  fingerprints are recorded, and changes are not automatically reverted. Build output and live
+  databases are not otherwise copied. Other measurement prerequisites still need authorization or
+  matching retained evidence; disclose missing tools rather than claim a product defect or use the
+  live tree. The explicit live-tree opt-out does not install dependencies.
 - The native agent's shell policy rejects recognized destructive git commands (`git reset --hard`,
   `git checkout .`, `git clean -fdx`, `git push --force`). This command-text check is not a
   guarantee against every way executable code can discard work; see the shell boundary below.

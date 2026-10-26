@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 import { reapRunWorktree } from '../../backend/src/services/run/worktreeReap.ts';
+import { auditSetupPaths } from '../../shared/src/metadata/audit-setup.ts';
 import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
@@ -22,6 +23,48 @@ async function runGit(cwd: string, args: string[]): Promise<string> {
 }
 
 describe('reapRunWorktree', () => {
+	test.each(['installing', 'incomplete', 'malformed', 'mismatched'])(
+		'retains audit setup %s until canonical evidence confirms cleanup',
+		async (state) => {
+			const root = await testTempDir('aidd-reap-setup-');
+			try {
+				const projectDir = join(root, 'project');
+				await mkdir(projectDir, { recursive: true });
+				await runGit(projectDir, ['init', '-b', 'main']);
+				await runGit(projectDir, ['config', 'user.email', 'test@aidd.local']);
+				await runGit(projectDir, ['config', 'user.name', 'aidd test']);
+				await writeFile(join(projectDir, 'file.txt'), 'base\n');
+				await runGit(projectDir, ['add', '.']);
+				await runGit(projectDir, ['commit', '-m', 'base']);
+				const worktreePath = join(root, 'worktree');
+				await runGit(projectDir, ['worktree', 'add', '-b', 'aidd/run-setup', worktreePath]);
+				await mkdir(join(projectDir, '.aidd', 'reports', 'audit-setup'), {
+					recursive: true,
+				});
+				const recordPath = auditSetupPaths(projectDir, 'setup').recordPath;
+				await writeFile(
+					recordPath,
+					state === 'malformed'
+						? '{'
+						: JSON.stringify({
+								cleanupComplete: state !== 'incomplete',
+								cwd: state === 'mismatched' ? root : worktreePath,
+								status: state === 'installing' ? 'installing' : 'failed',
+							}),
+				);
+				await reapRunWorktree(projectDir, worktreePath, 'aidd/run-setup');
+				expect(existsSync(worktreePath)).toBe(true);
+				await writeFile(
+					recordPath,
+					JSON.stringify({ cwd: worktreePath, status: 'failed', cleanupComplete: true }),
+				);
+				await reapRunWorktree(projectDir, worktreePath, 'aidd/run-setup');
+				expect(existsSync(worktreePath)).toBe(false);
+			} finally {
+				await removeTempTree(root);
+			}
+		},
+	);
 	test('removes the worktree dir and its branch', async () => {
 		const root = await testTempDir('aidd-reap-test-');
 		try {

@@ -12,6 +12,7 @@ import type { MergeConflictResolver } from './merge-resolver.ts';
 import type { OrchestratorDeps } from './types.ts';
 import type { WorktreeMetadataSession } from './worktree-metadata-session.ts';
 
+import { prepareAuditDependencies } from './audit-dependencies.ts';
 import { auditIntegritySummary, finalizeAuditWorktree } from './audit-worktree.ts';
 import { finalizeRunWorktree, persistRunEvidence } from './worktree-evidence.ts';
 import { createRunWorktree, removeRunWorktree } from './worktree-manager.ts';
@@ -72,6 +73,7 @@ export async function prepareWorktreeRun(input: {
 }): Promise<null | WorktreeRunContext> {
 	const { launcherManaged, plan, requested, runId, webDataDir } = input;
 	if (warnForLiveAudit(plan) || !needsWorktree(plan, requested)) return null;
+	if (plan.mode === 'audit') plan.runStartedAtMs ??= Date.now();
 	const worktree = await createRunWorktree(plan.projectDir, runId, {
 		...(webDataDir ? { baseDir: join(webDataDir, 'worktrees') } : {}),
 	});
@@ -82,6 +84,7 @@ export async function prepareWorktreeRun(input: {
 	console.log(
 		`[worktree] seeded ${session.seededFiles} metadata file(s) into the worktree store`,
 	);
+	await prepareAuditDependencies(plan, runId);
 	return { session };
 }
 
@@ -125,6 +128,12 @@ export function worktreeOrchestratorDeps(
 export async function rollbackWorktreeRun(plan: RunPlan): Promise<void> {
 	const worktree = plan.worktree;
 	if (!worktree) return;
+	if (worktree.setupCleanupIncomplete) {
+		console.warn(
+			`[audit-setup] Child cleanup unconfirmed; checkout retained at ${worktree.dir}`,
+		);
+		return;
+	}
 	if (plan.mode === 'audit') {
 		const result = await finalizeAuditWorktree(plan.projectDir, worktree);
 		if (result.auditIntegrity) {

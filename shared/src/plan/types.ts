@@ -141,6 +141,8 @@ export interface WorktreePlan {
 	branch: string;
 	/** Absolute path to the git worktree the run's execution + metadata writes land in. */
 	dir: string;
+	/** Dependency setup cannot vouch for child cleanup; rollback must retain this checkout. */
+	setupCleanupIncomplete?: true;
 }
 
 export interface PromptFragmentRef {
@@ -203,6 +205,8 @@ export interface RunPlan {
 	prompt: PromptPlan;
 	provider?: string;
 	reasoningEffort: string;
+	/** Internal clock shared by isolated audit setup and execution; never a fresh second budget. */
+	runStartedAtMs?: number;
 	scope: RunScope;
 	simulation: boolean;
 	/** End an initializer/onboarding run once the persisted blueprint reaches coding-ready state. */

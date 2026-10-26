@@ -1,4 +1,5 @@
 import { removeTempTree } from 'aidd-shared/lib/remove-temp-tree';
+import { auditSetupNeedsRetention } from 'aidd-shared/metadata/audit-setup';
 
 import { webLogger } from '../../logger.ts';
 
@@ -27,6 +28,16 @@ export async function reapRunWorktree(
 	worktreeBranch: null | string,
 ): Promise<void> {
 	try {
+		const runId = worktreeBranch?.startsWith('aidd/run-')
+			? worktreeBranch.slice('aidd/run-'.length)
+			: undefined;
+		if (runId && (await auditSetupNeedsRetention(projectPath, runId, worktreePath))) {
+			webLogger.warn(
+				{ worktreePath },
+				'Retained audit setup worktree: child cleanup is unconfirmed',
+			);
+			return;
+		}
 		await gitOk(projectPath, ['worktree', 'remove', '--force', worktreePath]);
 		await removeTempTree(worktreePath).catch(() => {});
 		if (worktreeBranch) await gitOk(projectPath, ['branch', '-D', worktreeBranch]);

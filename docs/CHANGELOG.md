@@ -10,6 +10,7 @@ All notable public aidd releases are documented here.
 
 ### Fixed
 
+- Isolated Bun audits install frozen development and production dependencies before starting the agent, using copied package files instead of writable cache hardlinks. Setup failures, escaping local dependencies, tracked edits and stop requests fail before provider execution; setup output is retained canonically, and uncertain child cleanup keeps the checkout for diagnosis.
 - Audit benchmark scoring accepts a finding's citation to the exact source span of a cataloged function, as well as its name. The span is recorded from the original fixture before the agent runs; citations to another file or a neighboring function do not count.
 - Audit agents now run in a disposable checkout of the project's committed HEAD by default, so temporary probes leave live source alone. aidd persists accepted reports and findings into the live `.aidd/`, discards the audit checkout without merging, and records leftover tracked edits as an audit integrity violation. `--audit-live-tree` explicitly opts out with a warning; otherwise a committed Git HEAD is required.
 

@@ -38,6 +38,10 @@ function modeProjectDir(plan: RunPlan): string {
 	return plan.mode === 'audit' ? plan.projectDir : runRepoDir(plan);
 }
 
+function runTimeOrigin(plan: RunPlan): number {
+	return plan.runStartedAtMs ?? Date.now();
+}
+
 export async function initializeOrchestratorRun(
 	plan: RunPlan,
 	deps: OrchestratorDeps,
@@ -49,7 +53,7 @@ export async function initializeOrchestratorRun(
 		return { exitCode: preCheckExit.exitCode, kind: 'return' };
 	}
 
-	const runStartedAtMs = Date.now();
+	const runStartedAtMs = runTimeOrigin(plan);
 	const acc = createRunAccumulator(deps.runId ?? randomUUID(), runStartedAtMs);
 	await captureDirtySourceBaseline(acc, runRepoDir(plan));
 	const encodingGuardExit = await handlePromptEncodingGuard(plan, deps, acc, move);

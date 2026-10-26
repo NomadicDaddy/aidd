@@ -19,12 +19,34 @@ Without that opt-out, a project without a committed Git HEAD cannot run an audit
 separates ordinary relative writes; external CLI and shell processes retain their account's host
 permissions. See [What aidd can modify](../reference/what-aidd-modifies.md#git).
 
-The checkout contains committed files and seeded `.aidd/` context, not ignored dependencies such
-as `node_modules`, build output or a live database. aidd does not install dependencies for an audit.
-A measurement audit needs separately authorized dependency and tool provisioning in disposable
-resources, or matching retained evidence. Without those prerequisites, report the execution limit
-and the source-only coverage; missing checkout dependencies are not a defect in the audited product.
-Do not switch to the live tree or install packages merely to obtain a measurement.
+Before starting the audit agent, aidd installs dependencies once in that run's disposable checkout
+when it has a root `package.json` and committed text `bun.lock`. It uses the installed Bun executable
+with `install --frozen-lockfile --backend=copyfile`, including development dependencies. An owned
+temporary config preserves project settings while disabling production-only installation; tracked
+configuration is unchanged. Copying prevents audit edits in `node_modules` from changing shared-cache
+package files through hardlinks. Local file, link and workspace references escaping the checkout are
+refused, including symlink resolutions. Projects without a root JS manifest skip this step; unsupported
+or missing locks and conflicting package-manager declarations stop setup before any provider starts.
+
+Setup runs normal declared lifecycle scripts with the account's permissions. Bun's download cache
+and, for Summon, the Electron installer cache are expected host writes; the checkout is not a host
+sandbox. It never reuses the live dependency tree, changes the lock or falls back to a live install.
+Lifecycle scripts can also affect shared Git metadata, such as a project's hook setup; review those
+declared script effects when authorizing the audit. The working directory does not confine them.
+Setup fingerprints local Git configuration and the effective hooks directory before and after
+installation, without retaining config values. Hook symlinks are fingerprinted without reading their
+targets. A change stops before the provider and is recorded as
+an integrity violation; it is not automatically reverted or attributed solely to the installer.
+Canonical `.aidd/reports/audit-setup/` records command, cwd, timestamps, actual exit and scrubbed output.
+Setup and execution share one configured run deadline, starting before worktree creation; setup consumes
+the execution budget rather than restarting it. Git inspection shares that deadline and is bounded by
+output and hook-tree size limits. Stop files also apply to setup. Failed installs, tracked edits or unconfirmed
+child cleanup stop before the agent; unconfirmed cleanup retains the checkout, including against the
+web orphan sweeper. No build output or live database is otherwise copied from the live project.
+
+An install does not establish every measurement prerequisite or permission. Use matching retained
+evidence or disclose missing capabilities and source-only coverage; do not treat a missing checkout
+tool as a product defect, switch to the live tree or start an unapproved measurement.
 
 An explicit multi-audit run takes the named audits in the order given. Existing reports do not
 suppress an explicit `--audit` request, so this form is suitable for refreshing named audits:

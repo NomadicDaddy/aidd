@@ -5,6 +5,8 @@
 env = false
 
 [test]
+# Only discover aidd's maintained tests, never tests in runtime audit checkouts or reports.
+root = "./test"
 # Refuses to start a second concurrent `bun test` for this repo - see the preload.
 preload = ["./test/test-run-lock.preload.ts"]
 # Coverage reports describe production behavior; counting the assertions themselves inflates it.

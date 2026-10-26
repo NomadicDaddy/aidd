@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
-import { relative, resolve, sep } from 'node:path';
+import { relative, resolve } from 'node:path';
 
 import {
 	GENERATED_OUTPUT_PREFIX,
@@ -12,6 +12,7 @@ import {
 } from './dependencies.ts';
 import { collectDocsDependencies } from './docs.ts';
 import { collectPrettierDependencies } from './prettier.ts';
+import { walkCacheFiles } from './walk.ts';
 
 /**
  * File collection and hashing for the smoke cache. Split from dependencies.ts so that file
@@ -98,21 +99,16 @@ async function scanGlob(
 ): Promise<string[]> {
 	const key = `${allowGeneratedOutput ? 'generated' : 'source'}\0${pattern}`;
 	const scan = async (): Promise<string[]> => {
-		const matches: string[] = [];
 		const glob = new Bun.Glob(pattern);
-		// `dot` is required, not cosmetic: without it Bun.Glob skips dot-directories, so declared
-		// patterns like `.githooks/**/*` and `.github/**/*` silently match NOTHING and their steps
-		// cache against an empty input set — edit a hook or a workflow and the gate replays a pass
-		// over it. IGNORED_SEGMENTS already carries `.git`, which is only meaningful with this on.
-		for await (const relativePath of glob.scan({
-			cwd: projectRoot,
-			dot: true,
-			onlyFiles: true,
-		})) {
-			const normalized = relativePath.split(sep).join('/');
-			if (!isIgnored(normalized, allowGeneratedOutput)) matches.push(normalized);
-		}
-		return matches;
+		const prefix = pattern.slice(0, pattern.indexOf('*'));
+		const directory = prefix.slice(0, Math.max(0, prefix.lastIndexOf('/')));
+		if (isIgnored(directory, allowGeneratedOutput)) return [];
+		if (!(await pathExists(resolve(projectRoot, directory)))) return [];
+		// Dot paths such as .github/workflows remain real inputs. Only ignored subtrees are pruned.
+		const files = await walkCacheFiles(projectRoot, directory, true, (path) =>
+			isIgnored(path, allowGeneratedOutput),
+		);
+		return files.filter((path) => glob.match(path));
 	};
 
 	if (context === undefined) return await scan();

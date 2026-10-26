@@ -98,6 +98,7 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/lib/docs/*.ts',
 		'scripts/lib/smoke-cache/collect.ts',
 		'scripts/lib/smoke-cache/docs.ts',
+		'scripts/lib/smoke-cache/walk.ts',
 		'scripts/smoke-cache.ts',
 	],
 	'check:env-spread': [

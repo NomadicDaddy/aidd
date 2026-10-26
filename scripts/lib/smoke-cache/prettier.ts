@@ -1,6 +1,8 @@
 import { readdir, stat } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 
+import { walkCacheFiles } from './walk.ts';
+
 const PRETTIER_CANDIDATE_GLOBS = [
 	'**/*.cjs',
 	'**/*.css',
@@ -47,14 +49,9 @@ async function pathExists(path: string): Promise<boolean> {
 }
 
 /**
- * Bun.Glob will not descend into hidden directories unless `dot: true`, so a plain `**` scan
- * cannot see `.github/**` — which `prettier --check .` very much does check. Enabling `dot`
- * for the whole tree is not the fix: it also walks node_modules' dotfiles and makes the scan
- * roughly ten times slower, which the pre-commit inner loop pays on every run.
- *
- * Hidden directories are therefore walked one at a time. Any that .prettierignore already
- * covers (.aidd, .claude, .vscode) is skipped as a whole via a single probe instead of being
- * enumerated and rejected file by file.
+ * The visible walk skips dot paths. Probe each hidden root against Prettier's ignore policy
+ * before walking it, so .github remains an input while ignored agent/runtime trees stay out.
+ * The walker also prunes dependency and generated directories before entering them.
  */
 async function collectHiddenCandidates(projectRoot: string): Promise<string[]> {
 	const { getFileInfo } = await import('prettier');
@@ -69,30 +66,16 @@ async function collectHiddenCandidates(projectRoot: string): Promise<string[]> {
 		});
 		if (probe.ignored) continue;
 
-		const glob = new Bun.Glob('**/*');
-		for await (const relativePath of glob.scan({
-			cwd: resolve(projectRoot, entry.name),
-			dot: true,
-			onlyFiles: true,
-		})) {
-			candidates.push(`${entry.name}/${relativePath.split(sep).join('/')}`);
-		}
+		candidates.push(...(await walkCacheFiles(projectRoot, entry.name, true, isIgnored)));
 	}
 
 	return candidates;
 }
 
 async function collectVisibleCandidates(projectRoot: string): Promise<string[]> {
-	const candidates: string[] = [];
-
-	for (const pattern of PRETTIER_CANDIDATE_GLOBS) {
-		const glob = new Bun.Glob(pattern);
-		for await (const relativePath of glob.scan({ cwd: projectRoot, onlyFiles: true })) {
-			candidates.push(relativePath.split(sep).join('/'));
-		}
-	}
-
-	return candidates;
+	const globs = PRETTIER_CANDIDATE_GLOBS.map((pattern) => new Bun.Glob(pattern));
+	const candidates = await walkCacheFiles(projectRoot, '', false, isIgnored);
+	return candidates.filter((path) => globs.some((glob) => glob.match(path)));
 }
 
 export async function collectPrettierDependencies(

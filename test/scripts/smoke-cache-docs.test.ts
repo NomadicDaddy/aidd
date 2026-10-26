@@ -88,10 +88,10 @@ describe('check:docs cache key', () => {
 		expect(await canSkipStep(root, 'check:docs')).toBe(false);
 	});
 
-	test('the key covers the hasher, so a change to how inputs are hashed retires old entries', async () => {
+	test.each(['collect.ts', 'walk.ts'])('the key covers its input collector %s', async (file) => {
 		const root = await recorded();
 		await mkdir(join(root, 'scripts', 'lib', 'smoke-cache'), { recursive: true });
-		await writeFile(join(root, 'scripts', 'lib', 'smoke-cache', 'collect.ts'), '// changed\n');
+		await writeFile(join(root, 'scripts', 'lib', 'smoke-cache', file), '// changed\n');
 		expect(await canSkipStep(root, 'check:docs')).toBe(false);
 	});
 

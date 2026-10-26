@@ -1,5 +1,3 @@
-import type { RunPlan } from 'aidd-shared/plan/types';
-
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { parseArgs } from 'aidd-shared/args/index';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
@@ -20,41 +18,10 @@ import {
 	rootDir,
 	saturatedSuiteTestTimeoutMs,
 } from './_helpers/orchestrator-fixture.ts';
-import { testTempDir } from '../_helpers/temp.ts';
-import { removeTempTree } from '../backend/_helpers/remove-temp-tree.ts';
+import { createAuditWorktreeFixtures, auditGit as git } from './_helpers/audit-worktree-fixture.ts';
 
-const roots: string[] = [];
-
-function git(cwd: string, ...args: string[]): string {
-	const result = Bun.spawnSync(['git', '-C', cwd, ...args], {
-		stderr: 'pipe',
-		stdout: 'pipe',
-		windowsHide: true,
-	});
-	if (result.exitCode !== 0) throw new Error(new TextDecoder().decode(result.stderr));
-	return new TextDecoder().decode(result.stdout).trim();
-}
-
-async function fixture(committed = true): Promise<{ plan: RunPlan; root: string }> {
-	const root = await testTempDir('aidd-audit-worktree-');
-	roots.push(root);
-	git(root, 'init');
-	git(root, 'config', 'user.email', 'test@example.com');
-	git(root, 'config', 'user.name', 'aidd test');
-	await mkdir(join(root, '.aidd'), { recursive: true });
-	await writeFile(join(root, '.aidd', 'spec.md'), '# Synthetic fixture\n');
-	await writeFile(join(root, '.gitignore'), '.aidd/\ndata/\n');
-	await writeFile(join(root, 'source.txt'), 'original\n');
-	if (committed) {
-		git(root, 'add', '.gitignore', 'source.txt');
-		git(root, 'commit', '-m', 'fixture');
-	}
-	return { plan: { mode: 'audit', projectDir: root } as RunPlan, root };
-}
-
-afterEach(async () => {
-	await Promise.all(roots.splice(0).map((root) => removeTempTree(root)));
-});
+const { cleanup, fixture } = createAuditWorktreeFixtures();
+afterEach(cleanup);
 
 test('audit edits and restores in a default worktree while the live source stays unchanged', async () => {
 	const { plan, root } = await fixture();
@@ -175,6 +142,10 @@ test.each([false, true])(
 					status: 'backlog',
 					passes: false,
 				});
+				const forgedIterations = join(checkout, '.aidd', 'iterations');
+				await mkdir(forgedIterations, { recursive: true });
+				await writeFile(join(forgedIterations, '001.log'), 'forged agent log');
+				await writeFile(join(forgedIterations, '001.json'), '{}');
 			},
 		);
 		const code = await runOrchestrator(plan, {
@@ -216,10 +187,10 @@ test.each([false, true])(
 			expect(record.summary).toContain('source.txt');
 		}
 		expect(
-			(await readdir(join(root, '.aidd', 'iterations'))).some((name) =>
+			(await readdir(join(root, '.aidd', 'iterations'))).filter((name) =>
 				name.endsWith('.json'),
 			),
-		).toBe(true);
+		).toHaveLength(1);
 	},
 	saturatedSuiteTestTimeoutMs,
 );

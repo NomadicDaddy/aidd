@@ -184,9 +184,10 @@ export async function run(argv: string[]): Promise<number> {
 		// records freeze mid-flight and the web reaps it as heartbeat_stale with no ledger
 		// entry, even when the backend finished its work.
 		// Worktree runs: a hard death ALSO skips worktree finalization AND the catch-path
-		// rollback below — the checkout's iteration evidence is lost with it (accepted; the
-		// crash finalizer still lands a canonical failed ledger line via the heartbeat
-		// fallback), and the web orphan sweeper reaps the leftover worktree + branch. Any
+		// rollback below. Coding iteration evidence can be lost when the orphan sweeper removes
+		// the checkout; audit evidence is already canonical. The crash finalizer still writes a
+		// failed canonical ledger line via the heartbeat fallback, and the sweeper reaps the
+		// leftover checkout and branch. Any
 		// crash-scoped resource with cross-run effects (e.g. feature leases) must therefore be
 		// released by that sweep, never by in-process cleanup alone.
 		if (heartbeat) installCrashFinalizer(heartbeat);
@@ -211,7 +212,8 @@ export async function run(argv: string[]): Promise<number> {
 			// Worktree isolation: when requested (and the project has a committed HEAD), the run
 			// executes in a throwaway git worktree on branch aidd/run-<id>, seeded with the
 			// canonical `.aidd` metadata so the run store sees the real project; the completion
-			// gate reads the worktree, hence a worktree-rooted store. Runs INSIDE this try:
+			// gate reads the worktree. Coding uses a worktree store; audits persist canonically.
+			// Runs INSIDE this try:
 			// prepareWorktreeRun records plan.worktree before seeding, so a seeding failure hits
 			// the catch below (rolling the registered worktree back) and the finally (disposing
 			// the heartbeat) instead of leaking both. See worktree-run-setup.ts.

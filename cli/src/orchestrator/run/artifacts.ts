@@ -181,9 +181,8 @@ export async function writeRunSummary(
 	// Worktree finalization happens HERE — after the run-end git accounting above (which must
 	// read the worktree before it can be removed) and BEFORE the ledger append + terminal
 	// heartbeat below — so BOTH record the run's effective outcome (e.g. a parked merge), never
-	// the pre-merge success. The hook also persists the worktree's iteration evidence into the
-	// canonical `.aidd` for every outcome, so the ledger's canonical home always has the run's
-	// evidence beside it.
+	// the pre-merge success. Coding finalization copies iteration evidence canonically; audit
+	// evidence is already written there by the runtime and is never imported from the checkout.
 	let effectiveExitCode = finalExitCode;
 	let effectiveStopReason: StopReason = stopReason;
 	let effectiveSummary = summaryWithRunEndChecks;

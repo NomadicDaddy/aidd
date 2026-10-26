@@ -6,7 +6,6 @@ import { existsSync } from 'node:fs';
 import type { WorktreeFinalization } from './worktree-evidence.ts';
 
 import { gitOutput } from './git-exec.ts';
-import { persistRunEvidence } from './worktree-evidence.ts';
 import { removeRunWorktree } from './worktree-manager.ts';
 
 export function liveAuditWarnings(plan: RunPlan): string[] {
@@ -30,11 +29,7 @@ export function auditIntegritySummary(
 	return `${summary}; [audit-integrity-violation] ${detail}; source was not merged (exit ${exitCode}).`;
 }
 
-function auditFinalization(
-	evidenceFiles: number,
-	paths: string[],
-	error?: string,
-): WorktreeFinalization {
+function auditFinalization(paths: string[], error?: string): WorktreeFinalization {
 	return {
 		...(paths.length > 0 || error !== undefined
 			? {
@@ -42,7 +37,7 @@ function auditFinalization(
 					overrideExitCode: orchestratorExitCodes.writeAllowlistViolation,
 				}
 			: {}),
-		evidenceFiles,
+		evidenceFiles: 0,
 		mergeStatus: 'discarded',
 	};
 }
@@ -59,30 +54,16 @@ async function trackedAuditPaths(worktree: WorktreePlan): Promise<string[] | und
 	return diff === undefined ? undefined : [...new Set(diff.split('\0').filter(Boolean))].sort();
 }
 
-/** Audit findings are persisted canonically by the runtime. Never merge the agent's checkout
- * or copy its metadata delta back. Inspect tracked content against the starting pin, preserve
- * evidence before cleanup, and fail closed if inspection or evidence preservation fails. */
+/** The runtime already persists audit results and iteration evidence canonically. Never merge
+ * the agent's checkout or import its metadata, including forged iteration files. Inspect tracked
+ * content against the starting pin and fail closed if inspection or cleanup fails. */
 export async function finalizeAuditWorktree(
 	projectDir: string,
 	worktree: WorktreePlan,
 ): Promise<WorktreeFinalization> {
-	let evidenceFiles: number;
-	try {
-		evidenceFiles = await persistRunEvidence(projectDir, worktree.dir);
-	} catch {
-		return {
-			...auditFinalization(
-				0,
-				[],
-				`could not preserve audit evidence; checkout retained at ${worktree.dir}`,
-			),
-			evidencePersistFailed: true,
-		};
-	}
 	const paths = await trackedAuditPaths(worktree);
 	if (paths === undefined) {
 		return auditFinalization(
-			evidenceFiles,
 			[],
 			`tracked-file diff unavailable; checkout retained at ${worktree.dir}`,
 		);
@@ -91,5 +72,5 @@ export async function finalizeAuditWorktree(
 	const cleanupError = existsSync(worktree.dir)
 		? `audit checkout removal failed; retained at ${worktree.dir}`
 		: undefined;
-	return auditFinalization(evidenceFiles, paths, cleanupError);
+	return auditFinalization(paths, cleanupError);
 }

@@ -108,8 +108,9 @@ your project's own `deploy` script; aidd never stores or handles deploy credenti
   uncommitted live source is not included. Accepted audit results are persisted by aidd into the
   live `.aidd/`. Agent-written metadata is not copied back, and audit source is never merged.
   At run end, tracked differences against the starting pin are recorded as an audit integrity
-  violation (exit 76) and the checkout is removed. Inspection or evidence-preservation failures
-  retain the checkout and fail the run. `--audit-live-tree` explicitly opts out and records a
+  violation (exit 76) and the checkout is removed. Inspection failures retain the checkout and
+  fail the run. Runtime iteration evidence is written canonically; agent-written iteration files
+  are discarded with the checkout, including on rollback. `--audit-live-tree` explicitly opts out and records a
   warning; an audit without a committed HEAD otherwise refuses to run. A worktree changes the
   agent's working directory; it does not restrict its account's access to other host paths.
 - The native agent's shell policy rejects recognized destructive git commands (`git reset --hard`,

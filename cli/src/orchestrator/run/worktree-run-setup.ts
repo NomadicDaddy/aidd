@@ -12,7 +12,7 @@ import type { MergeConflictResolver } from './merge-resolver.ts';
 import type { OrchestratorDeps } from './types.ts';
 import type { WorktreeMetadataSession } from './worktree-metadata-session.ts';
 
-import { finalizeAuditWorktree } from './audit-worktree.ts';
+import { auditIntegritySummary, finalizeAuditWorktree } from './audit-worktree.ts';
 import { finalizeRunWorktree, persistRunEvidence } from './worktree-evidence.ts';
 import { createRunWorktree, removeRunWorktree } from './worktree-manager.ts';
 import { seedWorktreeMetadata } from './worktree-metadata-session.ts';
@@ -85,11 +85,12 @@ export async function prepareWorktreeRun(input: {
 	return { session };
 }
 
-/** Orchestrator deps for a worktree run: finalization (evidence persistence + merge-back/park +
- * metadata write-back) runs INSIDE the orchestrator's terminal writeRunSummary via this hook —
+/** Orchestrator deps for a worktree run: coding merge-back/park and metadata write-back, or
+ * audit discard-only cleanup, run INSIDE the terminal writeRunSummary via this hook —
  * before the ledger append and the run's heartbeat — so a parked merge surfaces as a
  * non-success exit code everywhere instead of the pre-merge success. The ledger goes to the
- * canonical store: the worktree's own gitignored `.aidd` dies with the worktree. */
+ * canonical store. Audit iteration evidence is already canonical; coding evidence is copied
+ * before its worktree's gitignored `.aidd` is removed. */
 export function worktreeOrchestratorDeps(
 	plan: RunPlan,
 	context: WorktreeRunContext,
@@ -113,8 +114,8 @@ export function worktreeOrchestratorDeps(
 	};
 }
 
-/** Rollback for a thrown run failure that never reached merge-back: preserve any iteration
- * evidence the run managed to write, then discard the worktree so the run rolls back instead
+/** Rollback for a thrown run failure that never reached merge-back: preserve coding iteration
+ * evidence, or keep audit evidence already written canonically, then discard the worktree instead
  * of leaking a branch + checkout. Best-effort on both steps.
  *
  * Covers THROWN errors only. A hard process death (unhandled rejection / uncaught exception)
@@ -124,6 +125,19 @@ export function worktreeOrchestratorDeps(
 export async function rollbackWorktreeRun(plan: RunPlan): Promise<void> {
 	const worktree = plan.worktree;
 	if (!worktree) return;
+	if (plan.mode === 'audit') {
+		const result = await finalizeAuditWorktree(plan.projectDir, worktree);
+		if (result.auditIntegrity) {
+			console.warn(
+				auditIntegritySummary(
+					'Audit rollback',
+					result.overrideExitCode!,
+					result.auditIntegrity,
+				),
+			);
+		}
+		return;
+	}
 	try {
 		await persistRunEvidence(plan.projectDir, worktree.dir);
 	} catch (err) {

@@ -11,7 +11,8 @@ accepted `AIDD_RESULT` reports, finding features, finding-ledger events and road
 live project's `.aidd/`; it never merges an audit checkout or copies agent-written metadata back.
 At the end, tracked differences against the starting pin produce an audit integrity violation
 naming the paths (exit 76), and the checkout is removed after preserving iteration evidence.
-Inspection or evidence-preservation failures retain the checkout and fail the run.
+Inspection failures retain the checkout and fail the run. Iteration evidence is already written
+to the canonical store; completion and rollback never import agent-written iteration files.
 
 `--audit-live-tree` explicitly disables isolation and warns at startup and in the run summary.
 Without that opt-out, a project without a committed Git HEAD cannot run an audit. A worktree

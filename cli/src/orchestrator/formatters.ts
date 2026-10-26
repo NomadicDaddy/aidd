@@ -129,11 +129,7 @@ export function isAgentSignalEvent(type: string): boolean {
 	);
 }
 
-export function formatFeatureValidation(
-	projectDir: string,
-	result: FeatureValidationResult,
-): string {
-	const projectName = projectDir.split(/[/]/).filter(Boolean).pop() ?? projectDir;
+function featureValidationCountLines(result: FeatureValidationResult): string[] {
 	const total = result.total;
 	const roadmapInvalid = result.issues.some((issue) => issue.path === '.aidd/roadmap.json');
 	const invalid = new Set(
@@ -142,16 +138,27 @@ export function formatFeatureValidation(
 			.map((issue) => issue.id),
 	).size;
 	const valid = total - invalid;
+	const lines = [
+		`Total files:         ${total}`,
+		`Valid:               ${valid}`,
+		`Invalid:             ${invalid}`,
+	];
+	if (roadmapInvalid) lines.push('Roadmap:             invalid (.aidd/roadmap.json)');
+	return lines;
+}
+
+export function formatFeatureValidation(
+	projectDir: string,
+	result: FeatureValidationResult,
+): string {
+	const projectName = projectDir.split(/[/]/).filter(Boolean).pop() ?? projectDir;
 	const lines: string[] = [];
 	lines.push('');
 	lines.push('==============================================================================');
 	lines.push(`Feature JSON Validation: ${projectName}`);
 	lines.push('==============================================================================');
 	lines.push('');
-	lines.push(`Total files:         ${total}`);
-	lines.push(`Valid:               ${valid}`);
-	lines.push(`Invalid:             ${invalid}`);
-	if (roadmapInvalid) lines.push('Roadmap:             invalid (.aidd/roadmap.json)');
+	lines.push(...featureValidationCountLines(result));
 	lines.push('');
 	if (result.valid) {
 		lines.push('All feature.json files are valid.');

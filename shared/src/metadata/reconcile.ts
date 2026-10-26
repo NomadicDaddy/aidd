@@ -78,8 +78,8 @@ export async function reconcileProjectMetadata(
 	} catch (error) {
 		// Absent and unreadable are different problems. A project with no roadmap has nothing to
 		// propagate and is fine; a roadmap that exists and will not parse is drift nothing else
-		// catches — the skills do not run `--check-features` — so it has to surface here or it
-		// surfaces nowhere. Feature validation below deliberately ignores the roadmap too.
+		// catches inside propagation — the skills do not run `--check-features` — so name the
+		// failure here as well as in the feature-contract validation below.
 		if (!isMissingRoadmap(error)) {
 			errors.push(`roadmap.json could not be read: ${describeRoadmapError(error)}`);
 		}

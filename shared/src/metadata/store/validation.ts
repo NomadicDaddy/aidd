@@ -4,12 +4,17 @@ import {
 	validateFeatureCollection,
 	validateFeatureContract,
 } from '../features.ts';
-import { evaluateRoadmapCodingGate, type Roadmap } from '../roadmap.ts';
+import {
+	describeRoadmapError,
+	evaluateRoadmapCodingGate,
+	isMissingRoadmap,
+	type Roadmap,
+} from '../roadmap.ts';
 
 // Combine per-feature contract issues, collection-level issues/warnings, and the
 // roadmap-assignment gate into a single validation result. `readRoadmap` is injected so
-// the store stays the only filesystem touchpoint; a missing/invalid roadmap is swallowed
-// because it is not part of the feature contract surface.
+// the store stays the only filesystem touchpoint. An absent roadmap is optional, but an
+// existing unreadable roadmap is a contract issue, even when every feature is valid.
 export async function evaluateFeatureValidation(
 	features: Feature[],
 	readRoadmap: () => Promise<Roadmap>,
@@ -42,8 +47,14 @@ export async function evaluateFeatureValidation(
 				message: 'roadmap.json references a feature directory that no longer exists',
 			});
 		}
-	} catch {
-		// Missing or invalid roadmap.json is not part of the feature contract surface.
+	} catch (error) {
+		if (!isMissingRoadmap(error)) {
+			issues.push({
+				id: 'roadmap.json',
+				message: `roadmap.json could not be read: ${describeRoadmapError(error)}`,
+				path: '.aidd/roadmap.json',
+			});
+		}
 	}
 	return {
 		issues,

@@ -1,7 +1,7 @@
 ---
 title: 'Project Assertions / Invariants Audit'
-last_updated: '2026-10-01'
-version: '1.5'
+last_updated: '2026-10-25'
+version: '1.6'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -222,7 +222,7 @@ Feature IDs for this audit use the `audit-assertions-` prefix. For each gap, cre
 - `id`: `audit-assertions-<stable-slug>` (e.g., `audit-assertions-workspace-isolation-backend-gap`)
 - `description`: The invariant that is not upheld, verbatim from `assertions.md`
 - `spec`: Concrete work required to close the gap (add guard / add constraint / add UI check). Include the invariant ID and the specific layer(s) missing enforcement.
-- `status`: `planned`
+- `status`: `backlog`
 - `passes`: `false`
 
 > **Invariant ID convention**: When `assertions.md` does not define stable IDs, generate them with a project prefix (e.g. `MM-ASSERT-001` for margin-planner, `VR-ASSERT-001` for hidden-path) rather than a bare `ASSERT-001`. The generated ID range MUST match the invariant count - if the file has 17 invariants, IDs run `…-001` through `…-017`, not `…-034`. A range that exceeds the count signals dropped, merged, or miscounted invariants and is itself a reportable inconsistency.

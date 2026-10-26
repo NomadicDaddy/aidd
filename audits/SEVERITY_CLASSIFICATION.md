@@ -1,7 +1,7 @@
 ---
 title: 'Unified Severity Classification System'
-last_updated: '2026-10-01'
-version: '2.3'
+last_updated: '2026-10-25'
+version: '2.4'
 category: 'Reference'
 priority: 'Medium'
 type: 'reference'
@@ -192,7 +192,7 @@ This document defines the standardized 4-level severity classification system us
 
 [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md) defines findings that are about the evidence, not the code. Classify them as it states:
 
-- A named instrument that is absent, unwired, or unfaithful is **High**: the target has no working measurement for a dimension the audit requires.
+- A confirmed missing required measurement capability is **High**. An absent template-named script, an inapplicable surface, missing execution permission or audit-created contamination is not that finding by itself; follow AUDIT_METHODOLOGY's applicability and execution limits.
 - A red gate with no named mechanism and no evidence is a finding against the target. Classify it by what the gate protects.
 - A red gate classed environmental is a **hold**, not a finding. It gets no severity and no feature.json. It is reported, and it is never counted as a pass.
 - A missing falsification record, or an absence claim with no known-positive control, makes a report incomplete. In your own report, supply the missing record before scoring. Found in an earlier report, it is an incomplete-audit finding: classify it by the control that was left unverified.

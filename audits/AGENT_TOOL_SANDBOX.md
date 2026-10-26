@@ -1,7 +1,7 @@
 ---
 title: 'Agent Tool Sandbox & Target-Repo Prompt-Injection Audit'
-last_updated: '2026-10-01'
-version: '1.5'
+last_updated: '2026-10-25'
+version: '1.6'
 category: 'Security'
 priority: 'Critical'
 estimated_time: '2-4 hours'
@@ -85,6 +85,17 @@ Within aidd this audit governs:
 9. [BREAK-THE-ASSUMPTION Scenarios](#9-break-the-assumption-scenarios)
 
 ## Pre-Audit Setup
+
+Map these aidd reference symbols to the target's actual tool/provider boundary. Any agent tool
+surface is enough for the corresponding sections to apply; a git pipeline and multi-run state
+are not additional prerequisites. Do not require a lexical filter when a different enforcing
+boundary supplies the required protection. State each backend's actual controls and residuals.
+
+Keep executable fixtures outside the audited source tree and its lint/build/package globs.
+Native symlink, timeout, descendant-kill, worktree and port-rebind tests need authorized disposable
+resources. Stop only fixture-owned processes, never the live panel or another run. Where a test
+cannot be run, record the source trace and untested platform explicitly; do not infer native
+acceptance from a policy function's return value.
 
 ### Verification Commands
 

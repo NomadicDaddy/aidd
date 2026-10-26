@@ -1,7 +1,7 @@
 ---
 title: 'Code Complexity and Optimization Audit'
-last_updated: '2026-06-28'
-version: '1.3'
+last_updated: '2026-10-25'
+version: '1.4'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '30-60 min'
@@ -78,7 +78,9 @@ Conduct a comprehensive code audit focused on identifying and documenting overco
 
 ## Spernakit Applicability
 
-This audit runs against spernakit-derived apps. The following stack facts are authoritative for every check below; do not re-derive or contradict them in individual findings.
+This audit can run against any target with source code. Establish its actual roots and compiler
+configuration before applying the Spernakit-specific notes below. Thresholds select candidates;
+they do not establish a defect or its severity without a concrete maintenance or runtime effect.
 
 - **React Compiler handles memoization.** Spernakit apps enable `babel-plugin-react-compiler`, so the compiler memoizes automatically. Flag manual `useMemo`, `useCallback`, and `React.memo` as unnecessary complexity - **unless** the file contains a `'use no memo'` directive, which is the sanctioned escape hatch and must not be flagged.
 - **ESLint enforces no complexity rules.** The lint config configures no `complexity`, `max-lines-per-function`, `max-params`, or `max-depth` rules. All thresholds in this audit are audit-time observations, not CI gates (see [Pre-Audit Setup](#pre-audit-setup)).
@@ -91,7 +93,10 @@ The thresholds and compliance targets in this audit are **audit-time observation
 
 ### **Option A: Ad-hoc ESLint pass**
 
-Spernakit ships ESLint and `typescript-eslint` - treat the versions pinned in `package.json` as authoritative (STACK is pinned at v3.11.0-lts, so any literal version here drifts). Run a temporary, audit-only ESLint invocation with the built-in complexity rules enabled to surface candidate violations - do **not** commit these rules to the repo config:
+Spernakit ships ESLint and `typescript-eslint`; read the target's actual versions and source roots.
+An authorized temporary ESLint invocation may enable complexity rules to select candidates. Do
+not install tools or change the repository config during the audit. Apply the shared execution
+boundary; manual counting remains available when execution is unavailable.
 
 ```bash
 # Audit-time only — flags candidates for manual review, not a CI gate
@@ -124,7 +129,7 @@ The "compliance %" figures in the report template are derived from these audit-t
 **Measurement**: Count decision points (if, while, for, case, &&, ||, ?, catch)
 
 ```typescript
-// ✅ LOW COMPLEXITY (Score: 2)
+// ✅ LOW COMPLEXITY (Score: 3: base 1 plus two if statements)
 function validateUser(user: User): boolean {
 	if (!user.email) return false; // +1
 	if (!user.name) return false; // +1
@@ -475,7 +480,7 @@ function validateUser(user: User): { valid: boolean; errors: string[] } {
 // - Harder to understand and maintain
 ```
 
-> **Scope note**: A class hierarchy is only over-engineering when it wraps a trivial, fixed problem like the two-field validation above. Legitimate domain abstractions - custom parsers, ECS entity-extension, multi-batch inference, and the batching/retry patterns in the [Justified Examples](#justified-complexity-examples) - solve real, measured problems and must **not** be flagged on the basis of "it's a class hierarchy" alone. Apply the [Complexity Decision Framework](#complexity-decision-framework) before flagging.
+> **Scope note**: A class hierarchy is only over-engineering when it wraps a trivial, fixed problem like the two-field validation above. Legitimate domain abstractions - custom parsers, ECS entity-extension, multi-batch inference, and the batching/retry patterns in the [Justified Examples](#examples-of-justified-vs-unjustified-complexity) - solve real, measured problems and must **not** be flagged on the basis of "it's a class hierarchy" alone. Apply the [Complexity Decision Framework](#complexity-decision-framework) before flagging.
 
 #### **Example 2: Premature Optimization**
 
@@ -567,7 +572,8 @@ const UserDisplay = ({ user }: { user: User }) => {
 
 ## Clean-Pass Evidence Requirement
 
-Every historical run of this audit has been a zero-finding pass. A clean pass is a valid and expected outcome - but a green gate or a narrative ("complexity looks fine") is **not** sufficient evidence. To claim a clean pass, the auditor must demonstrate:
+A clean pass is a valid outcome, but a green gate or a narrative ("complexity looks fine") is
+not sufficient evidence. To claim a clean pass, the auditor must demonstrate:
 
 - [ ] The **measured complexity distribution** is cited with actual numbers - e.g. peak cyclomatic complexity observed, count/percentage of functions over each threshold, deepest nesting level, and largest parameter count - not a summary adjective.
 - [ ] The measurement method is recorded (Option A ESLint pass or Option B manual protocol) so the result is reproducible.

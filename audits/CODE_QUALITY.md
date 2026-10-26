@@ -1,7 +1,7 @@
 ---
 title: 'Code Quality, Organization, and Standards Audit'
-last_updated: '2026-08-30'
-version: '2.4'
+last_updated: '2026-10-25'
+version: '2.5'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '15-30 min'
@@ -72,7 +72,7 @@ consolidates: 'ORDER.md, COMPARISON.md, LINT.md, COMMENT.md, FILE.md'
 - `check:max-lines` for the 300-line-per-file modularity gate (`bun run check:max-lines`, part of `smoke:qc`), unless the project waives the limit (see [File Size and Modularity](#file-size-and-modularity))
 - Git for diff analysis
 
-> **Test framework note**: The Spernakit/aidd stack has no unit-test framework (no vitest/jest/@testing-library). Static gates run via `bun run smoke:qc` and runtime verification via `crawltest`, so "test coverage" is not a CODE_QUALITY axis here.
+> **Test framework note**: Discover the target's own tooling. Spernakit uses crawltest and standalone test scripts; aidd and Summon use bun:test. Do not infer an absent unit suite from the template. Test adequacy belongs to TESTING; this audit checks code-quality enforcement.
 
 ### Verification Commands
 
@@ -80,8 +80,7 @@ consolidates: 'ORDER.md, COMPARISON.md, LINT.md, COMMENT.md, FILE.md'
 # Primary quality gate (check-only aggregate — see Quality Gate section)
 bun run smoke:qc
 
-# Repair lint/format drift, then re-validate
-bun run qc:fix
+# Audit mode reports lint/format drift; it does not run qc:fix, lint:fix or format writes.
 
 # Individual checks (all subsumed by smoke:qc)
 bun run lint            # ESLint with --max-warnings 0
@@ -92,7 +91,11 @@ bun run build           # Production build validation
 
 ## Quality Gate
 
-`bun run smoke:qc` is the single source of truth for code-quality enforcement and **must pass before every commit**. It is a check-only aggregate; use `bun run qc:fix` to repair lint/format drift and re-validate. Because this gate auto-enforces nearly all ordering, formatting, and import-sort rules in this audit, most ordering checks below reduce to "verify enforcement is configured and `smoke:qc` passes" rather than manual per-file inspection.
+Read the target's `smoke:qc` implementation and local commit rules. An audit records a failing
+baseline and reports confirmed defects; it does not run repair commands or create commits.
+Commands named `check` may still build artifacts or start children, so apply the execution
+boundary in AUDIT_METHODOLOGY before running them. Existing gate evidence supports only the
+inputs and enforcement it actually covers; inspect the configuration before relying on a pass.
 
 **`smoke:qc` pipeline (canonical source - do not re-transcribe here):** Read the authoritative,
 ordered step list from the target repository's live smoke implementation. Spernakit uses
@@ -108,7 +111,7 @@ check is reachable.
 - `check:process-env` - enforces that the only approved `process.env` access is the `configLoader.ts` secret-injection mapping (JSON-only config). A new `process.env` read anywhere else fails the gate.
 - `typecheck`, `build`, `format:check` - type, build, and Prettier (ordering plugins) enforcement.
 
-> **Auditor guidance**: If `bun run smoke:qc` passes, the ordering, lint, formatting, type, build, file-size, and process-env criteria in this audit are satisfied by definition. Spend manual effort on the axes the gate cannot judge - comment quality, documentation of non-obvious logic, file organization, and dead code (`bun run check:dead-code`).
+> **Auditor guidance**: A passing gate supports the checks it actually enforces. It does not prove those checks are configured faithfully or apply template-specific process-env rules to another target. Inspect the target's configuration, then spend manual effort on comment quality, non-obvious logic, file organization and dead code.
 
 ## Code Ordering Standards
 
@@ -405,10 +408,11 @@ The `check:max-lines` gate (part of `smoke:qc`) fails the build when any tracked
 
 Files are considered "in-use" if they meet any of:
 
-- Recent access/modification (last 90 days)
-- Referenced by other active components
-- Active log activity
-- Part of deployed version in VCS
+- Reachable from a real entry point or consumer, including dynamic or configuration-driven loading
+- Required by a documented public interface, build, packaging, migration or operator workflow
+
+Recent modification, a tracked file, or inclusion in an artifact does not by itself prove use.
+Apply DEAD_CODE's reference tracing and known-positive controls before proposing removal.
 
 ### Unused Code (Dead Code, Unused Exports/Imports)
 

@@ -1,7 +1,7 @@
 ---
 title: 'Schema Constraints and Integrity Audit'
-last_updated: '2026-10-01'
-version: '1.6'
+last_updated: '2026-10-25'
+version: '1.7'
 category: 'Core Architecture'
 priority: 'Critical'
 estimated_time: '1-2 hours'
@@ -30,7 +30,7 @@ consolidates: 'Schema constraint validation, data integrity checks, security-foc
 
 - **Anti-Replay Columns**: `nonce`, `token`, `key` columns in security tables MUST be unique
 - **Per-Entity Settings**: `userId` in preference/settings tables MUST be unique (one row per user)
-- **Rate Limiting Keys**: Rate limit key columns MUST be unique OR use upsert patterns
+- **Rate Limiting Keys**: The actual counter identity must be protected by a unique constraint/index or a demonstrated equivalent atomic serialization strategy
 - **Polymorphic Junctions**: Entity-tag/permission junction tables MUST have unique constraints on `(entityType, entityId, targetId)`
 
 **Security Impact**
@@ -67,6 +67,13 @@ Conduct a systematic analysis of database schema files to identify:
 8. **Table-rebuild copy safety**: constraint changes delivered as a SQLite table rebuild whose copy statement silently corrupts data
 
 ## Pre-Audit Setup
+
+Audit existing schema, migrations and enforcement without changing them. The migration and seed
+procedures below are follow-up verification plans for an authorized disposable database, not
+permission to copy private production data, migrate the live database or repair duplicates during
+an audit. Record execution limits and inspect source where no isolated fixture is authorized.
+Uniqueness is scoped by the actual invariant: an equivalent composite constraint may be correct;
+do not require global single-column uniqueness from a column name alone.
 
 ### Required Tools and Access
 
@@ -240,7 +247,9 @@ grep -n "nonce.*text" backend/src/db/schema/*.ts
 
 **Pattern**: Tables that track rate limit counters per key
 
-**Required**: Either `.unique()` constraint OR documented upsert pattern in service
+**Required**: Enforce the actual counter identity, which may be composite, with a unique
+constraint/index or a demonstrated equivalent atomic serialization strategy. An upsert needs a
+matching conflict constraint; a comment describing an upsert is not an alternative to enforcement.
 
 _Examples are simplified for illustration. See `rateLimitEntries.ts` for the complete template pattern with indexes and docstrings._
 
@@ -263,8 +272,10 @@ export const rateLimitEntries = sqliteTable(
 	(table) => [index('idx_rate_limit_entries_reset_at').on(table.resetAt)],
 );
 
-// ✅ OPTION 2: Documented upsert pattern in service
-// Service uses: INSERT OR REPLACE ON CONFLICT(key) DO UPDATE...
+// ✅ Service upsert uses a matching UNIQUE(key) constraint or unique index:
+// INSERT INTO rate_limit_entries (key, count) VALUES (?, 1)
+// ON CONFLICT(key) DO UPDATE SET count = count + 1;
+// Verify the real schema and transaction, not only this comment.
 ```
 
 **Risk Without Constraint**: Under high traffic with concurrent requests, multiple rows can be created for the same key, causing rate limit counters to split and rate limiting to become inaccurate.
@@ -275,8 +286,8 @@ export const rateLimitEntries = sqliteTable(
 # Find rate limit tables by filename or content.
 grep -l "rate.*limit\|ratelimit" backend/src/db/schema/*.ts
 
-# Then open each file and confirm the rate-limit `key` column either has `.unique()`
-# inline OR the service layer uses `INSERT ... ON CONFLICT(key) DO UPDATE` (upsert).
+# Then read the complete schema and service: confirm the actual counter identity is unique
+# (inline, named or composite), or prove equivalent atomic serialization.
 # ⚠️ grep alone cannot prove upsert coverage — hand-verify in the service layer.
 ```
 
@@ -493,7 +504,7 @@ const oauthAccounts = sqliteTable(
 
 **Required**:
 
-- **Enum-like text columns**: Constrain the value domain at the database level. Prefer Drizzle's `text('col', { enum: [...] })`, which emits a CHECK constraint, over an unconstrained `text('col')`. Where the value set is shared, source the enum from `spernakit-shared` (e.g. `MFA_METHODS`, `OAUTH_PROVIDERS`).
+- **Enum-like text columns**: Inspect explicit CHECK constraints in the schema and resulting migration DDL. Drizzle's SQLite `text('col', { enum: [...] })` provides TypeScript inference only; it does not validate runtime values or emit a CHECK. Where database enforcement is required, declare `check(...)` explicitly and verify the generated SQL. Source shared value sets from the target's own contract module.
 - **JSON columns**: Add a `json_valid()` CHECK (SQLite) / equivalent (PostgreSQL) so malformed JSON cannot be persisted (e.g. a `settings.value` column that must be valid JSON).
 
 ```typescript
@@ -503,16 +514,26 @@ export const runs = sqliteTable('runs', {
 	backend: text('backend').notNull(), // RISK: 'cli', 'web', or a typo all pass
 });
 
-// ✅ CORRECT: enum-constrained column emits a CHECK on the value domain
-export const runs = sqliteTable('runs', {
-	id: integer('id').primaryKey({ autoIncrement: true }),
-	backend: text('backend', { enum: ['cli', 'web'] }).notNull(), // CHECK enforced
-});
+// ✅ CORRECT: an explicit CHECK enforces the value domain; enum adds type inference only
+import { sql } from 'drizzle-orm';
+import { check, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+export const runs = sqliteTable(
+	'runs',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		backend: text('backend', { enum: ['cli', 'web'] }).notNull(),
+	},
+	(table) => [check('runs_backend_check', sql`${table.backend} IN ('cli', 'web')`)],
+);
 ```
 
 **Risk Without Constraint**: Application bugs or direct writes can persist out-of-domain values (typos, retired states) that downstream `switch`/filter logic does not handle, producing silent data corruption and unhandled cases.
 
-**Detection Pattern**: Identify text columns whose name implies a closed value set (`status`, `state`, `backend`, `type`, `kind`, `method`, `mode`, `role`) and verify each uses `text({ enum: [...] })` or carries a CHECK constraint. For JSON columns, verify a `json_valid()` CHECK exists.
+**Detection Pattern**: Use names such as `status` or `kind` to locate candidates, then establish
+their actual allowed values and inspect physical CHECK constraints. An `enum:` option alone is
+not enforcement. For a column required to contain JSON, inspect a `json_valid()` CHECK or the
+target's documented equivalent. See [Drizzle's SQLite text documentation](https://orm.drizzle.team/docs/sqlite/column-types#text).
 
 ```bash
 # Find candidate enum-like text columns lacking an `enum:` option.
@@ -638,7 +659,10 @@ const dashboards = pgTable(
 );
 ```
 
-**SQLite**: SQLite does support partial indexes syntactically (`WHERE`-clauses on `CREATE INDEX`), but Drizzle's `sqlite-core` does not expose a direct `.where()` builder for `uniqueIndex` the way `pg-core` does. The practical consequence: document the application-layer enforcement strategy in the schema file's JSDoc docstring. For example, the dashboards schema explicitly notes: _"per-user uniqueness is enforced at the application layer: the service clears the previous default inside a transaction before setting the new one."_
+**SQLite**: SQLite supports partial indexes, and the installed Drizzle SQLite index builder
+exposes `.where(...)` after `.on(...)`. Inspect the target's exact version and migration DDL.
+Either use an appropriate partial unique index or demonstrate an atomic application-layer
+strategy; do not accept a docstring alone as evidence that concurrent default writes are safe.
 
 **Detection**: Search for `isDefault` or `is_default` boolean columns. For each, verify the enforcement strategy is documented in the schema docstring or implemented as a database constraint.
 
@@ -707,7 +731,7 @@ Escalate finding to template if ALL of:
 ### Critical Checks
 
 - [ ] **Nonce columns** have `.unique()` constraint (replay attack prevention)
-- [ ] **Rate limit key columns** have `.unique()` OR documented upsert pattern
+- [ ] Rate-limit counter identity enforced by a unique constraint/index or proven equivalent atomic serialization; upsert conflict targets match real constraints
 - [ ] **Per-user settings tables** have unique constraint on `userId`
 - [ ] **Security token columns** have `.unique()` constraint
 - [ ] **API key columns** have `.unique()` constraint where semantically required
@@ -721,7 +745,7 @@ Escalate finding to template if ALL of:
 - [ ] **Email/username columns** have `.unique()` constraint
 - [ ] **External ID columns** have `.unique()` constraint
 - [ ] **Session token columns** have `.unique()` constraint
-- [ ] **Enum-like text columns** (`status`, `backend`, `type`, etc.) use `text({ enum: [...] })` or carry a CHECK constraint; **JSON columns** carry a `json_valid()` CHECK
+- [ ] **Enum-like text columns** requiring database validation carry physical CHECK constraints; a TypeScript `enum:` option alone does not satisfy this. JSON constraints match each column's actual value contract
 - [ ] **Sequence/ordering columns** (`displayOrder`, `sortOrder`, `position`) have a composite `uniqueIndex(parentId, order)`
 - [ ] **Foreign keys** declared via named `foreignKey({...}).onDelete(...)` in the constraints array (no inline `.references()`), in `schema/` and, where it exists, `schema-pg/`
 - [ ] **Overlapping tables** documented or flagged for consolidation
@@ -764,9 +788,9 @@ The example below shows the shape. Its table and column are illustrative, taken 
 		"risk": "replay_attack_bypass",
 		"table": "api_key_nonces"
 	},
-	"auditSeverity": "critical",
+	"auditSeverity": "Critical",
 	"auditSource": "SCHEMA_CONSTRAINTS",
-	"category": "Backend",
+	"category": "Audit",
 	"createdAt": "2026-03-01T00:00:00.000Z",
 	"description": "AUDIT FINDING [Critical]: The `apiKeyNonces` table is missing a unique constraint on the `nonce` column...",
 	"id": "audit-database-{timestamp}-{slug}",

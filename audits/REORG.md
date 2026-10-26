@@ -1,7 +1,7 @@
 ---
 title: 'Codebase Reorganization Audit'
-last_updated: '2026-10-01'
-version: '2.6'
+last_updated: '2026-10-25'
+version: '2.7'
 category: 'Architecture'
 priority: 'Medium'
 estimated_time: '1-2 hours'
@@ -113,7 +113,8 @@ This table describes the Spernakit template and derived apps. Read the live tree
 > **Absence checks need a control**: several commands below pass by printing nothing. A search over a directory the target does not have also prints nothing. Before reading an empty result as clean, run the same command for something known to be present in that tree.
 
 ```bash
-# Run quality baseline (cross-platform) - if this fails, fix QC issues before auditing reorganization
+# Reuse matching retained baseline first; run only if separately authorized and needed.
+# Record QC failures without repairing source during the audit.
 bun run smoke:qc
 
 # Derived Spernakit apps only - recorded differences from the template (read in full first)
@@ -501,7 +502,7 @@ Every location in the report is the live `file:line` read during this audit, wit
 ### Required Outputs
 
 1. Audit report in `.aidd/audit-reports/REORG-YYYY-MM-DD.md`
-2. Feature.json files for each finding requiring code changes; emitted `feature.json` must be prettier-normalized (run `prettier --write`; sorted keys, tabs) so it passes `--check-features`
+2. Feature records for confirmed findings. During an aidd run, emit AIDD_RESULT and let the runtime persist and normalize metadata; do not execute a formatter or write target files merely to produce audit output.
 3. Summary of template-origin issues (filed once against the Spernakit template, never as a change to a derived app's copy) and of the `.templateoverrides` entries that were respected
 
 ### Success Criteria
@@ -517,5 +518,5 @@ Every location in the report is the live `file:line` read during this audit, wit
 
 ---
 
-**Version**: 2.6
-**Last Updated**: 2026-10-01
+**Version**: 2.7
+**Last Updated**: 2026-10-25

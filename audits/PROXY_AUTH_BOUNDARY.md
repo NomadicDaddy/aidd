@@ -1,7 +1,7 @@
 ---
 title: 'Reverse-Proxy / Loopback Trust Boundary Audit'
-last_updated: '2026-10-01'
-version: '1.3'
+last_updated: '2026-10-25'
+version: '1.4'
 category: 'Security'
 priority: 'Critical'
 estimated_time: '1-2 hours'
@@ -63,6 +63,16 @@ This audit is the aidd reduced-equivalent of a multi-user RBAC audit (see AUDIT_
 **Out of scope (audited elsewhere):** loopback/remote **bind-default enforcement** (whether the listener binds `127.0.0.1` unless `allowRemote` is set) belongs to [SECURITY.md §15 (Local-Tool Control Surface)](./SECURITY.md#15-local-tool-control-surface). This audit covers the per-request forwarded-vs-loopback token decision, the HTTP request's `Host` and `Origin` gates (a page in the operator's own browser reaching the loopback listener, by DNS rebinding or by a cross-origin request; scenarios 10-11), each WS upgrade's own origin gate, and the one start-time precondition the token decision now relies on: `assertWebAuthTokenPresent` (see §3). The tokenless branch of `isPeerAuthorized` is only as sound as that precondition and the bind default together, so a finding against either in SECURITY.md §15 is also a finding here.
 
 ## Pre-Audit Setup
+
+Map the aidd reference paths to the target's actual listener, route registration, authentication
+and WebSocket controls. A different mechanism or symbol name is not a defect. Record N/A for a
+section with no equivalent surface, with source evidence.
+
+Trace scenarios in source first. Runtime requests, remote-bind startup, shutdown, run launch and
+terminal attachment may affect real state: exercise them only in a separately authorized
+disposable instance with synthetic tokens, stub actions and a non-default port. Never send these
+requests to the operator's live panel or change its configuration. Report source-traced outcomes,
+fixture observations and untested cases separately; missing runtime permission is a coverage limit.
 
 ```bash
 # Locate the guard, its mount, the WS upgrade authorizer, and the start-time token assertion
@@ -196,7 +206,7 @@ This section is REQUIRED: if you found zero false-positive candidates, state tha
 - [ ] Every WebSocket route (broadcast and terminal) repeats the authorization predicate and enforces origin independently.
 - [ ] Every `WS_UPGRADE_PATHS` entry maps to a WebSocket route and has its own recorded justification for accepting a query-string token.
 - [ ] Token comparison is timing-safe and rejects missing or unequal-length values.
-- [ ] All nine mandatory falsification outcomes include their deciding `file:line`.
+- [ ] All eleven mandatory falsification outcomes include their deciding `file:line` and evidence class.
 - [ ] False-positive candidates and their dispositions are recorded explicitly.
 
 ## Report Template

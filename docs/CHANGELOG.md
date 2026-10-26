@@ -4,6 +4,10 @@ All notable public aidd releases are documented here.
 
 ## Unreleased
 
+### Changed
+
+- Reviewed the 34 audits applicable to Summon and corrected 27 definitions plus the shared methodology and severity guidance. Audits now distinguish diagnostic evidence from permission to repair, use the project's actual tools and topology, keep executable probes outside the target, and grade findings by demonstrated impact.
+
 ### Fixed
 
 - Audit benchmark scoring accepts a finding's citation to the exact source span of a cataloged function, as well as its name. The span is recorded from the original fixture before the agent runs; citations to another file or a neighboring function do not count.

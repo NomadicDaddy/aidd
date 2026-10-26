@@ -1,7 +1,7 @@
 ---
 title: 'Technology Stack and Infrastructure Audit'
-last_updated: '2026-10-01'
-version: '1.4'
+last_updated: '2026-10-25'
+version: '1.5'
 category: 'Architecture'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -72,7 +72,11 @@ TECH_STACK inventories **what** tooling exists and its versions/compatibility. D
 
 ## Pre-audit Setup
 
-Before inventorying, run the project's built-in validation tooling to establish a baseline and surface drift (see [Spernakit Validation Commands](#spernakit-validation-commands)). For Spernakit-based apps these are `config:validate`, `check:drift` (derived apps; it compares against the template), `check-deps`, and the full `smoke:qc` gate. aidd has `check-deps` and `smoke:qc` and neither of the other two. For any target, read `package.json` first and run only the scripts that exist there; a script this file names and the target lacks is recorded as absent, not run under a guessed name.
+Inventory actual manifests, lockfiles and tooling source first. Reuse matching retained validation
+evidence. Commands in [Spernakit Validation Commands](#spernakit-validation-commands) are target
+examples, not a mandatory baseline sequence. Inspect their transitive effects and acquire only
+the smallest authorized isolated check needed for an unresolved claim. Do not guess missing
+script names, install/update dependencies, repair drift or repeat the full gate for this audit.
 
 A step that the gate reports as `[CACHED]` did not run: it replays an earlier pass recorded against the same declared inputs. Record it as cached. It is baseline context for this audit, never the evidence for a stack claim, and it is not to be forced or cleared to get a fresh line.
 
@@ -92,7 +96,12 @@ A step that the gate reports as `[CACHED]` did not run: it replays an earlier pa
 
 ### 2. Stack Documentation Structure
 
-Target output: the project's existing stack document, updated in place. Find it before writing: the Spernakit template keeps `docs/template/STACK.md`, and other targets vary. Where a project has no stack document, put the inventory in the audit report and raise the missing document as a finding; do not create a second one beside an existing one. The document has these sections:
+Target output: the audit report's stack inventory and proposed corrections to the project's
+existing stack document. Find that document first: the Spernakit template keeps
+`docs/template/STACK.md`, and other targets vary. Do not edit it during the audit. Where a project
+has no stack document, put the inventory in the report and assess whether the missing
+documentation creates a concrete gap. Do not create a second document beside an existing one.
+The inventory has these sections:
 
 - **Frontend Stack**
     - Framework, build tool, language, package manager
@@ -159,7 +168,7 @@ Classify findings:
 
 ## Report Template
 
-Use or extend the project's stack document and summarize here:
+Compare the project's stack document with this inventory and report proposed corrections here:
 
 ```markdown
 # Technology Stack Audit Report - YYYY-MM-DD
@@ -259,7 +268,7 @@ There is no lockfile-determinism script. Lockfile determinism is enforced where 
 
 A successful run of this audit produces:
 
-- An authoritative, up-to-date stack document describing the full stack (the project's existing one, updated in place)
+- An evidence-backed stack inventory in the audit report, with proposed corrections to the existing stack document
 - Risk-classified findings (Critical / High / Medium / Low) per the [SEVERITY_CLASSIFICATION.md](./SEVERITY_CLASSIFICATION.md) tiers
 - A prioritized upgrade/consolidation plan with effort and impact for each item
 

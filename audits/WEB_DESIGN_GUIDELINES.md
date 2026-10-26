@@ -1,7 +1,7 @@
 ---
 title: 'Web Interface Guidelines Audit (Vercel)'
-last_updated: '2026-10-03'
-version: '1.8'
+last_updated: '2026-10-25'
+version: '1.9'
 category: 'Frontend'
 priority: 'High'
 estimated_time: '2-3 hours'
@@ -13,11 +13,11 @@ lifecycle: 'active'
 
 Based on
 [Vercel's Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines/blob/main/command.md),
-synchronized against the current `command.md` source on 2026-08-30. Companion audit to
+synchronized against the current `command.md` source on 2026-10-25. Companion audit to
 [REACT_BEST_PRACTICES.md](./REACT_BEST_PRACTICES.md) and
 [COMPOSITION_PATTERNS.md](./COMPOSITION_PATTERNS.md).
 
-Comprehensive UI quality and accessibility guide covering all 103 upstream checks across 17
+Comprehensive UI quality and accessibility guide covering the current upstream checks across 17
 categories, plus one aidd-specific manual color-contrast check. It covers accessibility, forms,
 animation, typography, performance, navigation, theming, and interaction patterns.
 
@@ -46,7 +46,7 @@ animation, typography, performance, navigation, theming, and interaction pattern
 
 ## Spernakit Applicability
 
-The 103 upstream checks are DOM, HTML and CSS checks, so they apply to **any** target with a web-rendered interface: a React SPA, a static or server-rendered site, a desktop renderer scripted against the DOM. What changes per target is where the interface lives and which framework notes are relevant, and both are established in [Pre-Audit Setup](#pre-audit-setup) before any scan runs.
+The upstream checks are DOM, HTML and CSS checks, so they apply to **any** target with a web-rendered interface: a React SPA, a static or server-rendered site, a desktop renderer scripted against the DOM. What changes per target is where the interface lives and which framework notes are relevant, and both are established in [Pre-Audit Setup](#pre-audit-setup) before any scan runs.
 
 For spernakit applications (React 19 + Vite) all categories are relevant except Section 14 (Hydration Safety), which applies only where markup is rendered ahead of the client (SSR, static generation). A statically generated site is the opposite case: Section 14 applies and the React-specific notes do not.
 
@@ -54,7 +54,7 @@ The notes below marked **Spernakit** apply only when the target derives from Spe
 
 ### React Compiler / Tailwind CSS 4 Note
 
-`babel-plugin-react-compiler` does NOT affect any of these 103 upstream checks - they are all DOM/HTML/CSS concerns, not render optimization concerns. Tailwind CSS 4.3.x uses CSS-first configuration with `@theme` directive; `focus-visible:ring-*` and `text-wrap` utilities work differently from v3 - verify Tailwind v4 syntax when checking rules in Sections 2 (Focus States) and 5 (Typography).
+`babel-plugin-react-compiler` does NOT affect any of these upstream checks - they are all DOM/HTML/CSS concerns, not render optimization concerns. Tailwind CSS 4.3.x uses CSS-first configuration with `@theme` directive; `focus-visible:ring-*` and `text-wrap` utilities work differently from v3 - verify Tailwind v4 syntax when checking rules in Sections 2 (Focus States) and 5 (Typography).
 
 ### Spernakit-Specific Notes
 
@@ -116,8 +116,9 @@ Before beginning the audit, locate the interface and prepare search commands aga
     rg --files <ui-source> <ui-globs> | wc -l    # must be greater than zero
     ```
     A zero here means the scan looked at nothing. Fix the path and re-run; never report it as a pass.
-3. **Run the project's quality gate** to establish a clean baseline: `bun run smoke:qc` where it
-   exists, otherwise the project's typecheck, lint, build and format checks. Record which ran.
+3. **Record quality context** from matching retained evidence first. If an unresolved question
+   needs new execution, inspect the actual gate and run only an authorized isolated check under
+   resource rules. Do not repeat a full build/lint/typecheck gate merely for this definition.
 4. **Record the styling approach.** Where Tailwind is used, confirm `tailwindcss` in the manifest
    that owns the UI is v4.x. Where the target uses hand-written CSS, the Tailwind notes in Sections
    2 and 5 do not apply and the rules are checked against the stylesheets directly.
@@ -673,6 +674,13 @@ Do not make a gesture the only way to complete an operation.
 
 Use `autoFocus` only on desktop, only on single primary inputs (search, login). Avoid on mobile (keyboard pops up unexpectedly).
 
+### 10.7 Page Overscroll by Pointer Type
+
+For fine-pointer layouts, consider `overscroll-behavior: none` on `html` inside
+`@media (pointer: fine)` to suppress page rubber-banding. Preserve coarse-pointer native scrolling
+and pull-to-refresh. Check hybrid devices and scroll chaining before adopting the rule; a global
+suppression without that distinction can remove expected touch behavior.
+
 ---
 
 ## 11. Safe Areas & Layout
@@ -849,22 +857,22 @@ Use `&` instead of "and" in buttons, tabs, and other space-constrained contexts.
 
 These patterns should be flagged on sight. They indicate accessibility, performance, or UX regressions.
 
-| Anti-pattern                  | What to flag                                             | Fix                                |
-| ----------------------------- | -------------------------------------------------------- | ---------------------------------- |
-| Zoom disable                  | `user-scalable=no` or `maximum-scale=1` in viewport meta | Remove - violates WCAG             |
-| Paste prevention              | `onPaste` + `preventDefault`                             | Remove - blocks password managers  |
-| Transition all                | `transition: all`                                        | List specific properties           |
-| Outline removal               | `outline-none` without `focus-visible` replacement       | Add focus-visible ring             |
-| Div click navigation          | `<div onClick={() => navigate(...)}>`                    | Use `<Link>`                       |
-| Non-semantic interactions     | `<div>` / `<span>` with `onClick`                        | Use `<button>`                     |
-| Images without dimensions     | `<img>` missing `width` / `height`                       | Add explicit dimensions            |
-| Unvirtualized large lists     | `.map()` over 50+ items without virtualization           | Add virtualization                 |
-| Unlabeled inputs              | `<input>` without `<label>` or `aria-label`              | Add label                          |
-| Unlabeled icon buttons        | Icon-only `<button>` without `aria-label`                | Add aria-label                     |
-| Hardcoded date/number formats | Date/number formatting without `Intl.*`                  | Use Intl APIs                      |
-| Unjustified autoFocus         | `autoFocus` without clear justification                  | Remove or justify                  |
-| Animated GIF                  | Large or meaningful motion delivered only as a GIF       | Use video plus a still alternative |
-| Gesture-only interaction      | Swipe/drag/pinch is the only available control           | Add click, tap, and keyboard paths |
+| Anti-pattern                  | What to flag                                                              | Fix                                  |
+| ----------------------------- | ------------------------------------------------------------------------- | ------------------------------------ |
+| Zoom disable                  | `user-scalable=no` or `maximum-scale=1` in viewport meta                  | Remove - violates WCAG               |
+| Paste prevention              | `onPaste` + `preventDefault`                                              | Remove - blocks password managers    |
+| Transition all                | `transition: all`                                                         | List specific properties             |
+| Outline removal               | `outline-none` without `focus-visible` replacement                        | Add focus-visible ring               |
+| Div click navigation          | `<div onClick={() => navigate(...)}>`                                     | Use `<Link>`                         |
+| Non-semantic interactions     | `<div>` / `<span>` with `onClick`                                         | Use `<button>`                       |
+| Images without dimensions     | `<img>` missing `width` / `height`                                        | Add explicit dimensions              |
+| Unvirtualized large lists     | Demonstrated excessive rendering cost without pagination or another bound | Choose a measured rendering strategy |
+| Unlabeled inputs              | `<input>` without `<label>` or `aria-label`                               | Add label                            |
+| Unlabeled icon buttons        | Icon-only `<button>` without `aria-label`                                 | Add aria-label                       |
+| Hardcoded date/number formats | Date/number formatting without `Intl.*`                                   | Use Intl APIs                        |
+| Unjustified autoFocus         | `autoFocus` without clear justification                                   | Remove or justify                    |
+| Animated GIF                  | Large or meaningful motion delivered only as a GIF                        | Use video plus a still alternative   |
+| Gesture-only interaction      | Swipe/drag/pinch is the only available control                            | Add click, tap, and keyboard paths   |
 
 ---
 
@@ -916,7 +924,7 @@ These patterns should be flagged on sight. They indicate accessibility, performa
 
 **Performance**
 
-- [ ] **High**: Lists >50 items use virtualization
+- [ ] Large-list rendering is bounded by pagination, virtualization or another measured strategy; a modest paginated list is not a violation merely because it exceeds 50 items
 - [ ] **High**: No `getBoundingClientRect` / `offsetHeight` in render
 - [ ] **High**: DOM reads/writes batched (no layout thrashing)
 - [ ] **High**: CDN domains have `<link rel="preconnect">`
@@ -931,7 +939,7 @@ These patterns should be flagged on sight. They indicate accessibility, performa
 **Anti-patterns**
 
 - [ ] **High**: No `transition: all` - specific properties listed
-- [ ] **High**: No unvirtualized `.map()` over large arrays
+- [ ] Unvirtualized arrays assessed for actual row complexity, rendered count and interaction cost
 - [ ] **High**: No `<div>` / `<span>` with `onClick` as interactive elements
 - [ ] **High**: No gesture-only interaction path
 
@@ -963,6 +971,7 @@ These patterns should be flagged on sight. They indicate accessibility, performa
 
 - [ ] **Medium**: `touch-action: manipulation` on interactive elements
 - [ ] **Medium**: Modal scroll containment (`overscroll-behavior: contain`)
+- [ ] **Medium**: Fine-pointer page overscroll evaluated while preserving coarse-pointer and hybrid-device behavior
 - [ ] **Medium**: `autoFocus` used sparingly, desktop-only
 - [ ] **Medium**: Every gesture has an equivalent click, tap, or keyboard action
 
@@ -1150,7 +1159,7 @@ Recommended: [Date] (Monthly for active development)
 
 ## Deliverables
 
-- A report covering all 103 current upstream checks and the local color-contrast adaptation.
+- A report covering the current upstream inventory and the local color-contrast adaptation.
 - Manual browser evidence for contrast, focus occlusion, media controls, gestures, and motion where
   static source inspection cannot establish the behavior.
 - `file:line` evidence for every source finding and exact page/viewport evidence for rendered issues.
@@ -1158,7 +1167,7 @@ Recommended: [Date] (Monthly for active development)
 
 ## References
 
-- [Vercel Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines/blob/main/command.md) - 103 upstream checks reviewed 2026-08-30
+- [Vercel Web Interface Guidelines](https://github.com/vercel-labs/web-interface-guidelines/blob/main/command.md) - source inventory reviewed 2026-10-25
 - [WCAG 2.1 Guidelines](https://www.w3.org/TR/WCAG21/)
 - [MDN Accessibility Guide](https://developer.mozilla.org/en-US/docs/Web/Accessibility)
 - [web.dev Core Web Vitals](https://web.dev/vitals/)
@@ -1166,6 +1175,6 @@ Recommended: [Date] (Monthly for active development)
 
 ---
 
-**Version**: 1.7
-**Last Updated**: 2026-08-30
-**Next Review**: 2026-09-30
+**Version**: 1.9
+**Last Updated**: 2026-10-25
+**Next Review**: 2026-11-25

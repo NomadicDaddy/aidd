@@ -1,7 +1,7 @@
 ---
 title: 'Outbound SSRF - Provider & Webhook Egress Audit'
-last_updated: '2026-10-01'
-version: '1.2'
+last_updated: '2026-10-25'
+version: '1.3'
 category: 'Security'
 priority: 'Critical'
 estimated_time: '1-2 hours'
@@ -69,6 +69,19 @@ The provider `baseUrl` and webhook targets come from `~/.aidd/config.json` and p
 **Runtime note:** `redirect: 'error'` and `AbortSignal.timeout(...)` are Bun-native `fetch` features (WHATWG fetch, not Node's `http` module), so these controls hold under the Bun worker runtime that the web backend uses.
 
 ## Pre-Audit Setup
+
+The aidd paths and symbols below are reference mappings. Discover the target's actual source
+roots, configurable egress and enforcing equivalents before searching; a missing aidd symbol is
+not a finding. A negative grep alone does not establish N/A: include injected clients, SDKs,
+aliases and configuration consumers, with a known-positive search control.
+
+The scenarios below describe source traces or separately authorized disposable tests. Never edit
+the operator's real config or contact metadata endpoints, private services or the live control
+plane. Use synthetic config, a stub fetcher and a controlled redirect/stream fixture outside the
+audited tree. Label each result as source-traced, fixture-observed or not exercised; a trace is
+not a successful network test. A source comment documents intent, not acceptance of risk: verify
+the current requirement and operator-approved trust boundary before treating private/loopback
+or DNS-rebinding exposure as an accepted residual on another target.
 
 ```bash
 # Every import and call of the shared guard. The backend and CLI import it from the

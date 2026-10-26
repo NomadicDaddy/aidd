@@ -1,7 +1,7 @@
 ---
 title: 'Performance Optimization Audit Framework'
-last_updated: '2026-10-03'
-version: '2.4'
+last_updated: '2026-10-25'
+version: '2.5'
 category: 'Core Technology'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -124,6 +124,13 @@ This unified framework consolidates performance-related auditing across all tech
 
 ## Performance Targets
 
+These are catalog defaults and review triggers, not universal product requirements or automatic
+finding severities. Establish the target's approved budgets, workload and actual user impact.
+Named framework APIs and scripts are examples: equivalent controls count. Lack of a specifically
+named gate is High only when a required measurement capability is demonstrably missing. A pattern
+match such as an unindexed predicate or in-memory filter needs reachable scale/cost evidence;
+small bounded datasets do not require an index on every column or a fixed limit of fifty.
+
 ### Critical Thresholds (Current Core Web Vitals rubric)
 
 - **Largest Contentful Paint (LCP)**: ≤ 2.5s (Core Web Vital)
@@ -175,7 +182,7 @@ Every script named in this section is a **template** script. A derived applicati
 1. **Present** — read the target's `package.json`; confirm the script exists here.
 2. **Wired** — confirm a smoke mode or CI job invokes it. A script nothing calls has never run.
 3. **Faithful** — confirm it measures what it claims: which build, which server, which statistic. A flag that names a mode is not proof the mode took effect; read the code that consumes the flag.
-4. **Run, not replayed** - a gate step that prints `[CACHED]` did not run. It replays an earlier pass recorded against the same declared inputs, so it is evidence about an earlier build. Take a measurement from a script you ran in this session against the build you produced, and record a cached step as cached. Running a check's own script does not consult the gate's cache; do not force or clear the cache to get a fresh line.
+4. **Evidence provenance** - a gate step that prints `[CACHED]` replays an earlier result. Record its source revision, declared inputs, artifact identity and age; reuse it only for claims those inputs support. Prefer matching retained measurements before acquiring more. A new measurement is needed for an unresolved claim about the current runtime or changed inputs, not merely because this is a new audit session. Do not force or clear caches to obtain a fresh-looking pass.
 
 As read on 2026-10-01, the scripts below exist as follows. This is a starting point for assertion 1, not a substitute for it:
 
@@ -191,9 +198,13 @@ As read on 2026-10-01, the scripts below exist as follows. This is a starting po
 | `profile:cpu` / `profile:heap` | yes                                                                                                                                                                                                                                         | no                                                                                              |
 | `optimize-images`              | yes                                                                                                                                                                                                                                         | no                                                                                              |
 
-Record an instrument record per instrument. **A missing or broken instrument is a High finding, not a reason to narrow scope.** With zero verified instruments the audit cannot be performed: declare `auditStatus: "unavailable"` in the result, with an `unavailableReason` naming the instruments that failed, and write no score (enforced at report-write time). In that case file the High finding only when the missing instrument is a defect of this project, not when the target has nothing to measure.
+Record an instrument record per instrument. A confirmed missing required measurement capability is High under AUDIT_METHODOLOGY; an absent template script, inapplicable layer, denied execution or auditor-created contamination is not that defect. Find target equivalents first and group failures with one cause. With zero verified measurement instruments, declare `auditStatus: "unavailable"` and its reason, and write no performance score. Preserve independently established source findings separately without presenting them as runtime measurements.
 
-Before beginning the audit, collect baseline artifacts:
+Collect matching retained baseline artifacts first. The following commands are conditional examples,
+not a sequence to run for every audit. Inspect their transitive effects: builds write output,
+crawls drive a server, and profiling creates load. Use only the smallest authorized isolated probe
+needed for an unresolved measurement. Do not start, stop or reconfigure a shared server, repair
+source, install tools, or run another audit as a prerequisite. Record unavailable evidence explicitly.
 
 ```bash
 # Run the production build and capture bundle stats
@@ -658,12 +669,12 @@ Performance problem identified
 
 ### Instrument Validation (Phase 0 — complete before anything below)
 
-- [ ] Every instrument named in this framework confirmed present in **this** target
-- [ ] Every instrument confirmed invoked by a smoke mode or CI job, not merely present as a script
-- [ ] No measurement taken from a cached gate step; cached steps recorded as cached
+- [ ] Applicable instruments mapped to the target's actual capabilities and required regression coverage
+- [ ] Automated instruments traced to their real callers; retained artifacts and manual probes identified separately
+- [ ] Retained and cached evidence labelled with provenance; new measurement limited to unresolved claims
 - [ ] Every reported number labelled with its build, its server, and its statistic
 - [ ] Crawl-derived vitals traced to the build that actually served them
-- [ ] A High finding raised for each instrument that failed, rather than the scope narrowed around it
+- [ ] High instrument findings limited to confirmed missing required capability; absence of a template name or execution permission is not a product finding
 - [ ] Score withheld entirely if no instrument verified
 
 ### Critical Performance Issues
@@ -899,7 +910,7 @@ Recommended: [Date] (Quarterly cadence)
 ## Deliverables
 
 - Performance audit report in `.aidd/audit-reports/PERFORMANCE-YYYY-MM-DD.md` following the Report Template above, including the Phase 0 instrument-validation table.
-- One High `feature.json` per instrument that failed Phase 0 (absent, unwired, or measuring something other than what it claims).
+- A deduplicated High finding for each confirmed missing required measurement capability under AUDIT_METHODOLOGY; list inapplicable layers and execution limits separately.
 - One `feature.json` file per distinct finding in `.aidd/features/`, severity mapped per [SEVERITY_CLASSIFICATION.md](./SEVERITY_CLASSIFICATION.md).
 - Updated bundle analysis snapshot (the report the target's `build:analyze` writes) attached or referenced, with the build it describes.
 - Updated crawltest web-vitals report (`logs/crawltest.json`) referenced for comparison.

@@ -1,7 +1,7 @@
 ---
 title: 'Deployment, Monitoring, and Infrastructure Audit'
-last_updated: '2026-10-01'
-version: '3.3'
+last_updated: '2026-10-25'
+version: '3.4'
 category: 'Infrastructure'
 priority: 'Medium'
 estimated_time: '1-2 hours'
@@ -119,6 +119,13 @@ The reverse-proxy posture remains IN SCOPE even for local tools: delegate it to 
 
 ## Pre-Audit Setup
 
+This audit inspects deployment; it does not deploy, roll back, restart services or fire real
+alerts. Trace lifecycle examples against source and retained evidence. Restore tests, container
+launches and other mutations require an authorized isolated test environment under
+AUDIT_METHODOLOGY. Missing authority is an execution limit, not a product finding. Inspect secret
+injection definitions and record variable names/presence only; never print values or dump a live
+environment or configuration file into tool output.
+
 ### Required Access
 
 > **Applies to**: container deployments. A non-container app has no container runtime or host proxy to inspect; the access it needs is read access to the repository, the running app's log and data directories, and the operator's answer on how the data directory is backed up.
@@ -141,9 +148,9 @@ docker inspect <image> --format '{{.Config.Entrypoint}} {{.Config.Cmd}}'
 # Show the production compose file
 cat docker-compose.production.yml
 
-# Confirm config mount and secret envs are injected (not baked into image)
+# Confirm config mounts; inspect secret injection definitions without dumping values
 docker inspect <container> --format '{{range .Mounts}}{{.Source}} -> {{.Destination}}{{"\n"}}{{end}}'
-docker exec <container> env | grep -E '_(JWT|COOKIE|ENCRYPTION|API)'
+# Record required secret names and presence through an approved redacted interface.
 
 # Hit the health endpoint from inside the container
 docker exec <container> wget -qO- http://127.0.0.1:3330/api/v1/health
@@ -203,7 +210,7 @@ Bad: Drifted shape (any of the following is a finding)
 - Running as root (missing `USER bun`).
 - Writable root filesystem without `read_only: true`.
 - Two separate containers (one for frontend, one for backend); this is not the Spernakit model.
-- An external database container (Spernakit uses embedded SQLite/libSQL by default).
+- A database deployment that contradicts the target's configured dialect and documented topology. PostgreSQL is supported; an external PostgreSQL service is not a violation merely because SQLite is the default.
 
 ## Configuration and Secrets
 
@@ -371,8 +378,8 @@ The Spernakit backup service writes SQLite snapshots to `/app/backups`.
 # Confirm backup volume and recent files
 docker exec <container> ls -lh /app/backups/
 
-# Backup config in effective JSON
-docker exec <container> sh -c 'cat /app/config/*.json' | grep -A 8 '"backup"'
+# Inspect only non-secret backup settings through the target's approved redacted interface.
+# Do not dump config/*.json; a live configuration may contain private integration material.
 ```
 
 Audit checks:

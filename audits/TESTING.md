@@ -1,7 +1,7 @@
 ---
 title: 'Testing Strategy, Coverage, and Verification Audit'
-last_updated: '2026-10-01'
-version: '2.3'
+last_updated: '2026-10-25'
+version: '2.4'
 category: 'Quality'
 priority: 'High'
 estimated_time: '2-3 hours'
@@ -87,6 +87,17 @@ For single-user local tools with no container build (e.g. **aidd**: `smoke:qc` +
 
 ## Pre-Audit Setup
 
+Establish the target's actual test strategy first. A desktop Electron app, CLI or service is not
+required to adopt crawltest, React routes, OpenAPI, auth-reset scripts or the Spernakit container
+chain. Map scenarios to the target's own test runner and native harnesses, and apply the
+Spernakit-only checks only to a verified Spernakit target.
+
+Read verification scripts before execution. The `supertest`/`smoke:reset` examples below may reset
+data, rebuild packages and start containers or servers; inspect their wiring without running them
+against a live target. Execute only the authorized isolated probes needed for unresolved
+questions, reusing matching baseline evidence and preserving full failures. Screenshot cleanup
+is confined to new scratch owned by this audit; never clear existing acceptance evidence.
+
 ### Required Artifact Files
 
 Consult these before forming findings; they anchor what "tested" means for this project:
@@ -120,7 +131,10 @@ Capture the current state:
 
 ### 2. Verify `smoke:qc` Pipeline Shape
 
-`smoke:qc` is a **check-only** quality gate: it must **never write** to the working tree. The repair counterpart is the separate `qc:fix` command (`lint:fix` + `format` + `smoke:qc`). The gate therefore uses the read-only `lint` and `format:check` steps - **not** the writing `lint:fix` / `format` variants.
+`smoke:qc` must not repair tracked source or configuration. It uses checking lint/format variants,
+not fixers. A build or test within the gate can still write generated output, caches and fixtures
+or start children; inspect those effects and use authorized disposable resources. A separate
+repair command such as `qc:fix`, where present, is outside the audit's diagnostic scope.
 
 **Do not freeze a step count in this audit.** The canonical pipeline is the repo's live `smoke:qc` implementation; `STACK.md`'s Quality Gate Pipeline prose is a secondary reference that can lag. Verify the repo's `smoke:qc` against the **current implementation** rather than a snapshot baked here.
 

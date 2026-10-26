@@ -1,7 +1,7 @@
 ---
 title: 'Control Flow and Logic Evaluation Framework'
-last_updated: '2026-10-01'
-version: '1.6'
+last_updated: '2026-10-25'
+version: '1.7'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -29,7 +29,7 @@ This audit evaluates the correctness, clarity, and maintainability of control fl
 **Essential standards**:
 
 - React Compiler handles memoization automatically; no manual `useMemo`, `useCallback`, or `React.memo`.
-- All `JSON.parse` calls against runtime data must be wrapped in `try-catch` with a fallback.
+- Runtime JSON parse failures must be handled at an appropriate boundary, locally or by a caller. Do not require a catch at every call or a permissive fallback where rejection is correct.
 - Division operations must guard against zero divisors.
 - Bare `catch {}` blocks are prohibited only when they swallow unexpected parse/decrypt/schema/IO failures without logging; a commented best-effort broadcast/notify path is not a finding.
 - Nullish-vs-falsy checks must be correct (`??`/explicit `=== undefined` where `0`/`''`/`false` are valid), and discriminated-union switches must be exhaustive.
@@ -61,6 +61,11 @@ This audit evaluates the correctness, clarity, and maintainability of control fl
 
 ## Pre-audit Setup
 
+Establish the target's actual source roots, runtime and UI libraries first. React, Elysia, Drizzle,
+TanStack Query and template paths below apply only where the target uses them. Audit mode does
+not repair a failing baseline or launch a live dev server; use matching retained evidence or an
+authorized isolated probe under AUDIT_METHODOLOGY. Record limits and continue static tracing.
+
 Before beginning the audit, ensure the following:
 
 1. **Quality baseline is passing**:
@@ -69,12 +74,13 @@ Before beginning the audit, ensure the following:
     bun run smoke:qc
     ```
 
-    This establishes a clean type-check, lint, build, and format baseline. If `smoke:qc` fails, resolve quality gate issues before auditing logic. The exact gate steps are defined canonically in `scripts/smoke.json`; consult that file for the current step list rather than relying on a hardcoded count.
+    Record the baseline and any failure without repairing it. Read the gate source reached from
+    the target's package script; `scripts/smoke.json` is the Spernakit shape, not a universal path.
 
-2. **Application is running** (for dynamic verification):
+2. **Dynamic verification is authorized and isolated** (otherwise trace source only):
 
     ```bash
-    bun run dev
+    # Read the actual launch script; do not run dev against a live instance for this audit.
     ```
 
 3. **Required tools**:
@@ -344,7 +350,7 @@ current **Spernakit v3** stack (React 19 + Vite 8 + Elysia + Drizzle ORM + TanSt
 - [ ] No floating promises: async calls are awaited or have an explicit `.catch()`/best-effort wrapper that logs; fire-and-forget work is intentional and documented
 - [ ] Concurrent state transitions (run/session lifecycle, heartbeat, reconciliation) are guarded against interleaving; terminal-status writes go through a single idempotent path, not parallel writers
 - [ ] _(Apps with workspace/tenant scoping only)_ Tenant-scoped TanStack Query keys include the active-tenant id
-- [ ] JSON.parse calls wrapped in try-catch with fallback
+- [ ] Runtime JSON parse failures handled at the appropriate local or caller boundary; reject invalid input when required rather than inventing a permissive fallback
 - [ ] No bare `catch {}` that swallows **unexpected** parse/decrypt/schema/IO failures without logging; a commented best-effort broadcast/notify path that intentionally ignores a peer-send failure is not a finding
 - [ ] Retried mutations are idempotent: any request that opts into `apiClient` 5xx retry/backoff is safe to apply more than once (idempotency key, upsert, or natural idempotence)
 

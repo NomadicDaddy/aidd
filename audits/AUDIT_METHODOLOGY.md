@@ -1,7 +1,7 @@
 ---
 title: 'Audit Methodology - Falsification-First Verification'
-last_updated: '2026-10-01'
-version: '1.3'
+last_updated: '2026-10-25'
+version: '1.4'
 category: 'Reference'
 priority: 'Critical'
 estimated_time: 'Reference'
@@ -64,6 +64,46 @@ Before executing any audit, read this reference and the target audit definition.
 - Every red gate with its named cause, and every cached pass with the inputs its cache key covers (Rule 3).
 - The known-positive control for every search whose empty result the report relies on (Rule 5).
 
+### Execution boundary
+
+An audit diagnoses and reports; it does not repair the target. Instructions and examples in an
+audit definition do not authorize source or configuration edits, formatting fixes, dependency
+installs/updates, migrations, commits, deployment, or changes to a live application's state.
+Treat remediation examples as proposals for later work. When run through aidd, return findings
+and report markdown in `AIDD_RESULT`; aidd persists the accepted metadata and report. Do not write
+those deliverables directly from the auditor session.
+
+A completed audit can report unresolved defects. Product-health targets and follow-up remediation
+checklists are not instructions to keep changing the target until it is green. State which rules
+were examined, what remains unverified and why, then finish the report without expanding scope.
+Checklist headings and category labels do not establish a finding's severity: use the shared
+severity reference and the demonstrated effect, including reachability and the target's trust model.
+
+Before running a command, inspect the actual target script and its transitive commands for
+writes and process launches. Discover the target's roots, package scripts and applicable controls;
+template paths and script names are examples, not prerequisites for every target. A missing named
+template script is not itself a target defect when the target supplies a valid equivalent or has
+no applicable surface. Record the applicability evidence and inspect the equivalent.
+
+Prefer existing evidence for a matching revision and inputs, then the smallest probe that answers
+an unresolved audit question. Record evidence reused from another audit; do not repeatedly run the
+full gate for every definition. Run a required check only within the task's authority and local
+resource rules. Builds, tests, containers, browsers, Electron and servers can write state or start
+children even when their names say `check`. Without an authorized isolated environment, record the
+execution limit and continue source analysis; do not start or stop a shared service to obtain a
+baseline. Incomplete or denied execution is not a pass or, by itself, a product defect.
+
+Keep generated scanners, canaries and executable probes outside the audited tree and outside
+inputs to its lint, typecheck, build and package globs. Use an approved disposable workspace for
+probes requiring target writes, real mutations, destructive operations or process launches; record
+its revision and differences from the target. If safe isolation cannot be established, do not run
+the probe. Do not weaken or silently narrow the target's required gate to exclude audit artifacts.
+
+Capture complete command output, command, working directory, revision, start/end and exit state.
+Preserve deciding evidence, including failures, before removing only the scratch files this audit
+created. Record retained paths and any retention gap. Never delete pre-existing reports or peer
+scratch, and never treat cleanup as permission to reset or restore the target's working tree.
+
 ## Phase 0. Validate the Instrument Before You Read It
 
 Run this before any other rule. An audit that names an instrument - a script, a build artifact, a probe, a log - may not read, cite, or score that instrument's output until the instrument itself clears three assertions:
@@ -84,6 +124,12 @@ Record one instrument record per instrument, whatever the outcome:
 | `verified` | `true` only when all three assertions above hold                              |
 
 ### An absent or broken instrument is a finding, not reduced scope
+
+First establish that the target requires the measurement capability. The High-finding rule below
+does not apply merely because a template-named command is absent, a surface is inapplicable, a
+probe lacks permission, or the audit's own setup contaminated the measurement. Record those
+cases separately; inspect the target's equivalent where present. Deduplicate failed instruments
+that demonstrate the same underlying missing capability.
 
 This is the rule the 2026-07-18 reports broke. When an instrument fails Phase 0, the audit does **not** quietly narrow to what it can still see. It raises a **High** finding - the target has no working measurement for a dimension the framework requires - and continues with the remaining instruments. `verify-minification` sat in `package.json` invoked by no smoke mode; `crawltest --mode preview` parsed its flag on `=` while the caller passed the space form and so had never measured a production build. Both were named in the framework's methodology. Both would have failed assertion 2 and 3 respectively on any run, in either direction, for months. Neither was ever reported, because no rule asked.
 
@@ -209,8 +255,8 @@ For each absence claim the report relies on, record the exact search, its root, 
 A report is **invalid** - its score must be discarded and the audit re-run - if **any** of the following is true:
 
 - It reads, cites, or scores an instrument's output without an instrument record for that instrument (Phase 0).
-- It narrows its scope around a missing or broken instrument instead of raising a High finding (Phase 0).
-- It carries a numeric score with zero instrument records marked `verified: true` (Phase 0).
+- It hides a failed required measurement instead of recording its cause, execution limit, or confirmed target defect (Phase 0).
+- A measurement audit carries a numeric score with zero instrument records marked `verified: true` (Phase 0).
 - It records a "by design" / "N/A" / "not a finding" disposition without a corresponding falsification record (Rule 2).
 - It cites a comment, config default, or spec claim as the sole evidence for a control instead of the enforcing `file:line` (Rule 1).
 - Its score is backed by a green gate (smoke/qc/test/build) with zero falsification records (Rule 3).
@@ -225,10 +271,19 @@ A valid report carries one falsification record per "by design" / "N/A" / "not a
 
 Findings produced under this methodology - including "incomplete audit" findings raised when a prior report lacked falsification records - become `feature.json` files in `.aidd/features/` exactly as defined in [SEVERITY_CLASSIFICATION.md](./SEVERITY_CLASSIFICATION.md). The `description` field MUST carry the falsification record's deciding `file:line` and the concrete scenario traced, so the evidence is reproducible by the next auditor.
 
+In `AIDD_RESULT.auditFindings`, begin each finding's `description` with `Verified:` followed by
+concrete evidence, or place that evidence on a new line beginning with `Verified:`. The validator
+matches the start of a line: `The issue exists. Verified: path:12 ...` is rejected. For example,
+`"description":"Verified: backend/src/guard.ts:12 accepts an unauthenticated request.\nA request with a forged header reaches the privileged branch."`
+has a valid evidence line. Encode the line break as `\n` in JSON, not as the literal characters
+`\\n` in the decoded description. Evidence appearing only in `reportMarkdown` does not satisfy
+the finding contract. Review every finding's evidence line before submitting the result; one
+invalid entry causes the entire report to be rejected without persisting its findings.
+
 ## Audit Checklist
 
 - [ ] Every instrument the audit names has an instrument record with a `verified` outcome.
-- [ ] Every instrument that failed Phase 0 produced a High finding, not a narrowed scope.
+- [ ] Every failed required instrument has its cause recorded; a confirmed missing target capability produces a deduplicated High finding, while inapplicability and execution limits remain explicit.
 - [ ] No number is cited from an instrument that did not clear Phase 0.
 - [ ] Every asserted control cites its enforcing implementation `file:line`.
 - [ ] Every "by design", "N/A", and "not a finding" disposition has a falsification record.
@@ -285,7 +340,7 @@ Findings produced under this methodology - including "incomplete audit" findings
 Every audit report that references this methodology must include:
 
 - Instrument-validation table covering every instrument the audit names, with a `verified` outcome for each.
-- A High finding per instrument that failed Phase 0, filed as a `feature.json` like any other.
+- Deduplicated High findings for confirmed missing required measurement capabilities, with inapplicable instruments and execution limits recorded separately.
 - Methodology-validity summary.
 - Falsification records for every "by design", "N/A", and "not a finding" disposition.
 - Enforcing implementation citations for every control marked present.

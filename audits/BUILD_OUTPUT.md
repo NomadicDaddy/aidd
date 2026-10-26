@@ -1,7 +1,7 @@
 ---
 title: 'Build Output and Delivery Audit'
-last_updated: '2026-10-01'
-version: '1.2'
+last_updated: '2026-10-25'
+version: '1.3'
 category: 'Performance'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -70,12 +70,23 @@ Every finding in this framework is a **difference between what the configuration
 
 ## Instruments
 
-This audit is deliberately **portable**: it requires no project-specific script. Its instruments are the artifact itself and HTTP requests against the running application, both of which exist in every target regardless of build tool or server. Record each per [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLOGY.md) Phase 0.
+First establish the distribution and transport: served web assets, a desktop renderer loaded from
+local files, a CLI/source package, or a container image. HTTP negotiation and preload assertions
+apply only to surfaces that use them. A local Electron renderer can have auditable packaged
+assets without an HTTP origin; mark wire-only checks N/A with that evidence. Do not invent a
+server or start the target's live application to make a subsection applicable.
+
+Use a retained production artifact only when its revision, build inputs and provenance match the
+target, recording its age and hash. Otherwise build in an authorized isolated environment. The
+commands below are subject to AUDIT_METHODOLOGY's process and write boundaries.
+
+This audit requires no specific script. Its instruments are the applicable production artifacts
+and, where the target serves HTTP, authorized response probes. Record each per Phase 0.
 
 | Instrument             | Kind     | How to obtain                                                                                                                                                                                                           |
 | ---------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Built frontend output  | artifact | Run the project's production build; audit the emitted directory, not a stale one                                                                                                                                        |
-| Build diagnostics      | log      | Capture the production build's full stdout **and** stderr; do not discard warnings. A cached build step prints nothing, so run the build, or read a log the runner retained from the last real build and record its age |
+| Build diagnostics      | artifact | Capture the production build's full stdout **and** stderr; do not discard warnings. A cached build step prints nothing, so run the build, or read a log the runner retained from the last real build and record its age |
 | Container image layers | artifact | `docker create` the release image and inspect its filesystem, or `docker run … ls`                                                                                                                                      |
 | Served responses       | probe    | HTTP requests against the running application at the port it actually serves on                                                                                                                                         |
 | Chunk import graph     | artifact | Parse the entry HTML and the emitted JS; see Phase 3                                                                                                                                                                    |
@@ -89,7 +100,7 @@ Where a target **does** ship a purpose-built gate — the template's `check:crit
 
 A wired gate that printed `[CACHED]` has not run either, in this session. A cached step replays an earlier pass recorded against the same declared inputs; it is evidence about the build that existed then. Before crediting a cached artifact gate, read what its cache key hashes: a step that inspects the build output must hash the output itself, not only the sources that produced it, or a stale, partial or hand-edited `dist` sits behind a valid entry. Then measure the build you produced for this audit by running the check's own script against it, which does not consult the gate's cache. Do not regenerate a budget file to obtain a reading.
 
-**If the production build cannot be produced at audit time, this audit cannot be performed: declare `auditStatus: "unavailable"` in the result, with an `unavailableReason` that says why the build could not be produced.** File a High finding in that result only when that is a defect of this project (it is meant to build and does not); file none when the target has no production build to inspect. Do not substitute a dev build; a dev server emits unhashed, unminified, unsplit output and every check below is meaningless against it.
+If neither a matching retained production artifact nor an authorized isolated build is available, declare `auditStatus: "unavailable"` with its reason and no artifact score. A denied build is a coverage limit. A High product finding requires a confirmed required build capability that is broken, not a missing template script or permission. Do not substitute a dev build.
 
 ## Phase 1: Establish the Delivery Topology
 
@@ -113,15 +124,22 @@ Enumerate every file in the built output and in the image's served directory, wi
 
 ### Files that must not ship
 
-| Class                     | Detection                                                             | Severity     |
-| ------------------------- | --------------------------------------------------------------------- | ------------ |
-| Source maps               | `*.map` present in the served directory or in the image               | **Critical** |
-| Original sources          | `.ts`/`.tsx`/`.jsx` files, or `sourcesContent` inside any shipped map | **Critical** |
-| Environment files         | `.env*` anywhere in the artifact or image                             | **Critical** |
-| Backups / editor detritus | `*.bak`, `*.orig`, `*~`, `.DS_Store`, `Thumbs.db`                     | Low          |
-| Development-only assets   | fixtures, seed data, test media                                       | Medium       |
+Establish the target's publication policy before applying this table or the severity mapping.
+Source-distribution packages intentionally ship source, and desktop renderers normally contain
+readable application code. Approved public source or maps are not secret disclosures. File a
+security finding only for demonstrated sensitive content or an unapproved exposure across the
+target's trust boundary; classify intentional source distribution separately. Do not classify a
+public example environment file as a credential leak merely from its extension.
 
-Source maps rate **Critical** and not Medium because the exposure is not "stack traces are readable" — it is the complete original source of the application, retrievable by anyone who can fetch a chunk and append `.map`. Assess the two layers independently:
+| Class                     | Detection                                                             | Severity                             |
+| ------------------------- | --------------------------------------------------------------------- | ------------------------------------ |
+| Source maps               | `*.map` present in the served directory or in the image               | Impact-based; see publication policy |
+| Original sources          | `.ts`/`.tsx`/`.jsx` files, or `sourcesContent` inside any shipped map | Impact-based; see publication policy |
+| Environment files         | `.env*` anywhere in the artifact or image                             | Impact-based; see publication policy |
+| Backups / editor detritus | `*.bak`, `*.orig`, `*~`, `.DS_Store`, `Thumbs.db`                     | Low                                  |
+| Development-only assets   | fixtures, seed data, test media                                       | Medium                               |
+
+Classify unapproved source-map exposure by demonstrated sensitive content, audience and impact under SEVERITY_CLASSIFICATION. Public source or intentionally distributed desktop code is not a Critical secret disclosure merely because it is readable. Assess map metadata and embedded sources separately:
 
 1. **Is the map in the artifact?** Build config decides this. A build that emits maps only under an explicit opt-in passes.
 2. **Is the map reachable over HTTP?** The server decides this. A deny rule for `.map` is defence in depth and does not excuse emitting them.
@@ -263,32 +281,32 @@ State the finding with both numbers: the dependency's contribution and the route
 
 ## Severity Mapping
 
-| Finding                                                                   | Severity                        |
-| ------------------------------------------------------------------------- | ------------------------------- |
-| Source maps, original sources, or `.env` files reachable over HTTP        | **Critical**                    |
-| Source maps or `.env` files present in the image but not served           | **High**                        |
-| Framework runtime not in a preloaded chunk                                | **High**                        |
-| Entry statically imports a non-preloaded chunk                            | **High**                        |
-| Declared chunk group not present in the emitted output                    | **High**                        |
-| Deprecated build option controlling chunking, preload, or emission        | **High**                        |
-| Two build options set where the tool ignores one in favour of the other   | **High**                        |
-| Other deprecation warnings in the build log                               | Medium                          |
-| Text assets served uncompressed                                           | **High**                        |
-| Content-hashed assets not immutably cacheable                             | **High**                        |
-| Entry HTML cacheable                                                      | **High**                        |
-| Legacy font formats shipped beside `woff2`                                | **High**                        |
-| No critical-path gate wired into a smoke mode or CI                       | **High**                        |
-| Critical path over budget (re-measured, outside build-to-build variation) | High / Medium by margin         |
-| Critical path within build-to-build variation of its limit                | Medium, High if seen to flap    |
-| Budget leg skipped (no budget file) while the gate exits 0                | **High**                        |
-| Artifact gate cached on sources only, not on the output it reads          | **High**                        |
-| Incorrect `Content-Type` on a served asset                                | Medium, High if render-blocking |
-| Heavy dependency statically imported behind a conditional subtree         | Medium, High if dominant        |
-| Byte-identical duplicate assets                                           | Medium                          |
-| Oversized or unjustified image format                                     | Medium, High if preloaded       |
-| Redundant font subsets or fixed-weight sets                               | Medium                          |
-| Already-compressed formats re-compressed                                  | Low                             |
-| Editor/backup detritus in the artifact                                    | Low                             |
+| Finding                                                                   | Severity                             |
+| ------------------------------------------------------------------------- | ------------------------------------ |
+| Source maps, original sources, or `.env` files reachable over HTTP        | Impact-based; see publication policy |
+| Source maps or `.env` files present in the image but not served           | Impact-based; see publication policy |
+| Framework runtime not in a preloaded chunk                                | **High**                             |
+| Entry statically imports a non-preloaded chunk                            | **High**                             |
+| Declared chunk group not present in the emitted output                    | **High**                             |
+| Deprecated build option controlling chunking, preload, or emission        | **High**                             |
+| Two build options set where the tool ignores one in favour of the other   | **High**                             |
+| Other deprecation warnings in the build log                               | Medium                               |
+| Text assets served uncompressed                                           | **High**                             |
+| Content-hashed assets not immutably cacheable                             | **High**                             |
+| Entry HTML cacheable                                                      | **High**                             |
+| Legacy font formats shipped beside `woff2`                                | **High**                             |
+| No critical-path gate wired into a smoke mode or CI                       | **High**                             |
+| Critical path over budget (re-measured, outside build-to-build variation) | High / Medium by margin              |
+| Critical path within build-to-build variation of its limit                | Medium, High if seen to flap         |
+| Budget leg skipped (no budget file) while the gate exits 0                | **High**                             |
+| Artifact gate cached on sources only, not on the output it reads          | **High**                             |
+| Incorrect `Content-Type` on a served asset                                | Medium, High if render-blocking      |
+| Heavy dependency statically imported behind a conditional subtree         | Medium, High if dominant             |
+| Byte-identical duplicate assets                                           | Medium                               |
+| Oversized or unjustified image format                                     | Medium, High if preloaded            |
+| Redundant font subsets or fixed-weight sets                               | Medium                               |
+| Already-compressed formats re-compressed                                  | Low                                  |
+| Editor/backup detritus in the artifact                                    | Low                                  |
 
 ## Audit Checklist
 

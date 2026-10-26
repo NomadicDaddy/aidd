@@ -1,7 +1,7 @@
 ---
 title: 'Secret Handling, Log Redaction, and Retention Audit'
-last_updated: '2026-10-01'
-version: '1.4'
+last_updated: '2026-10-25'
+version: '1.5'
 category: 'Security'
 priority: 'Critical'
 estimated_time: '2-4 hours'
@@ -34,6 +34,11 @@ These bind the audit itself. A report that breaks one is a finding against the r
 - **Scan live artifacts by shape, and report location only.** When checking real logs or rows for surviving secrets, use a search that reports the file and a count (or file and line number), never the matched text. A finding names the file, the line, and which rule matched. It never quotes the value.
 - **File metadata is not file content.** Checking a file's permission bits, its presence in `.gitignore`, or whether git tracks it does not require reading it.
 - **If a real secret is found**, do not copy it into the report, a feature record, a note, a message, or a commit. Record where it is and what kind it is, tell the owner it must be rotated, and stop handling it.
+
+Shape matches alone do not establish a real secret or disclosure. A redacted marker, synthetic
+fixture, denied tool result or public config value is not confirmed exposure. Require a safe
+producer/consumer trace and metadata-only corroboration before recommending rotation; retain
+unresolved candidates as such. Keep sentinel scripts outside the audited tree and its tool globs.
 
 ## Table of Contents
 
@@ -110,7 +115,7 @@ grep -rn "\.send(" backend/src/ --include="*.ts"
 grep -rn "buildToolSubprocessEnv\|buildBackendSubprocessEnv\|\.\.\.process\.env" backend/src/ shared/src/ cli/src/ --include="*.ts"
 
 # Shape scan of live artifacts: files and counts ONLY. Never print the matched text (-o) and
-# never open the file to look. A non-zero count is a finding located by file; stop there.
+# never open the file to look. A non-zero count is a candidate located by file, not proof of a credential.
 grep -acE "sk-[A-Za-z0-9_-]{16}|Bearer [A-Za-z0-9._-]{8}|Authorization:[[:space:]]*[A-Za-z0-9]|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20}|github_pat_[A-Za-z0-9_]{20}|AIza[A-Za-z0-9_-]{20}|api\.telegram\.org/bot[0-9]" logs/ai-calls.jsonl logs/*.log 2>/dev/null
 
 # Config-file permissions: metadata only, POSIX only (see note below)
@@ -268,7 +273,7 @@ The closing exercise. **Do not** sign off "secrets are scrubbed, by design" from
 5. Log an object carrying a sentinel under a redacted key, an unredacted key, and inside an `Error`, to a `webLogger`-configured logger writing to a scratch destination.
 6. Call `buildToolSubprocessEnv` and `buildBackendSubprocessEnv` with a synthetic source object (Section 7).
 
-**Part B: live artifacts, by shape, location only.** Run the count-only shape scan from Pre-Audit Setup against the real logs, transcripts, and iteration records. For the run and invocation rows, query the database in place with a pattern match that returns row ids and counts only; do not export the rows to a file. A non-zero count is a finding located by file and line number, or by table and row id. Do not print or copy the match.
+**Part B: live artifacts, by shape, location only.** Scan only authorized artifact locations with count-only output and known-positive controls. Never query or alter the live application database just because this example names it: prefer retained read-only evidence, or an explicitly authorized read-only connection returning ids/counts only. A non-zero count is a candidate, not confirmed disclosure. Use producer paths, fixture classification and metadata-only predicates to distinguish redacted markers, synthetic sentinels, refusal messages and public configuration. Do not print, copy or inspect raw credential values; if confirmation cannot be made safely, record an unresolved candidate and its limit.
 
 Specific failure modes to hunt:
 
@@ -292,7 +297,7 @@ If you find none, state **what you actually ran**: the functions called, the sen
 
 ### Critical
 
-- [ ] Live logs, transcripts, and iteration records contain **no** string of a credential shape (count-only scan, with its control)
+- [ ] Count-only shape candidates triaged without exposing values; only confirmed secret retention is filed, and unresolved candidates remain explicit
 - [ ] No raw secret persisted in run or invocation rows
 - [ ] Every broadcast frame is scrubbed by `WebSocketHub.broadcast`, and every direct socket send is accounted for
 - [ ] The user-level config is written `0o600` in a `0o700` directory by every writer

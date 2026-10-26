@@ -1,7 +1,7 @@
 ---
 title: 'Director Orchestrator Concurrency & State-Machine Audit'
-last_updated: '2026-10-01'
-version: '1.2'
+last_updated: '2026-10-25'
+version: '1.3'
 category: 'Reliability'
 priority: 'High'
 estimated_time: '2-4 hours'
@@ -145,6 +145,13 @@ grep -rn "monitorBackend(\|idleDefaults" cli/src shared/src backend/src
 ```
 
 ### Probe Safety
+
+The worker-transaction restrictions and named tables below describe aidd's architecture, not a
+requirement to introduce it into every target. Trace the target's actual storage connection,
+transaction ownership and serialization mechanism. An in-memory queue or a different database
+may close the same race without aidd's worker command facade. Runtime exercises are conditional
+on execution authority and resource availability; distinguish source-traced, fixture-observed
+and untested outcomes throughout the report and checklist.
 
 Drive interleavings in a **disposable fixture**: a throwaway data directory and database, a throwaway git repository, a non-default port, and a stub or simulated child in place of a real agent backend. Do not race launches, kill processes, or restart against the operator's live panel, its database, or a run in progress, and do not start a real (billable) backend session to create load. Where an interleaving cannot be driven safely, trace it by hand and say so.
 

@@ -1,7 +1,7 @@
 ---
 title: 'Third-Party Software Licensing Audit'
-last_updated: '2026-10-01'
-version: '2.1'
+last_updated: '2026-10-25'
+version: '2.2'
 category: 'Compliance'
 priority: 'High'
 estimated_time: '3-6 hours'
@@ -521,8 +521,12 @@ Read the implementations of, and run only the read-only forms of:
 ```text
 bun run check:licenses        # check:license-core, then the generator with --check
 bun run check:fresh-release
-bun run check:source-install
 ```
+
+`check:source-install` is not read-only: it exports a tree, installs dependencies and builds the
+frontend. Prefer retained acceptance evidence; execute it only as a separately authorized isolated
+probe under the resource rules. Do not build release artifacts merely to inventory licenses when
+matching retained artifacts are available.
 
 `bun run licenses:generate` rewrites the committed documents; do not run it in an audit. The
 license core (`scripts/check-license-core.ts` and `scripts/lib/license-core/`) is synchronized

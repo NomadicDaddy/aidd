@@ -1,7 +1,7 @@
 ---
 title: 'Data Architecture, Single Source of Truth, and Scheduled Tasks Audit'
-last_updated: '2026-06-28'
-version: '2.4'
+last_updated: '2026-10-25'
+version: '2.5'
 category: 'Core Architecture'
 priority: 'Critical'
 estimated_time: '1-2 hours'
@@ -56,6 +56,16 @@ consolidates: 'TRUTH.md, SCHEDULED_TASKS.md'
 9. [Deliverables](#deliverables)
 
 ## Pre-Audit Setup
+
+Establish the target's real storage and configuration authorities first. A file-backed local tool
+is not required to adopt Drizzle, SQL indexes, a shared workspace, TanStack Query or WebSocket
+delivery. Trace its own file writes, validation, consistency and scheduling equivalents. An index,
+rollback script or additional cache is recommended only for a demonstrated query or recovery
+requirement, not every bounded scan or setting.
+
+Record existing gate evidence and run only authorized checks under AUDIT_METHODOLOGY. Schema,
+migration and scheduler examples below describe controls to inspect, not changes to execute.
+Do not migrate data, trigger a real scheduled job or repair a baseline during the audit.
 
 ### Required Tools and Access
 
@@ -285,7 +295,10 @@ export const aiProviders = sqliteTable(
 
 ### Eliminate Client-Side Polling
 
-**🚨 CRITICAL: Never poll from the client**
+**Check for unbounded or duplicative polling.** Bounded polling can be appropriate for a local
+tool or an active operation; trace lifecycle cleanup, interval, workload and existing invalidation
+paths before proposing a change. The implementation below illustrates one alternative, not a
+requirement to add a query library or WebSocket service to every target.
 
 ❌ **Bad: Client-Side Polling**:
 
@@ -520,7 +533,9 @@ aidd is a single-user **local CLI + embedded Elysia control panel + spawned agen
 
 ## Feature.json Generation
 
-For each finding requiring code changes, generate a feature.json in `.aidd/features/audit-data-architecture-{timestamp}-{slug}/` following the standard aidd format. Map severity: Critical→P0, High→P1, Medium→P2, Low→P3.
+For each confirmed finding, use the shared finding contract and evidence in `description`.
+The runtime persists accepted findings under `.aidd/features/`. The numeric audit priorities are
+Critical=1, High=2, Medium=3, Low=4; do not substitute zero-based priority labels.
 
 ## Report Template
 
@@ -669,7 +684,7 @@ For each finding requiring code changes, generate a feature.json in `.aidd/featu
 
 - **100% authority clarity** for all domains
 - **Zero duplicate authorities** or parallel interfaces
-- **100% database queries** use proper indexes
-- **Zero client-side polling** patterns
+- Applicable database queries use indexes justified by workload and query plans; bounded scans are assessed by actual cost
+- **Bounded, justified polling** with cleanup and no duplicate freshness authority
 - **100% scheduled tasks** use proper patterns
-- **All migrations** have rollback procedures
+- Migration recovery follows the target's actual transaction, backup and forward-recovery contract; no migration is executed by this audit

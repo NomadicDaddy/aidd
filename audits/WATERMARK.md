@@ -1,7 +1,7 @@
 ---
 title: 'Watermark, Steganography, and Covert Telemetry Audit'
-last_updated: '2026-10-03'
-version: '1.2'
+last_updated: '2026-10-25'
+version: '1.3'
 category: 'Security'
 priority: 'High'
 estimated_time: '2-4 hours'
@@ -80,21 +80,24 @@ approval. Prefer official local detection; otherwise use already-public copy onl
 ## Phase 0: Validate the Instruments
 
 A clean result requires the same scanner and flags to detect seeded controls. Create canaries in
-ignored `.aidd/tmp/`, remove them afterward, and record pass/fail per instrument:
+a disposable `audit-scratch` directory outside the audited tree and its lint/build/package globs.
+Author them with file tools, remove only your own fixtures afterward, and record pass/fail per instrument:
 
 ```bash
-bun -e "import { mkdir } from 'node:fs/promises'; await mkdir('.aidd/tmp', { recursive: true }); await Bun.write('.aidd/tmp/wm-canary.txt', 'A\u200bB \u2062 C\ufeff\nD  \nX\u{e0041}\u{e0042}Y\n'); await Bun.write('.aidd/tmp/wm-canary.png', Buffer.from('\x89PNG\r\n\x1a\nIHDRcaBXc2pa.watermarked', 'latin1'))"
-rg -n '[\x{200B}-\x{200F}\x{2060}-\x{2064}\x{FEFF}]' .aidd/tmp/wm-canary.txt
-rg -n '[\x{E0000}-\x{E007F}]' .aidd/tmp/wm-canary.txt
-rg -n ' +$' .aidd/tmp/wm-canary.txt
-rg -a -n 'IHDR|caBX|c2pa\.watermarked' .aidd/tmp/wm-canary.png
+# Resolve audit-scratch outside the target; these commands only scan fixtures already authored.
+rg -n '[\x{200B}-\x{200F}\x{2060}-\x{2064}\x{FEFF}]' <audit-scratch>/wm-canary.txt
+rg -n '[\x{E0000}-\x{E007F}]' <audit-scratch>/wm-canary.txt
+rg -n ' +$' <audit-scratch>/wm-canary.txt
+rg -a -n 'IHDR|caBX|c2pa\.watermarked' <audit-scratch>/wm-canary.png
 ```
 
 All probes must hit. A canary proves only the flags and globs it was run with, so before the
 repository sweeps run every Section 1 command with its exact flags and globs, pointed at
-`.aidd/tmp` instead of `.`: the `--glob '*.{ts,tsx,js,json,md}'` sweeps never read a `.txt` file,
-so also write the text canary as `.aidd/tmp/wm-canary.ts` and `.aidd/tmp/wm-canary.md`. Delete the
-canaries before the repository sweeps, or those `-uu` sweeps report the canaries as findings.
+the external fixture directory instead of `.`: extension-filtered sweeps never read a `.txt` file,
+so also author equivalent `.ts` and `.md` canaries. Seed zero-width characters, a BOM, tag-block
+characters and trailing spaces in the text fixtures, and PNG/chunk-marker bytes in the binary
+fixture. A marker-byte fixture verifies a byte scan, not a valid PNG/C2PA parser; use a known-valid
+metadata fixture for that parser. Keep canaries outside repository sweeps to avoid contamination.
 Record versions for `rg`, `git`, `exiftool`, and `c2patool`. Missing metadata
 tools permits byte fallbacks; a failed canary blocks its section. Validate any metadata tool used
 as deciding evidence against a known-positive fixture. Detector unavailability is a coverage
@@ -114,7 +117,7 @@ rg -uu -n '[\p{Cyrillic}\p{Greek}\x{FF01}-\x{FF5E}]' --glob '*.{ts,tsx,js,json}'
 rg -uu -n ' +$' --glob '*.{ts,tsx,js,md,json}' -g '!node_modules/**' -g '!.git/**' .
 ```
 
-- Any tag-block hit is a finding. No ordinary repository content needs U+E0000-U+E007F.
+- Triage tag-block hits for covert payloads, active instructions or unapproved distribution. Deliberate detector tests and approved reference examples may contain those characters; record their purpose and ship path rather than filing a finding from the codepoint alone.
 - Justify invisible, BOM, filler, NBSP, and homoglyph hits by function and location.
 - Verify variation selectors against preceding codepoints; emoji use is benign, encoded bits are
   findings.
@@ -198,7 +201,7 @@ runtime reconstruction of executable code or URLs is Critical until proved benig
 
 ```bash
 rg -uu -n 'type=[\x{22}\x{27}]hidden|display:\s*none|visibility:\s*hidden|opacity:\s*0' --glob '*.{tsx,jsx,html,css}' -g '!node_modules/**' -g '!.git/**' .
-rg -uu -n 'content:\s*[\x{22}\x{27}][^\x{22}\x{27}]*\\[0-9a-fA-F]{4,6}' --glob '*.{css,tsx,jsx}' -g '!node_modules/**' -g '!.git/**' .
+rg -uu -n 'content:\s*[\x{22}\x{27}][^\x{22}\x{27}]*\x5c[0-9a-fA-F]{4,6}' --glob '*.{css,tsx,jsx}' -g '!node_modules/**' -g '!.git/**' .
 rg -uu -n '<meta\s|data-[a-z-]+=' --glob '*.{tsx,jsx,html}' -g '!node_modules/**' -g '!.git/**' .
 rg -uu -n '<!--' --glob '*.html' -g '!node_modules/**' -g '!.git/**' .
 ```
@@ -258,7 +261,7 @@ dispositions make the report `INCOMPLETE`.
   confirmed invisible or whitespace channel; or hidden DOM/meta carrier with an identifier.
 - **Medium**: generator-bearing EXIF/text/XMP residue, SVG creator metadata, homoglyph identifier,
   untraceable constant, opaque encoded blob, or unexplained modified font.
-- **Low**: incidental whitespace/BOM/punctuation hygiene or dense linguistic advisory.
+- **Low**: incidental whitespace/BOM/punctuation hygiene with a demonstrated maintenance effect. Linguistic style remains a narrative advisory, not a watermark finding or evidence of AI authorship.
 
 Do not file overt provenance or proved benign functional artifacts; retain falsification evidence.
 

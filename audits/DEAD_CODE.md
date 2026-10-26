@@ -1,7 +1,7 @@
 ---
 title: 'Dead Code and Orphaned Files Audit'
-last_updated: '2026-10-01'
-version: '1.6'
+last_updated: '2026-10-25'
+version: '1.7'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -98,6 +98,12 @@ lifecycle: 'development'
 
 ### Required Tools
 
+Resolve source roots, entry points and installed scripts from the target first. Commands below
+name the Canon tools; run only applicable scripts the target actually has, within the execution
+boundary in AUDIT_METHODOLOGY. When a wiring script is absent, trace the target's registration
+mechanisms manually. Its absence alone is not a dead-code finding. Reuse a matching quality
+baseline rather than running the full gate again for every audit, and never fix it here.
+
 ```bash
 # Primary detection tool - both Spernakit and aidd ship this script
 bun run check:dead-code   # canonical (wraps knip); `bunx knip` is the fallback where the script is absent
@@ -110,7 +116,10 @@ bun run check:feature-integration
 bun run smoke:qc
 ```
 
-Run `check:dead-code` and `check:feature-integration` directly for this audit. Both are cached steps of `smoke:qc`, and a `[CACHED]` line there replays an earlier pass against the same declared inputs; it is not a knip run and produces no output to read. Running the script itself does not consult the gate's cache.
+When current scanner output is needed and execution is authorized, run the target's applicable
+`check:dead-code` or wiring script directly. A cached full-gate result does not provide fresh
+scanner output. Do not download a fallback tool or change its configuration without authority;
+record unavailable tool output and continue manual tracing.
 
 ### Verification Commands
 
@@ -261,6 +270,9 @@ The HYGIENE audit uses the same automated tools (Knip, Madge, JSCPD) for dead co
 
 ## Audit Checklist
 
+Checklist priorities indicate review order. Assign finding severity from demonstrated impact and
+SEVERITY_CLASSIFICATION, not from an unused file's kind or its position in this checklist.
+
 ### Critical Checks
 
 - [ ] All `frontend/src/` files reviewed (excluding configured exclusions)
@@ -268,7 +280,7 @@ The HYGIENE audit uses the same automated tools (Knip, Madge, JSCPD) for dead co
 - [ ] All `shared/src/` files reviewed (types, constants, pure functions)
 - [ ] Confirmed unused files have **zero** references and no dynamic registration
 - [ ] No test, config, migration, example, or dual-schema file is incorrectly flagged
-- [ ] `bun run check:feature-integration` run directly and passing (no unregistered routes/pages); a cached gate line does not count
+- [ ] The target's wiring check or manual registration trace is recorded; an absent template script is not reported as missing feature integration by itself
 - [ ] Every empty search that supports a finding has a known-positive control recorded beside it
 
 ### High Priority Checks

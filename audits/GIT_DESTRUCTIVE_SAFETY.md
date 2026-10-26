@@ -1,7 +1,7 @@
 ---
 title: 'Git-Destructive Safety & Metadata-Only Write-Boundary Audit'
-last_updated: '2026-10-01'
-version: '1.3'
+last_updated: '2026-10-25'
+version: '1.4'
 category: 'Security'
 priority: 'Critical'
 estimated_time: '2-4 hours'
@@ -38,7 +38,7 @@ Detection is not recovery. The guard can tell that uncommitted work was discarde
 **Essential Standards**
 
 - Every run type is mapped to the controls that actually apply to it. No control is credited to a run it does not reach.
-- Force-push and history rewrites have **no code deny-list**; verify the policy gate and treat an autonomous force-push as a live finding.
+- Verify force-push and history-rewrite controls separately: aidd's in-process bash policy judges remote-rewriting push forms, while external CLI tools do not inherit that check. Trace repository pre-push protection and remaining rewrite paths without attempting a real push.
 - The before and after snapshots leave no window in which a violating write goes unseen.
 - Metadata writes are confined to `.aidd` (`METADATA_ALLOWLIST`) and cannot be redirected out of it (`.aidd/../src`).
 - **Surfaces outside the agent tool** - the CLI run started against a live checkout, the control panel's own git actions, operator tooling - are policed separately; see [Section 7](#7-surfaces-outside-the-agent-tool).
@@ -90,6 +90,10 @@ For an external CLI backend the only controls on a destructive git command are: 
 
 ### Safety rules for this audit
 
+- The aidd symbols below are reference mappings; discover target equivalents and actual roots. Do not file an absent aidd-specific helper as a defect in another orchestrator.
+- Historical denied/allowed labels are probe expectations, not current evidence. Read the current policy and record source-traced versus fixture-observed results; an unrun fixture is untested.
+- Keep disposable repositories and executable probes outside the audited tree and its tool globs. No remote is needed: never attempt a real force-push, history rewrite, reset or cleanup on an operator repository.
+
 - Never run a destructive git command against a real checkout to see what happens. Every scenario in this audit is either traced by hand through the code or driven against a **disposable scratch repository** created for the purpose, with invented files.
 - To test the deny-list, call `checkBashWorkspacePolicy` with the command string. It returns the decision and executes nothing.
 - Do not start a real run against a live checkout to observe its effect on the working tree. Read the lifecycle code.
@@ -131,28 +135,41 @@ The last search does not come back empty: aidd's own code does issue destructive
 
 `checkBashWorkspacePolicy` masks literal null-device output redirects (`maskNullOutputRedirects`), calls `evaluateBashWorkspacePolicy`, and wraps any violation with `denialMessage`. `evaluateBashWorkspacePolicy` calls `usesDestructiveGit(command)` **as its first check**, on the command as written: quoted spans are not blanked for this check. The checks that follow, in order, are: dangerous constructs (`eval`, `bash -c`, `exec`, `source`), encoding-plus-eval chains, home references and the `printenv` forms, absolute paths, positional targets (`cd`, redirects, file destinations, `tee`), command substitution, and the general argument containment sweep. That order is stated as load-bearing in the function's own comment; confirm it has not changed.
 
-`usesDestructiveGit` (`shell-policy-git.ts`) reads words, not text, and where the text cannot settle a question it takes the reading that denies. Read the file and confirm each step:
+`usesDestructiveGit` reads conservative command interpretations, not the shell's runtime
+behavior. Read these enforcing modules together and cite the live symbols:
 
-1. `simpleCommands` splits the command at a newline, `;`, `&`, `|`, `(`, `)`, and a backtick. It does this twice: once treating a separator inside quotes as ordinary text, and once ignoring quotes altogether. Either reading can deny. The second reading exists because a quote character in a comment or after a backslash is not a real quote, and reading it as one hides the next command.
-2. `segmentDiscards` splits each simple command into words with the shared quote-aware tokenizer (`tokenizeShell` in `shell-policy-tokens.ts`) and removes every backslash from every word (`unescaped`), as bash does inside a word.
-3. A simple command whose text contains `clean.requireForce` (any letter case) and which has the word `clean` is denied outright: that setting lets a bare `git clean` delete with no force flag to see.
-4. **Every** word whose file name is `git` or `git.exe`, in any letter case and with any path prefix, starts a git invocation (`isGitBinary`). So does every word that starts with `$`: a variable may hold `git`.
-5. `invocationDiscards` walks the words after `git`. A word in the walk that contains `$` denies, unless it directly follows `-C` or `-c` (a known value, so `git -C "$dir" status` stays usable). An option in `VALUELESS_GLOBAL_OPTIONS`, or one written with `=`, takes no further word. Any other option may or may not take the next word as its value, so the walk tries both: each word that could be the subcommand is judged. The walk stops at the first word that is neither an option nor a possible option value.
-6. A subcommand in `JUDGED` is denied when any of its arguments contains `$`, or when `isDestructive` says so. Seven subcommands are judged; every other subcommand is allowed.
-7. For `rebase`, `bisect`, `submodule`, and `filter-branch` (`RUNS_A_COMMAND`) the trailing words are joined, each `=` is replaced by a space (so the command after `--exec=` is seen), and the result is passed back through `usesDestructiveGit`, because git runs it as a command.
-8. When the simple command has the word `xargs`, a git word is denied if its first non-option word is a judged subcommand or is missing: `xargs` appends arguments this check never sees.
+1. `shell-policy-git-input.ts`: `gitReadings` produces command readings. Establish which
+   redirections, expansions and attached forms it handles before predicting a verdict.
+2. `shell-policy-git.ts`: `simpleCommands` splits each reading with and without quote awareness;
+   `segmentDiscards` tokenizes and unescapes words, denies `clean.requireForce` changes, and
+   identifies possible git invocations, including variable command words.
+3. `readInvocation` follows global options, tries possible subcommands and calls
+   `isDestructive`. It recursively judges commands supplied to `RUNS_A_COMMAND`, and
+   `argumentsAreFed` accounts for xargs/find-fed arguments. An archive followed by an extracting
+   consumer and a command-bearing quoted argument are checked separately.
+4. `shell-policy-git-options.ts`: `readOptions` stops at option termination and consumes
+   short/long option values. `lastSettingOn` handles boolean negation where used.
+   `namesWholeTree` includes normalized whole-tree, parent, glob and absolute-root spellings.
 
-| Subcommand       | Denied when                                                                                                                                                                                                                                                                                                                                                                               |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `reset`          | `--hard`, `--keep`, or `--merge` is present. Otherwise allowed when `--soft` is present. Otherwise denied when a word before `--` that does not start with `-` contains `~`, `^`, or `@{` (a revision that walks back)                                                                                                                                                                    |
-| `clean`          | `--force` is present or a short-option cluster contains `f`, unless a dry run is asked for (`--dry-run` spelled in full, or a short-option cluster containing `n`) and `--no-dry-run` is absent. The word directly after an exclude option (`--exclude` in any accepted spelling, including its `=` form, or a short-option cluster ending in `e`) is a pattern and is not read as a flag |
-| `checkout`       | `--force` is present, a short-option cluster contains `f`, or an argument is a whole-tree pathspec                                                                                                                                                                                                                                                                                        |
-| `checkout-index` | `--force` or `--all` is present, or a short-option cluster contains `f` or `a`                                                                                                                                                                                                                                                                                                            |
-| `read-tree`      | `--reset` is present, or a short-option cluster contains `u`                                                                                                                                                                                                                                                                                                                              |
-| `restore`        | An argument is a whole-tree pathspec, unless `--staged` or `-S` is given without `--worktree` or `-W`                                                                                                                                                                                                                                                                                     |
-| `switch`         | `--force` or `--discard-changes` is present, or a short-option cluster contains `f`                                                                                                                                                                                                                                                                                                       |
+The following describes the current aidd reference implementation, not a requirement to copy its
+parser. Verify the live `JUDGED` set and each predicate instead of freezing a subcommand count.
 
-A **whole-tree pathspec** (`namesWholeTree`) is a word that does not start with `-` and that starts with `:` (`:/`, `:(top)`), or contains a glob character (`*`, `?`, `[`), or normalises to `.` or `./` (`.`, `./.`, `src/..`), or normalises to a path that starts with `..`. Globs are not expanded, so every glob counts. A **long option** (`isOption`) matches by its full spelling or by a prefix of at least three characters counting the two dashes (`--h`, `--forc`), with any `=value` removed first. A **short-option cluster** (`hasShortFlag`) is a dash followed by letters only.
+| Subcommand     | Control to verify                                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| reset          | Hard/keep/merge and walked-back revisions are denied; plain refs and soft resets have separate residuals.                             |
+| clean          | Interactive/force deletes are denied. A real dry run can exempt force; exclude-pattern values must not be mistaken for flags.         |
+| checkout       | Force, patch input, pathspec files and whole-tree pathspecs are denied.                                                               |
+| checkout-index | Force or all-files checkout is denied.                                                                                                |
+| read-tree      | Reset or worktree update is denied.                                                                                                   |
+| restore        | Patch/pathspec input is denied; whole-tree restore has a staged-only exemption that must not include worktree writes.                 |
+| switch         | Force or discard-changes is denied.                                                                                                   |
+| apply          | Reverse application is denied.                                                                                                        |
+| rm             | Forced/recursive whole-tree removal is denied unless the final cached setting is enabled; later no-cached must cancel that exemption. |
+| push           | Force, force-with-lease, force-if-includes, delete, mirror, prune and forcing/deleting refspecs are denied.                           |
+| archive        | Extraction by a downstream consumer is judged separately from `JUDGED`.                                                               |
+
+These are expectations for policy-function fixtures. Do not execute destructive commands or
+attempt a real remote operation merely to demonstrate a predicate.
 
 These commands discard work without naming a path the write-allowlist diff can see, so the path checks cannot bound them and the deny-list is the enforcing control.
 
@@ -325,7 +342,7 @@ The deny-list governs one tool. These surfaces are outside it. Each caused, or c
 | `[ ]` | **Completion recovery and metadata commits** stage and commit on the operator's branch (`git add -A -- <paths>` in `cli/src/orchestrator/run/completion-recovery.ts` and `metadata-commit.ts`)                                                                                                                                                                                                                                                                                                                                                                        | Confirm the staged set is limited to the paths the run names and cannot sweep in unrelated operator work. Staging is not destructive, but a commit of the operator's unfinished files is a loss of control over them                                                                                                                                                                                                                                                                                                                                      |
 | `[ ]` | **Run-worktree cleanup** force-removes worktrees and deletes branches (`worktree remove --force`, `branch -D`, `update-ref -d` in `cli/src/orchestrator/run/worktree-manager.ts`; `reapRunWorktree` in `backend/src/services/run/worktreeReap.ts`)                                                                                                                                                                                                                                                                                                                    | Confirm every such call is addressed to a path and branch aidd created for that run, derived from the run id, and can never resolve to the operator's checkout or branch. Confirm a worktree holding unmerged work or unpersisted evidence is preserved, not removed                                                                                                                                                                                                                                                                                      |
 | `[ ]` | **The control panel's own discard action.** `discardWorkingTreePaths` (`backend/src/services/git/workingTreeActions.ts`) unstages, restores, and force-cleans the paths the operator selected                                                                                                                                                                                                                                                                                                                                                                         | This is an operator action, destructive by design. Verify it acts only on the exact selected paths (the literal-pathspec option and the exact-match narrowing), refuses conflicted paths, sits behind the bearer-token guard, and that the UI asks for confirmation. No agent tool may reach this endpoint                                                                                                                                                                                                                                                |
-| `[ ]` | **No autonomous force-push or history-rewrite path.** There is **no code deny-list** for `git push --force` or `-f`, `git commit --amend`, `git rebase`, `git filter-branch`, `git branch -D`, or `git stash`. The only controls are the prompt policy (`prompts/_common/forbidden-commands.md`) and, for committed violations in a guarded run, the ancestor bail-out                                                                                                                                                                                                | Verify no autonomous run or target-repository-authored prompt can reach a force-push. An autonomous force-push that rewrites a shared remote is Critical. A prompt instruction is not an enforcing implementation (AUDIT_METHODOLOGY Rule 1): record it as policy, not as a control                                                                                                                                                                                                                                                                       |
+| `[ ]` | **Remote rewrite versus local history changes.** Read `pushRewritesRemote` in `shell-policy-git-options.ts`: the in-process tool denies force, delete, mirror, prune and forcing/deleting refspec forms. External CLI shells do not inherit it. Amend, rebase, branch deletion and stash need separate assessment.                                                                                                                                                                                                                                                    | Trace the actual policy, pre-push guard and guarded-run ancestor bail-out. Never attempt a real remote rewrite. Report prompt-only controls as policy, not enforcement.                                                                                                                                                                                                                                                                                                                                                                                   |
 | `[ ]` | **Editor or tool behavior outside aidd.** An editor, IDE assistant, or second agent that snapshots, switches branches, or resets in the same checkout can discard in-flight work. This is environment behavior, not aidd code                                                                                                                                                                                                                                                                                                                                         | Record it as an environment hazard with its named mechanism and evidence, and the operating rule that mitigates it. Do not file a code finding against aidd for it                                                                                                                                                                                                                                                                                                                                                                                        |
 
 > **Scope note**: the deliverable for this section is, per surface, either a confirmed control with its enforcing `file:line`, or a finding scoped to the specific script or path.
@@ -342,7 +359,7 @@ The deny-list governs one tool. These surfaces are outside it. Each caused, or c
 - [ ] The operator is told uncommitted work was discarded; no message claims a restore that did not happen
 - [ ] Non-git fail-open is closed at BOTH layers: launch refusal (`launchRecipe`) and step refusal (`executeStep`)
 - [ ] A discard with no baseline commit, or of a path absent from the baseline commit, is reported as failed, not swallowed
-- [ ] Force-push has no reachable autonomous path (policy-gated only; no code deny-list)
+- [ ] Remote-rewriting push forms checked against the actual bash policy and repository pre-push guard, with external-CLI and local-history residuals stated separately
 
 ### High Priority Checks
 
@@ -379,7 +396,7 @@ Each finding becomes a feature.json under `.aidd/features/audit-{audit_name_lowe
 
 ### Success Criteria
 
-- [ ] The destructive-verb deny-list is confirmed firing for all nine judged subcommands (`reset`, `clean`, `checkout`, `checkout-index`, `read-tree`, `restore`, `switch`, `apply`, `rm`) and for `archive` piped into an extraction, and every tested form has a recorded verdict
+- [ ] The destructive-verb deny-list is checked against the live `JUDGED` set, including remote-rewriting `push` forms and `archive` piped into extraction; every tested form has a recorded verdict
 - [ ] The destructive-discard detection is confirmed firing, and the truthfulness of the loss message is recorded
 - [ ] The non-git fail-open is confirmed closed at both layers
 - [ ] 0 reachable autonomous force-push or history-rewrite paths

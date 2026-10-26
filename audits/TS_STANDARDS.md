@@ -1,7 +1,7 @@
 ---
 title: 'TypeScript Repo Standards Audit'
-last_updated: '2026-10-01'
-version: '1.3'
+last_updated: '2026-10-25'
+version: '1.4'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '30-60 min'
@@ -50,11 +50,11 @@ conform as far as their stack permits without hiding failures surfaced by strict
 
 This audit **self-scopes**: if the target has no `tsconfig.json` anywhere (excluding `node_modules/`), report N/A and stop. Audit-profile mapping has no language facet, so this check is the language gate.
 
-| Tier      | Targets                                                                                                                                                                                                                            | Bar                                                                                                                                                         |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A Canon   | spernakit, aidd                                                                                                                                                                                                                    | Full conformance. Any strictness divergence between the two is a finding unless listed in the Intentional Differences registry.                             |
-| B Derived | spernakit-derived apps - any repo other than spernakit itself whose `.aidd/features/*/feature.json` carries a `spernakit_version` field (the template's own records carry it too, so the field alone does not make a repo derived) | Tooling configs byte-identical to spernakit; exact dependency pins. Project-specific `knip.json` entries are acceptable and are not findings.               |
-| C Conform | all other active TypeScript repos                                                                                                                                                                                                  | Conform as practical. Missing pieces are findings; surfaced-but-unfixed code errors behind a newly aligned config are **known-deferred**, not new findings. |
+| Tier      | Targets                                                                                                                                                                                                                                     | Bar                                                                                                                                                         |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A Canon   | spernakit, aidd                                                                                                                                                                                                                             | Full conformance. Any strictness divergence between the two is a finding unless listed in the Intentional Differences registry.                             |
+| B Derived | Spernakit-derived apps: establish origin from the root manifest's `spernakit_version`, the project's declared origin and workspace instructions; the template itself is Canon. A feature record's field alone does not establish derivation | Tooling configs byte-identical to spernakit; exact dependency pins. Project-specific `knip.json` entries are acceptable and are not findings.               |
+| C Conform | all other active TypeScript repos                                                                                                                                                                                                           | Conform as practical. Missing pieces are findings; surfaced-but-unfixed code errors behind a newly aligned config are **known-deferred**, not new findings. |
 
 The concrete tier assignments live in the workspace-root `AGENTS.md` ("TypeScript Repo Standards"), which is the private index — do not enumerate app names in this file.
 
@@ -167,6 +167,9 @@ Run the scripts themselves for these measurements. A `[CACHED]` line from a cach
 - Tier B `knip.json`: project-specific `ignore`/`ignoreBinaries` entries
 
 ## Remediation workflow
+
+The steps below describe recommended follow-up implementation, not actions to perform during
+this audit. Report proposed changes and gate evidence; do not align configuration or fix code here.
 
 1. Cite the exact config file and key for each finding (file:line, read from the live file at audit time).
 2. Config fixes land per-repo, one commit per repo; Tier B fixes must keep configs byte-identical to spernakit (fix in spernakit first if the baseline itself is wrong).

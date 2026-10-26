@@ -1,7 +1,7 @@
 ---
 title: 'Feature Integration and Reachability Audit'
-last_updated: '2026-06-28'
-version: '1.4'
+last_updated: '2026-10-25'
+version: '1.5'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -99,6 +99,14 @@ This audit addresses a distinct problem from traditional dead code detection:
 13. [Usage Notes](#usage-notes)
 
 ## Pre-Audit Setup
+
+Discover the target's actual composition roots and user paths first. The template examples below
+do not require another target to adopt Elysia, React Router, a database, or the named scripts.
+Endpoints may serve a frontend, CLI, webhook sender, integration or another real consumer. Detail,
+create, report and not-found pages may be reached through in-page links or redirects instead of
+primary navigation. Data used for audit, expiry, exports or external delivery need not have a UI
+read path. Trace the intended consumer before declaring an island. Apply these qualifications to
+every matrix and checklist below, and record inapplicable surfaces with evidence.
 
 ### Automated Baseline Check
 
@@ -293,9 +301,9 @@ High unit test coverage combined with low integration/E2E test coverage is a pri
 
 ### Immediate Triage (for inherited codebases)
 
-1. **Route scraping**: Dump all registered routes from both layers. Manually navigate to each one from the UI. If a route exists in code but cannot be reached via normal navigation, it is a Cathedral candidate.
-2. **Log injection**: Temporarily add `console.warn('ALIVE: FeatureName')` to suspected orphan modules. Run the full test suite and simulate user workflows. If the warning never fires, the module is an island.
-3. **Database query analysis**: Identify tables with write volume but zero read volume (or vice versa). A table that is populated but never displayed is a strong Cathedral signal.
+1. **Route tracing**: Enumerate actual composition roots and trace each route to its intended frontend, CLI, webhook or integration consumer. Missing primary navigation alone does not make a detail, create, report or not-found route an island.
+2. **Reachability evidence**: Trace calls and existing runtime or test evidence without editing source. Missing log activity alone does not prove an island. Any additional instrumentation requires separately authorized disposable isolation; never inject logging into the audited target.
+3. **Data-consumer analysis**: Trace reads, retention, exports and external delivery. Data need not be displayed in the UI to serve a real consumer; establish its actual purpose before declaring it orphaned.
 
 ## Code Review Red Flags
 
@@ -340,8 +348,8 @@ The first commit for any feature should be a **steel thread**: the thinnest poss
 
 1. Register the route in `create-api-app.ts` (backend) and `routes.tsx` (frontend)
 2. Add a navigation link in the sidebar/menu
-3. Create a stub page that calls a stub endpoint returning hardcoded data
-4. Verify: a user can click through the UI and see the stub response
+3. Implement the smallest functional page and endpoint that satisfy a real user action
+4. Verify that action through the UI and its real consumer/data path
 
 Only after this wiring is proven do you build out the real implementation. This inverts the typical approach (build the service first, wire it later) and eliminates the window where Cathedral formation occurs.
 
@@ -488,5 +496,5 @@ Prevention rules derived from this audit are enforced as architectural constrain
 
 ---
 
-**Version**: 1.4
-**Last Updated**: 2026-06-28
+**Version**: 1.5
+**Last Updated**: 2026-10-25

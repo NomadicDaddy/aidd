@@ -1,7 +1,7 @@
 ---
 title: 'Technical Debt Audit Specification'
-last_updated: '2026-10-01'
-version: '2.5'
+last_updated: '2026-10-25'
+version: '2.6'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '30-60 min'
@@ -505,10 +505,12 @@ These patterns are consistently flagged during tech debt audits but are not actu
 
 ### Quality Baseline
 
-Run these commands before beginning the audit to establish a clean baseline:
+Prefer matching retained baseline evidence. Inspect actual scripts and transitive effects before
+any additional authorized isolated check; do not repair source or repeat a full gate for each
+definition. Record failures and execution limits without converting them into automatic findings.
 
 ```bash
-# Run full quality gate - fix any failures before auditing.
+# Optional authorized baseline acquisition; report failures without repairing them during the audit.
 # Read the step list from its source instead of hardcoding a count:
 #   Spernakit and derived apps: scripts/smoke.json (the "qc" mode)
 #   aidd: scripts/lib/smoke-qc/steps.ts
@@ -657,10 +659,10 @@ Create feature.json files in `.aidd/features/` for each high-priority finding:
 
 - `id`: `audit-techdebt-{unix_timestamp}-{descriptive-slug}`
 - `auditSource`: `TECHDEBT`
-- `auditSeverity`: mapped from category priority
+- `auditSeverity`: mapped from demonstrated impact under SEVERITY_CLASSIFICATION, not the category label
 - `affectedFiles`: array of file paths
 - `spec`: detailed remediation steps
-- `verificationEvidence`: `file:line` reference and specific pattern observed
+- `description`: `file:line` reference, specific pattern observed and demonstrated impact
 
 ## Focus Areas
 
@@ -816,5 +818,5 @@ The report must also carry the sections [AUDIT_METHODOLOGY.md](./AUDIT_METHODOLO
 
 ---
 
-**Version**: 2.5
-**Last Updated**: 2026-10-01
+**Version**: 2.6
+**Last Updated**: 2026-10-25

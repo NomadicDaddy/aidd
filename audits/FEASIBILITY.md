@@ -1,7 +1,7 @@
 ---
 title: 'Feasibility and Decision Readiness Audit'
-last_updated: '2026-10-01'
-version: '1.3'
+last_updated: '2026-10-25'
+version: '1.4'
 category: 'Planning and Governance'
 priority: 'High'
 estimated_time: '2-4 hours'
@@ -654,7 +654,7 @@ If this audit produces `.aidd/features/*/feature.json` findings:
 
 - Use `auditSource: "FEASIBILITY"`.
 - Use `auditSeverity` according to [SEVERITY_CLASSIFICATION.md](./SEVERITY_CLASSIFICATION.md).
-- Include `verificationEvidence` that names the missing, weak, or contradicted decision artifact.
+- Put verification evidence in `description`, naming the missing, weak, or contradicted decision artifact. There is no separate `verificationEvidence` field in the finding contract.
 - Include the affected proposal name in the title or description.
 - Prefer one finding per decision blocker or mitigation package, not one finding per unanswered
   checklist item.

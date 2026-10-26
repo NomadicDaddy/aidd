@@ -1,7 +1,7 @@
 ---
 title: 'Comprehensive Code Hygiene Audit'
-last_updated: '2026-06-28'
-version: '2.4'
+last_updated: '2026-10-25'
+version: '2.5'
 category: 'Core Quality'
 priority: 'High'
 estimated_time: '1-2 hours'
@@ -68,7 +68,10 @@ HYGIENE is the **umbrella static-analysis audit** that orchestrates automated to
 
 ### Required Tools
 
-All tools run via `bunx` (no global installation required):
+Prefer the target's installed, pinned tools and scripts. The `bunx` examples below are fallbacks,
+not permission to download tools. Resolve missing tools only within the task's authority and
+record the versions actually used. Select the target's real source roots instead of assuming the
+template's frontend/backend layout. Apply AUDIT_METHODOLOGY's execution boundary to every probe.
 
 ```bash
 # Verify tools are available
@@ -82,7 +85,7 @@ bunx madge --version
 ### Verification Commands
 
 ```bash
-# Run quality baseline — if this fails, fix QC issues before auditing hygiene
+# Record an authorized quality baseline or reuse matching evidence; report failures without fixing them
 bun run smoke:qc
 
 # Quick smoke test — if these run without errors, tools are ready
@@ -129,7 +132,7 @@ CRUD entity pages are the #1 source of duplication across Spernakit applications
 
 - [ ] **Run Madge (Circular Dependencies)**: `bunx madge --extensions ts,tsx --ts-config tsconfig.json --circular frontend/src backend/src`
     - Capture: all circular dependency chains
-    - Severity: **Critical**; all circular deps must be resolved
+    - Separate runtime cycles from type-only edges. File a finding only after tracing an actual initialization, correctness or maintenance problem; severity follows impact, not the presence of a graph cycle alone
 
 - [ ] **Run Madge (Orphan Modules)**: `bunx madge --extensions ts,tsx --ts-config tsconfig.json --orphans frontend/src backend/src`
     - Capture: files that are never imported
@@ -194,8 +197,8 @@ Review all tool outputs and create a unified remediation plan:
 
 Assign priority levels based on:
 
-- **Critical**: Circular dependencies, missing dependencies (breaks functionality)
-- **High**: Unused dependencies (bloats bundle), significant code duplication (>10%)
+- **Critical/High**: Demonstrated runtime or security failures; trace a cycle or missing dependency to the failing path before assigning this severity
+- **Medium/Low**: Confirmed unused dependencies or maintainability problems, adjusted for measured cost and affected behavior rather than a duplication percentage alone
 - **Medium**: Unused exports, orphaned files, duplication 5-10%
 - **Low**: Leaf modules (informational), minor duplication (<5%)
 
@@ -227,7 +230,7 @@ Assign priority levels based on:
 
 ### Module Architecture
 
-- [ ] Circular dependencies identified; all are Critical severity
+- [ ] Circular dependencies classified as runtime or type-only; any finding has a traced effect and impact-based severity
 - [ ] Orphaned modules identified and cross-referenced with Knip
 - [ ] Leaf modules cataloged (informational)
 - [ ] Madge processed-file count recorded and greater than zero for each analysis
@@ -339,6 +342,6 @@ Assign priority levels based on:
 
 ---
 
-**Version**: 2.4
-**Last Updated**: 2026-06-28
-**Next Review**: 2026-09-28
+**Version**: 2.5
+**Last Updated**: 2026-10-25
+**Next Review**: 2027-01-25

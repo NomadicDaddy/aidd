@@ -73,6 +73,14 @@ export interface AuditEvalCatalog {
 	scoring: AuditEvalScoring;
 }
 
+/** Function locations resolved from the fixture before the audited agent starts. */
+export interface AuditEvalSymbolSpan {
+	endLine: number;
+	file: string;
+	startLine: number;
+	symbol: string;
+}
+
 export interface AuditEvalRunScore {
 	auditId: string;
 	/** Findings that pointed at a cataloged defect; one finding may credit several defects. */
@@ -175,6 +183,7 @@ export interface EvaluationResult {
 export interface BenchmarkRun {
 	artifactPaths: BenchmarkArtifacts;
 	auditEval?: AuditEvalRunScore;
+	auditEvalSymbolSpans?: AuditEvalSymbolSpan[];
 	command: string[];
 	correctnessScore: number;
 	costUsd: null | number;

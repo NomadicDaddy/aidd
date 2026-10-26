@@ -2,6 +2,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
 import type {
+	AuditEvalSymbolSpan,
 	BenchmarkArtifacts,
 	BenchmarkTask,
 	CommandResult,
@@ -174,6 +175,7 @@ function evaluateValidate(
 
 export function evaluateTask(input: {
 	artifacts: BenchmarkArtifacts;
+	auditEvalSymbolSpans?: AuditEvalSymbolSpan[];
 	commandResult?: CommandResult;
 	metrics: ParsedMetrics;
 	task: BenchmarkTask;
@@ -194,7 +196,11 @@ export function evaluateTask(input: {
 		case 'audit':
 			return evaluateAudit(input.workspaceDir, expectation);
 		case 'audit-eval':
-			return evaluateAuditEval(input.workspaceDir, input.task.auditEval);
+			return evaluateAuditEval(
+				input.workspaceDir,
+				input.task.auditEval,
+				input.auditEvalSymbolSpans,
+			);
 		case 'interview':
 			return evaluateInterview(input.workspaceDir, expectation);
 		case 'quiz':

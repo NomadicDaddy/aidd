@@ -14,6 +14,7 @@ import type {
 	RunMatrixItem,
 } from './types.ts';
 
+import { resolveAuditSymbolSpans } from '../audit-eval/locality.ts';
 import { aggregate } from './aggregate.ts';
 import { buildAiddInvocation, parseBenchmarkArgs } from './cli.ts';
 import { repoRoot } from './constants.ts';
@@ -59,6 +60,7 @@ function buildRun(
 	);
 	createWorkspace(sourceFixture, workspaceDir);
 	const sourceHash = hashTaskFixture(args.manifest, item.task);
+	const auditEvalSymbolSpans = resolveAuditSymbolSpans(sourceFixture, item.task.auditEval);
 	const { invocation, result } = executeAidd(
 		item.stack,
 		item.task,
@@ -74,6 +76,7 @@ function buildRun(
 	});
 	const evaluation = evaluateTask({
 		artifacts,
+		auditEvalSymbolSpans,
 		commandResult: result,
 		metrics,
 		task: item.task,
@@ -83,6 +86,7 @@ function buildRun(
 	return {
 		artifactPaths: artifacts,
 		...(evaluation.auditEval ? { auditEval: evaluation.auditEval } : {}),
+		...(auditEvalSymbolSpans.length > 0 ? { auditEvalSymbolSpans } : {}),
 		command: [invocation.command, ...invocation.args],
 		correctnessScore: evaluation.score,
 		costUsd: resolveCost(

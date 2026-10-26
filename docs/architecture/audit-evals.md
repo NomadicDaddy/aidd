@@ -22,13 +22,21 @@ A finding is credited for a site only when all three hold:
 
 1. it names the cataloged file, in `affectedFiles` or in its text;
 2. it points at the cataloged location: for a symbol site it names the symbol as a whole
-   identifier (`health` does not match `healthy`), for a line site it cites a line, as
+   identifier (`health` does not match `healthy`), or cites that same file at a line within
+   the function's exact source span; for a line site it cites a line, as
    `server.ts:12` or `line 12`, within `scoring.auditEval.lineTolerance` (default 3) of the
    cataloged line;
 3. it uses one of the site's aliases.
 
 Matching is evaluated per defect, so one consolidated finding that names two planted defects
 credits both. Two findings on the same defect are both real catches.
+
+Function spans are resolved from unique function declarations in the original fixture before
+the agent starts, and retained in the run's `auditEvalSymbolSpans`. A regrade uses that recorded
+snapshot, never the agent's edited source. Missing or ambiguous declarations keep identifier-only
+matching. Span citations receive no line tolerance: neighboring functions, wrong files, unrelated
+line numbers and finding-id keywords cannot claim the defect. Absolute citations must resolve to
+the cataloged file inside the audited workspace.
 
 ### Decoy accounting
 

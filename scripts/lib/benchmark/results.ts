@@ -174,7 +174,13 @@ function regradeRun(
 					exitStatus: run.exitCode === 0 ? ('success' as const) : ('failure' as const),
 				}
 			: parsed;
-	const evaluation = evaluateTask({ artifacts, metrics, task, workspaceDir });
+	const evaluation = evaluateTask({
+		artifacts,
+		...(run.auditEvalSymbolSpans ? { auditEvalSymbolSpans: run.auditEvalSymbolSpans } : {}),
+		metrics,
+		task,
+		workspaceDir,
+	});
 	const resolvedCost = resolveCost(metrics.costUsd, metrics.tokenUsage, pricing);
 	const changed =
 		JSON.stringify(evaluation.auditEval) !== JSON.stringify(run.auditEval) ||

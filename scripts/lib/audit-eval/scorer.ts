@@ -11,6 +11,7 @@ import type {
 import { listFiles } from '../benchmark/execution.ts';
 import { clampScore } from '../benchmark/shared.ts';
 import { isRecord, readJsonUnknown, stringArray, stringValue } from '../benchmark/validation.ts';
+import { type AuditEvalLocality, citesAuditSymbol } from './locality.ts';
 
 export interface ReportedAuditFinding {
 	files: string[];
@@ -53,6 +54,7 @@ export function findingMatchesSite(
 	finding: ReportedAuditFinding,
 	site: AuditEvalSite,
 	lineTolerance: number,
+	locality?: AuditEvalLocality,
 ): boolean {
 	const text = normalize(finding.text);
 	const expectedFile = normalize(site.file);
@@ -62,7 +64,7 @@ export function findingMatchesSite(
 	if (!fileMatches) return false;
 	const localityMatches =
 		site.symbol !== undefined
-			? namesSymbol(text, site.symbol)
+			? namesSymbol(text, site.symbol) || citesAuditSymbol(finding.text, site, locality)
 			: site.line !== undefined &&
 				finding.lines.some((line) => Math.abs(line - (site.line ?? 0)) <= lineTolerance);
 	if (!localityMatches) return false;
@@ -118,6 +120,7 @@ export function collectReportedAuditFindings(
 export function scoreAuditFindings(
 	catalog: AuditEvalCatalog,
 	findings: ReportedAuditFinding[],
+	locality?: AuditEvalLocality,
 ): EvaluationResult {
 	const { lineTolerance, strictPrecision } = catalog.scoring;
 	const matchedDefects = new Set<string>();
@@ -129,7 +132,7 @@ export function scoreAuditFindings(
 		// Every defect is tested against every finding, so one consolidated finding that names two
 		// planted defects credits both, and two findings on the same defect are both real catches.
 		const defects = catalog.defects.filter((site) =>
-			findingMatchesSite(finding, site, lineTolerance),
+			findingMatchesSite(finding, site, lineTolerance, locality),
 		);
 		if (defects.length > 0) {
 			creditedFindingIds.push(finding.id);
@@ -140,7 +143,7 @@ export function scoreAuditFindings(
 			continue;
 		}
 		const decoy = catalog.decoys.find((site) =>
-			findingMatchesSite(finding, site, lineTolerance),
+			findingMatchesSite(finding, site, lineTolerance, locality),
 		);
 		if (decoy) {
 			decoyFindingIds.push(finding.id);
@@ -192,7 +195,12 @@ export function scoreAuditFindings(
 export function evaluateAuditEval(
 	workspaceDir: string,
 	catalog: AuditEvalCatalog | undefined,
+	spans: AuditEvalLocality['spans'] = [],
 ): EvaluationResult {
 	if (!catalog) return { notes: ['audit-eval task is missing its defect catalog'], score: 0 };
-	return scoreAuditFindings(catalog, collectReportedAuditFindings(workspaceDir, catalog.auditId));
+	return scoreAuditFindings(
+		catalog,
+		collectReportedAuditFindings(workspaceDir, catalog.auditId),
+		{ spans, workspaceDir },
+	);
 }

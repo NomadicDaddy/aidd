@@ -6,6 +6,7 @@ All notable public aidd releases are documented here.
 
 ### Fixed
 
+- Audit benchmark scoring accepts a finding's citation to the exact source span of a cataloged function, as well as its name. The span is recorded from the original fixture before the agent runs; citations to another file or a neighboring function do not count.
 - Audit agents now run in a disposable checkout of the project's committed HEAD by default, so temporary probes leave live source alone. aidd persists accepted reports and findings into the live `.aidd/`, discards the audit checkout without merging, and records leftover tracked edits as an audit integrity violation. `--audit-live-tree` explicitly opts out with a warning; otherwise a committed Git HEAD is required.
 
 ## [3.6.0] - 2026-10-19

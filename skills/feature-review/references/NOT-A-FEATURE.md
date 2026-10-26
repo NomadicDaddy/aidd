@@ -34,11 +34,13 @@ report. A gitignored `.aidd` has no history to recover a record from.
   record and its roadmap entry together, through the web feature delete, or by removing the
   directory and deleting its `roadmap.features` key in the same edit. Never leave a roadmap entry
   behind for a removed directory.
-- **Not done**: the change still has to happen, so it needs a durable home before the record goes.
-  Put it in the report as a task or question for the project's owner, carrying the record's
-  spec and the archive path, and remove the record only once that report is saved under
-  `.aidd/reports/`. The owner decides whether it becomes a finding for a coding run. A run that
-  cannot save a report removes nothing and reports the record instead.
+- **Not done**: report it, remove nothing. The change still has to happen, and an open record is
+  what aidd counts: the project's incomplete total, its milestone and its roadmap all read it. A
+  report or task list off the feature tree is not counted, so moving open work there hides it.
+  On 2026-10-25 six open v1.0 acceptance records moved to a task list and the milestone's open
+  count fell from 12 to 6 with none of the work done (Room #23297). Put the record in the report
+  as a question for the project's owner: keep it, reshape it into a lasting requirement, or turn
+  it into a finding for a coding run.
 - **Mixed**: remove only the one-off spec steps and keep the record. Add a dated changelog line
   naming the record and the steps removed, since this rewrites a spec that may be completed.
 - **Report only**, removing nothing, when the record is `in_progress` (a run may hold it) or another
@@ -52,6 +54,6 @@ report. A gitignored `.aidd` has no history to recover a record from.
 #### {feature-title} (`{feature-id}`) - {status}
 
 - What it changed or would change: {one sentence}
-- Disposition: {cleared: changelog entry, record removed | task or question for the owner, record
-  removed | mixed: one-off steps removed | reported only: in progress, or depended on by {ids}}
+- Disposition: {cleared: changelog entry, record removed | reported only: not done, question for
+  the owner | mixed: one-off steps removed | reported only: in progress, or depended on by {ids}}
 ```

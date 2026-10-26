@@ -135,7 +135,12 @@ export function formatFeatureValidation(
 ): string {
 	const projectName = projectDir.split(/[/]/).filter(Boolean).pop() ?? projectDir;
 	const total = result.total;
-	const invalid = new Set(result.issues.map((issue) => issue.id)).size;
+	const roadmapInvalid = result.issues.some((issue) => issue.path === '.aidd/roadmap.json');
+	const invalid = new Set(
+		result.issues
+			.filter((issue) => issue.path !== '.aidd/roadmap.json')
+			.map((issue) => issue.id),
+	).size;
 	const valid = total - invalid;
 	const lines: string[] = [];
 	lines.push('');
@@ -146,6 +151,7 @@ export function formatFeatureValidation(
 	lines.push(`Total files:         ${total}`);
 	lines.push(`Valid:               ${valid}`);
 	lines.push(`Invalid:             ${invalid}`);
+	if (roadmapInvalid) lines.push('Roadmap:             invalid (.aidd/roadmap.json)');
 	lines.push('');
 	if (result.valid) {
 		lines.push('All feature.json files are valid.');

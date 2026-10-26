@@ -19,6 +19,12 @@ describe('--check-features roadmap validation', () => {
 			exit: 0,
 		},
 		{ name: 'array milestones', raw: '{"milestones":[]}', exit: 7 },
+		{
+			name: 'array milestones with no features',
+			raw: '{"milestones":[]}',
+			exit: 7,
+			empty: true,
+		},
 		{ name: 'invalid JSON', raw: '{"milestones":', exit: 7 },
 	]) {
 		test(
@@ -32,7 +38,8 @@ describe('--check-features roadmap validation', () => {
 					passes: false,
 					status: 'backlog',
 				});
-				await writeFile(featurePath, feature);
+				const empty = 'empty' in scenario && scenario.empty;
+				if (!empty) await writeFile(featurePath, feature);
 				const roadmapPath = join(dir, '.aidd/roadmap.json');
 				if (scenario.raw !== null) await writeFile(roadmapPath, scenario.raw);
 				const child = Bun.spawn(
@@ -52,15 +59,23 @@ describe('--check-features roadmap validation', () => {
 				if (scenario.exit !== 0) {
 					expect(stdout + stderr).toContain('roadmap.json');
 					expect(stdout + stderr).toContain(
-						scenario.name === 'array milestones' ? 'milestones' : 'Invalid JSON',
+						scenario.name.startsWith('array milestones')
+							? 'milestones'
+							: 'Invalid JSON',
 					);
 					const ledger = await readFile(join(dir, '.aidd/runs.jsonl'), 'utf8');
 					expect(ledger).toContain(
-						'1 contract issue(s); 1 feature file(s) checked; roadmap.json unreadable',
+						`1 contract issue(s); ${empty ? 0 : 1} feature file(s) checked; roadmap.json unreadable`,
 					);
 					expect(ledger).not.toContain('invalid feature file(s)');
 				}
-				expect(await readFile(featurePath, 'utf8')).toBe(feature);
+				if (!empty) expect(await readFile(featurePath, 'utf8')).toBe(feature);
+				expect(stdout + stderr).not.toMatch(/^Valid:\s+-/m);
+				if (empty) {
+					expect(stdout + stderr).toMatch(/^Valid:\s+0/m);
+					expect(stdout + stderr).toMatch(/^Invalid:\s+0/m);
+					expect(stdout + stderr).toContain('Roadmap:             invalid');
+				}
 				if (scenario.raw !== null)
 					expect(await readFile(roadmapPath, 'utf8')).toBe(scenario.raw);
 				else

@@ -10,10 +10,10 @@ metadata:
 Run the requested workflow through aidd proper. Resolve the project and skill, submit one skill
 session, and follow its result. Do not perform the selected workflow in the calling conversation.
 
-## Invocation
+## Usage
 
 ```text
-/aidd <project> <skill> [skill arguments]
+aidd <project> <skill> [skill arguments]
 ```
 
 Examples: `/aidd summon review-features` and `/aidd beazley.org cut-release`. These are invocation

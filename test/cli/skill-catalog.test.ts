@@ -28,6 +28,7 @@ const SKILL_TRIGGER_PATTERN = /\b(?:auto-triggers?|use (?:as|for|to|when))\b/i;
 
 const EXPECTED_BUNDLED_SKILL_CATEGORIES = {
 	'12-factor-guidelines': 'general',
+	aidd: 'runtime',
 	'audit-finding-review': 'audit-remediation',
 	'audit-review': 'metadata',
 	bug2feature: 'audit-remediation',
@@ -97,6 +98,7 @@ const EXPECTED_BUNDLED_SKILL_CATEGORIES = {
 // frontend-design-sweep. Keep this list explicit so a skill cannot quietly accept prose-only
 // inputs that the catalog UI cannot present.
 const ARGUMENT_ACCEPTING_SKILL_IDS = new Set([
+	'aidd',
 	'audit-finding-review',
 	'audit-review',
 	'bug2feature',

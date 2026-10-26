@@ -96,6 +96,8 @@ export interface OutputPolicy {
 
 export interface AuditPlan {
 	current?: string;
+	/** Explicit operator opt-out; warning is retained in the run summary. */
+	liveTree?: boolean;
 	names: string[];
 	runAll: boolean;
 }

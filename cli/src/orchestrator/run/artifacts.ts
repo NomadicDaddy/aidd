@@ -11,6 +11,7 @@ import {
 } from 'aidd-shared/runs/outcome';
 
 import { cleanIterationLogs } from '../../metadata/log-cleaner.ts';
+import { auditIntegritySummary, liveAuditWarnings } from './audit-worktree.ts';
 import { classifyResidualDirtySourcePaths } from './dirty-source-attribution.ts';
 import {
 	filterRunAttributedCommits,
@@ -62,10 +63,11 @@ export async function writeRunSummary(
 	// After reconciliation, so one commit carries every record the run wrote once the agent had
 	// stopped. A read-only directive is exempt: it promised to change nothing, and a commit of its
 	// own would break that promise even over metadata.
-	const metadataCommit = plan.prompt.customDirectiveReadonly
-		? undefined
-		: await commitOwnedMetadata(runRepoDir(plan), acc.dirtyMetadataAtStart);
-	const runEndSummaryParts = [finalSummary];
+	const metadataCommit =
+		plan.mode === 'audit' || plan.prompt.customDirectiveReadonly
+			? undefined
+			: await commitOwnedMetadata(runRepoDir(plan), acc.dirtyMetadataAtStart);
+	const runEndSummaryParts = [finalSummary, ...liveAuditWarnings(plan)];
 	if (reconcileNote !== null) runEndSummaryParts.push(reconcileNote);
 	if (metadataCommit?.kind === 'committed') {
 		runEndSummaryParts.push(
@@ -189,7 +191,14 @@ export async function writeRunSummary(
 		const finalization = await deps.finalizeWorktree(finalExitCode);
 		if (finalization.overrideExitCode !== undefined) {
 			effectiveExitCode = finalization.overrideExitCode;
-			if (finalization.metadataConflict !== undefined) {
+			if (finalization.auditIntegrity !== undefined) {
+				effectiveStopReason = 'exit_error';
+				effectiveSummary = auditIntegritySummary(
+					summaryWithRunEndChecks,
+					effectiveExitCode,
+					finalization.auditIntegrity,
+				);
+			} else if (finalization.metadataConflict !== undefined) {
 				// A `.aidd` metadata conflict parked the run (not a git merge conflict): a
 				// dedicated stop reason keeps the two machine-distinguishable, and the summary
 				// surfaces the conflicting paths so the operator knows which metadata diverged.

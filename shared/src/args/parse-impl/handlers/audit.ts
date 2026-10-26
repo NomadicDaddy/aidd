@@ -25,6 +25,9 @@ export function applyAuditFlags(
 			}
 			return i + 1;
 		}
+		case '--audit-live-tree':
+			args.auditLiveTree = true;
+			return i + 1;
 		case '--complexity-tiering':
 			args.complexityTiering = true;
 			return i + 1;

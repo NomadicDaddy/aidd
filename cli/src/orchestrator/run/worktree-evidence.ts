@@ -23,6 +23,8 @@ import {
 } from './worktree-metadata-session.ts';
 
 export interface WorktreeFinalization {
+	/** Audit source changes are never merged; diff failures also fail closed. */
+	auditIntegrity?: { error?: string; paths: string[] };
 	/** Iteration files copied into the canonical `.aidd/iterations`. */
 	evidenceFiles: number;
 	/** Present when copying evidence into the canonical `.aidd` FAILED: the worktree (holding

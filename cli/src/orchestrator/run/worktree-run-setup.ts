@@ -12,6 +12,7 @@ import type { MergeConflictResolver } from './merge-resolver.ts';
 import type { OrchestratorDeps } from './types.ts';
 import type { WorktreeMetadataSession } from './worktree-metadata-session.ts';
 
+import { finalizeAuditWorktree } from './audit-worktree.ts';
 import { finalizeRunWorktree, persistRunEvidence } from './worktree-evidence.ts';
 import { createRunWorktree, removeRunWorktree } from './worktree-manager.ts';
 import { seedWorktreeMetadata } from './worktree-metadata-session.ts';
@@ -20,10 +21,39 @@ export interface WorktreeRunContext {
 	session: WorktreeMetadataSession;
 }
 
-/** Set up worktree isolation for a coding run when requested. On success the plan's `worktree`
+function warnForLiveAudit(plan: RunPlan): boolean {
+	if (plan.mode !== 'audit' || !plan.audit?.liveTree) return false;
+	console.warn(
+		'[audit-live-tree] Worktree isolation explicitly disabled; the audit agent can write the live checkout.',
+	);
+	return true;
+}
+
+function needsWorktree(plan: RunPlan, requested: boolean): boolean {
+	return plan.mode === 'audit' || (requested && plan.mode === 'coding');
+}
+
+function handleMissingHead(plan: RunPlan, launcherManaged: boolean): null {
+	if (plan.mode === 'audit') {
+		throw new Error(
+			'Audit isolation requires a committed Git HEAD; refusing to run against the live tree. Use --audit-live-tree only to explicitly accept that exposure.',
+		);
+	}
+	if (launcherManaged) {
+		throw new Error(
+			'--worktree was requested by the launcher, which counted this run as isolated, but the project no longer has a committed HEAD of its own; refusing to run against the live tree.',
+		);
+	}
+	console.warn(
+		'[worktree] --worktree requested but the project has no committed HEAD; running against the live tree.',
+	);
+	return null;
+}
+
+/** Set up coding isolation when requested, or audit isolation by default. On success `worktree`
  * is populated (so `runRepoDir(plan)` resolves to the checkout) and the seeded metadata session
- * is returned. Returns null when isolation was not requested, the mode is not coding, or the
- * project has no committed HEAD (initializer phase — falls back to the live tree with a warning).
+ * is returned. Non-coding/non-audit modes skip it. Coding can fall back with a warning when
+ * there is no committed HEAD; audits fail closed unless --audit-live-tree was explicitly set.
  * A launcher-managed run never falls back: the launcher queued it with --worktree only after
  * finding a HEAD, and admission counted it as isolated from that flag, so a HEAD gone by the time
  * the child starts must fail the run rather than put a second mutating run in the live tree.
@@ -41,21 +71,11 @@ export async function prepareWorktreeRun(input: {
 	webDataDir?: string;
 }): Promise<null | WorktreeRunContext> {
 	const { launcherManaged, plan, requested, runId, webDataDir } = input;
-	if (!requested || plan.mode !== 'coding') return null;
+	if (warnForLiveAudit(plan) || !needsWorktree(plan, requested)) return null;
 	const worktree = await createRunWorktree(plan.projectDir, runId, {
 		...(webDataDir ? { baseDir: join(webDataDir, 'worktrees') } : {}),
 	});
-	if (worktree === null) {
-		if (launcherManaged) {
-			throw new Error(
-				'--worktree was requested by the launcher, which counted this run as isolated, but the project no longer has a committed HEAD of its own; refusing to run against the live tree.',
-			);
-		}
-		console.warn(
-			'[worktree] --worktree requested but the project has no committed HEAD; running against the live tree.',
-		);
-		return null;
-	}
+	if (worktree === null) return handleMissingHead(plan, launcherManaged);
 	plan.worktree = worktree;
 	console.log(`[worktree] run isolated in ${worktree.dir} on branch ${worktree.branch}`);
 	const session = await seedWorktreeMetadata(plan.projectDir, worktree.dir);
@@ -80,13 +100,15 @@ export function worktreeOrchestratorDeps(
 	if (!worktree) throw new Error('worktreeOrchestratorDeps requires plan.worktree');
 	return {
 		finalizeWorktree: (exitCode: number) =>
-			finalizeRunWorktree({
-				exitCode,
-				projectDir: plan.projectDir,
-				resolveConflict,
-				session: context.session,
-				worktree,
-			}),
+			plan.mode === 'audit'
+				? finalizeAuditWorktree(plan.projectDir, worktree)
+				: finalizeRunWorktree({
+						exitCode,
+						projectDir: plan.projectDir,
+						resolveConflict,
+						session: context.session,
+						worktree,
+					}),
 		ledgerStore: canonicalStore,
 	};
 }

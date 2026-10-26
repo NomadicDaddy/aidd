@@ -34,6 +34,10 @@ interface ReturnedStartup {
 
 type OrchestratorStartup = ReadyStartup | ReturnedStartup;
 
+function modeProjectDir(plan: RunPlan): string {
+	return plan.mode === 'audit' ? plan.projectDir : runRepoDir(plan);
+}
+
 export async function initializeOrchestratorRun(
 	plan: RunPlan,
 	deps: OrchestratorDeps,
@@ -57,7 +61,9 @@ export async function initializeOrchestratorRun(
 		acc,
 		context: {
 			findingLedgerStore: deps.ledgerStore ?? deps.store,
-			projectDir: runRepoDir(plan),
+			// Audit runtime persistence and freshness use canonical metadata; prompt compilation
+			// and agent execution below continue to inspect the isolated checkout.
+			projectDir: modeProjectDir(plan),
 			rootDir: deps.rootDir,
 			runId: acc.runId,
 			store: deps.store,

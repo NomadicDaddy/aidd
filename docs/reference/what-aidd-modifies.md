@@ -61,8 +61,8 @@ application code unchanged. They can still write metadata, reports, and run reco
 files do not replace existing files. Operator-configured `sharedDirs` and `sharedFiles` are
 different: their copies can overwrite matching files. Shared directories land by basename at the
 fresh project's root, during initializer-phase runs only. Shared files are copied on every run
-except validation runs, audits included, to a project-relative target or the source filename at
-the root. A run's write allowlist, when present, limits those targets.
+except validation runs, to a project-relative target or the source filename at the root. Audit
+scaffolding restricts those copies to `.aidd/`; other runs honor their write allowlist when present.
 
 Deploy configuration (a `Dockerfile`, `wrangler.toml`, CI workflow, …) is never emitted
 autonomously. It comes only from the `deployment-readiness` skill — a code-changing
@@ -79,7 +79,7 @@ your project's own `deploy` script; aidd never stores or handles deploy credenti
   (the web "create project" flow opts in). If git isn't installed it skips this and carries on.
   Creating a project from a template or GitHub repo is the other init path: aidd shallow-clones the
   source, deletes the template's `.git`, and inits a fresh repository in its place.
-- **Git hooks:** wherever aidd creates `.aidd/` in a git repository the project itself owns, it
+- **Git hooks:** except in audit and validation runs, when aidd creates `.aidd/` in a git repository the project itself owns, it
   copies `.githooks/` in (a `pre-push` hook that blocks a push carrying `.aidd/` metadata and
   refuses a push that rewrites or deletes remote history when an aidd agent issues it, and a
   `pre-commit` secret-leak guard), points the repository's local `core.hooksPath` at `.githooks`,
@@ -102,8 +102,16 @@ your project's own `deploy` script; aidd never stores or handles deploy credenti
   feature directory is removed.
 - **Agent commits:** in a code-changing run, the AI backend may also commit work as part of its
   instructions. Review the selected recipe and skill before launching work that includes commits.
-- **Worktrees:** runs configured with `--worktree` execute in a throwaway git worktree (under your
-  temp dir, or the panel's data dir) on a `aidd/run-<id>` branch, which is removed when the run ends.
+- **Worktrees:** coding runs configured with `--worktree`, and audit runs by default, execute in
+  a throwaway git worktree (under your temp dir, or the panel's data dir) on an `aidd/run-<id>`
+  branch. Audit worktrees start at the project's committed HEAD with a copy of its `.aidd/`;
+  uncommitted live source is not included. Accepted audit results are persisted by aidd into the
+  live `.aidd/`. Agent-written metadata is not copied back, and audit source is never merged.
+  At run end, tracked differences against the starting pin are recorded as an audit integrity
+  violation (exit 76) and the checkout is removed. Inspection or evidence-preservation failures
+  retain the checkout and fail the run. `--audit-live-tree` explicitly opts out and records a
+  warning; an audit without a committed HEAD otherwise refuses to run. A worktree changes the
+  agent's working directory; it does not restrict its account's access to other host paths.
 - The native agent's shell policy rejects recognized destructive git commands (`git reset --hard`,
   `git checkout .`, `git clean -fdx`, `git push --force`). This command-text check is not a
   guarantee against every way executable code can discard work; see the shell boundary below.

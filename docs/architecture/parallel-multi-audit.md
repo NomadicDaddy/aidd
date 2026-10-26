@@ -5,6 +5,19 @@ in order, one session each; no session is ever given more than one audit.
 
 ## CLI Behavior
 
+Audit agents execute in a fresh worktree at the project's committed HEAD by default, with seeded
+`.aidd/` context. The live checkout's uncommitted source is not part of that snapshot. aidd persists
+accepted `AIDD_RESULT` reports, finding features, finding-ledger events and roadmap changes into the
+live project's `.aidd/`; it never merges an audit checkout or copies agent-written metadata back.
+At the end, tracked differences against the starting pin produce an audit integrity violation
+naming the paths (exit 76), and the checkout is removed after preserving iteration evidence.
+Inspection or evidence-preservation failures retain the checkout and fail the run.
+
+`--audit-live-tree` explicitly disables isolation and warns at startup and in the run summary.
+Without that opt-out, a project without a committed Git HEAD cannot run an audit. A worktree
+separates ordinary relative writes; external CLI and shell processes retain their account's host
+permissions. See [What aidd can modify](../reference/what-aidd-modifies.md#git).
+
 An explicit multi-audit run takes the named audits in the order given. Existing reports do not
 suppress an explicit `--audit` request, so this form is suitable for refreshing named audits:
 

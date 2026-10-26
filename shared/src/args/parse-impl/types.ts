@@ -8,6 +8,8 @@ export interface ParsedArgs {
 	auditFindings: boolean;
 	/** Optional audit source (e.g. SECURITY) to narrow the audit-findings sweep. */
 	auditFindingsSource?: string;
+	/** Explicit audit-only opt-out from the default disposable checkout. */
+	auditLiveTree?: boolean;
 	auditMode: boolean;
 	auditModel?: string;
 	auditNames: string[];

@@ -51,6 +51,7 @@ Key options:
   --audit AUDIT[,AUDIT]
   --audit-model MODEL
   --audit-all
+  --audit-live-tree          opt out of default audit worktree isolation; warns in the run record
   --triumvirate --secondary-cli CLI --overseer-cli CLI [--exec-cli CLI]
       when --exec-cli is omitted, execution uses the overseer CLI/model.
   --secondary-model MODEL --overseer-model MODEL --exec-model MODEL
@@ -83,7 +84,7 @@ Key options:
   --write-allowlist PATH[,PATH]  revert backend writes outside these relative paths,
                              retry once with the violation in the prompt, then fail (exit 76)
   --worktree                 run execution in an isolated git worktree (branch aidd/run-<id>);
-                             merge back on success, discard on failure (free rollback)
+                             coding merges on success; audits isolate by default and never merge
   --stop
   --version
   --help                     show this help and exit

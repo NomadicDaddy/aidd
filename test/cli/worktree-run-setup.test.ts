@@ -52,7 +52,7 @@ afterEach(async () => {
 });
 
 describe('worktree run setup', () => {
-	test('skips when not requested or outside coding mode', async () => {
+	test('skips when coding isolation is not requested or mode is unsupported', async () => {
 		const root = await project(false);
 		expect(
 			await prepareWorktreeRun({
@@ -65,7 +65,7 @@ describe('worktree run setup', () => {
 		expect(
 			await prepareWorktreeRun({
 				launcherManaged: false,
-				plan: plan(root, 'audit'),
+				plan: plan(root, 'todo'),
 				requested: true,
 				runId: 'two',
 			}),

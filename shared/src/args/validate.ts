@@ -10,6 +10,12 @@ export class ArgsError extends Error {
 }
 
 export function validateParsedArgs(args: ParsedArgs): void {
+	if (args.auditLiveTree && (!args.auditMode || args.directorMode)) {
+		throw new ArgsError('--audit-live-tree requires an audit run');
+	}
+	if (args.auditLiveTree && args.worktree) {
+		throw new ArgsError('--audit-live-tree cannot be combined with --worktree');
+	}
 	if (args.skillId && args.customPrompt) {
 		throw new ArgsError('--skill cannot be combined with --prompt');
 	}

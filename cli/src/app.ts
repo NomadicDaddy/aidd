@@ -102,7 +102,7 @@ export async function run(argv: string[]): Promise<number> {
 		// guard, which staged .githooks and set core.hooksPath in a repo only being checked (2026-09-30).
 		await ensureMetadata(
 			plan.projectDir,
-			plan.mode === 'validate' ? undefined : rootDir,
+			plan.mode === 'validate' || plan.mode === 'audit' ? undefined : rootDir,
 			plan.writeAllowlist,
 		);
 		if (plan.mode === 'coding') {
@@ -146,11 +146,11 @@ export async function run(argv: string[]): Promise<number> {
 		// a live checkout (e.g. dogfooding aidd on its own repo); only execution modes scaffold.
 		if (plan.mode !== 'validate') {
 			await scaffoldProjectAssets(
-				plan,
+				plan.mode === 'audit' ? { ...plan, writeAllowlist: ['.aidd'] } : plan,
 				rootDir,
 				scaffoldOptionsFor(config, preparedSkill?.contracts),
 			);
-			if (plan.initGitAfterScaffold) {
+			if (plan.initGitAfterScaffold && plan.mode !== 'audit') {
 				await initGitAfterScaffold(plan.projectDir, plan.writeAllowlist);
 			}
 		}
@@ -222,7 +222,12 @@ export async function run(argv: string[]): Promise<number> {
 				runId,
 				...(webDataDir ? { webDataDir } : {}),
 			});
-			const runStore = plan.worktree ? new FileAiddStore(plan.worktree.dir) : store;
+			// Audit results are accepted and persisted by the runtime, never copied back from
+			// agent-written metadata. The agent still reads the seeded disposable checkout.
+			const runStore =
+				plan.worktree && plan.mode !== 'audit'
+					? new FileAiddStore(plan.worktree.dir)
+					: store;
 			const scoringRoots = resolveScoringRoots(config);
 			const aiSummarizer = createRunAiSummarizer(config, rootDir);
 			const resolveConflict = createMergeResolver({

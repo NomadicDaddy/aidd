@@ -236,6 +236,7 @@ export function resolveRunPlan(args: ParsedArgs, config: ResolvedConfig): RunPla
 	if (filters[0]) plan.featureFilter = filters[0];
 	if (args.auditMode) {
 		const audit: RunPlan['audit'] = {
+			...(args.auditLiveTree ? { liveTree: true } : {}),
 			names: args.auditNames,
 			runAll: args.auditAll,
 		};

@@ -48,19 +48,23 @@ bun <aidd-root>/scripts/aidd-client.ts --path /api/v1/skills
 2. Read the full selected definition from `GET /api/v1/skills/<id>` and its required references.
    The native catalog includes bundled and managed imports; a skill visible to the calling agent
    is not automatically installed in aidd.
-3. If the named skill is absent but its exact permitted local package is available, use aidd's
-   existing local-folder import flow: POST `/api/v1/skills/imports/preview`, then
-   `/api/v1/skills/imports`, with `{"sourcePath":"<package directory>","category":"general"}`.
-   Read the preview, require the requested id and `conflict: "none"`, and retain the source/hash.
-   This installs only the named package needed by this invocation. Respect configured Application
-   Roots and host permissions; never widen them, replace an existing skill, fetch an alternative
-   source or install unrelated packages. Report an unavailable or refused source. Re-read the
-   imported definition before launching it.
+3. If the named skill is absent, report that it is not installed in aidd. If its exact local
+   package is readable and invocation-permitted, read its full definition and required references,
+   then POST `/api/v1/skills/imports/preview` with
+   `{"sourcePath":"<package directory>","category":"general"}`. Require the requested id and
+   `conflict: "none"`. Present the preview's exact source path, skill id and source hash, and obtain
+   the user's explicit approval to import that package before POSTing `/api/v1/skills/imports`.
+   A workflow invocation or a path under Application Roots alone does not grant import approval.
+   Respect configured roots and host permissions; never widen them, replace an existing skill,
+   fetch an alternative source or install unrelated packages. Report an unavailable or refused
+   source. Re-read the imported definition before launching it.
 4. Read the target project's applicable instructions and current state. Set `executionIntent`
    explicitly: `review-only` for a requested read-only assessment, or `apply-changes` for the
    requested skill's authorized edits. Derive intent from the actual workflow, not merely a word
    such as “review” in its name. Preserve operator holds and the skill's own release, publication
-   and approval boundaries. A dispatch is not approval to bypass them.
+   and approval boundaries. Resolve any required pre-launch human decision before dispatch; a
+   headless child cannot supply it. A dispatch is not approval to bypass later push/tag/publication
+   decisions. Preserve a child's approval request as unfinished work and return it to the user.
 
 ## Launch once and follow the result
 

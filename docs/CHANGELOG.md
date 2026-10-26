@@ -4,12 +4,30 @@ All notable public aidd releases are documented here.
 
 ## Unreleased
 
+## [3.7.0] - 2026-10-26
+
+### Added
+
+- The Director offers a consolidation task when a project still holds completed audit or remediation findings. It suggests the feature-consolidation-document-changes recipe and shows the work as "Completed findings to fold" on the dashboard. The suggestions table accepts the new task type through migration 0014, applied at the next backend startup.
+- `bun run news:digest -- <command>` supplies the daily digest's advisory and release queries, feed and article readers, duplicate tracking, and validation. Queries follow every release page within the bounded page limit and give network requests a deadline. Daily files live under `news/`; the archive command moves files older than a week into `news/archive/`, preserving collisions for inspection.
+
 ### Changed
 
 - Reviewed the 34 audits applicable to Summon and corrected 27 definitions plus the shared methodology and severity guidance. Audits now distinguish diagnostic evidence from permission to repair, use the project's actual tools and topology, keep executable probes outside the target, and grade findings by demonstrated impact.
+- New project instructions keep `.aidd/` out of Git wholesale. The artifact catalogue and parity checks distinguish local records from tracked product files. The history guard respects a repository that has removed its guard hooks or ignores its metadata, instead of reinstalling them.
+- Consolidation carries each lasting acceptance criterion into its owning feature before removing a completed finding, records one-off changes in the changelog, and leaves explicit owner or upstream questions visible. Feature review reports unfinished one-off work for a decision instead of removing its open record.
 
 ### Fixed
 
+- Default test discovery stays inside aidd's maintained `test/` tree, so an isolated audit checkout under `data/worktrees/` cannot add another project's tests to aidd's gate. The preload and nested test/spec discovery remain covered by an executable fixture and a failing unbounded control.
+- The panel and CLI share numbered interview answer documents and the progress index. Saving a panel answer preserves other answers from older multi-question documents, refuses a file collision with another question's answer, and writes preserved answers before replacing the saved answer's original file.
+- An allowlisted run sees its writable paths in its first prompt. Its discard check distinguishes a committed staged file from lost pre-existing unstaged content, and an unreadable baseline cannot count as confirmed absence. Coding instructions require agents to leave concurrent changes they did not make alone.
+- Documentation-only work is no longer parked merely for reporting that no live UI check was owed. Both the selected and final feature records decide whether live verification is required; a live acceptance clause or non-documentation file still requires it.
+- Final-check reporting uses the gate output's last verdict, including an explicit `exit: N` line, instead of letting a successful shell wrapper hide a failed gate.
+- A review-only run that omits its result marker keeps the text after its last tool call as a separate unconfirmed report. The run still fails its result contract; an aggregate transcript is not accepted as its final report.
+- Director audit and remediation suggestions include only dependency-ready work, while blocked findings remain visible in project health. Scheduled CLI runs retain their scheduled source in telemetry.
+- Advisory sweeps include the BBS and application-worktree roots by default and write a package query's label once. Fleet hook checks detect repositories with a missing hook directory or a dispatcher that invokes no leak guard.
+- Updated the in-range lockfile to clear the body-parser High advisory present in the earlier dependency tree, with the corresponding third-party notices refreshed.
 - Isolated Bun audits install frozen development and production dependencies before starting the agent, using copied package files instead of writable cache hardlinks. Setup failures, escaping local dependencies, tracked edits and stop requests fail before provider execution; setup output is retained canonically, and uncertain child cleanup keeps the checkout for diagnosis.
 - Audit benchmark scoring accepts a finding's citation to the exact source span of a cataloged function, as well as its name. The span is recorded from the original fixture before the agent runs; citations to another file or a neighboring function do not count.
 - Audit agents now run in a disposable checkout of the project's committed HEAD by default, so temporary probes leave live source alone. aidd persists accepted reports and findings into the live `.aidd/`, discards the audit checkout without merging, and records leftover tracked edits as an audit integrity violation. `--audit-live-tree` explicitly opts out with a warning; otherwise a committed Git HEAD is required.

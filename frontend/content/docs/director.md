@@ -9,6 +9,8 @@ Run a **cycle** to have the Director analyze the fleet, optionally with a direct
 - **Project-scoped** suggestions launch their named recipe as a pipeline session. Suggestions without a recipe launch a supervised run.
 - **Fleet-wide** suggestions are advisory: they give direction but aren't launchable on their own.
 
+The Director also offers **Completed findings to fold** when a project still has completed audit or remediation records. Its consolidation recipe carries lasting requirements into their owning features, records one-off changes in the changelog, and removes the completed finding records. Findings awaiting an owner decision or an upstream template fix remain visible until resolved.
+
 Dismiss a pending suggestion when you decide not to launch it, or after handling fleet-wide guidance. A completed cycle retires any still-actionable suggestions from older cycles before inserting its own.
 
 Cycles can also start automatically from a built-in task on the **Scheduled** page called Director fleet cycle. The task is paused by default. Change its cadence, pause it, or resume it there; the Director page and Settings show its current state and link to it. Only one cycle runs at a time, so starting one by hand while another is running is refused, and an automatic occurrence that arrives during a cycle is recorded as skipped.

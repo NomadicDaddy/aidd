@@ -100,7 +100,8 @@ async function scanGlob(
 	const key = `${allowGeneratedOutput ? 'generated' : 'source'}\0${pattern}`;
 	const scan = async (): Promise<string[]> => {
 		const glob = new Bun.Glob(pattern);
-		const prefix = pattern.slice(0, pattern.indexOf('*'));
+		const firstMeta = pattern.split('').findIndex((character) => '*?{['.includes(character));
+		const prefix = pattern.slice(0, firstMeta);
 		const directory = prefix.slice(0, Math.max(0, prefix.lastIndexOf('/')));
 		if (isIgnored(directory, allowGeneratedOutput)) return [];
 		if (!(await pathExists(resolve(projectRoot, directory)))) return [];

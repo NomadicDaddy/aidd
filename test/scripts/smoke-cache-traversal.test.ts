@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { collectDependencies } from '../../scripts/lib/smoke-cache/collect.ts';
+import { STEP_DEPENDENCIES } from '../../scripts/lib/smoke-cache/dependencies.ts';
 import { walkCacheFiles } from '../../scripts/lib/smoke-cache/walk.ts';
 import { canSkipStep, recordStepSuccess } from '../../scripts/smoke-cache.ts';
 import { testTempDir } from '../_helpers/temp.ts';
@@ -26,6 +27,28 @@ async function createProject(): Promise<string> {
 }
 
 describe('smoke cache traversal', () => {
+	test.each(['src/{a,b}/**/*.ts', 'src/[ab]/**/*.ts', 'src/?/**/*.ts'])(
+		'keeps glob metacharacters before the first star in %s',
+		async (pattern) => {
+			const root = await createProject();
+			for (const name of ['a', 'b']) {
+				await mkdir(join(root, 'src', name, 'nested'), { recursive: true });
+				await writeFile(join(root, 'src', name, 'nested', 'example.ts'), 'export {};\n');
+			}
+			const step = 'fixture:glob-prefix';
+			expect(STEP_DEPENDENCIES[step]).toBeUndefined();
+			STEP_DEPENDENCIES[step] = [pattern];
+			try {
+				expect(await collectDependencies(root, step)).toEqual([
+					'src/a/nested/example.ts',
+					'src/b/nested/example.ts',
+				]);
+			} finally {
+				delete STEP_DEPENDENCIES[step];
+			}
+		},
+	);
+
 	test('prunes an excluded directory before visiting its children', async () => {
 		const root = await createProject();
 		const visited: string[] = [];

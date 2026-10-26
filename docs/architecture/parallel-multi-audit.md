@@ -10,7 +10,7 @@ Audit agents execute in a fresh worktree at the project's committed HEAD by defa
 accepted `AIDD_RESULT` reports, finding features, finding-ledger events and roadmap changes into the
 live project's `.aidd/`; it never merges an audit checkout or copies agent-written metadata back.
 At the end, tracked differences against the starting pin produce an audit integrity violation
-naming the paths (exit 76), and the checkout is removed after preserving iteration evidence.
+naming the paths (exit 76), and the checkout is removed.
 Inspection failures retain the checkout and fail the run. Iteration evidence is already written
 to the canonical store; completion and rollback never import agent-written iteration files.
 
@@ -18,6 +18,13 @@ to the canonical store; completion and rollback never import agent-written itera
 Without that opt-out, a project without a committed Git HEAD cannot run an audit. A worktree
 separates ordinary relative writes; external CLI and shell processes retain their account's host
 permissions. See [What aidd can modify](../reference/what-aidd-modifies.md#git).
+
+The checkout contains committed files and seeded `.aidd/` context, not ignored dependencies such
+as `node_modules`, build output or a live database. aidd does not install dependencies for an audit.
+A measurement audit needs separately authorized dependency and tool provisioning in disposable
+resources, or matching retained evidence. Without those prerequisites, report the execution limit
+and the source-only coverage; missing checkout dependencies are not a defect in the audited product.
+Do not switch to the live tree or install packages merely to obtain a measurement.
 
 An explicit multi-audit run takes the named audits in the order given. Existing reports do not
 suppress an explicit `--audit` request, so this form is suitable for refreshing named audits:

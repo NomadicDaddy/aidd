@@ -113,6 +113,11 @@ your project's own `deploy` script; aidd never stores or handles deploy credenti
   are discarded with the checkout, including on rollback. `--audit-live-tree` explicitly opts out and records a
   warning; an audit without a committed HEAD otherwise refuses to run. A worktree changes the
   agent's working directory; it does not restrict its account's access to other host paths.
+  Ignored dependencies such as `node_modules`, build output and live databases are not provisioned
+  in the audit checkout. aidd does not install them automatically. Measurement audits need separately
+  authorized disposable prerequisites or matching retained evidence; otherwise they must disclose
+  the execution limit and source-only coverage, rather than treat missing checkout tools as a
+  product defect or fall back to the live tree.
 - The native agent's shell policy rejects recognized destructive git commands (`git reset --hard`,
   `git checkout .`, `git clean -fdx`, `git push --force`). This command-text check is not a
   guarantee against every way executable code can discard work; see the shell boundary below.

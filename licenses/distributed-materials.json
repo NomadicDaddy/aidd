@@ -180,6 +180,8 @@
 			"site/index.html",
 			"skills/12-factor-guidelines/SKILL.md",
 			"skills/12-factor-guidelines/references/GUIDELINES.md",
+			"skills/aidd/SKILL.md",
+			"skills/aidd/agents/openai.yaml",
 			"skills/audit-finding-review/SKILL.md",
 			"skills/audit-review/SKILL.md",
 			"skills/bug2feature/SKILL.md",

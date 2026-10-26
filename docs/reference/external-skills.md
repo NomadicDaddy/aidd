@@ -10,7 +10,10 @@ evidence. `disable-model-invocation: true` means the skill cannot be automatical
 not mean uninstalled. Respect that restriction rather than reading and executing the same workflow
 another way. See [Claude's invocation rules](https://code.claude.com/docs/en/skills#control-who-invokes-a-skill).
 
-aidd does not detect, install, update, or remove agent-native skills. An optional upstream skill
+aidd does not detect, install, update, or remove upstream agent-native skills. The first-party
+`aidd` launcher has a separate, explicit [optional installer](./deployment.md#optional-agent-launcher)
+for personal agent skill directories; its canonical package remains in this repository.
+An optional upstream skill
 does not block work when a documented replacement covers the requested scope. Missing required
 contracts or unresolved required work do block completion. The local-folder skill import described
 in [the panel's Skills doc](../../frontend/content/docs/skills.md) is a separate,

@@ -1,0 +1,4 @@
+interface:
+    display_name: 'aidd'
+    short_description: 'Run project skills through aidd'
+    default_prompt: 'Use $aidd to launch a skill on a registered project.'

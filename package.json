@@ -152,6 +152,7 @@
 		"release:notes": "bun scripts/release-notes.ts",
 		"qc:status": "bun scripts/smoke-qc.ts --cache-status",
 		"self-contained": "bun scripts/self-contained.ts",
+		"skill:install": "bun scripts/install-aidd-skill.ts",
 		"smoke:backends": "bun scripts/smoke-backends.ts",
 		"smoke:dev": "bun run smoke:e2e",
 		"smoke:docs": "bun scripts/sync-smoke-docs.ts",

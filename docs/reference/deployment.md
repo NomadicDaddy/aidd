@@ -32,6 +32,27 @@ Unless explicitly skipped, the postinstall step builds the frontend when its ass
 or older than its build inputs. Starting or restarting the backend does not rebuild the UI. After
 editing frontend source, run `bun run build:frontend` before reloading the panel.
 
+### Optional agent launcher
+
+The first-party `skills/aidd` package delegates `/aidd <project> <skill> [arguments]` workflows
+to the running aidd service. Install it explicitly from the source checkout:
+
+```powershell
+bun run skill:install -- --agent codex
+bun run skill:install -- --agent claude
+```
+
+These target [Codex's personal skill directory](https://developers.openai.com/codex/skills/)
+(`~/.agents/skills/aidd`) and [Claude's personal skill directory](https://code.claude.com/docs/en/skills)
+(`~/.claude/skills/aidd`). In Codex, invoke `$aidd` or select it from `/skills`; in Claude, use
+`/aidd`. For a separate skill catalog, use `--directory <skills-root>` instead of `--agent`.
+
+The installer copies the canonical package and records this checkout's path in `installation.json`.
+Run the same command after updating aidd. It refuses unmanaged destinations and locally edited
+managed files. Installation is optional, launches no workflow, and does not start the service.
+The launcher resolves registered projects and native skills through the existing authenticated
+API, preserves the selected workflow's approval rules, and follows the resulting session.
+
 ## Configuration File Location
 
 aidd is JSON-only (no `.env`). Config merges in this order, with later sources overriding earlier:

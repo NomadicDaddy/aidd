@@ -8,6 +8,7 @@ All notable public aidd releases are documented here.
 
 ### Added
 
+- The optional `aidd` agent skill launches a named native skill against a registered project and follows its session result. Its canonical package ships in aidd; `bun run skill:install` installs it explicitly for Codex, Claude or a separate skill catalog and preserves unmanaged or locally edited destinations. The authenticated API reference client accepts explicit POST requests from UTF-8 JSON body files.
 - The Director offers a consolidation task when a project still holds completed audit or remediation findings. It suggests the feature-consolidation-document-changes recipe and shows the work as "Completed findings to fold" on the dashboard. The suggestions table accepts the new task type through migration 0014, applied at the next backend startup.
 - `bun run news:digest -- <command>` supplies the daily digest's advisory and release queries, feed and article readers, duplicate tracking, and validation. Queries follow every release page within the bounded page limit and give network requests a deadline. Daily files live under `news/`; the archive command moves files older than a week into `news/archive/`, preserving collisions for inspection.
 

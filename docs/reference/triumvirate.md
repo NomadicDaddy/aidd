@@ -115,9 +115,10 @@ AIDD_RESULT: {"decision":"execute","finalActions":"<execution instructions>"}
 AIDD_RESULT: {"decision":"abort","reason":"<why execution must not proceed>"}
 ```
 
-Only an overseer `execute` decision with non-empty `finalActions` starts the execution stage. An
-`abort` decision records a blocked run summary and prevents execution. Any other structured result,
-including a missing one, is recorded as `invalidDecision` and also prevents execution.
+On the full planning path, only an overseer `execute` decision with non-empty `finalActions` starts
+the execution stage. An `abort` decision records a blocked run summary and prevents execution.
+Any other structured result, including a missing one, is recorded as `invalidDecision` and also
+prevents execution.
 
 Under `--consistency-gate` the execute marker may also carry `"consistencyIssues":["<issue>"]`. aidd
 appends those strings to the execution prompt as gaps the execution agent must resolve or explain.
@@ -151,8 +152,9 @@ Top-level Triumvirate artifact fields:
 - `overseerDecision`: overseer stage artifact.
 - `decision`: parsed overseer decision with `status`, `source`, final actions or abort reason, and
   raw structured overseer result when available.
-- `execution`: execution stage artifact, present only when the overseer allowed execution.
-- `finalActions`: final overseer instructions, present only for execute decisions and on the
+- `execution`: execution stage artifact, present after an overseer execute decision or on the
+  complexity fast path.
+- `finalActions`: final execution instructions, present only for execute decisions and on the
   complexity fast path.
 - `consistencyIssues`: overseer-flagged gaps forwarded to execution, present only when
   `--consistency-gate` produced them.

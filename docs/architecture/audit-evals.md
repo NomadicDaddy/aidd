@@ -10,9 +10,10 @@ audit precision, recall, freshness, and definition hashes have explicit pass/fai
 task names its audit definition, fixture, planted defects, and benign decoys. Every catalog site
 must name a fixture file plus exactly one line or symbol, a severity, and one or more aliases.
 
-The benchmark runner copies the fixture from the manifest's own directory, runs the selected audit,
-and dispatches `evaluation: audit-eval` through `scripts/lib/benchmark/evaluation.ts`. The scorer
-reads each generated audit Feature separately, and only its own words: the title, description,
+The benchmark runner copies the fixture from the manifest's `fixtures/` subdirectory, runs the
+selected audit, and dispatches `evaluation: audit-eval` through
+`scripts/lib/benchmark/evaluation.ts`. The scorer reads each generated audit Feature separately,
+and only its own words: the title, description,
 notes, and `affectedFiles`. A finding's id and status are never part of the haystack, so a slug
 that happens to contain an alias cannot score.
 
@@ -72,7 +73,8 @@ gate reports a row whose recorded floors differ from the file as stale.
 
 `bun run bench:audits` writes ordinary benchmark outputs under the ignored
 `evals/audits/results/` directory, then refreshes the committed
-`evals/audits/attestation.json`. Only runs of the current fixture are attested. A run's
+`evals/audits/attestation.json`. Runs carrying a stale fixture hash are excluded; older records
+without a `fixtureHash` are still accepted by `selectAttestedRuns`. A run's
 `fixtureHash` covers the fixture files and the task's defect catalog (`hashTaskFixture` in
 `scripts/lib/benchmark/execution.ts`), so planting a file or editing an alias makes earlier runs
 stale: the attestation skips them and reports how many, and the benchmark reruns a stale replicate
@@ -100,6 +102,11 @@ the attested manifest, definition, and file hashes, and enforces the floors. Its
 the measured and unmeasured Audits apart, for example `1 of 44 audits measured, 47 audit files
 hash-checked`. It is part of `smoke:qc`; cache inputs include the Audit catalog, committed eval
 inputs, and scorer/checker sources, so any Audit definition or harness change re-runs the gate.
+
+When `evals/audits/results/runs.jsonl` exists locally, the gate also rebuilds the attestation from
+that ledger and compares `resultsDigest`, precision, recall, and run counts with the committed
+attestation (`scripts/lib/audit-eval/check-results.ts`). CI and fresh clones lack that ignored
+ledger, so they check the committed hashes and floors without recomputing the scores from runs.
 
 `bun run test:audit-evals` drives the real command against a scratch copy of the inputs
 (`scripts/lib/audit-eval/self-test.ts`). It proves a perfect attestation passes and that too few

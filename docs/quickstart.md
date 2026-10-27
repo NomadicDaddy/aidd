@@ -13,8 +13,11 @@ durable service, including data locations, remote binding, updates, and uninstal
   required** for the native-family backends (`native`, `ollama`, `lmstudio`, `openai`): the
   agent's shell tool runs through its bundled bash, and the preflight doctor refuses to start a
   run without it (`AIDD_BASH` can point at another `bash.exe`; see
-  [configuration](reference/configuration.md)). Git is optional only on Linux/macOS and for the
-  external-CLI backends, where aidd degrades gracefully without it.
+  [configuration](reference/configuration.md)). Outside that Windows native-shell requirement,
+  ordinary live-tree runs can proceed without Git. Audits use an isolated worktree by default
+  and require Git plus a committed HEAD in the target project on every platform and backend.
+  `--audit-live-tree` explicitly opts out of that isolation; see
+  [Multi-Audit Runs](architecture/parallel-multi-audit.md).
 - **Platform support**: Windows 11 + PowerShell 7 is the primary development platform and the
   only one with browser-smoke coverage. Linux runs the full quality gate (`smoke:qc` and the
   test suite) in CI on pushes to `main`, on `v*.*.*` tags and on pull requests to `main`.

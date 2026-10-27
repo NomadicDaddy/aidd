@@ -1,5 +1,7 @@
 import type { ResolvedTriumvirateConfig } from 'aidd-shared/config';
 
+import { parseArgs } from 'aidd-shared/args/parse';
+import { ArgsError } from 'aidd-shared/args/validate';
 import { type BackendName, requireBackendName } from 'aidd-shared/plan/types';
 import { access } from 'node:fs/promises';
 import { basename, join } from 'node:path';
@@ -7,6 +9,7 @@ import { basename, join } from 'node:path';
 import type { RunLaunchRequest, WebRunMode } from '../types.ts';
 
 import { normalizeAuditName, normalizeAuditNames } from './audit/auditHelpers.ts';
+import { HttpError } from './errors.ts';
 import { tokenizeExtraArgs } from './run/extraArgs.ts';
 
 export interface LaunchCommand {
@@ -66,12 +69,10 @@ function addModeArgs(args: string[], input: RunLaunchRequest, mode: WebRunMode):
 			args.push('--audit-all');
 			return;
 		}
-		args.push(
-			'--audit',
-			normalizeAuditNames(
-				input.auditNames?.length ? input.auditNames : ['CODE_QUALITY'],
-			).join(','),
-		);
+		if (!input.auditNames?.length) {
+			throw new HttpError('Select at least one audit or explicitly choose all audits.', 400);
+		}
+		args.push('--audit', normalizeAuditNames(input.auditNames).join(','));
 		return;
 	}
 	if (mode === 'todo') {
@@ -195,6 +196,14 @@ export async function buildLaunchCommand(
 	// (the CLI arg parser is last-wins for repeated flags).
 	if (input.extraArgs) {
 		for (const token of tokenizeExtraArgs(input.extraArgs)) args.push(token);
+	}
+	// Use the child's actual parser before launchRun creates any row or transcript. Tokenizing
+	// alone accepts bare audit names, unknown flags and missing values that cannot launch.
+	try {
+		parseArgs(args.slice(2));
+	} catch (err) {
+		if (err instanceof ArgsError) throw new HttpError(err.message, 400);
+		throw err;
 	}
 	return {
 		args,

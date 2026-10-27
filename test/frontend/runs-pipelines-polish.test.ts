@@ -262,8 +262,8 @@ describe('runs and pipelines polish', () => {
 	test('packs launch controls around the content they contain', async () => {
 		const launch = await runs('RunLaunchCard.tsx');
 
-		expect(launch).toContain("'max-w-[36ch] min-w-44 flex-1'");
-		expect(launch).toContain('placeholder="Additional args (e.g. --filter audit-*)"');
+		expect(launch).toContain('flex max-w-[36ch] min-w-44 flex-1 flex-col');
+		expect(launch).toContain('placeholder="Additional CLI args (e.g. --timeout 43200)"');
 		expect(launch).toContain('className="flex flex-wrap items-center gap-3 sm:ml-auto"');
 	});
 

@@ -112,10 +112,12 @@ export function RunsPage() {
 			<MobileRunLaunchDisclosure>
 				{/* The card owns its own header row, so its title sits inside the surface it names. */}
 				<RunLaunchCard
-					disabled={form.launch.isPending || !form.projectDir}
+					auditName={form.auditName}
+					disabled={form.launchDisabled}
 					extraArgs={form.extraArgs}
 					launchTarget={form.primaryTarget}
 					mode={form.mode}
+					onAuditNameChange={form.setAuditName}
 					onExtraArgsChange={form.setExtraArgs}
 					onLaunch={form.submitLaunch}
 					onLaunchTargetChange={form.setPrimaryTarget}
@@ -198,13 +200,9 @@ export function RunsPage() {
 			    require 88.375rem; below
 			    that, the regions stack. Above 100rem the ratio favors long console commands.
 
-			    This region measures one remaining-viewport budget and publishes it as
-			    `--fill-height`; it does not impose it on itself. The sticky console column is the
-			    only thing that needs a fixed height, so it is the only thing that resolves the
-			    property. The left column stays content-led at every width, because binding it to the
-			    budget made History a shorter and shorter scrollport as the window widened — 1152x1142
-			    with every row on screen at 1440x900, and a fraction of that at 2250x1309. Widening a
-			    window must never cost the reader rows. */}
+			    Only the sticky console resolves the shared `--fill-height` viewport budget.
+			    History stays content-led: binding it to that budget hid more rows as the
+			    window widened. */}
 			<div
 				className={cn(
 					'grid min-w-0 gap-5',

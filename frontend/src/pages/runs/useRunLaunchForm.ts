@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import type { RunLaunchRequest, RunMode, RunRecord } from '../../api/types.ts';
 import type { LaunchTargetValue } from '../../api/types/launchDefaults.ts';
 
+import { useAuditManager } from '../../hooks/useAudits.ts';
 import { useLaunchRun } from '../../hooks/useRuns.ts';
 import { traceDataMovement } from '../../lib/dataMovementTrace.ts';
 import { nullableText } from './runsUtils.ts';
@@ -16,6 +17,12 @@ export function useRunLaunchForm(onLaunched: (run: RunRecord) => void) {
 	const [projectDir, setProjectDir] = useState('');
 	const [projectError, setProjectError] = useState(false);
 	const [mode, setMode] = useState<RunMode>('coding');
+	const [auditName, setAuditName] = useState('');
+	const auditCatalog = useAuditManager(mode === 'audit');
+	const auditReady =
+		!auditCatalog.isError &&
+		auditCatalog.data?.auditsEnabled === true &&
+		auditCatalog.data.definitions.some((audit) => audit.enabled && audit.name === auditName);
 	// Overrides-only launch targets: an empty object means "use the resolved defaults",
 	// which LaunchTargetControl displays live from /api/v1/launch-defaults rather than
 	// copying settings values into editable fields.
@@ -32,6 +39,13 @@ export function useRunLaunchForm(onLaunched: (run: RunRecord) => void) {
 			return;
 		}
 		const request: RunLaunchRequest = { mode, projectDir };
+		if (mode === 'audit') {
+			if (!auditReady) {
+				toast.error('Select an audit before launching');
+				return;
+			}
+			request.auditNames = [auditName];
+		}
 		const launchExtraArgs = nullableText(extraArgs);
 		if (launchExtraArgs) request.extraArgs = launchExtraArgs;
 		// Only explicit overrides travel on the request; unset fields resolve on the
@@ -76,15 +90,18 @@ export function useRunLaunchForm(onLaunched: (run: RunRecord) => void) {
 	}
 
 	return {
+		auditName,
 		execTarget,
 		extraArgs,
 		launch,
+		launchDisabled: launch.isPending || !projectDir || (mode === 'audit' && !auditReady),
 		mode,
 		overseerTarget,
 		primaryTarget,
 		projectDir,
 		projectError,
 		secondaryTarget,
+		setAuditName,
 		setExecTarget,
 		setExtraArgs,
 		setMode,

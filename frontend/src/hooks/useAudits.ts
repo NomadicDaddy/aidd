@@ -18,8 +18,9 @@ import {
 	saveProjectAuditOverrides,
 } from '../api/audits.ts';
 
-export function useAuditManager() {
+export function useAuditManager(enabled = true) {
 	return useQuery({
+		enabled,
 		queryFn: getAuditManager,
 		queryKey: ['audits'],
 	});

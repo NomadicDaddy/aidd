@@ -1222,6 +1222,7 @@ describe('web run launcher', () => {
 			const command = await buildLaunchCommand(
 				rootDir,
 				{
+					auditNames: ['CODE_QUALITY'],
 					backend: 'codex',
 					feature: 'feature-one',
 					maxIterations: 1,
@@ -2134,6 +2135,7 @@ describe('web run launcher', () => {
 			try {
 				const run = await service.launchRun(
 					{
+						auditAll: true,
 						mode: 'audit',
 						projectDir,
 						simulation: true,
@@ -2340,7 +2342,7 @@ ${heartbeatTerminator()}`,
 			});
 			try {
 				const auditRun = await service.launchRun(
-					{ mode: 'audit', projectDir },
+					{ auditNames: ['CODE_QUALITY'], mode: 'audit', projectDir },
 					{ initiator: 'operator' },
 				);
 				const audited = await waitFor(

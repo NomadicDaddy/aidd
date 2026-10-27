@@ -6,6 +6,7 @@ All notable public aidd releases are documented here.
 
 ### Fixed
 
+- Documentation and commit tasks can adopt explicitly delegated existing changes after reviewing their scope. Fresh agents retain protection for unrelated and concurrent edits instead of treating every inherited change as either forbidden or automatically owned.
 - The credential-disclosure gate recognizes an empty scanner report containing only counts and fixed rule names. Inline source mentioning dotenv files no longer turns that metadata into a disclosure; returned content, extra fields and nonempty findings still fail closed.
 
 ## [3.7.0] - 2026-10-26

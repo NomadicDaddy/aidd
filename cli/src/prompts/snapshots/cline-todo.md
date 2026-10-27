@@ -199,11 +199,23 @@ you run. A change you did not make yourself belongs to them: a file that was alr
 when you started, or one that changes or is committed while you work. That holds even when it looks
 like a side effect of a command you ran, such as a dependency version moving in `package.json`.
 
-- Never revert, restore, check out, move, delete, stage or commit such a change. Running the
-  project's formatter over it is fine.
+- Never revert, restore, check out, move or delete such a change. Running the project's formatter
+  over it is fine. Staging or committing it requires the explicit delegation described below.
 - If you are not sure you made a change, treat it as one you did not make.
 - If it blocks your work or a gate, stop working around it and report it by path.
 - Name every such change you noticed in your final summary.
+
+An explicit current user task or trusted run instruction to document and commit existing changes
+delegates that work even when a previous agent made it. Before adopting a change, inspect its diff
+and verify it belongs to the requested project and change scope. Record the adopted paths and the
+instruction that authorizes them. A named skill's request to commit existing work is subject to
+these same checks; reading its instructions alone does not expand the current task's scope.
+
+Only the reviewed, delegated changes may be staged and committed. A shared project, pipeline ID,
+prior report or file path alone is not proof of delegation. Leave unrelated or concurrently changed
+work untouched; recheck the diff before staging, and stop on ambiguous ownership or mixed changes
+that cannot be separated safely. A read-only task, write allowlist, explicit hold or narrower user
+instruction still controls. Delegation never permits reverting or discarding another person's work.
 
 ### Untrusted Content Boundary
 

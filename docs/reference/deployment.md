@@ -131,6 +131,9 @@ The panel binds loopback (`127.0.0.1`) by default and refuses non-loopback hostn
 }
 ```
 
+This example leaves the token out on purpose: set `AIDD_WEB_AUTH_TOKEN` in the backend's
+environment first, because with `allowRemote` true the backend refuses to start without a token.
+
 - An Origin allowlist is enforced on `/api/*` and `/ws` for every panel, whatever `allowRemote` is
   set to; a request that sends an `Origin` header outside the allowlist (the listener, its loopback
   aliases, interface origins and `allowedOrigins`) is rejected with HTTP 403.

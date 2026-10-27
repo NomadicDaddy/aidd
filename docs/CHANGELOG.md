@@ -4,6 +4,10 @@ All notable public aidd releases are documented here.
 
 ## Unreleased
 
+### Fixed
+
+- The credential-disclosure gate recognizes an empty scanner report containing only counts and fixed rule names. Inline source mentioning dotenv files no longer turns that metadata into a disclosure; returned content, extra fields and nonempty findings still fail closed.
+
 ## [3.7.0] - 2026-10-26
 
 ### Added

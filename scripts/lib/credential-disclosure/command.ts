@@ -3,6 +3,7 @@ import { searchReturnedOnlyFlags } from './flag-search.ts';
 import { loopVariableIsRead, maskInertHereStrings, stripInertHeredocs } from './inert-text.ts';
 import { isNonDisclosingInspection, reportedMissing } from './inspection-output.ts';
 import { credentialLabel } from './paths.ts';
+import { isEmptyScannerReport } from './scanner-output.ts';
 import { liftSubstitutions } from './substitution.ts';
 
 /** Keep shell separators outside quoted arguments; a search expression is one argument. */
@@ -135,6 +136,7 @@ export function commandCredentialLabel(
 	returnedOutput?: unknown,
 	substituted = false,
 ): string | undefined {
+	if (isEmptyScannerReport(rawCommand, returnedOutput)) return undefined;
 	if (isNonDisclosingInspection(rawCommand, returnedOutput)) return undefined;
 	// A path inside a heredoc or a PowerShell here-string that is written to a file as data was never
 	// opened. `2>&1` names no file, and its `&` would otherwise split the command it belongs to away

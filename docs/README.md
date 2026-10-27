@@ -6,13 +6,12 @@ glossary is the repository-root [CONTEXT.md](../CONTEXT.md).
 
 Docs are organized by audience:
 
-- **Reference**: the operator-facing surface — configuration, backends, deployment, and the
-  schemas and contracts you look things up in.
+- **Reference**: configuration, backends, deployment, schemas, and contracts for operators.
 - **Architecture**: how the runtime works, for contributors.
 
-Task-oriented walkthroughs of the panel's own pages — Dashboard, Projects, Runs, Director, Audits,
-Skills, Scheduled, Telemetry, Recipes, Pipelines, Settings — ship inside the panel and are read
-there, on the Docs page. Their source is `frontend/content/docs/`.
+Walkthroughs of the panel's pages (Dashboard, Projects, Runs, Director, Audits, Skills, Scheduled,
+Telemetry, Recipes, Pipelines, Settings) are available on its Docs page. Their source is
+`frontend/content/docs/`.
 
 ## Reference
 

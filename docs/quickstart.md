@@ -1,9 +1,9 @@
 # Quickstart
 
 Get aidd running from a source checkout, launch the local web control panel, add a
-project, and run your first workflow. For configuration depth see
-[configuration.md](./reference/configuration.md); for running the panel as a durable service — data
-locations, remote binding, updates, uninstall — see [deployment.md](./reference/deployment.md).
+project, and run your first workflow. See [configuration.md](./reference/configuration.md) for
+configuration details and [deployment.md](./reference/deployment.md) for running the panel as a
+durable service, including data locations, remote binding, updates, and uninstalling.
 
 ## Prerequisites
 
@@ -33,7 +33,7 @@ git clone https://github.com/NomadicDaddy/aidd.git
 cd aidd
 ```
 
-...or download the source archive for a tagged release from
+Or download the source archive for a tagged release from
 [the releases page](https://github.com/NomadicDaddy/aidd/releases) and extract it. There are
 no prebuilt executables and no container image; a checkout is the artifact.
 

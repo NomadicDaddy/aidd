@@ -171,11 +171,11 @@ independently and merged into whichever preset matched:
 | `publishesReleaseArchives` | Nothing.                                                       | Always `none`.                                                          |
 | `derivesFromTemplate`      | A `spernakit_version` key in `package.json`.                   | `spernakit` when the key is present; the template itself infers `none`. |
 
-Two of the four have a top rung inference deliberately never reaches. A registry push and an
-uploaded release archive both live in CI workflow YAML, and reading that here would mean parsing
-every forge's syntax to answer a question the explicit profile answers directly. Inference stops at
-the rung it can prove, which under-claims rather than over-claims: a gate scoped to `published` is
-withheld from a project nobody profiled, instead of applied to one that turns out not to publish.
+Inference never sets `shipsContainerImage` to `published` or `publishesReleaseArchives` to
+`binary_archives`. Detecting registry pushes and uploaded release archives would require parsing
+CI workflow syntax for each forge; the explicit profile records those answers directly. Until an
+operator sets the profile, a gate scoped to `published` is withheld even if the project publishes
+images.
 
 Inferred profiles carry `source: "inferred"`; writing through the Profile UI promotes the profile to
 `source: "explicit"` and persists the canonical file. The Stage 2 (`structured`) maturity action

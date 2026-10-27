@@ -46,7 +46,7 @@ operations platform.
 The v2 line also carried most of the visible UI expansion. By 2.142.0, the panel had consistent
 navigation and layout across its main workspaces, responsive desktop and mobile behavior, better
 table and filter state, richer run consoles, accessible interactions, and release crawl coverage.
-Calling all of that v3 polish would erase the work that happened during v2.
+Those improvements belong to v2's history.
 
 v3 adds less surface area than v2 did. Its main feature change is bounded Director suggestion
 auto-launch. Most of the remaining work closes operational gaps exposed by the larger platform:
@@ -71,6 +71,3 @@ Windows native-shell boundary remains lexical, with an explicitly accepted inter
 - Choose v3 as the reference point for unattended operation and release polish: bounded autopilot,
   exact provenance, safer concurrency and recovery, measured frontend weight, and a reproducible
   source install.
-
-The shortest fair description is that v1 proved the development loop, v2 assembled the operating
-platform, and v3 adds bounded unattended operation and a public source release.

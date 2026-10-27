@@ -22,8 +22,7 @@ tools **you** install and authenticate — aidd never holds CodeRabbit credentia
 - **Windows:** the official CLI supports macOS, Linux, and WSL only — there is no native Windows
   build. Install and log in inside WSL; the skill probes native `coderabbit` first and
   falls back to running it through WSL against the project's `/mnt/<drive>/...` path
-  automatically. If neither is available, the run stops with setup guidance rather than failing
-  cryptically.
+  automatically. If neither is available, the run stops with setup guidance.
 
 ## What the skill does
 

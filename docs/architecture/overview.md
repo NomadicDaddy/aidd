@@ -115,19 +115,17 @@ artifact.
 
 ### Single-operator scope boundary
 
-The omissions above are a decision, not a backlog. aidd is an operator tool that runs on the
-owner's own machine against a local fleet, where identity is the OS user and there are no other
-tenants to isolate; carrying the hosted-product surface would add auth, RBAC, and tenancy
-complexity — and the attack surface that comes with them — for no local benefit. Reversing the
-decision is expensive, because auth, RBAC, and tenancy touch every route, store, and page, and the
-omission surprises a reader who expects a web app to have a login, so it is recorded here rather
-than left implicit.
+The features omitted above are outside the product scope. aidd runs on the owner's machine
+against a local fleet, where identity is the OS user and there are no other tenants to isolate.
+Auth, RBAC, and tenancy would add complexity and attack surface without a local benefit. Adding
+them would affect every route, store, and page. This boundary is documented explicitly for readers
+who expect a web application to have a login.
 
 Local scheduled execution is explicitly inside the boundary: tasks dispatch recipes, skills, and
 audits for the same OS user through the existing supervised execution paths, and the Director's
 automatic fleet cycle runs there too as a built-in task the operator can pause, resume, and re-time
 but not delete, rather than as a second private timer with its own settings. A hosted scheduler,
 shared task ownership, notifications, and every other multi-user concern stay outside it. The
-loopback web API stays guard-light by design — direct loopback calls are exempt from the optional
-access token, while proxy-forwarded requests must present it — consistent with the single-operator
-assumption. Adding one of the omitted surfaces is a product decision, not an incidental feature add.
+loopback web API uses limited guards under the single-operator assumption: direct loopback calls
+are exempt from the optional access token, while proxy-forwarded requests must present it. Adding
+any of the omitted features requires a product decision.

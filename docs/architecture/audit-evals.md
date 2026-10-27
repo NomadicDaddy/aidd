@@ -1,6 +1,6 @@
 # Audit evaluation harness
 
-The audit evaluation harness turns audit quality into a merge-blocking, reproducible contract. It
+The audit evaluation harness enforces reproducible audit measurements as a merge gate. It
 complements the general benchmark leaderboard: benchmark composite scores remain advisory, while
 audit precision, recall, freshness, and definition hashes have explicit pass/fail floors.
 
@@ -116,8 +116,8 @@ neither raises recall.
 4. Review the per-finding Run notes and the changed attestation.
 5. Run `bun run check:audit-evals`, then the normal quality gates.
 
-That is the route for anything that changes a measurement. Most edits to `audits/` change none,
-and the sections below say what each kind of edit needs.
+Use this procedure for changes that affect a measurement. The sections below describe the
+requirements for other edits to `audits/`.
 
 ### What the hashes record
 

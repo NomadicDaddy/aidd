@@ -174,7 +174,7 @@ Default coding run using the selected launch CLI: code the selected work, review
 3. `aidd-cli` - Remediate spirit findings (maxIterations: 1; prompt: Review the change set the spirit review covered — the working tree plus any commits produced earlier in this pipeline — and the immediately preceding spirit findings for {application}. Remediate every confirmed finding that is reasonable, applicable, and within the reviewed change's scope ...)
 4. `skill` - Document changes (args: {application}; skillId: document-changes)
 
-The review step takes no args. `spirit` is `spirit [boundary] [focus]`, so an application name lands in the `[boundary]` slot as a ref or path the project does not have; with zero args the skill resolves the change set itself — the working tree plus the commits step 1 just produced — which is what a post-coding review wants. `document-changes` is `document-changes [app]`, so it keeps `{application}`.
+The review step takes no args. `spirit` accepts `spirit [boundary] [focus]`, so passing an application name would make it look for a ref or path with that name. With no args it resolves the change set itself, including the working tree and the commits step 1 produced. `document-changes` accepts `document-changes [app]`, so that step keeps `{application}`.
 
 ### coding-review-remediate-document-changes
 
@@ -426,7 +426,7 @@ Validate the working tree, document and commit the work, then publish it as a Gi
 3. `skill` - Document and commit changes (args: {application}; skillId: document-changes)
 4. `skill` - Open pull request (args: {application}; skillId: ship-pr)
 
-This is the tail the coding recipes stop short of: they end at `document-changes`, which writes the changelog and commits in bundles but never pushes. Neither gate uses `onFailure: continue` — a failed build or test suite must stop the recipe rather than open a pull request over broken work. There is no `commit-bundles` step because `document-changes` already groups its commits the way that skill would; use `commit-bundles` on its own when you want the commits without the release documentation.
+The coding recipes end at `document-changes`, which writes the changelog and commits in bundles without pushing. This recipe adds PR publication. Neither validation gate uses `onFailure: continue`, so a failed build or test suite stops the recipe before publication. A separate `commit-bundles` step would duplicate the grouping already done by `document-changes`; use `commit-bundles` on its own when you want commits without release documentation.
 
 ### spernakit-bump
 
@@ -464,7 +464,7 @@ Align the core Spernakit template documentation, then run The Dance across the t
 
 This is the fleet-wide counterpart to `spernakit-release`, which propagates to exactly one `{application}`. The `spernakit-dance` skill owns the whole fan-out itself — ship the template, three-way sync each app, tester fan-out, triage, remediation, supertest and `smoke:qc` verification, per-app tagging, fleet-manifest reconciliation, dev diary, and session report — with checkpointed resume in `<applications-root>/.dance-state.json`. A recipe cannot loop, so it does not try to; it adds the one thing the skill does not do, which is bringing README, STACK, DEVELOPMENT, the fleet manifest, workspace AGENTS guidance, and the SPERNAKIT audit in line before the template ships. Leave `bumpHint` blank to let the skill size the release from `git log`, or pass `+0.0.1` / `+0.1.0` to force it.
 
-Step 1 stops the recipe when it fails. That is deliberate even though a doc misalignment sounds minor: step 2 commits, tags, and pushes the template and every derived application, so it is the one step in this recipe whose output cannot be quietly rolled back. Alignment is the recipe's stated prerequisite for the release, and a prerequisite that can fail without consequence is not one.
+Step 1 must pass before step 2 commits, tags, and pushes the template and every derived application. Documentation alignment is a release prerequisite, and publishing those releases cannot be quietly rolled back.
 
 ### spernakit-dance-resume
 

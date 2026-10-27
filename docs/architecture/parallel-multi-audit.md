@@ -1,7 +1,7 @@
 # Multi-Audit Runs
 
-aidd runs one audit per agent session, always. A run asked for several audits works through them
-in order, one session each; no session is ever given more than one audit.
+aidd gives each agent session one audit. A run asked for several audits works through them in
+order, with a separate session for each.
 
 ## CLI Behavior
 
@@ -74,7 +74,7 @@ Within one run an audit is settled once, in one of three ways, and is not select
 
 ### What counts as a failed attempt
 
-A failed attempt is a session that failed on its own account: the agent exited non-zero, the
+A failed attempt is an audit-specific session failure: the agent exited non-zero, the
 provider returned an error, the backend went idle, no structured result came back, or the report
 was rejected by validation. Each one counts once against the audit the session held. After the
 first, the same audit is selected again; after the second, the audit is given up on and the run
@@ -215,8 +215,8 @@ still listed as could not run for that run, and the summary says the existing re
 The run's driver names every audit on the run's worklist, not only the audit of its last session.
 The run record also carries a finding count per audit, and that list names only the audits the run
 performed: an audit it gave up on, or that could not run, is on the driver and not on the counts.
-Audit scoring credits a run to the audits on the counts, so an audit nothing audited is never
-scored as a performance that found nothing.
+Audit scoring credits a run only to audits listed in those counts. An audit the run did not
+perform is therefore not scored as having found nothing.
 
 Every iteration summary starts with a line for the audit just processed and carries a run-level
 line, so the final summary describes the whole run:

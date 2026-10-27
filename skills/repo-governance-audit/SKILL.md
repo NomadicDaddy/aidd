@@ -68,8 +68,13 @@ exception.
 
 Treat these as accepted unless current evidence or the user changes the decision:
 
-- Issues disabled: `awesome-htmx`, `eskew-ale`, `stars`.
+- Issues disabled: `awesome-htmx`, `eskew-ale`, `serialtcp`, `stars`.
 - Discussions enabled: `aidd`, `htmx-debugger`, `podex`, `spernakit`.
+- `serialtcp` keeps its fork settings (Phillip, 2026-10-19, room #15693): Projects and Wiki on,
+  merge commits and rebase merges allowed, no delete-branch-on-merge or update-branch suggestion,
+  vulnerability alerts and Dependabot security updates off, no `Default branch safety` ruleset,
+  and private vulnerability reporting off. Reporting goes to its upstream.
+- Private vulnerability reporting off on `awesome-htmx`, also a fork that reports upstream.
 - Archived repositories may retain `master` and do not need active-repository merge or cleanup
   settings.
 - GitHub disables push protection and Dependabot security updates when a public repository is

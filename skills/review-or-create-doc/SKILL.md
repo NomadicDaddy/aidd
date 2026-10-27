@@ -3,6 +3,7 @@ name: review-or-create-doc
 description: 'Review a document for accuracy against the current application state, or create it from the current state if it does not yet exist. Use when refreshing tracked documentation that may be missing, when docs are modified or referenced for accuracy, or during a documentation audit.'
 metadata:
     aidd-category: recipe-maturity
+    aidd-references: docs/reference/documentation-standard.md, docs/reference/feature-fields.md, docs/reference/artifacts.md
 ---
 
 # Review or Create Document
@@ -24,6 +25,12 @@ review-or-create-doc [app] <document-path> [instructions]
 - `[instructions]` → optional review, correction, or authoring emphasis stated in plain language.
 
 ## Process
+
+Read `.aidd/docs/reference/documentation-standard.md` (or `docs/reference/documentation-standard.md`
+inside aidd). Use its reader paths and project exceptions when creating a named missing document.
+Preserve existing first-use paths, in-app sources, and changelog consumers. A directory review or
+an existing-files-only invocation does not authorize a layout migration or new guide set; report
+that missing authoring scope separately. A review-only invocation never writes.
 
 1. **Resolve the target**: Identify the document and application from the invocation. When the
    optional app is supplied, scope relative document paths to that application's directory.

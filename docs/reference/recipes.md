@@ -617,7 +617,7 @@ Review an application's frontend UX, write a redesign plan, generate remediation
 
 ### update-application-documentation
 
-Review and update application documentation to match current implementation, humanize the prose, then document and commit the changes.
+Maintain existing application guides and references against current implementation, humanize the prose, then document and commit the changes. Report missing guides and layout/planning migration as separate authoring work under the documentation standard.
 
 - **Name:** update application documentation
 - **Parameters:** application

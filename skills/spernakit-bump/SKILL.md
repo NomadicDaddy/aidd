@@ -4,6 +4,7 @@ description: 'Ship a new Spernakit template version from <spernakit-root>: valid
 metadata:
     aidd-category: spernakit-fleet
     aidd-contracts: document-changes, humanize-docs
+    aidd-references: docs/reference/documentation-standard.md, docs/reference/feature-fields.md, docs/reference/artifacts.md
 ---
 
 # Release Spernakit

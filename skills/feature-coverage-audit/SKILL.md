@@ -4,6 +4,7 @@ description: 'Audit implemented features for natural documentation and complete 
 metadata:
     aidd-category: audit-remediation
     aidd-contracts: humanize-docs
+    aidd-references: docs/reference/documentation-standard.md, docs/reference/feature-fields.md, docs/reference/artifacts.md
 ---
 
 # Feature Coverage Audit
@@ -64,13 +65,21 @@ For each capability, record:
 
 Read likely maintained documentation surfaces:
 
-- `README.md`, root `CHANGELOG.md`, and `docs/**`
+- `README.md`, `docs/README.md`, first-use/task guides, `docs/CHANGELOG.md`, and other `docs/**`
+- Existing root changelogs, the Spernakit template-product docs, and actual in-app/site sources
 - `.aidd/*.md`, especially `assertions.md`, `project-structure.md`, `screen-map.md`, `testing-scenarios.md`, `questions.md`, and `.aidd/CHANGELOG.md`
 - `.aidd/roadmap.json` only as planning metadata, not natural documentation by itself
 
 Natural documentation coverage means a careful human can understand what the capability does
 without reading code. A changelog-only mention is partial coverage unless it describes current
 behavior clearly enough for reconstruction.
+
+Read the staged `.aidd/docs/reference/documentation-standard.md` (or the repository reference
+inside aidd). Distinguish task coverage from technical reference and verify real navigation and
+source/projection relationships. Report missing guides or path/planning migrations as separately
+scoped work; this audit's safe auto-fix policy does not authorize them. Preserve planning states,
+approval blockers, milestones, provenance, and unresolved acceptance rather than inferring them
+from TODO checkboxes.
 
 ## Phase 4: Inventory Feature JSONs
 

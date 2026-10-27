@@ -1,5 +1,5 @@
 {
-	"description": "Review and update application documentation to match current implementation, humanize the prose, then document and commit the changes.",
+	"description": "Maintain existing application guides and references against current implementation, humanize the prose, then document and commit the changes. Report missing guides and layout/planning migration as separate authoring work under the documentation standard.",
 	"name": "update application documentation",
 	"parameters": [
 		{

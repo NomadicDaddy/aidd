@@ -8,14 +8,13 @@ metadata:
         spernakit-template-refactor, spernakit-diff-sync, spernakit-tester, bug2feature,
         feature-review, devdiary-update, document-changes, tester, testing-scenarios,
         prompt-guidelines
+    aidd-references: docs/reference/documentation-standard.md, docs/reference/feature-fields.md, docs/reference/artifacts.md
     spernakit-references: docs/template/STACK.md, docs/template/DEVELOPMENT.md, docs/template/TESTING.md, docs/template/CHANGELOG.md
 ---
 
 # Propagate the Spernakit Fleet
 
 Propagate the Spernakit template through its derived applications.
-
-During development, it is completely normal to perform the dance often.
 
 ## Spernakit Registry
 

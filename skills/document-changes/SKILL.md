@@ -4,6 +4,7 @@ description: "Document any project's changes by updating its changelog, internal
 metadata:
     aidd-category: metadata
     aidd-contracts: humanize-docs
+    aidd-references: docs/reference/documentation-standard.md, docs/reference/feature-fields.md, docs/reference/artifacts.md
 ---
 
 # Document Changes
@@ -70,6 +71,10 @@ part of what gets documented. Do not stash, reset, or discard anything.
 
 ### Phase 1 - Resolve target and detect artifacts
 
+Read `.aidd/docs/reference/documentation-standard.md` (or the repository reference inside aidd).
+Keep public product history separate from local per-change records. Existing path detection is
+for discovery, not permission to migrate files or broaden the invocation.
+
 1. Confirm the target project root, then read the version manifest identified in Inputs and `VERSION`
    (if it exists). These define the current version. When the project has neither, take the current
    version from the newest version tag or the changelog's top header, and treat every "write the
@@ -87,7 +92,11 @@ part of what gets documented. Do not stash, reset, or discard anything.
     (have recent entries), and **match each file's existing format exactly**; read the top ~40
     lines of each before writing.
 
-3. If no changelog exists, create one in Keep a Changelog format.
+3. If no public changelog exists, create `docs/CHANGELOG.md` in Keep a Changelog format, or use
+   `docs/template/CHANGELOG.md` for the Spernakit template product. A local `.aidd/CHANGELOG.md`
+   alone is not public history. Preserve existing active public paths unless a separately scoped
+   migration updates packaging, release/history validators, tests, and links together; never
+   create a duplicate public history merely to match the preferred layout.
 
 ### Phase 2 - Determine the change surface
 

@@ -9,6 +9,7 @@ metadata:
         document-changes, diary-entry, execute-audit, humanize-docs, prompt-guidelines
     aidd-references: >-
         docs/reference/artifacts.md, docs/reference/external-skills.md,
+        docs/reference/documentation-standard.md, docs/reference/feature-fields.md,
         audits/SEVERITY_CLASSIFICATION.md
     spernakit-references: docs/template/STACK.md, docs/template/DEPLOYMENT.md
 ---
@@ -34,6 +35,12 @@ refresh-project-artifacts <app> [--dry-run]
 Read `.aidd/docs/reference/artifacts.md` completely. When running inside the aidd repository and
 the staged copy is absent, read `docs/reference/artifacts.md` from the repository root. Parse both
 the main artifact table and the related non-aidd artifact table at runtime.
+
+Read the staged `.aidd/docs/reference/documentation-standard.md` (or the repository reference
+inside aidd) for public documentation layout and source ownership. Keep the catalog's manual,
+protected, runtime, and local per-change records distinct from public guides and release history.
+Report missing authoring or path/planning migration scope rather than treating catalog refresh as
+permission to remove root plans, move changelogs, or change feature states and milestones.
 
 The sibling workflows named by the table are staged under `.aidd/skills/<id>/SKILL.md`. When
 running inside the aidd repository and a staged contract is absent, read `skills/<id>/SKILL.md`

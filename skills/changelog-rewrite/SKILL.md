@@ -4,6 +4,7 @@ description: 'Rewrite a noisy generated changelog into meaningful release histor
 metadata:
     aidd-category: metadata
     aidd-contracts: humanize-docs
+    aidd-references: docs/reference/documentation-standard.md, docs/reference/feature-fields.md, docs/reference/artifacts.md
 ---
 
 # Changelog Rewrite
@@ -37,6 +38,12 @@ cross a published boundary, preserve the versions and rewrite the prose only. As
 downgrade or destructive history rewrite.
 
 ## Inputs
+
+Read `.aidd/docs/reference/documentation-standard.md` (or the repository reference inside aidd).
+Create new public history at `docs/CHANGELOG.md`, with the Spernakit template-product exception
+below. Discovery of an existing root changelog does not authorize its relocation: a separate
+owner-scoped migration must update current/historical release checks, packaging, tests, and links
+together, preserving one active public history and the separate local `.aidd` change log.
 
 1. Resolve the target repository from `[app]` or the current working directory.
 2. Detect the version-bearing changelog in this order:

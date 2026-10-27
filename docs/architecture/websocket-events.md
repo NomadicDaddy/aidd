@@ -15,8 +15,9 @@ source of truth):
   `WebSocketEventType` with an `assertHandled(_: never)` default, so adding an event to the union
   without wiring its invalidation breaks the build.
 
-To add an event, add it to the union; the compiler then forces both the emitter and frontend
-invalidation handler to be updated.
+To add an event, add it to the union and implement its emitter. The compiler checks emitted
+payloads and requires the frontend handler and `realtimeEventInvalidations` table to cover the new
+type; it does not require an emitter to exist.
 
 ## Events
 

@@ -87,8 +87,10 @@ A `deferred` record is kept with its spec and its milestone, but it is not work:
 
 Validation rejects `passes: true` on any status other than `completed`. Completed audit findings and
 remediations with `passes: true` must also carry a non-empty `notes` resolution explaining how
-the issue was closed. Completion requires both metadata and the selected agent's final structured
-result to agree.
+the issue was closed. Normal completion requires both metadata and the selected agent's final structured
+result to agree. A missing-marker recovery can accept completed metadata only after attributing
+uncommitted source paths to the run, passing the project's quality gate, and committing that work;
+see [Completion recovery](./what-aidd-modifies.md#git).
 
 When `.aidd/roadmap.json` exists, every feature directory must be assigned to a milestone the
 roadmap defines. `--check-features` raises a hard issue for a feature directory that is unmapped or

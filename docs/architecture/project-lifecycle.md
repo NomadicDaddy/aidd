@@ -61,8 +61,10 @@ before launch. See [recipes.md](../reference/recipes.md) and
 ## 2. Intake (existing codebase)
 
 `recipes/project-intake.json` is a 9-step, **metadata-only** recipe (`metadataOnly: true`):
-it writes to `.aidd/` and never mutates application code, so production codebases can be
-onboarded without risk. The steps build on each other: codebase analysis → interview → infer
+it requests an `.aidd/`-only write allowlist and checks for changes outside it after each step.
+This detects violations rather than preventing writes: shell commands retain host permissions,
+and changes in the live tree are reported without being reverted. See
+[What aidd can modify](../reference/what-aidd-modifies.md). The steps build on each other: codebase analysis → interview → infer
 `project-profile.json` → check artifacts → reverse-engineer feature coverage → generate
 testing scenarios → run applicable audits → park open generated features as
 `waiting_approval` → write `.aidd/reports/intake.md`. The profile inferred in step 3 is what
@@ -77,7 +79,7 @@ it up. See [artifacts.md](../reference/artifacts.md).
 `detectInitialPhase` (`shared/src/metadata/onboarding.ts`) classifies the project on disk,
 checking conditions in order:
 
-1. **`coding`**: `isOnboardingComplete` is true, meaning `.aidd/spec.md`, `.aidd/CHANGELOG.md`,
+1. **`coding`**: `listMissingOnboardingArtifacts` returns no missing artifacts, meaning `.aidd/spec.md`, `.aidd/CHANGELOG.md`,
    and a `features/` directory holding at least one **real backlog feature**. "Real" is
    load-bearing: `hasRealBacklogFeature` requires a feature that `classifyFeatureStatusType`
    calls a `feature`, so the audit findings and remediation items that intake files do not
@@ -133,12 +135,14 @@ the same ranking, used by the non-lease-aware modes in `cli/src/modes/base.ts`. 
 trust the agent's claim alone**: the `AIDD_RESULT` marker must name the selected feature with
 `status: completed` / `passes: true`, **and** the on-disk `feature.json` must actually show
 the same. If the marker claims completion but the metadata wasn't updated, the completion is
-ignored and the run continues. A completion claim whose own prose admits verification was
+ignored and the run continues. A completion claim whose own prose admits required live verification was
 blocked or skipped is likewise rejected, and the feature is parked as `waiting_approval`
 rather than counted (`cli/src/modes/coding/completion.ts`). It then computes a work breakdown
 (eligible, dependency-blocked, pending-approval, incoherent-passing, remaining); when
-`eligible` is zero the run completes even if other features remain, since they're all blocked
-or awaiting approval.
+`eligible` is zero the run completes even if other features remain, since they're all blocked,
+awaiting approval, or deferred. A separate missing-marker recovery path can accept completed
+metadata only after attributing dirty source paths to the run, passing the project gate, and
+committing the attributed work; see [Completion recovery](../reference/what-aidd-modifies.md#git).
 
 ## 7. Audit and findings
 

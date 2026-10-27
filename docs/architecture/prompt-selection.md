@@ -8,15 +8,15 @@ feature context determine the final prompt.
 The CLI parser records flags, then `resolveRunPlan` (`cli/src/plan/resolve.ts`) selects the plan
 shape. `selectMode` takes the **first** matching branch, in this order:
 
-| Trigger                                               | Mode        | Prompt behavior                                                             |
-| ----------------------------------------------------- | ----------- | --------------------------------------------------------------------------- |
-| `--director`                                          | `director`  | Uses the director prompt and the configured fleet-summary/output paths.     |
-| `--audit` or `--audit-all`                            | `audit`     | Uses the compiled audit prompt and audit definitions.                       |
-| `--interview [FILE]`                                  | `interview` | Uses the interview prompt for the next question.                            |
-| `--todo`                                              | `todo`      | Selects the first unchecked item in `.aidd/todo.md`.                        |
-| `--validate`, `--check-features`, `--check-artifacts` | `validate`  | Uses the validate prompt to re-check incomplete features and pending todos. |
-| `--directive`, `--prompt`, `--skill`                  | `directive` | The custom or skill-compiled prompt replaces the base mode prompt.          |
-| no special mode                                       | `coding`    | Uses the coding prompt for selected feature work.                           |
+| Trigger                                               | Mode        | Prompt behavior                                                                        |
+| ----------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| `--director`                                          | `director`  | Uses the director prompt and the configured fleet-summary/output paths.                |
+| `--audit` or `--audit-all`                            | `audit`     | Uses the compiled audit prompt and audit definitions.                                  |
+| `--interview [FILE]`                                  | `interview` | Uses the interview prompt for the next question.                                       |
+| `--todo`                                              | `todo`      | Selects the first unchecked item in `.aidd/todo.md`.                                   |
+| `--validate`, `--check-features`, `--check-artifacts` | `validate`  | Validates feature contracts; invokes the validate prompt only when issues need repair. |
+| `--directive`, `--prompt`, `--skill`                  | `directive` | The custom or skill-compiled prompt replaces the base mode prompt.                     |
+| no special mode                                       | `coding`    | Uses the coding prompt for selected feature work.                                      |
 
 Because directive is the last branch, `--prompt` does not override an earlier mode flag: combining
 it with `--director` still resolves to director mode.
@@ -88,6 +88,8 @@ Other modes carry their own marker shape: `{"todoCompleted":true}` for todo mode
 `{"directiveCompleted":true}` for directive mode, `{"responseMarkdown":"…"}` for interview mode,
 and `{"directorOutputWritten":true}` for director mode. The `initializer` and `onboarding` phases
 get no result contract at all, because their completion is detected rather than reported.
+`--validate` skips the backend entirely when feature contracts are already valid; it does not
+retest implemented behavior or process the TODO list.
 
 Directive completion requires `directiveCompleted: true` and a successful backend exit; files,
 timestamps, commits, and unrelated JSON markers do not substitute for that result. Partial or

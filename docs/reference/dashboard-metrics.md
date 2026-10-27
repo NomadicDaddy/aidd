@@ -23,6 +23,9 @@ The four metrics are rendered by the generic `<Metric>` card
 - **Terminology:** use **"need attention"**, not "failing", because a non-`healthy` band includes
   stale and other needs-attention states that are not literal failures.
 
+A failed dashboard-summary request makes the Projects metric unavailable; a live fleet count does
+not conceal that error (`projectsReading.ts`).
+
 ### Active Runs
 
 - **Value:** `activeRuns.length`, every in-flight run (any non-terminal status, `queued` included,
@@ -36,7 +39,7 @@ Keep the headline and detail aligned to the same feature-pass ratio.
 
 - **Value:** `featureHealthValue`, the **fleet feature-pass rate**, rendered as
   `${featureHealthValue}%`. It is `percent(fleetFeaturePassing, fleetFeatureTotal)`, summed over the
-  discovered project list's `featureStats.passing` / `featureStats.total`. When that list contributes
+  dashboard summary's project `featurePassing` / `featureTotal` fields. When that list contributes
   no features, the totals fall back to the fleet summary's per-project `completedCount` /
   `featureCount`; if that total is also zero, the value falls back to the backend aggregate
   `fleet.fleetAggregations.featurePassRate`, computed in
@@ -62,11 +65,11 @@ Keep the headline and detail aligned to the same feature-pass ratio.
 
 ## Where the numbers come from
 
-| Metric          | Source field / computation                                                                                        | Computed in                                            |
-| --------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Projects        | `projectList.length` (excl. `*.old`); else `fleetAggregations.projectCount`                                       | `DashboardPage.tsx`                                    |
-| Active Runs     | `inFlightRuns(runList)` (non-terminal, `queued` included)                                                         | `DashboardPage.tsx`                                    |
-| Priority Health | `percent(passing, total)` over `featureStats`; else fleet `completedCount`/`featureCount`; else `featurePassRate` | `DashboardPage.tsx`, fallback `fleetSummaryService.ts` |
-| Suggestions     | `suggestions.filter(status === 'pending')`                                                                        | `DashboardPage.tsx`                                    |
+| Metric          | Source field / computation                                                                                                             | Computed in                                            |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Projects        | `projectList.length` (excl. `*.old`); else `fleetAggregations.projectCount`                                                            | `DashboardPage.tsx`                                    |
+| Active Runs     | `inFlightRuns(runList)` (non-terminal, `queued` included)                                                                              | `DashboardPage.tsx`                                    |
+| Priority Health | `percent(featurePassing, featureTotal)` over the dashboard summary; else fleet `completedCount`/`featureCount`; else `featurePassRate` | `DashboardPage.tsx`, fallback `fleetSummaryService.ts` |
+| Suggestions     | `suggestions.filter(status === 'pending')`                                                                                             | `DashboardPage.tsx`                                    |
 
 `fleetHealthScore` is **diagnostic, not a dashboard headline**; see Priority Health above.

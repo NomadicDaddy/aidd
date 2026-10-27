@@ -27,10 +27,12 @@ These rules are enforced rather than tolerated; a value in the wrong place is ig
 instead of being read with a fallback. Public releases are documented in
 [CHANGELOG.md](../CHANGELOG.md).
 
-- **Provider credentials live under `providers.<provider>.*`** in `config.json`, e.g.
-  `providers.zhipu.apiKey` and `providers.zhipu.baseUrl`. The native backend, Direct AI service,
-  and Settings pre-flight validation read only those keys; top-level `apiKey` / `baseUrl` values
-  are not consulted.
+- **Provider settings live under `providers.<provider>.*`** in the user config, e.g.
+  `providers.zhipu.baseUrl`. Prefer provider-scoped environment variables such as `ZHIPU_API_KEY`
+  for credentials; native runs also accept `NATIVE_API_KEY`, with environment keys taking
+  precedence over `providers.<provider>.apiKey`. Project config cannot supply providers or
+  credentials. Top-level `apiKey` / `baseUrl` are not accepted provider settings. See
+  [configuration.md](../reference/configuration.md#provider-settings) for the resolution rules.
 - **The native backend is named `native`** in CLI flags, config files, the runs and settings route
   schemas, and the `BackendInputName` union in `shared/src/plan/types.ts`. `"cli": "native"` and
   `triumvirate.*Cli: "native"` are the accepted spellings; there is no alias.

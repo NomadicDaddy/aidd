@@ -194,8 +194,10 @@ will do on your behalf, so it's worth understanding:
 - The environment is filtered to a narrow allowlist of runtime and shell variables (`PATH`, `HOME`,
   `TEMP`, `SHELL`, …). Provider API keys are **not** among them — those reach backend CLI
   subprocesses only, never a shell step.
-- Recipes are **operator-authored**: you (or a template you installed) write them. The AI agent
-  cannot author or inject recipes; it only runs the steps you defined.
+- Recipe definitions are **operator-trusted** files. You or a template supply them; a coding
+  agent with write access to the aidd checkout can also edit `recipes/*.json`. Review those
+  changes before launch. The shell-step executor runs the stored command without the native
+  agent's shell policy.
 
 ## Native agent shell boundary
 
@@ -222,7 +224,10 @@ aidd runs whatever backend you choose:
   OpenAI-compatible provider you configure (e.g. Zhipu, xAI, a local Ollama). Your API key comes from
   your config or environment and is sent only in the request's auth header, never logged or printed.
 
-The only network egress aidd initiates on its own is to that model provider. Creating a project
+Model-provider calls are one source of network egress. Isolated audit setup also runs the
+project's frozen Bun install, which can contact package registries and download sources and execute
+lifecycle scripts with the account's permissions. Agent and recipe shell commands can make their
+own network requests. Creating a project
 from a template or GitHub repo additionally runs `git clone --depth 1` against the source you named
 — at your request, when you ask for that project. The optional Telegram bridge, if
 you enable it, sends director-chat messages to the Telegram API you configured. The optional
@@ -249,7 +254,8 @@ home"** anywhere in aidd.
   recovery can produce commits during a run.
 - It does not send telemetry or usage analytics to us or a third party. Its usage telemetry stays
   local. Outbound content goes only through actions described above: the model provider and
-  optional Telegram bridge you configure, a source repository you ask aidd to clone, or the
-  opt-in CodeRabbit CLI review whose diff upload is disclosed before use.
+  optional Telegram bridge you configure, a source repository you ask aidd to clone, dependency
+  setup and shell commands, or the opt-in CodeRabbit CLI review whose diff upload is disclosed
+  before use.
 - On uninstall, deleting the aidd checkout leaves every project's `.aidd/` untouched (see the
   [deployment guide](./deployment.md#uninstall)).

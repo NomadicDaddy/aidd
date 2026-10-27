@@ -77,9 +77,10 @@ the first in priority order that still has unfinished features; a feature reques
 milestone after it, falling back to the active one when it is the last.
 
 The feature file, plus `roadmap.json` when a milestone was written, is then prettier-formatted
-and committed as `chore(aidd): add <remediation|feature> <featureId> from web report`. Both
-steps are best-effort: the metadata is already on disk, so a project that is not a git repo
-still returns a successful submission.
+and submitted to Git as `chore(aidd): add <remediation|feature> <featureId> from web report`. Both
+steps are best-effort: the metadata is already on disk, so a project that is not a Git repo, or
+whose ignore rules reject the metadata paths, still returns a successful submission. Ignored
+`.aidd/` metadata stays local; it is never force-added.
 
 ## Report status
 

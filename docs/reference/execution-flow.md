@@ -123,14 +123,19 @@ web-launched process records, PID/lifecycle state, pipeline links, and run-log p
 page combines that live supervision data with project-local `.aidd/runs.jsonl` and iteration
 metadata where available.
 
-The `/director` page has separate persisted chat state. Chat turns run through the selected
-Director backend/model in an isolated data-directory cwd and store user/assistant messages in
-SQLite. Director cycles remain the structured suggestion-producing path; when launched from an
+The `/director` page has separate persisted chat state. When the `directorChat` Direct AI surface
+is enabled and a tool-calling provider resolves, a bounded agent loop can inspect the fleet and
+launch supervised work. `director.chat.allowFileEdits` additionally enables project-scoped file
+tools. Otherwise chat falls back to a text-only turn; external CLI fallback runs in the isolated
+`data/director/chat-work` cwd and rejects reported file modifications. User/assistant messages and
+agent action trails are stored in SQLite. Director cycles remain the structured suggestion-producing path; when launched from an
 active chat they receive the saved profile, recent transcript, and optional cycle directive as
 context.
 
-Feature completion is accepted only when the selected feature metadata and the backend's
-`AIDD_RESULT` marker agree.
+Normal feature completion requires the selected feature metadata and the backend's `AIDD_RESULT`
+marker to agree. A narrow missing-marker recovery path can instead validate and commit changes
+attributed to the run; unknown ownership or a missing or failing gate prevents recovery. See
+[Completion recovery](./what-aidd-modifies.md#git).
 
 ## Stop and Failure Behavior
 

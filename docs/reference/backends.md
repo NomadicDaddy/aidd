@@ -70,13 +70,12 @@ Configure it in `~/.aidd/config.json`:
 	"cli": "native",
 	"defaultProvider": "zhipu",
 	"providers": {
-		"zhipu": { "apiKey": "sk-…", "model": "glm-5.3" }
+		"zhipu": { "model": "glm-5.3" }
 	}
 }
 ```
 
-Or supply the key by environment variable instead of storing it in config, handy for CI or shared
-machines:
+Supply the key through the environment so an agent reading the config file does not receive it:
 
 ```powershell
 $env:ZHIPU_API_KEY = "sk-…"   # or XAI_API_KEY; NATIVE_API_KEY works for any provider
@@ -101,10 +100,12 @@ to install or sign into. (The separate `codex` backend still exists for driving 
 harness.)
 
 ```json
-{ "cli": "openai", "providers": { "openai": { "apiKey": "sk-…", "model": "gpt-6-astra" } } }
+{ "cli": "openai", "providers": { "openai": { "model": "gpt-6-astra" } } }
 ```
 
-Supply the key via `providers.openai.apiKey`, or the `OPENAI_API_KEY` / `NATIVE_API_KEY` env var.
+Supply the key via `OPENAI_API_KEY` or `NATIVE_API_KEY`. The user-config fallback
+`providers.openai.apiKey` is still accepted, but keeping credentials outside the file avoids
+disclosing them when an agent inspects config.
 `reasoning_effort` is forwarded to reasoning-capable models; requests use the Chat Completions API
 (not the Responses API). Remote providers stream responses by default (SSE), which keeps long
 reasoning turns from tripping upstream idle timeouts and feeds the live run console mid-turn:
@@ -118,7 +119,8 @@ OpenAI SSE-compatible) and tune the no-bytes stall timeout with
 ### Ollama (fully local, no key)
 
 `ollama` is a backend name that runs on the native machinery with Ollama's defaults: a local model
-server, no API key, nothing leaves your machine.
+server and no API key. With the default local endpoint, model requests stay on your machine;
+agent tools and shell commands can still make network requests.
 
 ```json
 { "cli": "ollama", "providers": { "ollama": { "model": "gpt-oss:20b" } } }
@@ -130,7 +132,8 @@ Make sure Ollama is running and the model is pulled (`ollama pull gpt-oss:20b`).
 
 `lmstudio` is a backend name that runs on the native machinery with LM Studio's defaults. LM Studio
 exposes an OpenAI-compatible server at `http://localhost:1234/v1`, so aidd talks to it the same way it
-talks to any other provider: no API key, and nothing leaves your machine.
+talks to any other provider. The default local endpoint needs no API key and keeps model requests
+on your machine; agent tools and shell commands can still make network requests.
 
 ```json
 { "cli": "lmstudio", "providers": { "lmstudio": { "model": "openai/gpt-oss-20b" } } }

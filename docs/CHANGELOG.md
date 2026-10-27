@@ -4,6 +4,10 @@ All notable public aidd releases are documented here.
 
 ## Unreleased
 
+### Changed
+
+- Sixteen architecture and reference pages now match current behavior. Provider keys belong in the environment and project config cannot supply providers, credentials or listener access. Metadata-only intake and `web.allowedRoots` detect or bound rather than sandbox, and shell commands keep the account's permissions and network access. The pages also cover the missing-marker completion recovery, the write allowlist in prompts, shared interview answer files, Director chat tools, the benchmark stacks, dashboard and polling sources, and uninstalling the optional agent launcher.
+
 ### Fixed
 
 - Documentation and commit tasks can adopt explicitly delegated existing changes after reviewing their scope. Fresh agents retain protection for unrelated and concurrent edits instead of treating every inherited change as either forbidden or automatically owned.

@@ -14,9 +14,12 @@ Configuration starts from built-in defaults, then merges these sources:
 Later sources override earlier sources. The project file uses the same schema as the user-level
 file and should usually contain only project-specific overrides.
 
-`sharedFiles` and `sharedDirs` are honored from the user-level file only. The project file ships
-with the repository, so a file-copy directive in it would let a cloned codebase copy or overwrite
-files on the operator's machine. Project-config values for these two keys are silently ignored.
+Operator-only settings are silently dropped from project config by `restrictProjectConfig` in
+`shared/src/config/read.ts`: `sharedFiles`, `sharedDirs`, `providers`, `defaultProvider`,
+`channels`, `directAi.provider`, `directAi.baseUrl`, and `web.allowedOrigins`, `web.allowRemote`,
+`web.authToken`, and `web.hostname`. A project cannot supply credentials, redirect an inherited
+provider key, or change who can reach the panel. Other project overrides still apply, including
+model and Direct AI surface settings, web port, roots, and run limits.
 
 The root [config.json.example](../../config.json.example) file shows every accepted config path and
 every canonical backend/provider in a single valid JSON file. Where a runtime default can be
@@ -80,7 +83,8 @@ Provider API keys have their own, older environment chain — see [Provider Sett
   settings.
 - `<project>/.aidd/aidd.config.json` is loaded only after the project directory is known.
 - Bare project names passed by CLI can resolve under `applicationsRoot`.
-- `web.allowedRoots` is the web control panel and backend filesystem boundary.
+- `web.allowedRoots` bounds project discovery and backend project-path validation. Agent and
+  recipe shell commands retain the host account's filesystem permissions.
 - If `web.allowedRoots` is omitted, it falls back to `[applicationsRoot]` when configured, or the
   parent of the current runtime base directory.
 - The Settings page exposes `applicationsRoot` as "Fallback discovery root" (bare project-name
@@ -441,8 +445,9 @@ the argument. Reserve `{targetPath}`/`{root}` for scripts that accept real files
 
 To expose the control panel on a trusted LAN, enable remote access explicitly and bind to all
 interfaces or a concrete LAN address. Remote binding requires a non-empty `web.authToken`; the web
-backend refuses to start if `allowRemote` is true while `authToken` is missing or blank, so a
-remote-bound control panel can never listen without API authentication. The check lives at startup
+backend refuses to start if `allowRemote` is true while `authToken` is missing or blank. Remote
+and forwarded API requests require the token; direct loopback requests with a trusted Host remain
+exempt. The check lives at startup
 rather than in config resolution because every aidd process reads the same configuration, including
 the coding CLI a run spawns, and that CLI is deliberately given an environment without
 `AIDD_WEB_AUTH_TOKEN`. Supply the token through
@@ -466,7 +471,9 @@ When `hostname` is `0.0.0.0` or `::`, aidd also allows origins for detected loca
 interface addresses. The effective allowlist always includes the active listener origin, and adds
 the loopback aliases when the listener is a loopback or wildcard address; `allowedOrigins` is
 additive for stable machine names or fixed LAN IPs. Listener
-changes saved from Settings take effect after restarting `aidd-web`.
+changes to `hostname`, `port`, or `allowRemote` saved from Settings trigger a restart and page
+reload. Editing the config file or changing only `allowedOrigins` requires a restart before the
+listener and its origin allowlist use those values.
 
 The same allowlist decides two things on every panel, remote or not. A request whose `Origin` is
 not on it is refused (403), so a page on another site cannot drive the API from your browser. And
@@ -494,6 +501,8 @@ The web settings API uses a DTO shape, not the exact file shape:
 - `GET /api/v1/settings/config` returns `{ config }`.
 - `PUT /api/v1/settings/config` accepts `applicationRoots` (stored as `web.allowedRoots`) and
   `applicationsRoot` (stored as the top-level `applicationsRoot` key).
+- A PUT body must include `applicationRoots` (at least one entry), `cli`, `ignoredFolders`, and
+  `reasoningEffort`; the other fields are optional. It is not an arbitrary partial file-config patch.
 - Network listener fields (`allowRemote`, `hostname`, `port`, and `allowedOrigins`) are exposed
   directly in the DTO and persist under `web.*`.
 - Optional strings and numbers can be submitted as `null` to clear settings through the API.

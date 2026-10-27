@@ -43,7 +43,8 @@ re-queues the key, and the flush after the refetch settles covers it. The window
 that no operator reads it as lag, because the parts of the UI that must react instantly — a stop
 request flipping a row to "Stopping…" — do so from local state, not from the refetch.
 
-**3. Conditional polling.** A few queries poll, and each one polls only while something is active:
+**3. Polling.** Run and pipeline queries poll while work is active. Schedules, metrics, and sidebar
+counts also poll at fixed intervals because their updates have no corresponding WebSocket event:
 
 | Query                                      | Interval | Condition                                    |
 | ------------------------------------------ | -------- | -------------------------------------------- |
@@ -54,6 +55,7 @@ request flipping a row to "Stopping…" — do so from local state, not from the
 | `['scheduled-tasks', id, 'executions', n]` | 15 s     | always                                       |
 | `['system-metrics']`                       | 5 s      | always                                       |
 | `['web-vitals-summary']`                   | 30 s     | always                                       |
+| `['nav-counts']`                           | 60 s     | always                                       |
 
 Every conditional poller sets `refetchIntervalInBackground: false`, so a hidden tab stops polling.
 Polling is a fallback for socket loss and for the nav badges, not the refresh path — a new poll

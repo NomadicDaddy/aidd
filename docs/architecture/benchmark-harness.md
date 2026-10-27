@@ -8,25 +8,30 @@ the preserved benchmark output files.
 ## What It Measures
 
 - Stack labels (each is `<cli>-<model>-<effort/variant>`), as defined in `benchmarks/manifest.json`:
-    - `native-glm53-low`, `native-glm53-medium`, `native-glm53-high`
-    - `kilocode-glm53-low`, `kilocode-glm53-medium`, `kilocode-glm53-high`
-    - `opencode-glm53-low`, `opencode-glm53-medium`, `opencode-glm53-high`
-    - `claude-code-opus48-low`, `claude-code-opus48-medium`, `claude-code-opus48-high`, `claude-code-opus48-xhigh`, `claude-code-opus48-max`
+    - `native-glm53-low`, `native-glm53-medium`, `native-glm53-high`, `native-glm53-xhigh`
+    - `kilocode-glm53-low`, `kilocode-glm53-medium`, `kilocode-glm53-high`, `kilocode-glm53-xhigh`
+    - `opencode-glm53-low`, `opencode-glm53-medium`, `opencode-glm53-high`, `opencode-glm53-xhigh`
+    - `claude-code-opus5-low`, `claude-code-opus5-medium`, `claude-code-opus5-high`, `claude-code-opus5-xhigh`
+    - `claude-code-fable51-low`, `claude-code-fable51-medium`, `claude-code-fable51-high`, `claude-code-fable51-xhigh`
+    - `codex-gpt56-luna-low`, `codex-gpt56-luna-medium`, `codex-gpt56-luna-high`, `codex-gpt56-luna-xhigh`
+    - `codex-gpt56-terra-low`, `codex-gpt56-terra-medium`, `codex-gpt56-terra-high`, `codex-gpt56-terra-xhigh`
+    - `codex-gpt56-sol-low`, `codex-gpt56-sol-medium`, `codex-gpt56-sol-high`, `codex-gpt56-sol-xhigh`
     - `codex-gpt6-astra-low`, `codex-gpt6-astra-medium`, `codex-gpt6-astra-high`, `codex-gpt6-astra-xhigh`
-    - `ollama-qwen36-latest`, `ollama-qwen36-latest-thinking`, `ollama-qwen36-27b`, `ollama-qwen36-27b-thinking`
-    - `ollama-gpt-oss-20b-low`, `ollama-gpt-oss-20b-medium`, `ollama-gpt-oss-20b-high`, `ollama-gemma4-12b`
+    - `grok-46-low`, `grok-46-medium`, `grok-46-high`
     - `lmstudio-gpt-oss-20b`, `lmstudio-gemma-4-e4b`
 - Fairness cohorts defined in `benchmarks/manifest.json`
 - Control tasks reported separately from the composite leaderboard
 
-The benchmark schemas also accept `cline`. No default Cline stack is included because Cline owns
-provider and model selection; add an explicit stack only when the benchmark environment pins both.
+The benchmark schemas also accept `cline` and `ollama`, but the current manifest includes neither.
+Cline owns provider and model selection; add an explicit stack only when the benchmark environment
+pins both.
 
-Astra token-cost estimates use standard short-context rates: $10 input, $1 cached input, and
-$50 output per million tokens, verified against [OpenAI pricing](https://developers.openai.com/api/docs/pricing)
-on 2026-09-13. The manifest's flat-rate estimator does not model long-context or Fast mode pricing.
+Astra's configured fallback token-cost estimates are $10 input, $1 cached input, and $50 output
+per million tokens in `manifest.pricing`. These are the harness's recorded rates, not a live pricing
+quote. The flat-rate estimator does not model long-context or Fast mode pricing; see
+`benchmarks/README.md` for the recorded pricing assumptions.
 
-Local-model stacks (Ollama, LM Studio) need models loaded with a context window large enough for
+Local-model stacks (currently LM Studio) need models loaded with a context window large enough for
 aidd's prompts (the audit task alone sends ~58-65k tokens) and typically run with
 `--skip-preflight`; see `benchmarks/README.md` for the local-model context guidance.
 
@@ -38,7 +43,7 @@ aidd's prompts (the audit task alone sends ~58-65k tokens) and typically run wit
 - Agentic: `--interview --max-iterations 1`
 - Agentic: `--audit "SPERNAKIT,REACT_BEST_PRACTICES,COMPOSITION_PATTERNS,SECURITY" --max-iterations 1`
 - Agentic: remediation run filtered to `remediation-benchmark-*`
-- Agentic: `--validate --max-iterations 1`
+- Control: `--validate --max-iterations 1` (the fixture's valid feature contracts require no model call)
 - Agentic: comprehension quiz interview
 
 ## Artifacts

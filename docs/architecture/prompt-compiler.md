@@ -20,6 +20,7 @@ fragments are assembled.
 | `carryoverNote`           | One-shot corrective note from the previous iteration, rendered into the launch context.                       |
 | `aiddMetadataUntracked`   | Tells the launch context that `.aidd/` is gitignored in this project.                                         |
 | `leasedFeatures`          | Feature records claimed by other live runs, supplied by the orchestrator and rendered as a do-not-touch list. |
+| `writeAllowlist`          | Writable project-relative paths for this run, rendered before dependency and result-contract sections.        |
 
 The plan carries `fragments[]`, each tagged by `kind` (`phase`, `backend`, `inline`, `audit`,
 `common`, `mode`); the compiler resolves each fragment's `path` at the appropriate assembly
@@ -59,11 +60,13 @@ Sections are joined with a `\n\n---\n\n` separator. Empty fragments are skipped.
 7. **Leased features** (`renderLeasedFeatures`): the feature records other live runs have
    claimed, appended when `leasedFeatures` is non-empty. Renders nothing in the single-run
    case, which keeps it out of every prompt snapshot.
-8. **Dependency sections**: `compileDependencyGraph` (selected feature's neighborhood) and
+8. **Write allowlist** (`renderWriteAllowlist`): the run's writable paths, appended when its
+   allowlist is non-empty so the agent sees the boundary before it writes.
+9. **Dependency sections**: `compileDependencyGraph` (selected feature's neighborhood) and
    `compileDependencyTopology` (whole-project topology), appended when their data exists.
-9. **Result contract**: the structured completion marker from `compileResultContract`,
-   appended (see [prompt-selection.md](./prompt-selection.md#result-contracts)).
-10. **Runtime context**: only when `includeRuntimeContext` is set, the plan variables are
+10. **Result contract**: the structured completion marker from `compileResultContract`,
+    appended (see [prompt-selection.md](./prompt-selection.md#result-contracts)).
+11. **Runtime context**: only when `includeRuntimeContext` is set, the plan variables are
     appended as an `<!-- AIDD_V2_RUNTIME_CONTEXT … -->` HTML comment.
 
 ## Snapshot key

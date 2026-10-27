@@ -125,7 +125,6 @@ The panel binds loopback (`127.0.0.1`) by default and refuses non-loopback hostn
 	"web": {
 		"allowRemote": true,
 		"allowedOrigins": ["http://192.0.2.10:3210", "http://demo-host:3210"],
-		"authToken": "replace-with-a-long-random-secret",
 		"hostname": "0.0.0.0",
 		"port": 3210
 	}
@@ -231,8 +230,8 @@ again. Do not remove it while a backend is serving.
 
 ## Uninstall
 
-A source install is self-contained, so removing it is a directory delete. Nothing is written to
-system locations, the registry, or a package manager.
+A source install keeps its runtime data in the checkout. User configuration and an explicitly
+installed optional agent launcher live under the user profile and need separate cleanup.
 
 1. **Stop the backend** (`bun run stop:web`, or kill the PID in `logs/backend.pid`).
 2. **Back up `data/` first if you want to keep panel history or imported skills.** The SQLite
@@ -242,6 +241,8 @@ system locations, the registry, or a package manager.
    `data/`/`logs/`.
 4. **Optionally remove user config** at `~/.aidd/config.json` for a clean slate. It exists if you
    created one or ever saved the Settings page, which writes to that path.
+5. **If you installed the optional agent launcher**, remove only its managed `aidd` skill package
+   from the agent skill directory you selected. Deleting the checkout does not remove that copy.
 
 **Never delete a project's own `<project>/.aidd/` directory as part of uninstalling aidd.** Those
 hold each project's spec, features, audits, and run history. They are owned by the project, not the

@@ -38,10 +38,9 @@ const lowExposureProfile: ProjectAssuranceProfile = {
 	updatedAt: '2026-01-01T00:00:00.000Z',
 };
 
-// buildProjectWork only reads project.name, project.artifactHealth,
-// project.metadata.{artifactCheck, profile, maturity.currentStageId}. A healthy
-// artifact check keeps the artifact_maintenance work item out of the results so the
-// audit/feature items under test are isolated.
+// buildProjectWork only reads project.name, project.artifactHealth and project.metadata's
+// artifactCheck, profile and maturity.currentStageId. A healthy artifact check keeps the
+// artifact_maintenance item out of the results, isolating the audit/feature items under test.
 function makeProject(options: {
 	featureTotal?: number;
 	phase?: 'coding' | 'initializer' | 'onboarding';
@@ -98,6 +97,7 @@ function makeBacklog(
 		audit: { blockedCount: 0, bySeverity: {}, count: 0, readyCount: 0, top: [] },
 		feature: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
 		remediation: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
+		roadmapBlock: null,
 		unfolded: { count: 0, top: [] },
 		...overrides,
 	};

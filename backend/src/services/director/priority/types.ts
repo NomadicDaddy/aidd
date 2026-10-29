@@ -50,6 +50,16 @@ export interface DirectorBacklogItemSummary {
 	title: string;
 }
 
+export type DirectorRoadmapBlock =
+	'invalid_milestone_mapping' | 'invalid_roadmap' | 'unmapped_features';
+
+/** The records coding's roadmap gate lets a run take now. `runnable` is null when the project has
+ * no roadmap yet, which holds nothing back (coding then creates one with every record in v1.0). */
+export interface DirectorRoadmapEligibility {
+	block: DirectorRoadmapBlock | null;
+	runnable: null | ReadonlySet<string>;
+}
+
 export interface DirectorBacklogBreakdown {
 	audit: {
 		blockedCount: number;
@@ -70,6 +80,8 @@ export interface DirectorBacklogBreakdown {
 		readyCount: number;
 		top: DirectorBacklogItemSummary[];
 	};
+	/** Why coding's roadmap gate refuses every record in the project, or null when it does not. */
+	roadmapBlock: DirectorRoadmapBlock | null;
 	/** Completed audit and remediation findings still standing as records, waiting to be folded
 	 * into the features they changed. Template-owned records in a derived app are not counted. */
 	unfolded: {

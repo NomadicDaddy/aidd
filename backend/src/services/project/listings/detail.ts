@@ -146,6 +146,7 @@ export async function getProjectDetail(
 			auditFreshnessContext,
 			catalogDir: ctx.catalogDir ?? process.cwd(),
 			features,
+			...(roadmap !== undefined ? { roadmap } : {}),
 		})
 	).priorityHealth;
 	return summary;

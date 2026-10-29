@@ -52,6 +52,7 @@ export interface FleetSummaryProject {
 			readyCount: number;
 			top: { id: string; priority: null | number; title: string }[];
 		};
+		roadmapBlock: 'invalid_milestone_mapping' | 'invalid_roadmap' | 'unmapped_features' | null;
 		unfolded: {
 			count: number;
 			top: { id: string; priority: null | number; title: string }[];

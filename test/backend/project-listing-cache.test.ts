@@ -60,6 +60,7 @@ function cacheValue(): ProjectListingCacheValue {
 				audit: { blockedCount: 0, bySeverity: {}, count: 0, readyCount: 0, top: [] },
 				feature: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
 				remediation: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
+				roadmapBlock: null,
 				unfolded: { count: 0, top: [] },
 			},
 			priorityHealth: {

@@ -5,18 +5,22 @@ import {
 } from 'aidd-shared/metadata/features';
 import { isTemplateOwnedFeature } from 'aidd-shared/metadata/template-ownership';
 
-import type { DirectorBacklogBreakdown, DirectorBacklogItemSummary } from './types.ts';
+import type {
+	DirectorBacklogBreakdown,
+	DirectorBacklogItemSummary,
+	DirectorRoadmapEligibility,
+} from './types.ts';
 
 import { normalizeSeverity, numericPriority, numericPriorityOrNull } from './helpers.ts';
 
-// `runnable` holds the record directories the roadmap gate lets coding take now; null means the
-// project has no roadmap yet, which holds nothing back (coding then creates one with every record
-// in v1.0).
+const noRoadmap: DirectorRoadmapEligibility = { block: null, runnable: null };
+
 export function summarizeBacklog(
 	features: Feature[],
 	templateRepo: boolean,
-	runnable: null | ReadonlySet<string> = null,
+	roadmap: DirectorRoadmapEligibility = noRoadmap,
 ): DirectorBacklogBreakdown {
+	const { runnable } = roadmap;
 	const audit = features.filter((feature) => isOpenBacklog(feature) && isAuditFinding(feature));
 	const remediation = features.filter(
 		(feature) =>
@@ -34,6 +38,7 @@ export function summarizeBacklog(
 		audit: { ...bucket(audit, features, runnable), bySeverity: severityCounts(audit) },
 		feature: bucket(regular, features, runnable),
 		remediation: bucket(remediation, features, runnable),
+		roadmapBlock: roadmap.block,
 		unfolded: unfoldedFindings(features, templateRepo),
 	};
 }

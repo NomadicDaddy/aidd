@@ -209,8 +209,9 @@ function artifactIssueSummary(
 }
 
 // Health-only items for audit and remediation buckets where no record can run: each waits on an
-// unmet dependency or sits outside the roadmap's active milestone. buildProjectWork offers only buckets that can run, so without these a project with
-// open but blocked findings scored healthy (Morticia on 81c6abb). They carry no recipe and are
+// unmet dependency or sits outside the roadmap's active milestone, or the roadmap gate refuses
+// coding altogether. buildProjectWork offers only buckets that can run, so without these a project
+// with open but blocked findings scored healthy (Morticia on 81c6abb). They carry no recipe and are
 // passed to buildPriorityHealth only, never offered as suggestions. A dependency id that names no
 // record counts as unmet, so a mistyped or deleted dependency shows up here as well.
 export function buildBlockedBacklogHealthWork(
@@ -221,17 +222,38 @@ export function buildBlockedBacklogHealthWork(
 	if (profileSuppressesBacklog(project)) return [];
 	const blocked: DirectorPrioritizedWork[] = [];
 	const auditPolicy = auditBacklogPolicy(project, backlog.audit.bySeverity);
+	const cause = blockedCause(backlog.roadmapBlock);
 	if (auditsEnabled && auditPolicy.include && allBlocked(backlog.audit)) {
 		blocked.push(
-			blockedItem(project, 'audit_backlog', backlog.audit.count, auditPolicy.riskLevel),
+			blockedItem(
+				project,
+				'audit_backlog',
+				backlog.audit.count,
+				auditPolicy.riskLevel,
+				cause,
+			),
 		);
 	}
 	if (allBlocked(backlog.remediation)) {
 		blocked.push(
-			blockedItem(project, 'remediation_backlog', backlog.remediation.count, 'MEDIUM'),
+			blockedItem(project, 'remediation_backlog', backlog.remediation.count, 'MEDIUM', cause),
 		);
 	}
 	return blocked;
+}
+
+// Name the roadmap gate's own block, as coding does, rather than blaming dependencies for it.
+function blockedCause(block: DirectorBacklogBreakdown['roadmapBlock']): string {
+	switch (block) {
+		case 'invalid_milestone_mapping':
+			return 'the roadmap gate refuses coding because a record names a milestone the roadmap does not define';
+		case 'invalid_roadmap':
+			return 'the roadmap gate refuses coding because roadmap.json cannot be read';
+		case null:
+			return 'each waits on an unmet dependency or sits outside the active roadmap milestone';
+		case 'unmapped_features':
+			return 'the roadmap gate refuses coding because a record has no roadmap milestone';
+	}
 }
 
 function allBlocked(bucket: { count: number; readyCount: number }): boolean {
@@ -243,6 +265,7 @@ function blockedItem(
 	taskType: 'audit_backlog' | 'remediation_backlog',
 	count: number,
 	riskLevel: DirectorRiskLevel,
+	cause: string,
 ): DirectorPrioritizedWork {
 	const label = taskType === 'audit_backlog' ? 'audit' : 'remediation';
 	return {
@@ -250,7 +273,7 @@ function blockedItem(
 		projectId: project.routeId,
 		projectName: project.name,
 		rank: 0,
-		reason: `${project.name} has ${count} ${label} backlog item(s), none runnable: each waits on an unmet dependency or sits outside the active roadmap milestone.`,
+		reason: `${project.name} has ${count} ${label} backlog item(s), none runnable: ${cause}.`,
 		riskLevel,
 		suggestedArgs: null,
 		suggestedRecipe: null,

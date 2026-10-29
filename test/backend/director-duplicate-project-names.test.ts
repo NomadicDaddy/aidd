@@ -112,6 +112,7 @@ function backlogWithRemediation(count: number): DirectorBacklogBreakdown {
 		audit: { blockedCount: 0, bySeverity: {}, count: 0, readyCount: 0, top: [] },
 		feature: { blockedCount: 0, count: 0, readyCount: 0, top: [] },
 		remediation: { blockedCount: 0, count, readyCount: count, top: [] },
+		roadmapBlock: null,
 		unfolded: { count: 0, top: [] },
 	};
 }

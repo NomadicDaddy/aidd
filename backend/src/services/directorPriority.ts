@@ -1,6 +1,7 @@
 import type { AuditFreshnessContext } from 'aidd-shared/metadata/audit-freshness';
 import type { Feature } from 'aidd-shared/metadata/features';
 
+import { evaluateRoadmapCodingGate, isMissingRoadmap } from 'aidd-shared/metadata/roadmap';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 
 import type { ProjectSummaryDto } from '../types.ts';
@@ -45,7 +46,11 @@ export async function buildDirectorProjectPriority(
 				: {}),
 		}),
 	]);
-	const backlog = summarizeBacklog(features, project.isSpernakitTemplate === true);
+	const backlog = summarizeBacklog(
+		features,
+		project.isSpernakitTemplate === true,
+		await roadmapRunnableDirectories(project.path, features),
+	);
 	const auditsEnabled = options.auditsEnabled ?? true;
 	const work = buildProjectWork(project, backlog, auditHealth, auditsEnabled);
 	const priorityHealth = buildPriorityHealth([
@@ -53,6 +58,23 @@ export async function buildDirectorProjectPriority(
 		...buildBlockedBacklogHealthWork(project, backlog, auditsEnabled),
 	]);
 	return { auditHealth, backlog, priorityHealth, work };
+}
+
+// The record directories coding's roadmap gate would let a run take now. A project with no
+// roadmap returns null: coding creates one with every record in v1.0 and holds nothing back. A
+// roadmap that cannot be read, or whose gate is blocked, stops coding outright, so nothing runs.
+async function roadmapRunnableDirectories(
+	projectPath: string,
+	features: Feature[],
+): Promise<null | ReadonlySet<string>> {
+	try {
+		const roadmap = await new FileAiddStore(projectPath).readRoadmap();
+		const gate = evaluateRoadmapCodingGate(roadmap, features);
+		return new Set(gate.blocked ? [] : gate.allowedFeatureDirectories);
+	} catch (err) {
+		if (isMissingRoadmap(err)) return null;
+		return new Set();
+	}
 }
 
 export function applyDirectorAuditPolicy(

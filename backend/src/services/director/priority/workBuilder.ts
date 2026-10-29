@@ -86,7 +86,7 @@ export function buildProjectWork(
 			projectId: project.routeId,
 			projectName: project.name,
 			rank: 0,
-			reason: `${project.name} has ${backlog.audit.count} audit backlog item(s), with ${backlog.audit.readyCount} dependency-ready. ${auditPolicy.reason}`,
+			reason: `${project.name} has ${backlog.audit.count} audit backlog item(s), with ${backlog.audit.readyCount} ready to run. ${auditPolicy.reason}`,
 			riskLevel: auditPolicy.riskLevel,
 			suggestedArgs: { filterBy: 'id', filterValue: 'audit-*' },
 			suggestedRecipe: 'remediate-audit-findings',
@@ -108,7 +108,7 @@ export function buildProjectWork(
 			projectId: project.routeId,
 			projectName: project.name,
 			rank: 0,
-			reason: `${project.name} has ${backlog.remediation.count} remediation backlog item(s), with ${readyRemediationCount} dependency-ready.`,
+			reason: `${project.name} has ${backlog.remediation.count} remediation backlog item(s), with ${readyRemediationCount} ready to run.`,
 			riskLevel: readyRemediationCount > 2 ? 'HIGH' : 'MEDIUM',
 			suggestedArgs: { filterBy: 'id', filterValue: 'remediation-*' },
 			suggestedRecipe: 'remediate-bugs',
@@ -174,7 +174,7 @@ export function buildProjectWork(
 			projectId: project.routeId,
 			projectName: project.name,
 			rank: 0,
-			reason: `${project.name} has ${backlog.feature.count} regular backlog feature(s), with ${readyFeatureCount} dependency-ready.`,
+			reason: `${project.name} has ${backlog.feature.count} regular backlog feature(s), with ${readyFeatureCount} ready to run.`,
 			riskLevel:
 				readyFeatureCount > 5 || topPriority(backlog.feature.top) <= 2 ? 'MEDIUM' : 'LOW',
 			suggestedArgs: null,
@@ -208,8 +208,8 @@ function artifactIssueSummary(
 	};
 }
 
-// Health-only items for audit and remediation buckets whose every record waits on an unmet
-// dependency. buildProjectWork offers only buckets that can run, so without these a project with
+// Health-only items for audit and remediation buckets where no record can run: each waits on an
+// unmet dependency or sits outside the roadmap's active milestone. buildProjectWork offers only buckets that can run, so without these a project with
 // open but blocked findings scored healthy (Morticia on 81c6abb). They carry no recipe and are
 // passed to buildPriorityHealth only, never offered as suggestions. A dependency id that names no
 // record counts as unmet, so a mistyped or deleted dependency shows up here as well.
@@ -250,12 +250,12 @@ function blockedItem(
 		projectId: project.routeId,
 		projectName: project.name,
 		rank: 0,
-		reason: `${project.name} has ${count} ${label} backlog item(s), all blocked by unmet dependencies.`,
+		reason: `${project.name} has ${count} ${label} backlog item(s), none runnable: each waits on an unmet dependency or sits outside the active roadmap milestone.`,
 		riskLevel,
 		suggestedArgs: null,
 		suggestedRecipe: null,
 		taskType,
-		title: `${project.name}: ${label} backlog blocked by dependencies`,
+		title: `${project.name}: ${label} backlog not runnable yet`,
 	};
 }
 

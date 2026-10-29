@@ -55,7 +55,7 @@ describe('director health counts blocked backlog', () => {
 		const health = buildPriorityHealth([...work, ...blocked]);
 		expect(health.score).toBeLessThan(100);
 		expect(health.primaryTaskType).toBe('remediation_backlog');
-		expect(health.reasons.join(' ')).toContain('all blocked by unmet dependencies');
+		expect(health.reasons.join(' ')).toContain('none runnable');
 	});
 
 	test('a bucket with a ready record adds no health-only item', () => {

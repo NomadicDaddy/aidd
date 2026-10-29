@@ -12,6 +12,7 @@ All notable public aidd releases are documented here.
 
 - Documentation and commit tasks can adopt explicitly delegated existing changes after reviewing their scope. Fresh agents retain protection for unrelated and concurrent edits instead of treating every inherited change as either forbidden or automatically owned.
 - The credential-disclosure gate recognizes an empty scanner report containing only counts and fixed rule names. Inline source mentioning dotenv files no longer turns that metadata into a disclosure; returned content, extra fields and nonempty findings still fail closed.
+- Director suggestions name only records in the roadmap's active milestone. A finding mapped to a later milestone is still counted in project health, but it is no longer offered as a run that the roadmap gate would stop at its first step.
 - Audit launches from Runs require an explicit audit selection instead of silently choosing Code Quality. Project, run mode and additional CLI arguments keep visible labels, and invalid launch arguments are rejected before a run is recorded. Supported per-run limit arguments remain available.
 
 ## [3.7.0] - 2026-10-26

@@ -9,9 +9,13 @@ import type { DirectorBacklogBreakdown, DirectorBacklogItemSummary } from './typ
 
 import { normalizeSeverity, numericPriority, numericPriorityOrNull } from './helpers.ts';
 
+// `runnable` holds the record directories the roadmap gate lets coding take now; null means the
+// project has no roadmap yet, which holds nothing back (coding then creates one with every record
+// in v1.0).
 export function summarizeBacklog(
 	features: Feature[],
 	templateRepo: boolean,
+	runnable: null | ReadonlySet<string> = null,
 ): DirectorBacklogBreakdown {
 	const audit = features.filter((feature) => isOpenBacklog(feature) && isAuditFinding(feature));
 	const remediation = features.filter(
@@ -27,9 +31,9 @@ export function summarizeBacklog(
 			!feature.id.startsWith('remediation-'),
 	);
 	return {
-		audit: { ...bucket(audit, features), bySeverity: severityCounts(audit) },
-		feature: bucket(regular, features),
-		remediation: bucket(remediation, features),
+		audit: { ...bucket(audit, features, runnable), bySeverity: severityCounts(audit) },
+		feature: bucket(regular, features, runnable),
+		remediation: bucket(remediation, features, runnable),
 		unfolded: unfoldedFindings(features, templateRepo),
 	};
 }
@@ -53,13 +57,20 @@ function unfoldedFindings(
 }
 
 // A bucket's `top` and readyCount drive runnable suggestions, so they cover only records whose
-// dependencies are met; `count` still covers the whole backlog for health. A blocked remediation
-// record offered as a suggestion launched a run that found nothing eligible (rollshift, 2026-10-22).
+// dependencies are met and which sit in the roadmap's active milestone; `count` still covers the
+// whole backlog for health. A blocked remediation record offered as a suggestion launched a run
+// that found nothing eligible (rollshift, 2026-10-22), and a summon finding in milestone v1.1
+// launched one the roadmap gate stopped at its first step while v1.0 was active (2026-10-29).
 function bucket(
 	items: Feature[],
 	all: Feature[],
+	runnable: null | ReadonlySet<string>,
 ): { blockedCount: number; count: number; readyCount: number; top: DirectorBacklogItemSummary[] } {
-	const ready = items.filter((feature) => dependenciesAreSatisfied(feature, all));
+	const ready = items.filter(
+		(feature) =>
+			dependenciesAreSatisfied(feature, all) &&
+			(runnable === null || runnable.has(feature.directory ?? feature.id)),
+	);
 	return {
 		blockedCount: items.length - ready.length,
 		count: items.length,

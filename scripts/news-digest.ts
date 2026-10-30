@@ -88,8 +88,12 @@ async function runAdvisories(
 	print(`# lines listed below: ${result.lines.length}`);
 	for (const line of result.lines) print(formatAdvisoryLine(line));
 	if (result.returned !== result.lines.length) return 1;
-	// Only a complete listing moves the mark, so an incomplete run's window is queried again.
-	await writeState(statePath, recordAdvisoriesEnd(state, end));
+	// Only a complete listing moves the mark, so an incomplete run's window is queried again. The
+	// state is read again here, not reused from before the fetch, so an item added meanwhile stays.
+	const latest = await readState(statePath);
+	const next = recordAdvisoriesEnd(latest, start, end);
+	if (next === latest) print(`# recorded end unchanged: ${latest.advisoriesThrough ?? 'none'}`);
+	else await writeState(statePath, next);
 	return 0;
 }
 

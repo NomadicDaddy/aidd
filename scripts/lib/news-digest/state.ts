@@ -116,11 +116,20 @@ export function previousAdvisoriesEnd(state: DigestState): string {
 	return state.advisoriesThrough;
 }
 
-/** The state after a complete advisories run listed through `end`, never moving the mark back. */
-export function recordAdvisoriesEnd(state: DigestState, end: string): DigestState {
+/**
+ * The state after a complete advisories run listed `start` to `end`. The mark never moves back,
+ * and it moves forward only over a window that joins it (`start` at or before the mark): a window
+ * starting later would carry the mark past time no run listed, the gap this mark exists to close
+ * (Morticia L-1 on eeef797e). With nothing recorded, any complete window sets it.
+ */
+export function recordAdvisoriesEnd(state: DigestState, start: string, end: string): DigestState {
+	const from = Date.parse(start);
 	const at = Date.parse(end);
+	if (Number.isNaN(from)) throw new Error(`Expected an ISO time for --start, got "${start}"`);
 	if (Number.isNaN(at)) throw new Error(`Expected an ISO time for --end, got "${end}"`);
 	const recorded = state.advisoriesThrough;
-	if (recorded !== undefined && Date.parse(recorded) >= at) return state;
+	if (recorded === undefined) return { ...state, advisoriesThrough: end };
+	const mark = Date.parse(recorded);
+	if (mark >= at || from > mark) return state;
 	return { ...state, advisoriesThrough: end };
 }

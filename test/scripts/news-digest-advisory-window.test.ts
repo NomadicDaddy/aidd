@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { FetchFn } from '../../scripts/lib/news-digest/fetch.ts';
@@ -86,10 +86,53 @@ describe('the advisories window chains from the previous run', () => {
 
 	test('the mark never moves back, and a time that is not one is refused', () => {
 		const state = { advisoriesThrough: SECOND_END, items: [] };
-		expect(recordAdvisoriesEnd(state, FIRST_END)).toBe(state);
-		expect(previousAdvisoriesEnd(recordAdvisoriesEnd({ items: [] }, FIRST_END))).toBe(
-			FIRST_END,
+		expect(recordAdvisoriesEnd(state, FIRST_END, FIRST_END)).toBe(state);
+		const seeded = recordAdvisoriesEnd({ items: [] }, '2026-10-27T13:33:13Z', FIRST_END);
+		expect(previousAdvisoriesEnd(seeded)).toBe(FIRST_END);
+		expect(() => recordAdvisoriesEnd(state, SECOND_END, 'yesterday')).toThrow(
+			'Expected an ISO time',
 		);
-		expect(() => recordAdvisoriesEnd(state, 'yesterday')).toThrow('Expected an ISO time');
+	});
+
+	// Morticia L-1 on eeef797e: a window starting after the mark would carry it past unlisted time.
+	test('a window that starts after the mark leaves the mark, so the gap is still asked for', async () => {
+		const dir = await digestDir();
+		const seed = { dir, end: FIRST_END, start: '2026-10-27T13:33:13Z' };
+		await runDigestCommand(['advisories'], seed, emptyAdvisories([]), () => undefined);
+		const lines: string[] = [];
+		const later = { dir, end: '2026-10-30T13:00:00Z', start: '2026-10-29T13:00:00Z' };
+		expect(
+			await runDigestCommand(['advisories'], later, emptyAdvisories([]), (line) => {
+				lines.push(line);
+			}),
+		).toBe(0);
+		expect(lines).toContain(`# recorded end unchanged: ${FIRST_END}`);
+		expect(await recorded(dir)).toBe(FIRST_END);
+
+		const joining = { dir, end: SECOND_END, start: '2026-10-28T00:00:00Z' };
+		await runDigestCommand(['advisories'], joining, emptyAdvisories([]), () => undefined);
+		expect(await recorded(dir)).toBe(SECOND_END);
+	});
+
+	// Morticia I-1 on eeef797e: items added while the query ran are kept.
+	test('an item recorded during the query survives the mark being written', async () => {
+		const dir = await digestDir();
+		const seed = { dir, end: FIRST_END, start: '2026-10-27T13:33:13Z' };
+		await runDigestCommand(['advisories'], seed, emptyAdvisories([]), () => undefined);
+		const path = join(dir, 'last-digest.json');
+		const addDuringQuery: FetchFn = async () => {
+			const state = JSON.parse(await readFile(path, 'utf8')) as { items: unknown[] };
+			state.items.push({ firstReported: '2026-10-29', title: 'Added', url: 'https://added' });
+			await writeFile(path, JSON.stringify(state));
+			return new Response('[]');
+		};
+		const next = { dir, end: SECOND_END, start: 'previous' };
+		await runDigestCommand(['advisories'], next, addDuringQuery, () => undefined);
+		const after = JSON.parse(await readFile(path, 'utf8')) as {
+			advisoriesThrough: string;
+			items: { url: string }[];
+		};
+		expect(after.advisoriesThrough).toBe(SECOND_END);
+		expect(after.items.map((item) => item.url)).toEqual(['https://added']);
 	});
 });

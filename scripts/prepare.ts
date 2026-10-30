@@ -2,7 +2,12 @@
 import { resolve } from 'node:path';
 import { cwd, exit } from 'node:process';
 
-const setupCommand = ['bun', './scripts/run-bash.ts', '.githooks/leak-guard-setup.sh'];
+const hooksPath = 'scripts/smokestack/hooks';
+const setupCommand = [
+	'bun',
+	'./scripts/smokestack/run-bash.ts',
+	`${hooksPath}/leak-guard-setup.sh`,
+];
 const setupDisplay = setupCommand.join(' ');
 
 interface CommandResult {
@@ -36,7 +41,7 @@ export function prepareRepository(projectRoot: string, run: RunCommand = runComm
 		console.error(`[FAIL] prepare hooks -- ${repository.stderr || 'git is unavailable'}`);
 		return 1;
 	}
-	const configure = run(['git', 'config', 'core.hooksPath', '.githooks'], root);
+	const configure = run(['git', 'config', 'core.hooksPath', hooksPath], root);
 	if (configure.exitCode !== 0) {
 		console.error(`[FAIL] prepare hooks -- ${configure.stderr || 'git config failed'}`);
 		return 1;

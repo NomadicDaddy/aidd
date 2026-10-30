@@ -1,1 +1,1 @@
-export { byCodepoint } from '../license-core/order.ts';
+export { byCodepoint } from '../../smokestack/lib/license-core/order.ts';

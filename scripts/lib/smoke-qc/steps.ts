@@ -120,7 +120,8 @@ export const SMOKE_QC_STEPS: SmokeQcStep[] = [
 	},
 	{
 		command: ['bun', 'run', 'check:hook-parity'],
-		description: 'scaffolding/.githooks matches .githooks and ships every guard it sources',
+		description:
+			'scaffolding/.githooks matches scripts/smokestack/hooks and ships every guard it sources',
 		label: 'check:hook-parity',
 		name: 'check:hook-parity',
 	},

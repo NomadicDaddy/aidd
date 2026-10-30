@@ -40,7 +40,8 @@ export const GATE_CONTRACT_STEPS = [
 	},
 	{
 		command: ['bun', 'run', 'check:gate-conventions'],
-		description: 'Every gate follows the conventions in docs/reference/gate-conventions.md',
+		description:
+			'Every gate follows the conventions in scripts/smokestack/docs/gate-conventions.md',
 		label: 'check:gate-conventions',
 		name: 'check:gate-conventions',
 	},

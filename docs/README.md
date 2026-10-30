@@ -35,7 +35,7 @@ Telemetry, Recipes, Pipelines, Settings) are available on its Docs page. Their s
 | [artifacts.md](./reference/artifacts.md)                                       | How each `.aidd/` artifact is created or refreshed.                                               |
 | [external-skills.md](./reference/external-skills.md)                           | Optional upstream skills aidd can use, and the distribution boundary.                             |
 | [execution-flow.md](./reference/execution-flow.md)                             | Execution flow from CLI args through iteration artifacts.                                         |
-| [gate-conventions.md](./reference/gate-conventions.md)                         | The eight rules every `check*` gate follows, and how to change one.                               |
+| [gate-conventions.md](../scripts/smokestack/docs/gate-conventions.md)          | The eight rules every `check*` gate follows, and how to change one.                               |
 | [project-reports.md](./reference/project-reports.md)                           | Web bug/feature reports and the feature records they generate.                                    |
 | [aidd-screen-recording-script.md](./reference/aidd-screen-recording-script.md) | Recording the release walkthrough: isolated profile, segments, export, acceptance.                |
 | [dashboard-metrics.md](./reference/dashboard-metrics.md)                       | Definition of record for the four dashboard fleet-metric numbers.                                 |

@@ -1,4 +1,4 @@
-import { licenseIdentifiers } from '../license-core/expression.ts';
+import { licenseIdentifiers } from '../../smokestack/lib/license-core/expression.ts';
 import { byCodepoint } from './order.ts';
 import { REGISTRY_LICENSE_NOTICES } from './registry-license-notices.ts';
 import { type ThirdPartyMaterial } from './registry-types.ts';

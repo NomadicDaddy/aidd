@@ -9,7 +9,15 @@ import { testTempDirSync } from '../_helpers/temp.ts';
 // failure paths are never executed is indistinguishable from one that has stopped detecting
 // anything — and this one is the only thing standing between a `git push` and permanent .aidd
 // exposure, so its branches are exercised against real repositories rather than mocks.
-const GUARD = resolve(import.meta.dir, '..', '..', '.githooks', 'aidd-history-guard.sh');
+const GUARD = resolve(
+	import.meta.dir,
+	'..',
+	'..',
+	'scripts',
+	'smokestack',
+	'hooks',
+	'aidd-history-guard.sh',
+);
 const ZERO = '0'.repeat(40);
 const tmpRoot = testTempDirSync('history-guard');
 
@@ -99,14 +107,14 @@ describe('hook file modes', () => {
 		(await git(repoRoot, ['ls-files', '-s', path])).split(/\s+/)[0] ?? '';
 
 	test('hooks git invokes directly are executable in the index', async () => {
-		expect(await indexMode('.githooks/pre-push')).toBe('100755');
-		expect(await indexMode('.githooks/pre-commit')).toBe('100755');
+		expect(await indexMode('scripts/smokestack/hooks/pre-push')).toBe('100755');
+		expect(await indexMode('scripts/smokestack/hooks/pre-commit')).toBe('100755');
 	});
 
 	test('bodies invoked via `bash <path>` need no exec bit', async () => {
 		// Matches the leak-guard convention; asserted so nobody "fixes" them into inconsistency.
-		expect(await indexMode('.githooks/aidd-history-guard.sh')).toBe('100644');
-		expect(await indexMode('.githooks/leak-guard.sh')).toBe('100644');
+		expect(await indexMode('scripts/smokestack/hooks/aidd-history-guard.sh')).toBe('100644');
+		expect(await indexMode('scripts/smokestack/hooks/leak-guard.sh')).toBe('100644');
 	});
 });
 

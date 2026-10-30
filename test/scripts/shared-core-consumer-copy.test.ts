@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, cpSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 
-import { isClaim, LOCK_FILE, readLock } from '../../scripts/lib/shared-core/lock.ts';
+import { isClaim, LOCK_FILE, readLock } from '../../scripts/smokestack/lib/shared-core/lock.ts';
 import { runSharedCoreFrom } from '../_helpers/shared-core-run.ts';
 import { testTempDirSync } from '../_helpers/temp.ts';
 
@@ -14,7 +14,7 @@ import { testTempDirSync } from '../_helpers/temp.ts';
 // the test temp root, with nothing beside it.
 
 const REPO_ROOT = join(import.meta.dir, '..', '..');
-const VICTIM = 'scripts/lib/license-core/order.ts';
+const VICTIM = 'scripts/smokestack/lib/license-core/order.ts';
 
 function git(root: string, ...args: string[]): void {
 	const result = Bun.spawnSync(['git', '-C', root, ...args], {

@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
-import { runNoInlineReferences } from '../../scripts/check-no-inline-references.ts';
+import { runNoInlineReferences } from '../../scripts/smokestack/check-no-inline-references.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';

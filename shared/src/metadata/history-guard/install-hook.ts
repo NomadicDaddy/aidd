@@ -21,8 +21,8 @@ interface HookSpec {
 	 * `pre-commit-leak-guard-only`, a deliberately LESSER variant of the file it lands on, so an
 	 * overwrite is a downgrade.
 	 *
-	 * `marker` cannot tell the two variants apart: it is `bash .githooks/leak-guard.sh`, and both
-	 * carry that line because both run the same guard first. So from 2026-08-09 every aidd run
+	 * `markers` cannot tell the two variants apart: both carry the line that runs the leak guard,
+	 * because both run the same guard first. So from 2026-08-09 every aidd run
 	 * replaced the full `pre-commit` with the guard-only one in each `.aidd`-carrying project it
 	 * touched and staged the result — dropping `smoke:qc:fast` and `check:licenses` from every
 	 * subsequent commit while the hook still read as installed. `aidd` and `podex` were both caught
@@ -37,8 +37,8 @@ interface HookSpec {
 	 * the guard-only file.
 	 */
 	keepExisting?: true;
-	/** Text that identifies the hook as ours, so a foreign one is refused rather than replaced. */
-	marker: string;
+	/** Texts, any one of which marks the hook as ours, so a foreign one is refused, not replaced. */
+	markers: readonly string[];
 	/** Name in `scaffolding/.githooks/`, which differs from `hook` for the commit guard. */
 	sourceFile: string;
 }
@@ -85,7 +85,8 @@ export async function installHook(
 	} catch {
 		/* No hook yet — the normal case. */
 	}
-	if (existing !== null && !existing.includes(spec.marker)) return 'foreign-hook';
+	const ours = (text: string) => spec.markers.some((marker) => text.includes(marker));
+	if (existing !== null && !ours(existing)) return 'foreign-hook';
 	const keep = existing !== null && spec.keepExisting === true;
 
 	// Guards are still delivered when the hook is kept, but only the ones that are ABSENT: a

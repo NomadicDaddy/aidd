@@ -7,7 +7,7 @@ import { sha256 } from '../../scripts/lib/release-build.ts';
 import { resolveBashExecutable } from '../../shared/src/agent/tools/bash-runtime.ts';
 import { fixtureGit, releaseFixture } from '../_helpers/release-capture.ts';
 
-const GUARD = resolve(import.meta.dir, '../../.githooks/screenshot-guard.sh');
+const GUARD = resolve(import.meta.dir, '../../scripts/smokestack/hooks/screenshot-guard.sh');
 const ZERO = '0'.repeat(40);
 const bash = resolveBashExecutable();
 

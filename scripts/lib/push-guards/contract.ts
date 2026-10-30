@@ -1,10 +1,10 @@
 /**
  * What the push-time guard set consists of.
  *
- * `.githooks/` is held byte-identical across the fleet by the shared-core sync (group
- * `push-guards` in `scripts/shared-core-manifest.json`), because a repository-local divergence is
- * exactly the failure mode the convention exists to prevent. This mirrors
- * lib/leak-guard/contract.ts, which does the same job for the commit-time hook.
+ * `scripts/smokestack/hooks/` is held byte-identical across the fleet by the shared-core sync
+ * (group `push-guards` in `scripts/smokestack/shared-core-manifest.json`), because a
+ * repository-local divergence is exactly the failure mode the convention exists to prevent. This
+ * mirrors lib/leak-guard/contract.ts, which does the same job for the commit-time hook.
  *
  * ONE HOOK, EVERY GUARD IT CHAINS. core.hooksPath allows exactly one pre-push, so the hook and the
  * guards it calls cannot have separate owners: two installers writing one file means whichever ran
@@ -25,7 +25,7 @@ export const HOOK = 'pre-push';
 export const MARKER = 'aidd history guard';
 
 /**
- * Every guard .githooks/pre-push chains, in the order it chains them.
+ * Every guard scripts/smokestack/hooks/pre-push chains, in the order it chains them.
  *
  * Re-exported from the ingestion-lane installer rather than restated, because a list kept in two
  * places diverges and the divergence is invisible until a push fails. push-guards-contract.test.ts

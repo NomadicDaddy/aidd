@@ -2,10 +2,10 @@
 /**
  * check-hook-parity.ts
  *
- * Enforces: `scaffolding/.githooks/` is a byte-identical subset of `.githooks/`.
+ * Enforces: `scaffolding/.githooks/` is a byte-identical subset of `scripts/smokestack/hooks/`.
  *
  * The repository has two copies of the same hook files and two different readers. The fleet sync
- * (`sync-shared-core.ts`) holds `.githooks/` byte-identical with the rest of the fleet, while
+ * (`sync-shared-core.ts`) holds `scripts/smokestack/hooks/` byte-identical with the fleet, while
  * `ensureHistoryGuard` installs from `scaffolding/.githooks/` — because the scaffold is what a
  * fresh project is built from and the repository root is not. Nothing made the two agree.
  *
@@ -16,12 +16,12 @@
  * of being pushed to the 32 repositories that sync from it.
  *
  * Three assertions, in the direction the failure ran:
- *   1. Every file in `scaffolding/.githooks/` exists in `.githooks/` with identical bytes.
+ *   1. Every file in `scaffolding/.githooks/` exists in `scripts/smokestack/hooks/`, identically.
  *   2. Every file `ensureHistoryGuard` installs exists in `scaffolding/.githooks/` — a hook copied
  *      without a guard it sources fails on first run under `set -euo pipefail`.
  *   3. A hook the scaffold delivers under a DIFFERENT name has not collapsed into it — see below.
  *
- * The subset is intentionally one-directional. `.githooks/` legitimately holds files the scaffold
+ * The subset is intentionally one-directional. The owner copy legitimately holds files the scaffold
  * must not carry: the full `pre-commit` names tasks a scaffolded package.json does not define, and
  * `leak-guard-setup.sh` is invoked from a `prepare` script a scaffolded package.json does not have.
  * A missing-from-scaffold file is only a failure when assertion 2 names it.
@@ -46,7 +46,7 @@ import {
 import { GUARDS, HOOK } from './lib/push-guards/contract.ts';
 
 const ROOT = resolve(import.meta.dir, '..');
-const OWNER = resolve(ROOT, '.githooks');
+const OWNER = resolve(ROOT, 'scripts', 'smokestack', 'hooks');
 const SCAFFOLD = resolve(ROOT, 'scaffolding', '.githooks');
 
 /**
@@ -90,7 +90,7 @@ export function findHookParityProblems(ownerDir: string, scaffoldDir: string): s
 		const owner = read(ownerDir, name);
 		if (owner === null) {
 			problems.push(
-				`scaffolding/.githooks/${name} — has no counterpart in .githooks/. The scaffold copy has no owner, so no sync will ever correct it.`,
+				`scaffolding/.githooks/${name} — has no counterpart in scripts/smokestack/hooks/. The scaffold copy has no owner, so no sync will ever correct it.`,
 			);
 			continue;
 		}
@@ -98,7 +98,7 @@ export function findHookParityProblems(ownerDir: string, scaffoldDir: string): s
 		// a lone line-ending difference is a real divergence between what two installers deliver.
 		if (!owner.equals(read(scaffoldDir, name)!)) {
 			problems.push(
-				`scaffolding/.githooks/${name} — differs from .githooks/${name}. Copy the owner's version over the scaffold's; a change to one half reaches only the installer that reads that half.`,
+				`scaffolding/.githooks/${name} — differs from scripts/smokestack/hooks/${name}. Copy the owner's version over the scaffold's; a change to one half reaches only the installer that reads that half.`,
 			);
 		}
 	}
@@ -120,7 +120,7 @@ export function findHookParityProblems(ownerDir: string, scaffoldDir: string): s
 		const delivered = read(ownerDir, source);
 		if (delivered !== null && installed.equals(delivered)) {
 			problems.push(
-				`.githooks/${destination} — byte-identical to .githooks/${source}, which ensureHistoryGuard installs over it. The richer hook has been overwritten by the lesser one; restore ${destination} from git history. The marker both variants carry cannot tell them apart, so nothing else will notice.`,
+				`scripts/smokestack/hooks/${destination} — byte-identical to scripts/smokestack/hooks/${source}, which ensureHistoryGuard installs over it. The richer hook has been overwritten by the lesser one; restore ${destination} from git history. The marker both variants carry cannot tell them apart, so nothing else will notice.`,
 			);
 		}
 	}
@@ -135,14 +135,14 @@ export function runHookParity(): number {
 		console.error('[FAIL] The scaffold hooks and the repository hooks disagree:\n');
 		for (const p of problems) console.error(`  - ${p}`);
 		console.error(
-			`\n${problems.length} problem(s). shared/src/metadata/history-guard.ts installs from the scaffold; every fleet sync copies from .githooks/.`,
+			`\n${problems.length} problem(s). shared/src/metadata/history-guard.ts installs from the scaffold; every fleet sync copies from scripts/smokestack/hooks/.`,
 		);
 		return 1;
 	}
 
 	const count = readdirSync(SCAFFOLD).filter((f) => statSync(join(SCAFFOLD, f)).isFile()).length;
 	console.log(
-		`[OK] check:hook-parity — ${count} scaffold hook file(s) match .githooks/, ${INSTALLED.length} installed file(s) present.`,
+		`[OK] check:hook-parity — ${count} scaffold hook file(s) match scripts/smokestack/hooks/, ${INSTALLED.length} installed file(s) present.`,
 	);
 	return 0;
 }

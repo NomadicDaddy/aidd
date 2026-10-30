@@ -400,11 +400,12 @@ describe('smoke cache', () => {
 
 	test('caches the leak-guard self-test and invalidates it when the guard changes', async () => {
 		const root = await createSmokeProject();
-		await mkdir(join(root, '.githooks'), { recursive: true });
-		await writeFile(join(root, '.githooks', 'leak-guard.sh'), '# first guard');
+		const hooks = join(root, 'scripts', 'smokestack', 'hooks');
+		await mkdir(hooks, { recursive: true });
+		await writeFile(join(hooks, 'leak-guard.sh'), '# first guard');
 		await recordStepSuccess(root, 'check:leak-guard', 25);
 		expect(await canSkipStep(root, 'check:leak-guard')).toBe(true);
-		await writeFile(join(root, '.githooks', 'leak-guard.sh'), '# changed guard');
+		await writeFile(join(hooks, 'leak-guard.sh'), '# changed guard');
 		expect(await canSkipStep(root, 'check:leak-guard')).toBe(false);
 	});
 

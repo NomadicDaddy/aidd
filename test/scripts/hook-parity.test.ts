@@ -11,8 +11,8 @@ import {
 import { GUARDS, HOOK } from '../../scripts/lib/push-guards/contract.ts';
 import { testTempDirSync } from '../_helpers/temp.ts';
 
-// The checker's whole value is that it fails on drift, and a green run against the real .githooks/
-// proves only the happy path. Every branch below is driven against synthetic directories.
+// The checker's whole value is that it fails on drift, and a green run against the real
+// scripts/smokestack/hooks/ proves only the happy path. Every branch below is driven against synthetic directories.
 
 const INSTALLED = [HOOK, ...GUARDS, GUARD_ONLY_SOURCE, ...GUARD_ONLY_FILES];
 
@@ -64,7 +64,7 @@ describe('hook parity checker', () => {
 		writeFileSync(join(scaffold, 'orphan-guard.sh'), '# nobody owns this\n');
 		const problems = findHookParityProblems(owner, scaffold);
 		expect(problems).toHaveLength(1);
-		expect(problems[0]).toContain('has no counterpart in .githooks/');
+		expect(problems[0]).toContain('has no counterpart in scripts/smokestack/hooks/');
 	});
 
 	test('an owner-only file is allowed — the subset is one-directional', () => {

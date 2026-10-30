@@ -4,7 +4,7 @@
 	"ignoreIssues": {
 		// Shared verbatim with Spernakit, whose setup branding pass consumes
 		// commandFileReferences. Preserve the owner's exported API here.
-		"scripts/check-script-targets.ts": ["exports"],
+		"scripts/smokestack/check-script-targets.ts": ["exports"],
 	},
 	"includeEntryExports": true,
 	"rules": {
@@ -14,7 +14,7 @@
 	},
 	"workspaces": {
 		".": {
-			"entry": ["scripts/*.ts", "test/**/*.test.ts"],
+			"entry": ["scripts/*.ts", "scripts/smokestack/*.ts", "test/**/*.test.ts"],
 			"ignoreBinaries": ["netstat"],
 			// Knip's binary scanner treats this Bun spawn argument as an unresolved import. The
 			// target is a real entry script and is also covered by the project glob.

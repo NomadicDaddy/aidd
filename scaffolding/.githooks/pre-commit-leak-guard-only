@@ -2,14 +2,14 @@
 # Leak-guard-only pre-commit, for repositories that cannot satisfy the full hook's script-name
 # contract.
 #
-# The canonical .githooks/pre-commit runs `bun run smoke:qc:fast`, and `bun run check:licenses` when
+# The canonical pre-commit runs `bun run smoke:qc:fast`, and `bun run check:licenses` when
 # a dependency manifest is staged. Those names are a contract, not an implementation: a carrier is
 # free to define them however it likes. But a hook that calls a script the repository does not
 # define fails EVERY commit instead of guarding it, and a hook that fails every commit gets
 # uninstalled rather than fixed — taking the leak guard with it.
 #
 # So repositories with no package.json, or with no qc chain behind those two names, get this file
-# instead. The security tier is identical: the same .githooks/leak-guard.sh, byte-identical to every
+# instead. The security tier is identical: the same leak-guard.sh, byte-identical to every
 # other carrier's, scanning the same staged index diff. Only the static checks are absent, and those
 # were never the reason this hook exists.
 #
@@ -43,7 +43,25 @@ unset GITHOOK_BASH_RESOLVED
 
 set -euo pipefail
 
+# The guard sits beside this hook: scripts/smokestack/hooks in a repository that takes it, and
+# .githooks in smokestack itself.
+hooks_dir="$(dirname "$0")"
+
 echo "pre-commit: leak-guard"
-bash .githooks/leak-guard.sh
+bash "$hooks_dir/leak-guard.sh"
+
+# The repository's own pre-commit, kept in .githooks, runs after ours. git runs hooks from one
+# folder, and in a repository that takes this file that folder is scripts/smokestack/hooks, so
+# nothing else would run it. A file there carrying smokestack's ownership line is a delivered copy
+# (in smokestack itself, this file), never the repository's own, and is not run.
+own_hook=".githooks/$(basename "$0")"
+if [ -f "$own_hook" ] && ! grep -q 'smokestack owns this file' "$own_hook"; then
+	if [ -x "$own_hook" ]; then
+		echo "pre-commit: $own_hook"
+		"$own_hook" "$@"
+	else
+		echo "pre-commit: $own_hook is not executable, so it was not run" >&2
+	fi
+fi
 
 echo "pre-commit: passed"

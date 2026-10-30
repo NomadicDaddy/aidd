@@ -1,7 +1,7 @@
 import { stat } from 'node:fs/promises';
 import { isAbsolute, join, normalize } from 'node:path';
 
-import { reviewLicenseExpression } from '../license-core/expression.ts';
+import { reviewLicenseExpression } from '../../smokestack/lib/license-core/expression.ts';
 import { type PackagedTrackedSurfaces } from './distributed-paths.ts';
 import { REGISTRY_LICENSE_NOTICES } from './registry-license-notices.ts';
 import {

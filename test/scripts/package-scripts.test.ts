@@ -145,14 +145,14 @@ describe('package script lifecycle contracts', () => {
 		// Git Bash and fails from PowerShell on the same machine, which broke `bun install` (the
 		// prepare script) and smoke:qc with an execvpe(/bin/bash) relay error that named neither
 		// the script nor the shell it wanted. Shell scripts are invoked through
-		// scripts/run-bash.ts, which resolves Git's own bash.
+		// scripts/smokestack/run-bash.ts, which resolves Git's own bash.
 		const bareBash = Object.entries(scripts).filter(([, command]) =>
 			/(?:^|\s|\()bash\s/.test(command),
 		);
 
 		expect(bareBash).toEqual([]);
-		expect(scripts['check:leak-guard']).toContain('scripts/run-bash.ts');
-		expect(scripts.prepare).toContain('scripts/run-bash.ts');
+		expect(scripts['check:leak-guard']).toContain('scripts/smokestack/run-bash.ts');
+		expect(scripts.prepare).toContain('scripts/smokestack/run-bash.ts');
 	});
 
 	test('builds the control panel through the install lifecycle', async () => {

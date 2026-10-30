@@ -34,7 +34,7 @@ const COMMENT = /<!--[\s\S]*?-->/g;
  * Drop HTML comments, which are markup rather than content and print in no other renderer.
  *
  * This became load-bearing when the in-app documentation started linking to app routes:
- * `scripts/check-docs.ts` resolves every internal markdown link against the filesystem, and
+ * `scripts/smokestack/check-docs.ts` resolves every internal markdown link against the filesystem, and
  * `[Settings](/settings)` is a router destination with no file behind it, so those lines carry the
  * gate's sanctioned `check-docs-allow:` waiver marker as an HTML comment. Without this the markers
  * rendered on the page as literal `<!-- … -->` text.

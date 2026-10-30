@@ -1,4 +1,4 @@
-import { collectDocsInputs } from '../../check-docs.ts';
+import { collectDocsInputs } from '../../smokestack/check-docs.ts';
 
 /**
  * The `check:docs` input list. The gate's verdict depends on more than markdown: a link to a

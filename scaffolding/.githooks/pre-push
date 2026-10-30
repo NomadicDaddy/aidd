@@ -4,8 +4,12 @@
 # git passes the remote name/URL as $1/$2 and the ref updates on stdin. Stdin is captured once
 # and replayed into each guard, because a guard that reads it would otherwise starve the next.
 #
-# If a repository grows its own pre-push checks, chain them here rather than replacing this file —
+# If a repository grows its own pre-push checks, it keeps them in a pre-push of its own in
+# .githooks, which this file runs after the guards (see its end), rather than replacing this file:
 # core.hooksPath allows exactly one pre-push, so an overwrite silently disables the guards.
+#
+# smokestack owns this file and delivers it with `bun run shared-core:write`. Change it in
+# smokestack; every repository that takes it holds a byte-identical copy.
 
 # Find bash by absolute path and put its directory first, then start over under it. Looking bash up
 # on PATH is what broke the pre-commit hook: on Windows System32 holds the WSL launcher under the
@@ -41,5 +45,19 @@ printf '%s\n' "$refs" | bash "$hooks_dir/aidd-history-guard.sh" "${1:-origin}"
 
 echo "pre-push: screenshot guard"
 printf '%s\n' "$refs" | bash "$hooks_dir/screenshot-guard.sh"
+
+# The repository's own pre-push, kept in .githooks, runs after ours. git runs hooks from one
+# folder, and in a repository that takes this file that folder is scripts/smokestack/hooks, so
+# nothing else would run it. A file there carrying smokestack's ownership line is a delivered copy
+# (in smokestack itself, this file), never the repository's own, and is not run.
+own_hook=".githooks/$(basename "$0")"
+if [ -f "$own_hook" ] && ! grep -q 'smokestack owns this file' "$own_hook"; then
+	if [ -x "$own_hook" ]; then
+		echo "pre-push: $own_hook"
+		printf '%s\n' "$refs" | "$own_hook" "$@"
+	else
+		echo "pre-push: $own_hook is not executable, so it was not run" >&2
+	fi
+fi
 
 echo "pre-push: passed"

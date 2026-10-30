@@ -6,7 +6,7 @@
 # Tier 2 (untracked): private literals loaded from LEAK_GUARD_PATTERNS, else
 # the Windows user-level value of the same name, else
 # $HOME/.config/leak-guard/patterns (extended regexes, one per line; blank
-# lines and # comments ignored). Seeded by .githooks/leak-guard-setup.sh
+# lines and # comments ignored). Seeded by leak-guard-setup.sh beside it
 # (runs via the `prepare` script). A configured file that is missing or
 # unreadable stops the commit unless LEAK_GUARD_ALLOW_NO_PRIVATE=1 is set
 # for it; with nothing configured the guard warns and runs tier 1 only.
@@ -19,11 +19,44 @@
 #
 # smokestack owns this file and delivers it with `bun run shared-core:write`. Change it in
 # smokestack; every repository that takes it holds a byte-identical copy. Keep it in step with
-# scripts/check-leak-guard.sh, which tests it.
+# scripts/smokestack/check-leak-guard.sh in a repository that takes it (scripts/check-leak-guard.sh
+# here), which tests it.
 set -euo pipefail
 
-added="$(git diff --cached --unified=0 --no-color -- . ':(exclude).githooks/leak-guard.sh' | grep -E '^\+' | grep -vE '^\+\+\+' || true)"
-[ -z "$added" ] && exit 0
+# What is scanned: everything staged but this file. Its path is asked of git rather than written
+# here, because one byte-identical copy lives at .githooks/leak-guard.sh in smokestack and at
+# scripts/smokestack/hooks/leak-guard.sh everywhere else, and git answers for a relative or absolute
+# hooks path alike. A copy git does not index is in no staged diff, so it needs no exclusion.
+self_path="$(git ls-files --full-name -- "$0" 2>/dev/null || true)"
+self_path="${self_path%%$'\n'*}"
+scanned=(.)
+[ -n "$self_path" ] && scanned+=(":(exclude)$self_path")
+
+# Tier 1c: key files by name. A private key that is binary or encrypted (DER inside .key, PKCS#12,
+# PKCS#8, PuTTY, a Java keystore, or a PEM wrapped by gpg, age or similar) has no PEM header for the
+# content scan, and a binary file adds no lines at all, so names are read before that scan can exit.
+# A bare .gpg or .pgp is refused because nothing inside it names what it wraps; a bare .asc is a
+# signature far more often than a key and is allowed. .der stays off: it is as often a public
+# certificate. A deletion is never refused. There is no exemption list (design review #17104).
+key_name_pattern='\.(pem|key|p12|pfx|p8|ppk|jks|keystore)(\.(gpg|asc|pgp|age|enc))?$|\.(gpg|pgp)$'
+# Prints each staged file whose last path segment is key-shaped, NUL-terminated; -z keeps a name
+# with a newline, quotes or non-ASCII whole, and T counts a symlink that became a file.
+key_named_files() {
+	local file
+	while IFS= read -r -d '' file; do
+		if printf '%s\n' "${file##*/}" | grep -qEi -e "$key_name_pattern"; then printf '%s\0' "$file"; fi
+	done < <(git diff --cached --name-only -z --diff-filter=ACMRT -- "${scanned[@]}")
+}
+# The loop above cannot tell an index git could not list from an empty one, so ask first: a guard
+# that cannot read the staged names has not checked them.
+if ! git diff --cached --name-only -z --diff-filter=ACMRT -- "${scanned[@]}" >/dev/null; then
+	echo "x leak-guard: git could not list the staged files, so key file names were not checked." >&2
+	exit 1
+fi
+key_hits="$(key_named_files | tr '\0' '\n')"
+
+added="$(git diff --cached --unified=0 --no-color -- "${scanned[@]}" | grep -E '^\+' | grep -vE '^\+\+\+' || true)"
+[ -z "$added$key_hits" ] && exit 0
 
 # Tier 1a: secret formats (case-insensitive like the rest of the scan).
 secret_pattern='AKIA[0-9A-Z]{16}|xox[baprs]-[0-9A-Za-z-]{10,}|gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,}|\bsk-[A-Za-z0-9_-]{20,}'
@@ -80,7 +113,7 @@ pem_scan() {
 		fi
 	done
 }
-pem_hits="$(git diff --cached --unified=1 --no-color -- . ':(exclude).githooks/leak-guard.sh' | grep -vE '^(\+\+\+|---)' | pem_scan || true)"
+pem_hits="$(git diff --cached --unified=1 --no-color -- "${scanned[@]}" | grep -vE '^(\+\+\+|---)' | pem_scan || true)"
 
 # Tier 2: private literals from the user-level pattern file.
 #
@@ -109,12 +142,21 @@ patterns_file="${patterns_file:-$HOME/.config/leak-guard/patterns}"
 [ -e "$patterns_file" ] && configured=1
 self_name="$(basename "$(git rev-parse --show-toplevel)")"
 # A public site may advertise sibling products whose names are private everywhere else, and the
-# self-name rule cannot express that. The tracked .githooks/leak-guard-publishes lists the names
-# this repository is cleared to publish, one per line. It is read from the INDEX, so what governs a
-# commit is what that commit's reviewer sees, not an unstaged local edit. A pattern is cleared only
-# when it matches a listed name in full (-x), so one concatenated entry cannot clear two patterns.
-# It clears tier 2 only; secret formats and home paths are never exempt, and each use is announced.
-publishes="$(git show :.githooks/leak-guard-publishes 2>/dev/null | tr -d '\r' | grep -vE '^[[:space:]]*(#|$)' || true)"
+# self-name rule cannot express that. The tracked scripts/smokestack/leak-guard-publishes lists the
+# names this repository is cleared to publish, one per line. It is read from the INDEX, so what
+# governs a commit is what that commit's reviewer sees, not an unstaged local edit. A pattern is
+# cleared only when it matches a listed name in full (-x), so one concatenated entry cannot clear
+# two patterns. It clears tier 2 only; secret formats and home paths are never exempt, and each use
+# is announced.
+#
+# The second read is the file's home before v0.6.0, kept for v0.6.0 only so a repository is not left
+# unguarded between taking this file and moving its list. The release after v0.6.0 removes it.
+publishes="$(
+	{
+		git show :scripts/smokestack/leak-guard-publishes 2>/dev/null || true
+		git show :.githooks/leak-guard-publishes 2>/dev/null || true
+	} | tr -d '\r' | grep -vE '^[[:space:]]*(#|$)' || true
+)"
 local_hits=''
 # A configured tier the guard cannot read is a guard that is off, and it used to say so in one stderr
 # line above 'passed'. A configured file that is missing or unreadable (an account the file's ACL
@@ -147,7 +189,7 @@ else
 		[ -z "$pattern" ] && continue
 		printf '%s\n' "$self_name" | grep -qEi -e "$pattern" 2>/dev/null && continue
 		if [ -n "$publishes" ] && printf '%s\n' "$publishes" | grep -qxEi -e "$pattern" 2>/dev/null; then
-			echo "leak-guard: a private pattern is cleared for this repo by .githooks/leak-guard-publishes" >&2
+			echo "leak-guard: a private pattern is cleared for this repo by its leak-guard-publishes" >&2
 			continue
 		fi
 		printf '%s\n' "$pattern"
@@ -194,12 +236,19 @@ report_class() {
 		if [ "${count:-0}" -gt 0 ]; then
 			printf '  %s: %s %s, %s\n' "$file" "$count" "$unit" "$label" >&2
 		fi
-	done < <(git diff --cached --name-only -z --diff-filter=ACMR -- . ':(exclude).githooks/leak-guard.sh')
+	done < <(git diff --cached --name-only -z --diff-filter=ACMR -- "${scanned[@]}")
 }
 
-if [ -n "$secret_hits$pem_hits$path_hits$local_hits" ]; then
+if [ -n "$secret_hits$pem_hits$path_hits$local_hits$key_hits" ]; then
 	echo "" >&2
 	echo "x re-leak guard: staged changes contain forbidden private/secret patterns:" >&2
+	if [ -n "$key_hits" ]; then
+		# A name may hold control characters; shown raw they would drive the terminal.
+		while IFS= read -r -d '' file; do
+			printf '  %s: key file by name; unstage it and add it to .gitignore\n' \
+				"$(printf '%s' "$file" | LC_ALL=C tr '\000-\037\177' '?')" >&2
+		done < <(key_named_files)
+	fi
 	if [ -n "$secret_hits" ]; then report_class secret 'secret format' 'line(s)'; fi
 	if [ -n "$pem_hits" ]; then report_class pem 'private key material' 'key(s)'; fi
 	if [ -n "$path_hits" ]; then report_class path 'home-directory path' 'line(s)'; fi

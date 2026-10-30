@@ -11,7 +11,7 @@ import { testTempDirSync } from '../_helpers/temp.ts';
 // prohibition is advice. Every branch below is therefore driven against real repositories and,
 // at the end, through a real `git push` with the whole pre-push chain installed, because a guard
 // whose refusal path is never executed cannot be told from one that has stopped refusing.
-const HOOKS_DIR = resolve(import.meta.dir, '..', '..', '.githooks');
+const HOOKS_DIR = resolve(import.meta.dir, '..', '..', 'scripts', 'smokestack', 'hooks');
 const GUARD = join(HOOKS_DIR, 'force-push-guard.sh');
 const ZERO = '0'.repeat(40);
 const tmpRoot = testTempDirSync('force-push-guard');

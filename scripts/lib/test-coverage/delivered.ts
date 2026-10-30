@@ -1,4 +1,4 @@
-import { readLock } from '../shared-core/lock.ts';
+import { readLock } from '../../smokestack/lib/shared-core/lock.ts';
 import { normalizeProjectPath } from './contracts.ts';
 
 /**

@@ -167,7 +167,7 @@ describe('ensureHistoryGuard', () => {
 		// Matched against executable lines only: the file's header explains the script-name contract
 		// at length, so a substring search over the whole body finds those names in prose.
 		const body = readFileSync(hook, 'utf8');
-		expect(body).toContain('bash .githooks/leak-guard.sh');
+		expect(body).toContain('bash "$hooks_dir/leak-guard.sh"');
 		expect(body).not.toMatch(/^\s*bun run /m);
 
 		const staged = git(dir, ['diff', '--cached', '--name-only']).split('\n');
@@ -185,7 +185,7 @@ describe('ensureHistoryGuard', () => {
 
 	test('keeps an existing pre-commit that already carries the marker — it may be the richer variant', async () => {
 		// The 2026-08-09 downgrade. What ships from the scaffold is deliberately the LESSER of two
-		// pre-commit variants, and the marker it is guarded by (`bash .githooks/leak-guard.sh`) is a
+		// pre-commit variants, and the marker it is guarded by (the line that runs leak-guard.sh) is a
 		// line both variants carry — so the foreign-hook test passes on the full hook and the copy
 		// proceeds. Every aidd run then replaced the richer hook with the poorer one and staged the
 		// result, in this repository among 31 others. A hook that already exists is never overwritten.
@@ -203,6 +203,20 @@ describe('ensureHistoryGuard', () => {
 		// sourcing a script that is not there, which under `set -euo pipefail` fails every commit.
 		expect(existsSync(join(dir, '.githooks', 'leak-guard.sh'))).toBe(true);
 		expect(staged).toContain('.githooks/leak-guard.sh');
+	});
+
+	test('keeps a pre-commit from smokestack 0.6.x, which runs its guard from beside itself', async () => {
+		// Smokestack 0.6.x hooks run `bash "$hooks_dir/leak-guard.sh"` rather than naming .githooks, so
+		// that line marks the hook as ours too. The older line above stays recognised so a project
+		// guarded before the move is kept for the fleet sync to upgrade, not refused (Phillip #27892).
+		const dir = await makeRepo('smokestack-commit');
+		await mkdir(join(dir, '.githooks'), { recursive: true });
+		const mine =
+			'#!/usr/bin/env bash\nbash "$hooks_dir/leak-guard.sh"\nbun run check:licenses\n';
+		await writeFile(join(dir, '.githooks', 'pre-commit'), mine);
+
+		expect(await ensureHistoryGuard(dir, AIDD_ROOT)).toBe('installed');
+		expect(readFileSync(join(dir, '.githooks', 'pre-commit'), 'utf8')).toBe(mine);
 	});
 
 	test('leaves an existing push hook and its guard bodies alone, and stages none of them', async () => {

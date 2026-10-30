@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
-import { runAuditArtifactHygiene } from '../../scripts/check-audit-artifact-hygiene.ts';
+import { runAuditArtifactHygiene } from '../../scripts/smokestack/check-audit-artifact-hygiene.ts';
 import { auditReportPath } from '../../shared/src/metadata/audit-freshness/metadata.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
@@ -107,7 +107,7 @@ describe('check-audit-artifact-hygiene tool', () => {
 					[
 						process.execPath,
 						'-e',
-						`import { runAuditArtifactHygiene } from './scripts/check-audit-artifact-hygiene.ts';
+						`import { runAuditArtifactHygiene } from './scripts/smokestack/check-audit-artifact-hygiene.ts';
 				process.exit(runAuditArtifactHygiene(${JSON.stringify(tmp)}, new Date(${JSON.stringify(instant)})));`,
 					],
 					{ cwd: process.cwd(), env: { ...process.env, TZ: zone } },

@@ -3,7 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
-import { runGitWindowHide } from '../../scripts/check-git-window-hide.ts';
+import { runGitWindowHide } from '../../scripts/smokestack/check-git-window-hide.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';

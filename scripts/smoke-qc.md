@@ -1,7 +1,8 @@
 # smoke:qc runbook
 
 The quality gate. `bun run smoke:qc` runs every step below in order and reports all failures;
-`bun run smoke:qc:fast` runs the four-step static subset that `.githooks/pre-commit` uses.
+`bun run smoke:qc:fast` runs the four-step static subset that `scripts/smokestack/hooks/pre-commit`
+uses.
 
 **The step lists on this page are generated.** They come from `scripts/lib/smoke-qc/steps.ts`, which
 is the registry the runner actually executes. Edit that file, then run `bun run smoke:docs` and
@@ -71,7 +72,7 @@ Steps (in order):
 15. `bun run check:artifact-parity`
     - artifacts.md is the whole .aidd catalog and scaffolding/.gitignore its projection.
 16. `bun run check:hook-parity`
-    - scaffolding/.githooks matches .githooks and ships every guard it sources.
+    - scaffolding/.githooks matches scripts/smokestack/hooks and ships every guard it sources.
 17. `bun run check:scaffold`
     - The fresh-project scaffold matches its owners and passes its own quality gate.
 18. `bun run check:audit-artifact-hygiene`
@@ -109,7 +110,7 @@ Steps (in order):
 34. `bun run check:gates-wired`
     - Every test:* script is run by a smoke:qc step, or excused by name with a reason.
 35. `bun run check:gate-conventions`
-    - Every gate follows the conventions in docs/reference/gate-conventions.md.
+    - Every gate follows the conventions in scripts/smokestack/docs/gate-conventions.md.
 36. `bun run check:api-types`
     - Independent Director API request and response types match the backend.
 37. `bun run check:audit-evals`
@@ -145,7 +146,7 @@ replaced here by `lint:fast`, which uses ESLint's `--cache`; the replacement rec
 cache key so a fast pass can never satisfy the full gate's uncached `lint`.
 
 The leak guard is deliberately absent: it scans the staged index diff, which is runtime state, so
-`.githooks/pre-commit` calls it directly ahead of this gate rather than through it.
+`scripts/smokestack/hooks/pre-commit` calls it directly ahead of this gate rather than through it.
 
 Steps (in order):
 

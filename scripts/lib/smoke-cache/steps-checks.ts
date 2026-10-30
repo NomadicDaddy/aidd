@@ -83,8 +83,8 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 	'check:destructive-confirmation': [
 		'frontend/src/**/*.tsx',
 		'package.json',
-		'scripts/check-destructive-confirmation.ts',
-		'scripts/lib/destructive/*.ts',
+		'scripts/smokestack/check-destructive-confirmation.ts',
+		'scripts/smokestack/lib/destructive/*.ts',
 	],
 	// The gate's own files only. What it reads (every markdown file it scans, each link target that
 	// resolves, the tracked .gitignore files) comes from the gate itself at run time: collect.ts adds
@@ -94,12 +94,12 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 	// entries recorded under the old rule.
 	'check:docs': [
 		'package.json',
-		'scripts/check-docs.ts',
-		'scripts/lib/docs/*.ts',
 		'scripts/lib/smoke-cache/collect.ts',
 		'scripts/lib/smoke-cache/docs.ts',
 		'scripts/lib/smoke-cache/walk.ts',
 		'scripts/smoke-cache.ts',
+		'scripts/smokestack/check-docs.ts',
+		'scripts/smokestack/lib/docs/*.ts',
 	],
 	'check:env-spread': [
 		'backend/src/**/*.{ts,tsx,js,mjs,cjs}',
@@ -107,7 +107,7 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'package.json',
 		'shared/src/**/*.{ts,tsx,js,mjs,cjs}',
 		'scripts/**/*.{ts,tsx,js,mjs,cjs}',
-		'scripts/check-env-spread.ts',
+		'scripts/smokestack/check-env-spread.ts',
 	],
 	'check:feature-integration': [
 		'backend/src/routes/**/*.ts',
@@ -132,17 +132,18 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'test/scripts/**/*',
 	],
 	'check:gate-conventions': [
-		// Every gate's own source is an input, because the gate reads all of them. `scripts/*.ts` is
-		// deliberately the whole directory rather than the current gate list: a task added to
-		// package.json changes the population, and a glob list naming today's gates would let the
-		// cache skip the run that would have seen the new one.
+		// Every gate's own source is an input, because the gate reads all of them. `scripts/*.ts` and
+		// `scripts/smokestack/*.ts` are deliberately whole directories rather than the current gate
+		// list: a task added to package.json changes the population, and a glob list naming today's
+		// gates would let the cache skip the run that would have seen the new one.
 		// The assertion catalog decides whether a gate's `Enforces:` ID resolves; removing an ID
 		// must rerun the gate rather than leave it cached green over a dangling citation.
 		'.aidd/assertions.md',
 		'package.json',
 		'scripts/*.ts',
 		'scripts/gate-conventions-allowlist.json',
-		'scripts/lib/gate/**/*.ts',
+		'scripts/smokestack/*.ts',
+		'scripts/smokestack/lib/gate/**/*.ts',
 	],
 	'check:gates-wired': [
 		'package.json',
@@ -166,19 +167,19 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 	// directories are globbed rather than listed: a file present on one side and not the other is
 	// itself the drift, so a list of today's filenames would cache away the run that would see it.
 	'check:hook-parity': [
-		'.githooks/**/*',
 		'package.json',
 		'scaffolding/.githooks/**/*',
 		'scripts/check-hook-parity.ts',
 		'scripts/lib/leak-guard/contract.ts',
 		'scripts/lib/push-guards/contract.ts',
+		'scripts/smokestack/hooks/**/*',
 		'shared/src/metadata/history-guard.ts',
 	],
 	'check:leak-guard': [
-		'.githooks/leak-guard.sh',
 		'package.json',
-		'scripts/check-leak-guard.sh',
-		'scripts/run-bash.ts',
+		'scripts/smokestack/check-leak-guard.sh',
+		'scripts/smokestack/hooks/leak-guard.sh',
+		'scripts/smokestack/run-bash.ts',
 	],
 	'check:licenses': [
 		'THIRD-PARTY-LICENSES.md',
@@ -204,10 +205,12 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 		'prompts/**/*',
 		'recipes/**/*',
 		'scaffolding/**/*',
-		'scripts/check-license-core.ts',
 		'scripts/generate-third-party-licenses.ts',
-		'scripts/lib/license-core/**/*.ts',
 		'scripts/lib/third-party-licenses/**/*.ts',
+		'scripts/smokestack/check-license-core.ts',
+		'scripts/smokestack/docs/**/*',
+		'scripts/smokestack/lib/license-core/**/*.ts',
+		'scripts/smokestack/lib/third-party-licenses/**/*.ts',
 		'shared/package.json',
 		'skills/**/*',
 	],
@@ -236,7 +239,7 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 	'check:no-inline-references': [
 		'backend/src/db/schema/**/*.ts',
 		'package.json',
-		'scripts/check-no-inline-references.ts',
+		'scripts/smokestack/check-no-inline-references.ts',
 	],
 	'check:scaffold': [
 		'.editorconfig',

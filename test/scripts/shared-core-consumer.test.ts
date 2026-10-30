@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { LOCK_FILE, readLock } from '../../scripts/lib/shared-core/lock.ts';
+import { LOCK_FILE, readLock } from '../../scripts/smokestack/lib/shared-core/lock.ts';
 import { runSharedCoreFrom } from '../_helpers/shared-core-run.ts';
 
 // aidd carries the shared-core sync and owns none of it. The tool's own tests live with its owner;

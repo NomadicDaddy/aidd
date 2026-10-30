@@ -23,8 +23,12 @@ describe('prepareRepository', () => {
 		expect(result).toBe(1);
 		expect(calls).toEqual([
 			['git', 'rev-parse', '--is-inside-work-tree'],
-			['git', 'config', 'core.hooksPath', '.githooks'],
-			['bun', './scripts/run-bash.ts', '.githooks/leak-guard-setup.sh'],
+			['git', 'config', 'core.hooksPath', 'scripts/smokestack/hooks'],
+			[
+				'bun',
+				'./scripts/smokestack/run-bash.ts',
+				'scripts/smokestack/hooks/leak-guard-setup.sh',
+			],
 		]);
 	});
 });

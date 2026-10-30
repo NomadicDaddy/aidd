@@ -14,7 +14,7 @@ import { AIDD_ROOT, GUARDS, HOOK, MARKER } from '../../scripts/lib/push-guards/c
 //
 // These tests read the actual hook body rather than restating it, because a restatement is one
 // more copy to keep in sync and would drift the same way.
-const HOOKS_DIR = join(AIDD_ROOT, '.githooks');
+const HOOKS_DIR = join(AIDD_ROOT, 'scripts', 'smokestack', 'hooks');
 const hookBody = readFileSync(join(HOOKS_DIR, HOOK), 'utf8');
 
 /**

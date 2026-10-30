@@ -177,6 +177,7 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		'scripts/lib/smoke-qc/**/*.ts',
 		'scripts/lib/test-coverage/**/*.ts',
 		'scripts/lib/third-party-licenses/**/*.ts',
+		'scripts/smokestack/lib/third-party-licenses/**/*.ts',
 		// The phase split and the stall watchdog live here, and between them they decide which
 		// files run, in which phase, and when a wedged phase is killed and retried. Each changes
 		// what a test run does without any edit to run-tests.ts, so keying on that file alone
@@ -218,9 +219,9 @@ export const STEP_DEPENDENCIES: Record<string, string[]> = {
 		// The gate and its rule library are the inputs; the fixture the test writes is created and
 		// deleted inside the run, so it can never be a cache input.
 		'package.json',
-		'scripts/check-gate-conventions.ts',
-		'scripts/lib/gate/**/*.ts',
-		'scripts/test-gate-conventions.ts',
+		'scripts/smokestack/check-gate-conventions.ts',
+		'scripts/smokestack/lib/gate/**/*.ts',
+		'scripts/smokestack/test-gate-conventions.ts',
 	],
 	'test:media-provenance': [
 		'package.json',

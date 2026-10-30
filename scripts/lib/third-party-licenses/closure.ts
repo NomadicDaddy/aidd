@@ -15,10 +15,15 @@
 
 import { join } from 'node:path';
 
-import { collectLockfileClosure } from '../license-core/lockfile.ts';
+import { collectLockfileClosure } from '../../smokestack/lib/license-core/lockfile.ts';
+import {
+	readJson,
+	readLicenseText,
+	readNoticeText,
+	resolveVersionedDir,
+} from '../../smokestack/lib/third-party-licenses/resolve.ts';
 import { licenseOf } from './collect.ts';
 import { byCodepoint } from './order.ts';
-import { readJson, readLicenseText, readNoticeText, resolveVersionedDir } from './resolve.ts';
 
 export interface ClosurePackage {
 	license: string;

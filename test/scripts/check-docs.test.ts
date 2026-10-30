@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { runDocs } from '../../scripts/check-docs.ts';
+import { runDocs } from '../../scripts/smokestack/check-docs.ts';
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';

@@ -2,17 +2,21 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { collectGateConventions, readAssertionIds } from '../../scripts/check-gate-conventions.ts';
-import { applyAllowlist, parseAllowlist } from '../../scripts/lib/gate/allowlist.ts';
-import { discoverGates, staleDeclarations } from '../../scripts/lib/gate/discover.ts';
-import { checkGate } from '../../scripts/lib/gate/rules.ts';
-import { scanTopLevel } from '../../scripts/lib/gate/toplevel.ts';
-import { type Gate, RULE_TITLES, STATIC_RULES } from '../../scripts/lib/gate/types.ts';
+import {
+	collectGateConventions,
+	readAssertionIds,
+} from '../../scripts/smokestack/check-gate-conventions.ts';
+import { applyAllowlist, parseAllowlist } from '../../scripts/smokestack/lib/gate/allowlist.ts';
+import { discoverGates, staleDeclarations } from '../../scripts/smokestack/lib/gate/discover.ts';
+import { checkGate } from '../../scripts/smokestack/lib/gate/rules.ts';
+import { scanTopLevel } from '../../scripts/smokestack/lib/gate/toplevel.ts';
+import { type Gate, RULE_TITLES, STATIC_RULES } from '../../scripts/smokestack/lib/gate/types.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';
 
-// scripts/test-gate-conventions.ts drives the same rules through the real command against a
-// scratch project, which is the shape spernakit can run as well since it has no test runner.
+// scripts/smokestack/test-gate-conventions.ts drives the same rules through the real command
+// against a scratch project, which is the shape spernakit can run as well since it has no test
+// runner.
 // This file covers what a subprocess fixture cannot reach cheaply: the rule functions in
 // isolation, over sources written to provoke exactly one rule at a time.
 
@@ -75,7 +79,7 @@ describe('gate conventions rules', () => {
 		expect(noMarker.map((item) => item.rule)).toEqual(['GC3']);
 
 		// Built from its code point so this file does not itself carry the character it tests for,
-		// the same reason scripts/test-gate-conventions.ts writes its fixture as an escape.
+		// the same reason scripts/smokestack/test-gate-conventions.ts writes its fixture as an escape.
 		const check = String.fromCodePoint(0x2705);
 		const escaped = checkGate(gate(CONFORMING.replace('[OK]', '[OK] \\u2705')), new Set());
 		expect(escaped).toEqual([]);

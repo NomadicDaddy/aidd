@@ -37,7 +37,7 @@ interface DbFileScan {
 	 *
 	 * The walk swallows read errors so a permission problem does not fail the gate, which means a
 	 * tree it never reached returns the same empty file list as a genuinely clean one. The count is
-	 * what separates them, and rule 5 of `docs/reference/gate-conventions.md` requires the caller
+	 * what separates them, and rule 5 of `scripts/smokestack/docs/gate-conventions.md` requires the caller
 	 * to report it.
 	 */
 	examined: number;

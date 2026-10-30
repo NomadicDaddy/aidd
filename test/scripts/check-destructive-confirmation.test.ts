@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { runDestructiveConfirmation } from '../../scripts/check-destructive-confirmation.ts';
+import { runDestructiveConfirmation } from '../../scripts/smokestack/check-destructive-confirmation.ts';
 import { SMOKE_QC_STEPS } from '../../scripts/smoke-qc.ts';
 
 import { testTempDir } from '../_helpers/temp.ts';

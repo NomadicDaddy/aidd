@@ -47,8 +47,8 @@ export const COMMIT_HOOK = 'pre-commit';
  * `pre-commit`. That one runs `bun run check:licenses` and `bun run smoke:qc:fast`, and a scaffolded
  * package.json defines only the second: a project born with it would fail every commit rather than
  * be guarded by one. `pre-commit-leak-guard-only` names no task at all, so it runs anywhere, and
- * scripts/sync-shared-core.ts reaches the same conclusion from that group's `requiresScripts` /
- * `fallbackSource` — it upgrades the hook in place once a project defines both names.
+ * scripts/smokestack/sync-shared-core.ts reaches the same conclusion from that group's
+ * `requiresScripts` / `fallbackSource` — it upgrades the hook in place once a project defines both names.
  *
  * Without this, a project is unguarded at commit time from creation until the next fleet-wide
  * sync, which is exactly the window in which a fresh project accumulates its first secrets.
@@ -56,12 +56,18 @@ export const COMMIT_HOOK = 'pre-commit';
 export const COMMIT_SOURCE = 'pre-commit-leak-guard-only';
 /**
  * Every guard the guard-only hook sources. Deliberately shorter than the `leak-guard-hooks` file
- * list in scripts/shared-core-manifest.json: the fleet sync also carries `leak-guard-setup.sh`,
- * which seeds the tier-2 pattern file from a `prepare` script, and a scaffolded package.json has no
+ * list in scripts/smokestack/shared-core-manifest.json: the fleet sync also carries
+ * `leak-guard-setup.sh`, which seeds the tier-2 pattern file from a `prepare` script, and a scaffolded package.json has no
  * `prepare` to run it. Copying it here would deliver a file nothing invokes.
  */
 export const COMMIT_GUARDS = ['leak-guard.sh'];
-const COMMIT_MARKER = 'bash .githooks/leak-guard.sh';
+/**
+ * What marks a commit hook as ours. Smokestack 0.6.x hooks find their guard beside themselves
+ * (`"$hooks_dir/leak-guard.sh"`); hooks installed before that ran `.githooks/leak-guard.sh` by path.
+ * Both are ours, so a project guarded under the older hook is kept for the fleet sync to upgrade
+ * rather than refused as foreign (Phillip #27892).
+ */
+const COMMIT_MARKERS = ['bash "$hooks_dir/leak-guard.sh"', 'bash .githooks/leak-guard.sh'];
 
 export type GuardOutcome =
 	| 'aidd-ignored'
@@ -184,7 +190,7 @@ export async function ensureHistoryGuard(
 		guards: GUARDS,
 		hook: HOOK,
 		keepExisting: true,
-		marker: MARKER,
+		markers: [MARKER],
 		sourceFile: HOOK,
 	});
 	// Report what actually happened. Returning 'installed' unconditionally would let a read-only
@@ -206,7 +212,7 @@ export async function ensureHistoryGuard(
 		guards: COMMIT_GUARDS,
 		hook: COMMIT_HOOK,
 		keepExisting: true,
-		marker: COMMIT_MARKER,
+		markers: COMMIT_MARKERS,
 		sourceFile: COMMIT_SOURCE,
 	});
 	if (commit === 'foreign-hook') return 'foreign-commit-hook';

@@ -681,7 +681,7 @@ This ensures audit fixes propagate back to the original feature specs, preventin
 
 **Compose the audit report and return it in the `reportMarkdown` field of `AIDD_RESULT`; aidd writes it to `/.aidd/audit-reports/SECURITY-{timestamp}.md`.**
 
-**Date discipline:** Substitute every `{YYYY-MM-DD}` placeholder below with the actual current local system date (for example, `date +%F`). Do NOT pick a future date, a recommended-next-audit date, or a placeholder year. The harness writes filenames using UTC, from `new Date().toISOString().slice(0,10)`. The `scripts/check-audit-artifact-hygiene.ts` gate in `smoke:qc` checks filenames against the current UTC date and headings and `**Date:**` fields against the current local date.
+**Date discipline:** Substitute every `{YYYY-MM-DD}` placeholder below with the actual current local system date (for example, `date +%F`). Do NOT pick a future date, a recommended-next-audit date, or a placeholder year. The harness writes filenames using UTC, from `new Date().toISOString().slice(0,10)`. The `check:audit-artifact-hygiene` gate in `smoke:qc` checks filenames against the current UTC date and headings and `**Date:**` fields against the current local date.
 
 **Score discipline:** in the PERFORMANCE, LIGHTHOUSE, and BUILD_OUTPUT audits the score is a measured claim, not a judgement. Write `N/A` unless this audit's `AIDD_RESULT` entry also declares the verified `instruments[]` entry that produced the number (see the MEASUREMENT CONTRACT in the result contract); aidd rewrites an unbacked score to `SKIPPED / data-unavailable`.
 

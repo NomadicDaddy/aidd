@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 import type { FileCoverageMetrics } from '../../scripts/lib/test-coverage/contracts.ts';
 
-import { LOCK_FILE, readLock } from '../../scripts/lib/shared-core/lock.ts';
+import { LOCK_FILE, readLock } from '../../scripts/smokestack/lib/shared-core/lock.ts';
 import { deliveredPaths } from '../../scripts/lib/test-coverage/delivered.ts';
 import {
 	buildCoverageReport,
@@ -46,6 +46,7 @@ describe('files delivered to this repository are not counted as its own code', (
 			owner: 'smokestack',
 			version: '1.0.0',
 		};
+		mkdirSync(dirname(join(root, LOCK_FILE)), { recursive: true });
 		writeFileSync(join(root, LOCK_FILE), JSON.stringify(lock));
 		expect(deliveredPaths(root)).toEqual(
 			new Set(['.githooks/guard.sh', '.githooks/pre-commit', 'scripts/check-a.ts']),
@@ -54,6 +55,7 @@ describe('files delivered to this repository are not counted as its own code', (
 
 	test('a lock that cannot be read is an error here, not an empty list', () => {
 		const root = testTempDirSync('coverage-delivered-bad-');
+		mkdirSync(dirname(join(root, LOCK_FILE)), { recursive: true });
 		writeFileSync(join(root, LOCK_FILE), '{ not json');
 		expect(() => deliveredPaths(root)).toThrow();
 	});
@@ -96,8 +98,8 @@ describe('files delivered to this repository are not counted as its own code', (
 		// an arbitrary path somebody added. The shared-files check holds the entries exact.
 		const delivered = deliveredPaths(REPO_ROOT);
 		expect(readLock(REPO_ROOT)?.version).toBeDefined();
-		expect(delivered.has('scripts/sync-shared-core.ts')).toBe(true);
-		expect(delivered.has('scripts/lib/shared-core/lock.ts')).toBe(true);
+		expect(delivered.has('scripts/smokestack/sync-shared-core.ts')).toBe(true);
+		expect(delivered.has('scripts/smokestack/lib/shared-core/lock.ts')).toBe(true);
 		expect(delivered.has('scripts/run-test-coverage.ts')).toBe(false);
 		expect(delivered.has('scripts/lib/test-coverage/delivered.ts')).toBe(false);
 	});

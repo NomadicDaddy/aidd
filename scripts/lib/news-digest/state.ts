@@ -15,6 +15,8 @@ export interface DigestItem {
 }
 
 export interface DigestState {
+	/** The end of the last advisories window a complete run listed; the next window starts here. */
+	advisoriesThrough?: string;
 	items: DigestItem[];
 	notes?: unknown;
 	updatedAt?: string;
@@ -97,4 +99,28 @@ export function addItems(state: DigestState, day: string, items: NewItem[]): Add
 		pruned: merged.length - kept.length,
 		state: { ...state, items: kept, updatedAt: new Date().toISOString() },
 	};
+}
+
+/**
+ * Where `--start previous` begins: the end the last complete advisories run recorded. Each run
+ * computing its own "24 hours ago" left gaps between windows (seconds on 2026-10-28/29, Roger
+ * 83e038c3), so consecutive runs chain instead. With nothing recorded there is nothing to chain
+ * from, and the caller has to name a start.
+ */
+export function previousAdvisoriesEnd(state: DigestState): string {
+	if (state.advisoriesThrough === undefined) {
+		throw new Error(
+			'No advisories window is recorded yet; pass an explicit --start <ISO> once',
+		);
+	}
+	return state.advisoriesThrough;
+}
+
+/** The state after a complete advisories run listed through `end`, never moving the mark back. */
+export function recordAdvisoriesEnd(state: DigestState, end: string): DigestState {
+	const at = Date.parse(end);
+	if (Number.isNaN(at)) throw new Error(`Expected an ISO time for --end, got "${end}"`);
+	const recorded = state.advisoriesThrough;
+	if (recorded !== undefined && Date.parse(recorded) >= at) return state;
+	return { ...state, advisoriesThrough: end };
 }

@@ -7,7 +7,9 @@
  * and the final check live here; choosing and writing up the news stays the agent's job.
  *
  * Run: bun run news:digest -- <command> [options]
- *   advisories --start <ISO> --end <ISO>       reviewed npm advisories in the window, every page
+ *   advisories --start <ISO|previous> --end <ISO>
+ *                                               reviewed npm advisories in the window, every page;
+ *                                               `previous` starts where the last complete run ended
  *   releases --start <ISO> --end <ISO>         stack-repo GitHub releases in the window
  *   feed <url> [--count N]                      title | link | date per RSS or Atom entry
  *   article <url> [--chars N]                   readable text of one page
@@ -39,7 +41,9 @@ import {
 	assertDay,
 	knownBefore,
 	parseNewItems,
+	previousAdvisoriesEnd,
 	readState,
+	recordAdvisoriesEnd,
 	writeState,
 } from './lib/news-digest/state.ts';
 import { validateDigest } from './lib/news-digest/validate.ts';
@@ -70,16 +74,23 @@ async function runAdvisories(
 	options: DigestOptions,
 	fetchFn: FetchFn,
 	print: Print,
+	statePath: string,
 ): Promise<number> {
-	const start = required(options.start, 'start');
+	const state = await readState(statePath);
+	const asked = required(options.start, 'start');
+	const start = asked === 'previous' ? previousAdvisoriesEnd(state) : asked;
 	const end = required(options.end, 'end');
 	const result = await fetchAdvisories(start, end, fetchFn);
 	print(`# query: ${result.query}`);
+	if (asked === 'previous') print(`# window starts at the previous run's recorded end: ${start}`);
 	print(`# pages read: ${result.pages}`);
 	print(`# count returned by API for window: ${result.returned}`);
 	print(`# lines listed below: ${result.lines.length}`);
 	for (const line of result.lines) print(formatAdvisoryLine(line));
-	return result.returned === result.lines.length ? 0 : 1;
+	if (result.returned !== result.lines.length) return 1;
+	// Only a complete listing moves the mark, so an incomplete run's window is queried again.
+	await writeState(statePath, recordAdvisoriesEnd(state, end));
+	return 0;
 }
 
 async function runReleases(
@@ -184,7 +195,7 @@ export async function runDigestCommand(
 	const dir = options.dir ?? DIGEST_DIR;
 	switch (command) {
 		case 'advisories':
-			return await runAdvisories(options, fetchFn, print);
+			return await runAdvisories(options, fetchFn, print, join(dir, 'last-digest.json'));
 		case 'archive':
 			return await runArchive(options, dir, print);
 		case 'article':

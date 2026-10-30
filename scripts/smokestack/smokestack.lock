@@ -1,5 +1,5 @@
 {
-	"commit": "f8ca51fdd016a53dad599c2d54c5eda5d5b713e4",
+	"commit": "9aa9a329416ab62027f2cef5bd4576620dfc75cf",
 	"groups": {
 		"gate-conventions": {
 			"files": {
@@ -87,9 +87,13 @@
 		},
 		"leak-guard-scripts": {
 			"files": {
+				"scripts/smokestack/check-leak-guard-cases.sh": {
+					"mode": "100644",
+					"sha256": "070b53507ba9b5d182b9ee220582ddb4db0ebf1fa9244c4554e34620fecadd6e"
+				},
 				"scripts/smokestack/check-leak-guard.sh": {
 					"mode": "100644",
-					"sha256": "26599535e12de2ddfb3c301aa5ae6f5d37ac365ce07efe35aef56e6e517133f1"
+					"sha256": "73a49eba725c6371e6f92db161440a89569e04a0bc21f0233a262506a9747a7b"
 				}
 			}
 		},
@@ -357,7 +361,7 @@
 				},
 				"scripts/smokestack/shared-core-manifest.json": {
 					"mode": "100644",
-					"sha256": "a87c8b24717108bdc1fe4bc086d5a31d774371ef8c4f4cc39620d4e97f75ab4b"
+					"sha256": "7ce49f5fbfe59457f44d5ff4b51f8c15b62ef086950b0a7e93d1a33539dcd082"
 				},
 				"scripts/smokestack/sync-shared-core.ts": {
 					"mode": "100644",
@@ -367,5 +371,5 @@
 		}
 	},
 	"owner": "smokestack",
-	"version": "0.6.3"
+	"version": "0.6.4"
 }

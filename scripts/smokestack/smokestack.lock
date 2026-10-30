@@ -1,5 +1,5 @@
 {
-	"commit": "d32e1c455e581950ddf36a078f366301bab03dc4",
+	"commit": "2cd0184e16219d3fe92ebac025056a9c918af3e8",
 	"groups": {
 		"gate-conventions": {
 			"files": {
@@ -89,7 +89,7 @@
 			"files": {
 				"scripts/smokestack/check-leak-guard.sh": {
 					"mode": "100644",
-					"sha256": "de4f430aee5de0758b4626dd0dde7f5dff51122d85ad35344f3c86ba805c07b7"
+					"sha256": "26599535e12de2ddfb3c301aa5ae6f5d37ac365ce07efe35aef56e6e517133f1"
 				}
 			}
 		},
@@ -217,7 +217,7 @@
 				},
 				"scripts/smokestack/lib/shared-core/check.ts": {
 					"mode": "100644",
-					"sha256": "294364c90da786011c8d3f4f6b0166aed787d0b41cbbc54409c5294ed53d7abf"
+					"sha256": "0a4cbef07cf59f6d470dfbc89002d83979a4e952cfc9bd8bf5e23fa9ba5deb8a"
 				},
 				"scripts/smokestack/lib/shared-core/deliveries.ts": {
 					"mode": "100644",
@@ -239,6 +239,10 @@
 					"mode": "100644",
 					"sha256": "ee6734e12064c3294b2af1bdd26e7a77d153a9fbf766a79104f5eed4c9b5518e"
 				},
+				"scripts/smokestack/lib/shared-core/frozen.ts": {
+					"mode": "100644",
+					"sha256": "1b2e21299e3f69377690e594618261c47779c07b2420ec31e24c8abd829a3d4f"
+				},
 				"scripts/smokestack/lib/shared-core/git-hooks.ts": {
 					"mode": "100644",
 					"sha256": "21ca7e790a6fc881d6c3387d1bd3e7736c982465d0beed4e2dfd9c1c8aaddc4b"
@@ -246,6 +250,10 @@
 				"scripts/smokestack/lib/shared-core/hook.ts": {
 					"mode": "100644",
 					"sha256": "98cda35ed01e00e6ceac41f19b713288345493e8d6bfa841c4fc4b5b3a6b516a"
+				},
+				"scripts/smokestack/lib/shared-core/known-drift.ts": {
+					"mode": "100644",
+					"sha256": "ada2ad4c0244173de9bb2896f35e3b0bdffd664e4d94f8307c600c63fde4024f"
 				},
 				"scripts/smokestack/lib/shared-core/lock-check.ts": {
 					"mode": "100644",
@@ -257,7 +265,7 @@
 				},
 				"scripts/smokestack/lib/shared-core/lock-write.ts": {
 					"mode": "100644",
-					"sha256": "783619cbeee4675b2207080b2968b3a566addf11fa8ec1a92f050ef209f95010"
+					"sha256": "6e543e7cf914a9b7adb3d871418e57ee8472ee956aaccb4597414838b3dbe30c"
 				},
 				"scripts/smokestack/lib/shared-core/lock.ts": {
 					"mode": "100644",
@@ -313,7 +321,7 @@
 				},
 				"scripts/smokestack/lib/shared-core/report.ts": {
 					"mode": "100644",
-					"sha256": "32ff2493c2434c536944f599ed2c29299ac3424646605c9c577c8ec70464668c"
+					"sha256": "b290273d4f3b4b5efbaeab40305af3a7ca67ff1d0760c297a173a3ec6223fa1c"
 				},
 				"scripts/smokestack/lib/shared-core/requires.ts": {
 					"mode": "100644",
@@ -329,7 +337,7 @@
 				},
 				"scripts/smokestack/lib/shared-core/tag.ts": {
 					"mode": "100644",
-					"sha256": "9e83766d40744b2f0c100822984117ebd6227f4bc171e1f83e89c6aec455a69a"
+					"sha256": "06e9d715e6b158d80c1243f84f6710131a974606dfe413a505818771549fca80"
 				},
 				"scripts/smokestack/lib/shared-core/targets.ts": {
 					"mode": "100644",
@@ -337,7 +345,7 @@
 				},
 				"scripts/smokestack/lib/shared-core/vacuity.ts": {
 					"mode": "100644",
-					"sha256": "da690a4c1952ac8520b79fe261f51492856ed7538f63e1a7bc3ef53c044033b5"
+					"sha256": "db57b764de85d50377e7dd6f8a5eb71eea47dcea88a8909c86bbb383a02e546c"
 				},
 				"scripts/smokestack/lib/shared-core/wiring.ts": {
 					"mode": "100644",
@@ -345,19 +353,19 @@
 				},
 				"scripts/smokestack/lib/shared-core/write.ts": {
 					"mode": "100644",
-					"sha256": "dde9e6d411a21531ed5b616ac0c4b7d7871cf05f8a920b059ccfc5d3b4bffbf8"
+					"sha256": "5344319188bf7d9aff09f0412f572893902304bbbc67e0b5d624e2abd13e3148"
 				},
 				"scripts/smokestack/shared-core-manifest.json": {
 					"mode": "100644",
-					"sha256": "e7a961c85f1c469d9953e2a56f1bdd7584c0ab173a946a85f26c18c1f3b6f6a3"
+					"sha256": "a87c8b24717108bdc1fe4bc086d5a31d774371ef8c4f4cc39620d4e97f75ab4b"
 				},
 				"scripts/smokestack/sync-shared-core.ts": {
 					"mode": "100644",
-					"sha256": "8b968d737ec2a26bf66b1cca862ece0954afb3a6862bff0a7924f7936214daf1"
+					"sha256": "7575b4fa3d88054ebdc6e7bf02c865a5e33b04ce24c4bd23399c2a7b1b582608"
 				}
 			}
 		}
 	},
 	"owner": "smokestack",
-	"version": "0.6.1"
+	"version": "0.6.2"
 }

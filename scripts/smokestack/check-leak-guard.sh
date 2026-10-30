@@ -278,7 +278,50 @@ cp "$hook" "$guard_repo/$guard"
 git -C "$guard_repo" -c user.email=t@test -c user.name=t commit -q -m 'header only'
 [ "$(run_guard "$synthetic" "$(printf '%s\n%s' "$pem_header" "$b64_run")")" = 1 ] || fail 'body added under a committed PEM header was not blocked'
 
+# 17. Tier 1c: a key file is refused by NAME even though its content matches no pattern and adds no
+# text line. A PEM header cannot appear in a gpg-wrapped key, so this is the only tier that can
+# catch it. staged.txt is first restaged clean: case 11 left the pasted key body in the index, and
+# it would refuse every later case for its own reason. The bytes carry a NUL so git treats the file
+# as binary (a real encrypted key's shape) and the staged diff adds no text line; printed through
+# an octal-escape pipeline so this file never holds a real key shape.
+printf '%s\n' 'plain harmless content' >"$guard_repo/staged.txt"
+git -C "$guard_repo" add staged.txt
+mkdir -p "$guard_repo/secrets"
+printf '\000\107\120\107\001' >"$guard_repo/secrets/vendor_private_key.pem.gpg"
+git -C "$guard_repo" add secrets/vendor_private_key.pem.gpg
+code=0
+(cd "$guard_repo" && LEAK_GUARD_PATTERNS="$synthetic" bash "$guard") 2>"$tmp/stderr" || code=$?
+[ "$code" = 1 ] || fail 'a gpg-wrapped key file was not refused by name'
+grep -q 'key file by name' "$tmp/stderr" || fail 'a key-name refusal did not say what it refused'
+git -C "$guard_repo" rm -q --cached secrets/vendor_private_key.pem.gpg
+rm -rf "$guard_repo/secrets"
+
+# 17b. A name the pattern does not cover, with the same NUL-bearing bytes, passes: the refusal is
+# governed by the name pattern alone, not by the file being binary.
+printf '\000\107\120\107\001' >"$guard_repo/binary-blob.bin"
+git -C "$guard_repo" add binary-blob.bin
+code=0
+(cd "$guard_repo" && LEAK_GUARD_PATTERNS="$synthetic" bash "$guard") 2>"$tmp/stderr" || code=$?
+[ "$code" = 0 ] || fail 'an uncovered binary name was refused'
+git -C "$guard_repo" rm -q --cached binary-blob.bin
+rm -f "$guard_repo/binary-blob.bin"
+
+# 18. A guard that cannot LIST the staged names has not checked them, so it refuses and says why
+# (the failed-listing branch of tier 1c, previously untested): a GIT_INDEX_FILE that exists but is a
+# directory makes every index read fail without touching the scratch repository's own index.
+mkdir -p "$tmp/bogus-index"
+printf '%s\n' 'plain harmless content' >"$guard_repo/staged.txt"
+git -C "$guard_repo" add staged.txt
+code=0
+(cd "$guard_repo" && GIT_INDEX_FILE="$tmp/bogus-index" LEAK_GUARD_PATTERNS="$synthetic" bash "$guard") 2>"$tmp/stderr" || code=$?
+[ "$code" = 1 ] || fail 'a failed staged-name listing let a commit through'
+grep -q 'could not list the staged files' "$tmp/stderr" || fail 'a failed listing did not say why it refused'
+
 if [ "$failures" -gt 0 ]; then
+	# Both streams: a gate harness that captures only one of them still sees the failure. The
+	# per-case FAIL lines stay on stderr; this summary is the one line a log must not lose
+	# (Morticia I-4: full gates exited 1 with no failure line in their captured output).
+	echo "check-leak-guard: $failures failure(s)"
 	echo "check-leak-guard: $failures failure(s)" >&2
 	exit 1
 fi

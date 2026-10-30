@@ -31,6 +31,7 @@ function order(findings: Finding[]): Finding[] {
 		'diverged-hook': 1,
 		drift: 0,
 		'foreign-hook': 2,
+		'known-drift': 4,
 		'local-chain': 6,
 		'lost-delivery': 1,
 		'not-applicable': 8,
@@ -153,7 +154,7 @@ export function reportCheck(
 		console.error(noRecord(fleetRoot));
 		return 1;
 	}
-	return reportClean(reports, only);
+	return reportClean(reports, only, findings.filter((f) => f.kind === 'known-drift').length);
 }
 
 /**
@@ -219,7 +220,7 @@ export function reportWrite(
 
 	const outcomes = new Map<string, WriteOutcome>();
 	for (const report of owned) {
-		const outcome = applyFindings(report.findings, fleetRoot, dryRun);
+		const outcome = applyFindings(report.findings, fleetRoot, dryRun, delivery, root);
 		outcomes.set(report.group, outcome);
 		// A stale lock is not the file writer's to settle and is not left alone either: the lock
 		// is rewritten below, and reported there. Nor is a lost delivery: the same absent file is

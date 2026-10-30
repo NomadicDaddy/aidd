@@ -4,7 +4,7 @@
  * A TAG, because a lock that names a version has to name something that can be found again. A write
  * is made only while the owner's HEAD is exactly the annotated tag `v<package.json version>` and no
  * tracked file is modified or staged. The bytes themselves are not read from this guarantee but from
- * the tag commit (taggedBytes), so a file that differs from its blob without git reporting it
+ * the tag commit (taggedBatches), so a file that differs from its blob without git reporting it
  * modified still delivers the tagged bytes; the refusals here keep the working tree an honest
  * witness rather than the source of what ships.
  */
@@ -30,17 +30,10 @@ const git = (root: string, ...args: string[]): null | string =>
 	rawGit(root, ...args)?.trim() ?? null;
 
 /**
- * The bytes `path` holds at `commit`, or null when git cannot produce them. The write reads every
- * delivered source through this, so what lands in a target is what the tag holds by construction:
- * a working-tree file that differs from its blob without git reporting it modified — skip-worktree
- * is the known way — cannot leak disk bytes into a delivery.
- */
-export function taggedBytes(root: string, commit: string, path: string): null | string {
-	return rawGit(root, 'show', `${commit}:${path}`);
-}
-
-/**
- * The bytes every `paths` entry holds at `commit`, in one spawn. A write delivers many files, and a
+ * The bytes every `paths` entry holds at `commit`, in one spawn. The write reads every delivered
+ * source through this, so what lands in a target is what the tag holds by construction: a
+ * working-tree file that differs from its blob without git reporting it modified — skip-worktree
+ * is the known way — cannot leak disk bytes into a delivery. A write delivers many files, and a
  * git spawn per file costs more than the read itself on Windows; cat-file --batch answers the whole
  * report from one process. A path git cannot produce maps to null — the same refusal a single
  * missing read would raise — and a batch that fails outright yields an empty map, which blocks

@@ -7,6 +7,7 @@ All notable public aidd releases are documented here.
 ### Changed
 
 - Sixteen architecture and reference pages now match current behavior. Provider keys belong in the environment and project config cannot supply providers, credentials or listener access. Metadata-only intake and `web.allowedRoots` detect or bound rather than sandbox, and shell commands keep the account's permissions and network access. The pages also cover the missing-marker completion recovery, the write allowlist in prompts, shared interview answer files, Director chat tools, the benchmark stacks, dashboard and polling sources, and uninstalling the optional agent launcher.
+- Project discovery's default ignored folders now include aidd's own `.tmp-aidd-*` smoke workspaces, agent and editor folders (`.agents`, `.claude`, `.codex`, `.cursor`, `.idea`, `.kilo`, `.vscode`), `.worktrees` and `*.old` copies. A fresh install, whose default root is the folder holding the aidd checkout, no longer lists the smoke workspaces as projects. A configured `web.ignoredFolders` list still replaces the defaults.
 
 ### Fixed
 

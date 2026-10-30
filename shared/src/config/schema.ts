@@ -7,9 +7,21 @@ import { backendNames, normalizeBackendName } from '../plan/types.ts';
 // Names skipped during project discovery. Besides the usual VCS/build/deps noise, this includes the
 // checkout's own asset directories (frontend, scaffolding) and runtime dirs (data, logs) so a
 // fresh install — whose default root is the app's parent folder — never surfaces the bundled
-// `scaffolding/` template (it ships with a `.aidd/`) as if it were a user project.
+// `scaffolding/` template (it ships with a `.aidd/`) as if it were a user project. aidd's own
+// smoke:e2e and smoke:backends create `.tmp-aidd-*` workspaces (each with a `.aidd/`) in that same
+// parent folder. Agent, editor and worktree folders and `*.old` archive copies are never projects.
 export const defaultIgnoredFolders = [
+	'*.old',
+	'.agents',
+	'.claude',
+	'.codex',
+	'.cursor',
 	'.git',
+	'.idea',
+	'.kilo',
+	'.tmp-aidd-*',
+	'.vscode',
+	'.worktrees',
 	'data',
 	'dist',
 	'frontend',

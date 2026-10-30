@@ -82,7 +82,17 @@ describe('resolveConfig', () => {
 		]);
 		expect(config.web?.dataDir).toBe(join(process.cwd(), 'data'));
 		expect(config.web?.ignoredFolders).toEqual([
+			'*.old',
+			'.agents',
+			'.claude',
+			'.codex',
+			'.cursor',
 			'.git',
+			'.idea',
+			'.kilo',
+			'.tmp-aidd-*',
+			'.vscode',
+			'.worktrees',
 			'data',
 			'dist',
 			'frontend',

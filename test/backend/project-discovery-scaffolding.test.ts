@@ -49,6 +49,32 @@ describe('project discovery ignores bundled distribution assets', () => {
 		expect(paths.some((path) => path.includes('scaffolding'))).toBe(false);
 		expect(paths.some((path) => path.includes('frontend'))).toBe(false);
 	});
+
+	test("skips aidd's own smoke workspaces, agent and editor folders and *.old copies", async () => {
+		const base = await seedInstallLayout();
+		const skipped = [
+			'.tmp-aidd-e2e',
+			'.tmp-aidd-backends',
+			'.claude',
+			'.codex',
+			'.worktrees',
+			'old-site.old',
+		];
+		for (const name of skipped) {
+			await mkdir(join(base, name, '.aidd'), { recursive: true });
+		}
+		const result = await scanRoot(
+			base,
+			5,
+			createIgnoredDirectoryMatcher(defaultIgnoredFolders),
+		);
+		const paths = result.projects.map((project) => project.path);
+
+		expect(paths.some((path) => path.endsWith('my-project'))).toBe(true);
+		for (const name of skipped) {
+			expect(paths.some((path) => path.endsWith(name))).toBe(false);
+		}
+	});
 });
 
 describe('project discovery treats a configured root as a container', () => {

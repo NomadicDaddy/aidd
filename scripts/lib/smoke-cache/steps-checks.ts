@@ -177,6 +177,7 @@ export const CHECK_STEP_DEPENDENCIES: Record<string, string[]> = {
 	],
 	'check:leak-guard': [
 		'package.json',
+		'scripts/smokestack/check-leak-guard-cases.sh',
 		'scripts/smokestack/check-leak-guard.sh',
 		'scripts/smokestack/hooks/leak-guard.sh',
 		'scripts/smokestack/run-bash.ts',

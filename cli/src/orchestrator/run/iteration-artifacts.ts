@@ -77,6 +77,7 @@ export function buildIterationStructured(input: {
 	} = input;
 	// A read-only iteration's window commits are someone else's: listed apart, never as its own.
 	const ownCommits = unexpectedReadOnlyCommits.length > 0 ? [] : iterationCommits;
+	const preExistingChanges = acc.preExistingPathWatch?.iterationChanges ?? [];
 	return {
 		durationMs,
 		endedAt,
@@ -110,6 +111,7 @@ export function buildIterationStructured(input: {
 		selectedFeatures: featureScope.selectedFeatures,
 		unacceptedCompletedFeatures: featureScope.unacceptedCompletedFeatures,
 		...(unexpectedReadOnlyCommits.length > 0 ? { unexpectedReadOnlyCommits } : {}),
+		...(preExistingChanges.length > 0 ? { preExistingPathsChanged: preExistingChanges } : {}),
 		...(featureScope.completionMarkerIssue !== undefined
 			? { completionMarkerIssue: featureScope.completionMarkerIssue }
 			: {}),

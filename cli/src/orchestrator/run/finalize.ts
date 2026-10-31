@@ -32,6 +32,7 @@ import {
 	mergeModeFileChanges,
 	resolveIterationFileChanges,
 } from './mode-file-changes.ts';
+import { settlePreExistingPathWatch } from './pre-existing-paths.ts';
 import {
 	accumulateIterationCommits,
 	accumulateIterationEvidence,
@@ -75,6 +76,7 @@ export async function finalizeIteration(
 	const durationMs = endedAtMs - startedAtMs;
 	const structuredResult = result.structuredResult;
 	const gitHeadAfter = await readGitHead(runRepoDir(plan));
+	await settlePreExistingPathWatch(acc, plan, gitHeadBefore, gitHeadAfter);
 	const iterationCommits = await listGitCommits(
 		runRepoDir(plan),
 		gitHeadBefore,

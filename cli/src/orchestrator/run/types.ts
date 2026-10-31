@@ -134,6 +134,21 @@ export const initialRunTotals = {
 	toolCalls: 0,
 };
 
+export type PreExistingChangeKind = 'changed' | 'committed' | 'removed' | 'rewritten' | 'staged';
+export type PreExistingFileState = 'missing' | { hash: string; mtimeMs: number };
+export interface PreExistingChange {
+	how: PreExistingChangeKind;
+	path: string;
+}
+export interface PreExistingPathWatch {
+	changes: PreExistingChange[];
+	files: ReadonlyMap<string, PreExistingFileState | undefined>;
+	index: ReadonlyMap<string, string> | undefined;
+	iterationChanges: PreExistingChange[];
+	paths: ReadonlySet<string>;
+	settledChanges: number;
+}
+
 export interface RunAccumulator {
 	/** Findings per audit name from every audit iteration, written to the run ledger entry so the
 	 * scorer credits each audit in a batch with its own count rather than the batch total. */
@@ -172,6 +187,8 @@ export interface RunAccumulator {
 	 * prompt alongside the flailing nudge. A guard that ends the iteration instead of the run
 	 * still has to tell the agent what went wrong, or the next iteration repeats it. */
 	pendingCarryoverNotes: string[];
+	/** Run-start state of the paths already uncommitted; absent when none were. */
+	preExistingPathWatch?: PreExistingPathWatch;
 	runId: string;
 	runStartedAt: string;
 	runStartedAtMs: number;

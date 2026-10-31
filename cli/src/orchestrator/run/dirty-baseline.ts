@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type { RunAccumulator } from './types.ts';
 
 import { gitDirtySourcePaths, isAiddMetadataPath } from './git.ts';
+import { capturePreExistingPathWatch } from './pre-existing-paths.ts';
 
 /**
  * Content of the `.aidd` records that are already dirty, keyed by path.
@@ -48,7 +49,10 @@ export async function captureDirtySourceBaseline(
 	// One status call for both baselines.
 	const baseline = await gitDirtySourcePaths(projectDir, { includeAiddMetadata: true });
 	if (baseline === undefined) return;
-	acc.dirtySourcePathsAtStart = new Set(baseline.filter((path) => !isAiddMetadataPath(path)));
+	const dirtySource = baseline.filter((path) => !isAiddMetadataPath(path));
+	acc.dirtySourcePathsAtStart = new Set(dirtySource);
+	const watch = await capturePreExistingPathWatch(projectDir, dirtySource);
+	if (watch !== undefined) acc.preExistingPathWatch = watch;
 	acc.dirtyMetadataAtStart = await hashDirtyMetadata(
 		projectDir,
 		baseline.filter((path) => isAiddMetadataPath(path)),

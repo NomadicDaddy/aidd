@@ -22,6 +22,7 @@ import {
 } from './git.ts';
 import { commitOwnedMetadata } from './metadata-commit.ts';
 import { reconcileRunMetadata } from './metadata-reconcile.ts';
+import { preExistingChangeSummary } from './pre-existing-paths.ts';
 import { type OrchestratorDeps, type RunAccumulator, runRuntimeFields } from './types.ts';
 
 // Iteration-level artifact writers live in ./iteration-artifacts.ts; this module owns the
@@ -95,6 +96,8 @@ export async function writeRunSummary(
 			`${unattributedSourceMarker} ${unattributedDirtySourceFiles.length} source file(s) changed in the worktree during this run but were not attributable to it`,
 		);
 	}
+	const preExistingSummary = preExistingChangeSummary(acc);
+	if (preExistingSummary !== undefined) runEndSummaryParts.push(preExistingSummary);
 	// Every terminal path funnels through here, which is the point: the offending run is usually a
 	// single-iteration directive whose carryover note is never drained, so the summary is the only
 	// channel that reaches the operator and the ledger.
@@ -156,6 +159,7 @@ export async function writeRunSummary(
 		...(residualUntrackedFeatureDirs.length > 0 ? ['untracked_feature_directories'] : []),
 		...(residualDirtySourceFiles.length > 0 ? ['residual_dirty_source_files'] : []),
 		...(unattributedDirtySourceFiles.length > 0 ? ['unattributed_dirty_source_files'] : []),
+		...(preExistingSummary !== undefined ? ['preexisting_paths_changed'] : []),
 	];
 	// Line-level ground truth for what the run changed, persisted so the web layer can chart
 	// output over time without re-walking git. Null (not zeros) when there are no attributed
@@ -244,6 +248,9 @@ export async function writeRunSummary(
 		...(residualUntrackedFeatureDirs.length > 0 ? { residualUntrackedFeatureDirs } : {}),
 		...(residualDirtySourceFiles.length > 0 ? { residualDirtySourceFiles } : {}),
 		...(unattributedDirtySourceFiles.length > 0 ? { unattributedDirtySourceFiles } : {}),
+		...(preExistingSummary !== undefined
+			? { preExistingPathsChanged: acc.preExistingPathWatch?.changes }
+			: {}),
 		toolBreakdown: acc.toolBreakdownTotals,
 		totals: acc.runTotals,
 	});

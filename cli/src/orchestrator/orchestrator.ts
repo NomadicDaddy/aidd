@@ -10,6 +10,7 @@ import { captureFeatureCompletionSnapshot } from './run/feature-scope.ts';
 import { finalizeIteration } from './run/finalize.ts';
 import { readGitHead } from './run/git.ts';
 import { handlePostIteration } from './run/post-iteration.ts';
+import { withPreExistingPathWatch } from './run/pre-existing-paths.ts';
 import {
 	handleModeDirtyTreeSkip,
 	handleNoWorkIteration,
@@ -36,12 +37,13 @@ export type {
 	RunObserver,
 } from './run/types.ts';
 
-export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Promise<number> {
-	const move = createStateMove(plan, deps);
+export async function runOrchestrator(plan: RunPlan, baseDeps: OrchestratorDeps): Promise<number> {
+	const move = createStateMove(plan, baseDeps);
 
-	const startup = await initializeOrchestratorRun(plan, deps, move);
+	const startup = await initializeOrchestratorRun(plan, baseDeps, move);
 	if (startup.kind === 'return') return startup.exitCode;
 	const { acc, context, mode, promptContext, runStartedAtMs } = startup;
+	const deps = withPreExistingPathWatch(baseDeps, acc, plan);
 	let lastSummary = 'max iterations reached';
 
 	let iteration = 0;
@@ -234,6 +236,7 @@ export async function runOrchestrator(plan: RunPlan, deps: OrchestratorDeps): Pr
 		previousIterationVerifiedBaseline =
 			finalize.recordedExitCode === orchestratorExitCodes.success &&
 			finalize.completedResultFeature !== undefined &&
+			(acc.preExistingPathWatch?.iterationChanges.length ?? 0) === 0 &&
 			iterationProvedCleanBaseline(finalize.details);
 
 		// Token/cost budget is warn-only: surface the first overrun in the run log (which the web

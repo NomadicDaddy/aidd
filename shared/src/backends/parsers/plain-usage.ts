@@ -25,6 +25,11 @@ import type { AgentEvent } from '../types.ts';
  * already counted, the same reconciliation the cline parser performs. Run totals are summed across
  * every `usage` event (`shared/src/orchestrator/result.ts`), so the remainder is what keeps the
  * authoritative total exact. A run that dies before `result` keeps its partial per-message usage.
+ *
+ * The result line's own `usage` covers the main thread only; its `modelUsage` covers the whole
+ * session, subagents included. A run that used six subagents reported 37,050 output tokens in
+ * `usage` against 202,713 in `modelUsage`, while a run with none reported the same in both. So
+ * `modelUsage` is the session total whenever it is present.
  */
 
 interface Tokens {
@@ -69,6 +74,32 @@ function readTokens(
 	}
 	if (cacheRead !== undefined) tokens.cachedTokens = cacheRead;
 	if (output !== undefined && !streamed) tokens.outputTokens = output;
+	return tokens;
+}
+
+/** The session total across every model, subagents included, when the result line carries it. */
+function readModelUsage(
+	modelUsage: Record<string, unknown> | undefined,
+	costUsd: number | undefined,
+): Tokens | undefined {
+	const models = Object.values(modelUsage ?? {})
+		.map(readRecord)
+		.filter((model) => model !== undefined);
+	if (models.length === 0) return undefined;
+	let cachedTokens = 0;
+	let inputTokens = 0;
+	let outputTokens = 0;
+	for (const model of models) {
+		const cacheRead = readNumber(model.cacheReadInputTokens) ?? 0;
+		cachedTokens += cacheRead;
+		inputTokens +=
+			(readNumber(model.inputTokens) ?? 0) +
+			(readNumber(model.cacheCreationInputTokens) ?? 0) +
+			cacheRead;
+		outputTokens += readNumber(model.outputTokens) ?? 0;
+	}
+	const tokens: Tokens = { cachedTokens, inputTokens, outputTokens };
+	if (costUsd !== undefined) tokens.costUsd = costUsd;
 	return tokens;
 }
 
@@ -147,7 +178,12 @@ export function createPlainUsageReconciler(): PlainUsageReconciler {
 				costUsd,
 				usage !== undefined && topLevel === undefined,
 			);
-			const counted = cumulative ? remainder(tokens, emitted) : tokens;
+			const counted = cumulative
+				? remainder(
+						readModelUsage(readRecord(record.modelUsage), costUsd) ?? tokens,
+						emitted,
+					)
+				: tokens;
 
 			const event = toEvent(counted);
 			if (event === undefined) return [];

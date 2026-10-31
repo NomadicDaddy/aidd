@@ -11,6 +11,7 @@ All notable public aidd releases are documented here.
 
 ### Fixed
 
+- Claude Code runs that use subagents now report their full output tokens. aidd was taking the session's output from a field that covers only the main thread, so a run with six subagents recorded 37,050 output tokens instead of 202,713. Input could also fall short. Cost was already correct, and runs already recorded keep their old numbers.
 - Documentation and commit tasks can adopt explicitly delegated existing changes after reviewing their scope. Fresh agents retain protection for unrelated and concurrent edits instead of treating every inherited change as either forbidden or automatically owned.
 - The credential-disclosure gate recognizes an empty scanner report containing only counts and fixed rule names. Inline source mentioning dotenv files no longer turns that metadata into a disclosure; returned content, extra fields and nonempty findings still fail closed.
 - Director suggestions name only records in the roadmap's active milestone. A finding mapped to a later milestone is still counted in project health, but it is no longer offered as a run that the roadmap gate would stop at its first step.

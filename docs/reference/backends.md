@@ -236,6 +236,36 @@ bun run start -- rest clear claude-code
 ISO date and time. Rests live in `data/provider-rest/`, one file per backend, so the panel and the
 CLI see the same rests.
 
+## Token Usage
+
+aidd counts tokens from the JSON output of the runs it launches. It doesn't read a CLI's own session
+files or a provider's API. Every parser normalizes into one convention, so totals compare across
+backends: cached tokens are a subset of input, and reasoning tokens are a subset of output.
+
+| Backend                | What aidd reads                     | How the CLI reports it                                                                                                                                                                                    |
+| ---------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `claude-code`          | stream-json messages and the result | Disjoint prompt buckets, so input is `input_tokens` + `cache_creation_input_tokens` + `cache_read_input_tokens`. Usage repeats on every content block of a message, so it's deduplicated by `message.id`. |
+| `codex`                | `turn.completed` usage              | Already follows the convention.                                                                                                                                                                           |
+| `grok`                 | usage and `end` events              | Cache reads sit outside input. Reasoning is already inside output.                                                                                                                                        |
+| `kilocode`, `opencode` | `step-finish` tokens, one per step  | All buckets are disjoint, so input is `input` + `cache.read` + `cache.write`, and output is `output` + `reasoning`.                                                                                       |
+
+Two Claude Code fields look authoritative and aren't. A streamed message's `output_tokens` is a
+snapshot taken mid-stream. The result line's `usage` covers the main thread only. Its `modelUsage`
+covers the whole session, subagents included, so aidd takes session totals from `modelUsage` and falls
+back to `usage` when it's absent. A run that dies before its result keeps the prompt tokens already
+streamed, but not the output.
+
+To cross-check a run against the CLI's own history:
+
+- **Claude Code:** `~/.claude/projects/<project>/<session-id>.jsonl`, plus one file per subagent under
+  `<session-id>/subagents/`. Add the subagent files, since the main transcript doesn't repeat them.
+  Deduplicate by `message.id` and skip the model `<synthetic>`. Claude Code's documentation says it
+  removes transcripts after a period of inactivity, 30 days by default, unless `cleanupPeriodDays`
+  says otherwise.
+- **Kilo:** the SQLite database `~/.local/share/kilo/kilo.db`, in WAL mode, so open it read-only or copy
+  it first. The `session` table has per-session totals, and `step-finish` rows in the `part` table
+  have the per-step amounts.
+
 ## Parser Coverage
 
 Parser fixture tests live under `test/fixtures/backends/{backend}`. Each backend has success,

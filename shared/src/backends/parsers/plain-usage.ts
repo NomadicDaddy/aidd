@@ -77,6 +77,10 @@ function readTokens(
 	return tokens;
 }
 
+function readCount(value: unknown): number {
+	return readNumber(value) ?? 0;
+}
+
 /** The session total across every model, subagents included, when the result line carries it. */
 function readModelUsage(
 	modelUsage: Record<string, unknown> | undefined,
@@ -90,13 +94,11 @@ function readModelUsage(
 	let inputTokens = 0;
 	let outputTokens = 0;
 	for (const model of models) {
-		const cacheRead = readNumber(model.cacheReadInputTokens) ?? 0;
+		const cacheRead = readCount(model.cacheReadInputTokens);
 		cachedTokens += cacheRead;
 		inputTokens +=
-			(readNumber(model.inputTokens) ?? 0) +
-			(readNumber(model.cacheCreationInputTokens) ?? 0) +
-			cacheRead;
-		outputTokens += readNumber(model.outputTokens) ?? 0;
+			readCount(model.inputTokens) + readCount(model.cacheCreationInputTokens) + cacheRead;
+		outputTokens += readCount(model.outputTokens);
 	}
 	const tokens: Tokens = { cachedTokens, inputTokens, outputTokens };
 	if (costUsd !== undefined) tokens.costUsd = costUsd;
@@ -123,6 +125,12 @@ function remainder(tokens: Tokens, emitted: Totals): Tokens {
 	if (input > 0) left.inputTokens = input;
 	if (output > 0) left.outputTokens = output;
 	return left;
+}
+
+/** What the result line still owes, taken from the session total when it carries one. */
+function resultRemainder(record: Record<string, unknown>, tokens: Tokens, emitted: Totals): Tokens {
+	const session = readModelUsage(readRecord(record.modelUsage), tokens.costUsd);
+	return remainder(session ?? tokens, emitted);
 }
 
 function toEvent(tokens: Tokens): AgentEvent | undefined {
@@ -178,12 +186,7 @@ export function createPlainUsageReconciler(): PlainUsageReconciler {
 				costUsd,
 				usage !== undefined && topLevel === undefined,
 			);
-			const counted = cumulative
-				? remainder(
-						readModelUsage(readRecord(record.modelUsage), costUsd) ?? tokens,
-						emitted,
-					)
-				: tokens;
+			const counted = cumulative ? resultRemainder(record, tokens, emitted) : tokens;
 
 			const event = toEvent(counted);
 			if (event === undefined) return [];

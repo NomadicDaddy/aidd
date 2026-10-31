@@ -116,6 +116,20 @@ describe('claude-code usage with subagents', () => {
 		expect(sumUsage(stdout)).toMatchObject({ cached: 900, input: 1010, output: 300 });
 	});
 
+	test('keeps usage when modelUsage has entries it cannot read', () => {
+		const stdout = [
+			mainMessage,
+			JSON.stringify({
+				modelUsage: { 'claude-opus': { renamedOutput: 900 } },
+				total_cost_usd: 0.5,
+				type: 'result',
+				usage: mainThreadUsage,
+			}),
+		].join('\n');
+
+		expect(sumUsage(stdout)).toEqual({ cached: 900, cost: 0.5, input: 1010, output: 300 });
+	});
+
 	test('a run that dies before its result keeps the streamed prompt tokens', () => {
 		const stdout = [mainMessage, subagentMessage].join('\n');
 

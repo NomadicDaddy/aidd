@@ -251,11 +251,14 @@ backends: cached tokens are a subset of input, and reasoning tokens are a subset
 
 Two Claude Code fields look authoritative and aren't. A streamed message's `output_tokens` is a
 snapshot taken mid-stream. The result line's `usage` covers the main thread only. Its `modelUsage`
-covers the whole session, subagents included, so aidd takes session totals from `modelUsage` and falls
-back to `usage` when it's absent. A run that dies before its result keeps the prompt tokens already
+covers the whole session, subagents included, so aidd takes the larger of the two for each token type. A run that dies before its result keeps the prompt tokens already
 streamed, but not the output.
 
-To cross-check a run against the CLI's own history:
+To cross-check a run aidd launched, read its log at `data/run-logs/<run-id>.log`, which keeps the
+CLI's JSON output. aidd starts Claude Code with `--no-session-persistence`, so its Claude runs have no
+transcript.
+
+For a CLI's usage outside aidd, it keeps its own history:
 
 - **Claude Code:** `~/.claude/projects/<project>/<session-id>.jsonl`, plus one file per subagent under
   `<session-id>/subagents/`. Add the subagent files, since the main transcript doesn't repeat them.

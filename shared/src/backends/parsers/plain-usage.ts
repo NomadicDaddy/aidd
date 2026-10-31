@@ -82,10 +82,7 @@ function readCount(value: unknown): number {
 }
 
 /** The session total across every model, subagents included, when the result line carries it. */
-function readModelUsage(
-	modelUsage: Record<string, unknown> | undefined,
-	costUsd: number | undefined,
-): Tokens | undefined {
+function readModelUsage(modelUsage: Record<string, unknown> | undefined): Tokens | undefined {
 	const models = Object.values(modelUsage ?? {})
 		.map(readRecord)
 		.filter((model) => model !== undefined);
@@ -100,9 +97,20 @@ function readModelUsage(
 			readCount(model.inputTokens) + readCount(model.cacheCreationInputTokens) + cacheRead;
 		outputTokens += readCount(model.outputTokens);
 	}
-	const tokens: Tokens = { cachedTokens, inputTokens, outputTokens };
-	if (costUsd !== undefined) tokens.costUsd = costUsd;
-	return tokens;
+	return { cachedTokens, inputTokens, outputTokens };
+}
+
+/**
+ * The larger of the two reports per bucket. modelUsage's field names come from observed logs, not a
+ * documented contract, so a renamed field must not replace a good `usage` number with zero.
+ */
+function largerBuckets(session: Tokens, usage: Tokens): Tokens {
+	return {
+		...usage,
+		cachedTokens: Math.max(readCount(session.cachedTokens), readCount(usage.cachedTokens)),
+		inputTokens: Math.max(readCount(session.inputTokens), readCount(usage.inputTokens)),
+		outputTokens: Math.max(readCount(session.outputTokens), readCount(usage.outputTokens)),
+	};
 }
 
 interface Totals {
@@ -129,8 +137,8 @@ function remainder(tokens: Tokens, emitted: Totals): Tokens {
 
 /** What the result line still owes, taken from the session total when it carries one. */
 function resultRemainder(record: Record<string, unknown>, tokens: Tokens, emitted: Totals): Tokens {
-	const session = readModelUsage(readRecord(record.modelUsage), tokens.costUsd);
-	return remainder(session ?? tokens, emitted);
+	const session = readModelUsage(readRecord(record.modelUsage));
+	return remainder(session === undefined ? tokens : largerBuckets(session, tokens), emitted);
 }
 
 function toEvent(tokens: Tokens): AgentEvent | undefined {

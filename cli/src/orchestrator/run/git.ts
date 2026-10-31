@@ -227,7 +227,10 @@ export async function gitDirtySourcePaths(
 	projectDir: string,
 	options: { includeAiddMetadata?: boolean } = {},
 ): Promise<string[] | undefined> {
+	// Git otherwise octal-escapes a non-ASCII name ("caf\303\251.ts"), which is no path on disk.
 	const status = await gitOutput(projectDir, [
+		'-c',
+		'core.quotePath=false',
 		'status',
 		'--porcelain=v1',
 		'--untracked-files=all',

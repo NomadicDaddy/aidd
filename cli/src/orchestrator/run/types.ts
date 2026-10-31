@@ -135,14 +135,15 @@ export const initialRunTotals = {
 };
 
 export type PreExistingChangeKind = 'changed' | 'committed' | 'removed' | 'rewritten' | 'staged';
-export type PreExistingFileState = 'missing' | { hash: string; mtimeMs: number };
+export type PreExistingFileState = 'missing' | { hash: string; mtimeMs: number; size: number };
 export interface PreExistingChange {
 	how: PreExistingChangeKind;
 	path: string;
 }
 export interface PreExistingPathWatch {
 	changes: PreExistingChange[];
-	files: ReadonlyMap<string, PreExistingFileState | undefined>;
+	/** Each path's state when last compared; a later change is measured from here. */
+	files: Map<string, PreExistingFileState | undefined>;
 	index: ReadonlyMap<string, string> | undefined;
 	iterationChanges: PreExistingChange[];
 	paths: ReadonlySet<string>;

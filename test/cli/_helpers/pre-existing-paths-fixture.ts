@@ -71,8 +71,8 @@ export async function runGit(projectDir: string, args: string[]): Promise<string
 
 /** A project whose src/teammate.ts holds someone's uncommitted edit, with an old write time so a
  * rewrite cannot land in the same Windows file-time tick as the run-start reading. */
-export async function makeProject(name: string): Promise<FileAiddStore> {
-	const projectDir = join(tmpRoot, name);
+export async function makeProject(name: string, root = tmpRoot): Promise<FileAiddStore> {
+	const projectDir = join(root, name);
 	await mkdir(join(projectDir, '.aidd', 'features', 'feature-core'), { recursive: true });
 	await mkdir(join(projectDir, 'src'), { recursive: true });
 	await writeFile(

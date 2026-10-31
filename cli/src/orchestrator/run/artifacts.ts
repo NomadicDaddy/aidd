@@ -9,6 +9,7 @@ import {
 	unattributedSourceMarker,
 	uncommittedSourceMarker,
 } from 'aidd-shared/runs/outcome';
+import { preExistingChangedMarker } from 'aidd-shared/runs/outcome-preexisting';
 
 import { cleanIterationLogs } from '../../metadata/log-cleaner.ts';
 import { auditIntegritySummary, liveAuditWarnings } from './audit-worktree.ts';
@@ -96,7 +97,7 @@ export async function writeRunSummary(
 			`${unattributedSourceMarker} ${unattributedDirtySourceFiles.length} source file(s) changed in the worktree during this run but were not attributable to it`,
 		);
 	}
-	const preExistingSummary = preExistingChangeSummary(acc);
+	const preExistingSummary = preExistingChangeSummary(acc, plan);
 	if (preExistingSummary !== undefined) runEndSummaryParts.push(preExistingSummary);
 	// Every terminal path funnels through here, which is the point: the offending run is usually a
 	// single-iteration directive whose carryover note is never drained, so the summary is the only
@@ -159,7 +160,9 @@ export async function writeRunSummary(
 		...(residualUntrackedFeatureDirs.length > 0 ? ['untracked_feature_directories'] : []),
 		...(residualDirtySourceFiles.length > 0 ? ['residual_dirty_source_files'] : []),
 		...(unattributedDirtySourceFiles.length > 0 ? ['unattributed_dirty_source_files'] : []),
-		...(preExistingSummary !== undefined ? ['preexisting_paths_changed'] : []),
+		...(preExistingSummary?.includes(preExistingChangedMarker)
+			? ['preexisting_paths_changed']
+			: []),
 	];
 	// Line-level ground truth for what the run changed, persisted so the web layer can chart
 	// output over time without re-walking git. Null (not zeros) when there are no attributed

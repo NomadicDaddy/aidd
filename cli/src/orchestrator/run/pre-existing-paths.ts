@@ -34,25 +34,37 @@ const howDescribed: Record<PreExistingChangeKind, string> = {
 	staged: 'staged differently',
 };
 
-async function readFileState(path: string): Promise<PreExistingFileState | undefined> {
+function statMatches(
+	known: PreExistingFileState | undefined,
+	size: number,
+	mtimeMs: number,
+): boolean {
+	return (
+		known !== undefined &&
+		known !== 'missing' &&
+		known.size === size &&
+		known.mtimeMs === mtimeMs
+	);
+}
+
+// This runs twice per tool call in the awaited event loop, so a file is only read when its size or
+// write time moved. The cost: a replacement that keeps both, as cp -p of a same-sized file would, goes
+// unseen until something else changes them.
+async function readFileState(
+	path: string,
+	known?: PreExistingFileState,
+): Promise<PreExistingFileState | undefined> {
 	try {
 		const info = await stat(path);
 		if (!info.isFile()) return undefined;
+		if (statMatches(known, info.size, info.mtimeMs)) return known;
 		const bytes = await Bun.file(path).arrayBuffer();
-		return { hash: Bun.SHA256.hash(new Uint8Array(bytes), 'hex'), mtimeMs: info.mtimeMs };
+		const hash = Bun.SHA256.hash(new Uint8Array(bytes), 'hex');
+		return { hash, mtimeMs: info.mtimeMs, size: info.size };
 	} catch (err) {
 		// Gone is a finding. Anything else, such as a lock on Windows, says nothing about the file.
 		return (err as NodeJS.ErrnoException).code === 'ENOENT' ? 'missing' : undefined;
 	}
-}
-
-async function readFileStates(
-	projectDir: string,
-	paths: Iterable<string>,
-): Promise<Map<string, PreExistingFileState | undefined>> {
-	const states = new Map<string, PreExistingFileState | undefined>();
-	for (const path of paths) states.set(path, await readFileState(join(projectDir, path)));
-	return states;
 }
 
 // Index entries per watched path. Undefined when git could not answer, so a failed read is never
@@ -93,26 +105,35 @@ function fileChange(
 }
 
 function recordChange(watch: PreExistingPathWatch, path: string, how: PreExistingChangeKind): void {
-	if (watch.changes.some((change) => change.path === path && change.how === how)) return;
+	// Once per iteration, so the same path changing again in a later iteration is reported again.
+	const unsettled = watch.changes.slice(watch.settledChanges);
+	if (unsettled.some((change) => change.path === path && change.how === how)) return;
 	watch.changes.push({ how, path });
 	console.warn(
 		`[orchestrator] ${path} was already uncommitted when this run started and has been ${howDescribed[how]}, by this run or by someone else; aidd cannot tell which.`,
 	);
 }
 
-/** Compare every watched path with its run-start state and record what differs. */
-async function checkWatchedPaths(watch: PreExistingPathWatch, projectDir: string): Promise<void> {
-	const states = await readFileStates(projectDir, watch.paths);
-	for (const [path, state] of states) {
-		const how = fileChange(watch.files.get(path), state);
-		if (how !== undefined) recordChange(watch, path, how);
-	}
-	if (watch.index === undefined) return;
+async function checkIndexEntries(watch: PreExistingPathWatch, projectDir: string): Promise<void> {
 	const index = await readIndexEntries(projectDir, watch.paths);
 	if (index === undefined) return;
+	const seen = watch.index ?? index;
 	for (const path of watch.paths) {
-		if (index.get(path) !== watch.index.get(path)) recordChange(watch, path, 'staged');
+		if (index.get(path) !== seen.get(path)) recordChange(watch, path, 'staged');
 	}
+	watch.index = index;
+}
+
+/** Compare every watched path with the state last seen, record what differs, and move on from it. */
+async function checkWatchedPaths(watch: PreExistingPathWatch, projectDir: string): Promise<void> {
+	for (const path of watch.paths) {
+		const before = watch.files.get(path);
+		const now = await readFileState(join(projectDir, path), before);
+		const how = fileChange(before, now);
+		if (how !== undefined) recordChange(watch, path, how);
+		if (now !== undefined) watch.files.set(path, now);
+	}
+	await checkIndexEntries(watch, projectDir);
 }
 
 /**
@@ -131,9 +152,11 @@ export async function capturePreExistingPathWatch(
 	console.warn(
 		`[orchestrator] this run leaves ${String(paths.size)} file(s) that were already uncommitted alone: ${dirtyPaths.join(', ')}.`,
 	);
+	const files = new Map<string, PreExistingFileState | undefined>();
+	for (const path of paths) files.set(path, await readFileState(join(projectDir, path)));
 	return {
 		changes: [],
-		files: await readFileStates(projectDir, paths),
+		files,
 		index: await readIndexEntries(projectDir, paths),
 		iterationChanges: [],
 		paths,
@@ -185,6 +208,18 @@ async function recordCommittedPaths(
 	}
 }
 
+// A task may delegate existing changes for committing (criteria 7 and 8 of this rule), and only a
+// directive carries a task of that kind. The plan does not say whether this one did, so in a directive
+// that can write, staging or committing such a file is reported without being treated as damage.
+// Changing its content never is delegated, and neither is anything in any other mode.
+function changesOfConcern(
+	plan: RunPlan,
+	changes: readonly PreExistingChange[],
+): readonly PreExistingChange[] {
+	if (plan.mode !== 'directive' || plan.prompt.customDirectiveReadonly === true) return changes;
+	return changes.filter((change) => change.how !== 'staged' && change.how !== 'committed');
+}
+
 function correctionNote(changes: readonly PreExistingChange[]): string {
 	const listed = changes.map((change) => `\`${change.path}\` (${howDescribed[change.how]})`);
 	return (
@@ -216,19 +251,28 @@ export async function settlePreExistingPathWatch(
 	await recordCommittedPaths(watch, projectDir, headBefore, headAfter);
 	watch.iterationChanges = watch.changes.slice(watch.settledChanges);
 	watch.settledChanges = watch.changes.length;
-	if (watch.iterationChanges.length > 0) {
-		acc.pendingCarryoverNotes.push(correctionNote(watch.iterationChanges));
-	}
+	const concerning = changesOfConcern(plan, watch.iterationChanges);
+	if (concerning.length > 0) acc.pendingCarryoverNotes.push(correctionNote(concerning));
+}
+
+function uniquePaths(changes: readonly PreExistingChange[]): string[] {
+	return [...new Set(changes.map((change) => change.path))];
 }
 
 /**
- * The run summary's sentence about these paths, for the marker the run outcome reads.
+ * The run summary's sentence about these paths. Only changes of concern carry the marker the run
+ * outcome reads.
  * @param acc The run accumulator holding the watch.
+ * @param plan The run plan, for whether the run could have been delegated these paths.
  * @returns The sentence, or undefined when nothing changed.
  */
-export function preExistingChangeSummary(acc: RunAccumulator): string | undefined {
+export function preExistingChangeSummary(acc: RunAccumulator, plan: RunPlan): string | undefined {
 	const changes = acc.preExistingPathWatch?.changes ?? [];
 	if (changes.length === 0) return undefined;
-	const paths = new Set(changes.map((change) => change.path));
-	return `${preExistingChangedMarker} ${String(paths.size)} file(s) already uncommitted when this run started changed during it, by this run or by someone else: ${[...paths].join(', ')}`;
+	const concerning = uniquePaths(changesOfConcern(plan, changes));
+	if (concerning.length > 0) {
+		return `${preExistingChangedMarker} ${String(concerning.length)} file(s) already uncommitted when this run started changed during it, by this run or by someone else: ${concerning.join(', ')}`;
+	}
+	const staged = uniquePaths(changes);
+	return `${String(staged.length)} file(s) already uncommitted when this run started were staged or committed during it, which a directive may be delegated to do: ${staged.join(', ')}`;
 }

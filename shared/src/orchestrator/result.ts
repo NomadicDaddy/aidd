@@ -14,6 +14,8 @@ import { orchestratorExitCodes } from './exit-codes.ts';
 export { describeOrchestratorExitCode, orchestratorExitCodes } from './exit-codes.ts';
 
 export interface AgentRunResult {
+	/** Commits in the iteration's window, set before the mode reads this result. */
+	commitsMade?: number;
 	events: AgentEvent[];
 	exitCode: number;
 	filesModified: string[];

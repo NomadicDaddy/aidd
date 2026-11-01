@@ -182,37 +182,26 @@ export function trailingAgentExplanation(events: AgentEvent[]): string | undefin
 	return undefined;
 }
 
-/** Whether a record's own spec says it must hold the given status ("stays backlog", "remain in
- * in_progress"). Only reached when the agent also claimed nothing and said why, so a spec describing
- * some other record's status costs a labelled stop rather than a false completion. */
-export function specRequiresStatus(spec: unknown, status: string): boolean {
-	if (typeof spec !== 'string') return false;
-	const holds = new RegExp(
-		`\\b(?:stays?|remains?|keeps?|kept|left)\\s+(?:in\\s+|as\\s+)?${status}\\b`,
-		'i',
-	);
-	return holds.test(spec);
-}
-
 /**
- * The other park the prompt allows: a record whose spec requires it to hold a status until an
- * external condition is met cannot move to waiting_approval, so the honest ending is no marker and
- * the status it was selected in. Claiming moves a backlog record to in_progress before the agent
- * starts, so ending in backlog means the agent put it back; an agent that did nothing ends in_progress
- * and is not this. The spec's own words and a stated reason are still required, because a record
- * selected in_progress needs no such step and would otherwise look the same as a forgotten marker.
+ * The other park the prompt allows: a record whose spec requires it to stay in backlog until an
+ * external condition is met cannot move to waiting_approval, so the honest ending is no marker, no
+ * commit, a stated reason and the record back in backlog.
+ *
+ * The signal is the agent's act, not the spec's wording. Claiming moves a backlog record to
+ * in_progress before the agent starts, so ending in backlog means the agent put it back; an agent that
+ * did nothing ends in_progress and is not this. A record selected in_progress has no such step, so
+ * it cannot qualify. Reading the spec was tried and dropped: across every spec in D:\applications the
+ * real holds are worded too many ways to match, and the only matches described other records.
  */
-export async function detectSpecMandatedPark(
+export async function detectBacklogHoldPark(
 	store: AiddStore,
 	featureId: string,
-	statusAtSelection: string | undefined,
-	explanation: string | undefined,
+	evidence: { commitsMade: number; explanation?: string; statusAtSelection?: string },
 ): Promise<boolean> {
-	if (statusAtSelection === undefined || explanation === undefined) return false;
+	if (evidence.statusAtSelection !== 'backlog' || evidence.commitsMade > 0) return false;
+	if (evidence.explanation === undefined) return false;
 	const feature = await readFeatureIfPresent(store, featureId);
-	if (feature === undefined || feature.status !== statusAtSelection) return false;
-	if (feature.status === 'completed' || feature.passes === true) return false;
-	return specRequiresStatus(feature.spec, feature.status);
+	return feature?.status === 'backlog' && feature.passes !== true;
 }
 
 /**

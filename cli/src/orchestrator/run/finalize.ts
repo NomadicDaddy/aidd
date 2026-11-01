@@ -103,6 +103,7 @@ export async function finalizeIteration(
 			work,
 		});
 	}
+	result.commitsMade = iterationCommits.length;
 	move({ result, type: 'process_result' });
 	const modeResult = await mode.processResult(context, result);
 	await deps.observer?.onModeResult?.(modeResult);
@@ -220,9 +221,8 @@ export async function finalizeIteration(
 	const iterationSummary = appendPlanningRecoverySummary(baseIterationSummary, planningRecovery);
 	move({ result, type: 'write_artifacts' });
 	iterationProgress.setStage('write_artifacts', { last: `exit ${recordedExitCode}` });
-	// Ledger's backendExitCode: the raw last-iteration exit before orchestrator classification.
-	// Must be the raw exitCode, not recordedExitCode — a clean exit reclassified to 73 would
-	// otherwise ledger backendExitCode: 73 while the summary reads "[backend exit 0]".
+	// Ledger's backendExitCode: the raw exit, not recordedExitCode — a clean exit reclassified to 73
+	// would otherwise ledger backendExitCode: 73 while the summary reads "[backend exit 0]".
 	acc.lastBackendExitCode = exitCode;
 	acc.iterationDurationsMs.push(durationMs);
 	accumulateIterationMetrics(acc, metrics);

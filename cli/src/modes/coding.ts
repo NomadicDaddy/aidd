@@ -80,11 +80,11 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 				return await processPhaseResult(plan, context, result, setupProgress);
 			}
 			const {
+				backlogHoldPark,
 				completionMarkerIgnored,
 				completionOutcome,
 				selectedFeatureId,
 				shouldComplete,
-				specMandatedPark,
 				verificationBlockedParked,
 			} = await evaluateFeatureCompletion(context.store, result);
 
@@ -134,17 +134,17 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 				...(verificationBlockedParked && selectedFeatureId !== undefined
 					? { verificationBlockedParked: selectedFeatureId }
 					: {}),
-				...(specMandatedPark && selectedFeatureId !== undefined
-					? { specMandatedPark: selectedFeatureId }
+				...(backlogHoldPark && selectedFeatureId !== undefined
+					? { backlogHoldPark: selectedFeatureId }
 					: {}),
 			};
-			// A record held in its required status is still selectable, so continuing would hand the
-			// next iteration the same record and pay for the same park until maxIterations. End here.
-			if (specMandatedPark) {
+			// A record held in backlog is still selectable, so continuing would hand the next iteration
+			// the same record and pay for the same park until maxIterations. End here.
+			if (backlogHoldPark) {
 				return {
 					artifacts: resultArtifacts,
 					complete: true,
-					summary: `coding left ${String(selectedFeatureId)} in the status its spec requires; ${breakdown.remaining} incomplete feature(s) remain; ${parkedWorkMarker} ${String(selectedFeatureId)} was parked, not completed`,
+					summary: `coding put ${String(selectedFeatureId)} back in backlog and gave a reason; ${breakdown.remaining} incomplete feature(s) remain; ${parkedWorkMarker} ${String(selectedFeatureId)} was parked, not completed`,
 				};
 			}
 			// The run exits 0 with stopReason 'completed' even though the feature it selected is not

@@ -5,9 +5,8 @@ import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/t
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { classifyWebRun } from 'aidd-shared/runs/outcome';
-import { specRequiresStatus } from '../../cli/src/modes/coding/verification.ts';
 import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
-import { rootDir, runBackend } from './_helpers/pre-existing-paths-fixture.ts';
+import { rootDir, runBackend, runGit } from './_helpers/pre-existing-paths-fixture.ts';
 
 // run_1792066967106_c0bc9f97 on beazley.org: a finding whose criterion 9 required it to stay backlog
 // was honoured by the agent and recorded as exit 73. Exempting the exit alone would loop, because a
@@ -15,8 +14,9 @@ import { rootDir, runBackend } from './_helpers/pre-existing-paths-fixture.ts';
 
 const tmpRoot = join(rootDir, '.tmp-spec-mandated-park-tests');
 const slowTestTimeoutMs = 15_000;
-const holdingSpec =
-	'1. Verify the token is rotated. 9. Until the operator rotates it, this stays backlog and passes:false.';
+// A real hold's wording, which no pattern for "stays backlog" would have matched.
+const holdingSpec = '1. Verify the token is rotated. 9. Keep this feature backlog until it is.';
+const reason = 'Waiting on the operator to rotate the token.';
 
 class ParkingBackend implements CLIBackend {
 	readonly name = 'native' as const;
@@ -38,7 +38,10 @@ class ParkingBackend implements CLIBackend {
 	}
 }
 
-async function makeStore(name: string, spec: string): Promise<FileAiddStore> {
+async function makeStore(
+	name: string,
+	status: 'backlog' | 'in_progress' = 'backlog',
+): Promise<FileAiddStore> {
 	const projectDir = join(tmpRoot, name);
 	await mkdir(join(projectDir, '.aidd', 'features', 'feature-core'), { recursive: true });
 	await writeFile(
@@ -47,17 +50,17 @@ async function makeStore(name: string, spec: string): Promise<FileAiddStore> {
 			id: 'feature-core',
 			passes: false,
 			priority: 1,
-			spec,
-			status: 'backlog',
+			spec: holdingSpec,
+			status,
 			title: 'Core feature',
 		}),
 	);
 	return new FileAiddStore(projectDir);
 }
 
-async function setStatus(store: FileAiddStore, status: 'backlog'): Promise<void> {
+async function putBack(store: FileAiddStore): Promise<void> {
 	const feature = await store.readFeature('feature-core');
-	await store.writeFeature({ ...feature, status });
+	await store.writeFeature({ ...feature, status: 'backlog' });
 }
 
 interface LedgerEntry {
@@ -75,14 +78,12 @@ afterEach(async () => {
 	await removeTempTree(tmpRoot);
 });
 
-describe('a park in the status the spec requires', () => {
+describe('an agent holding its record in backlog', () => {
 	test(
 		'is recorded as a park, not exit 73, and does not re-dispatch the record',
 		async () => {
-			const store = await makeStore('parks', holdingSpec);
-			const backend = new ParkingBackend('Waiting on the operator to rotate the token.', () =>
-				setStatus(store, 'backlog'),
-			);
+			const store = await makeStore('parks');
+			const backend = new ParkingBackend(reason, () => putBack(store));
 			await runBackend(store, backend);
 			const entry = await lastLedgerEntry(store);
 			expect(entry.exitCode).toBe(orchestratorExitCodes.success);
@@ -101,9 +102,32 @@ describe('a park in the status the spec requires', () => {
 	);
 
 	test(
-		'a run that forgets the marker on an ordinary record is still exit 73',
+		'silence is still exit 73: a park needs a stated reason',
 		async () => {
-			const store = await makeStore('forgot', '1. Verify the token is rotated.');
+			const store = await makeStore('silent');
+			await runBackend(store, new ParkingBackend(undefined, () => putBack(store)));
+			const entry = await lastLedgerEntry(store);
+			expect(entry.exitCode).toBe(orchestratorExitCodes.missingResult);
+		},
+		slowTestTimeoutMs,
+	);
+
+	test(
+		'an agent that leaves the claimed record in_progress forgot the marker, whatever it says',
+		async () => {
+			const store = await makeStore('claimed');
+			await runBackend(store, new ParkingBackend(reason));
+			const entry = await lastLedgerEntry(store);
+			expect(entry.exitCode).toBe(orchestratorExitCodes.missingResult);
+			expect(entry.summary).not.toContain('parked_work:');
+		},
+		slowTestTimeoutMs,
+	);
+
+	test(
+		'a record selected in_progress cannot park by doing nothing',
+		async () => {
+			const store = await makeStore('already-in-progress', 'in_progress');
 			await runBackend(store, new ParkingBackend('All done, I think.'));
 			const entry = await lastLedgerEntry(store);
 			expect(entry.exitCode).toBe(orchestratorExitCodes.missingResult);
@@ -113,51 +137,36 @@ describe('a park in the status the spec requires', () => {
 	);
 
 	test(
-		'silence on a holding record is still exit 73: a park needs a stated reason',
+		'an iteration that committed is not a park',
 		async () => {
-			const store = await makeStore('silent', holdingSpec);
-			await runBackend(
-				store,
-				new ParkingBackend(undefined, () => setStatus(store, 'backlog')),
-			);
-			const entry = await lastLedgerEntry(store);
-			expect(entry.exitCode).toBe(orchestratorExitCodes.missingResult);
-		},
-		slowTestTimeoutMs,
-	);
-
-	test(
-		'an agent that leaves the claimed record in_progress is not this park, whatever it says',
-		async () => {
-			const store = await makeStore('claimed', holdingSpec);
-			const backend = new ParkingBackend('Waiting on the operator to rotate the token.');
+			const store = await makeStore('committed');
+			const projectDir = store.projectDir;
+			await Bun.spawn(['git', 'init', projectDir], {
+				stderr: 'ignore',
+				stdout: 'ignore',
+				windowsHide: true,
+			}).exited;
+			await runGit(projectDir, ['config', 'user.email', 'aidd-test@example.invalid']);
+			await runGit(projectDir, ['config', 'user.name', 'aidd Test']);
+			await runGit(projectDir, ['add', '.']);
+			await runGit(projectDir, ['commit', '-m', 'init']);
+			let committed = false;
+			const backend = new ParkingBackend(reason, async () => {
+				if (committed) return;
+				committed = true;
+				await putBack(store);
+				await writeFile(join(projectDir, 'work.txt'), 'work\n');
+				await runGit(projectDir, ['add', 'work.txt']);
+				await runGit(projectDir, ['commit', '-m', 'some work']);
+			});
 			await runBackend(store, backend);
+			// A park would have ended the run after the first call. The second leaves the claimed
+			// record in_progress, which is a forgotten marker and ends it instead.
+			expect(backend.calls).toBe(2);
 			const entry = await lastLedgerEntry(store);
 			expect(entry.exitCode).toBe(orchestratorExitCodes.missingResult);
+			expect(entry.summary).not.toContain('parked_work:');
 		},
 		slowTestTimeoutMs,
 	);
-});
-
-describe('specRequiresStatus', () => {
-	test.each([
-		['this stays backlog and passes:false', 'backlog'],
-		['Until then it stays backlog', 'backlog'],
-		['must remain in in_progress until the host returns', 'in_progress'],
-		['criterion 9 (stay backlog)', 'backlog'],
-	])('%s requires %s', (spec, status) => {
-		expect(specRequiresStatus(spec, status)).toBe(true);
-	});
-
-	test.each([
-		['move it out of backlog when done', 'backlog'],
-		['stays in_progress', 'backlog'],
-		['the backlog stays short', 'backlog'],
-	])('%s does not require %s', (spec, status) => {
-		expect(specRequiresStatus(spec, status)).toBe(false);
-	});
-
-	test('no spec requires nothing', () => {
-		expect(specRequiresStatus(undefined, 'backlog')).toBe(false);
-	});
 });

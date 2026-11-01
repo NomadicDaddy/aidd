@@ -5,8 +5,8 @@ import { readFeatureIfPresent } from 'aidd-shared/metadata/store/read-optional';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 
 import {
+	detectBacklogHoldPark,
 	detectBlockedVerificationAdmission,
-	detectSpecMandatedPark,
 	featureStatusAtSelection,
 	parkBlockedVerificationFeature,
 	recordOwesLiveVerification,
@@ -18,13 +18,13 @@ export type CompletionOutcome =
 	'completed_after_backend_abort' | 'completed_after_backend_idle' | 'completed';
 
 export interface CompletionEvaluation {
+	/** The agent claimed nothing, committed nothing, said why, and put the feature back in backlog. */
+	backlogHoldPark: boolean;
 	/** Why a completion claim was rejected, when one was made and not honored. */
 	completionMarkerIgnored: string | undefined;
 	completionOutcome: CompletionOutcome | undefined;
 	selectedFeatureId: string | undefined;
 	shouldComplete: boolean;
-	/** The agent claimed nothing, said why, and left the feature in the status its own spec requires. */
-	specMandatedPark: boolean;
 	/** The selected feature ended the iteration parked as waiting_approval because its live
 	 * verification was blocked — either rejected from a false completion claim, or parked by the
 	 * agent itself. Either way the iteration produced a correct outcome, not nothing. */
@@ -63,11 +63,11 @@ export async function evaluateFeatureCompletion(
 			abortedAfterCompletion);
 
 	const base: CompletionEvaluation = {
+		backlogHoldPark: false,
 		completionMarkerIgnored: undefined,
 		completionOutcome: undefined,
 		selectedFeatureId,
 		shouldComplete: false,
-		specMandatedPark: false,
 		verificationBlockedParked: false,
 	};
 
@@ -147,14 +147,13 @@ export async function evaluateFeatureCompletion(
 		);
 		return {
 			...base,
-			specMandatedPark:
+			backlogHoldPark:
 				!verificationBlockedParked &&
-				(await detectSpecMandatedPark(
-					store,
-					selectedFeatureId,
-					statusAtSelection,
-					explanation,
-				)),
+				(await detectBacklogHoldPark(store, selectedFeatureId, {
+					commitsMade: result.commitsMade ?? 0,
+					...(explanation !== undefined ? { explanation } : {}),
+					...(statusAtSelection !== undefined ? { statusAtSelection } : {}),
+				})),
 			verificationBlockedParked,
 		};
 	}

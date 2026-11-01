@@ -25,6 +25,7 @@ All notable public aidd releases are documented here.
 
 ### Fixed
 
+- `git restore 'src\..'` and similar quoted Windows paths no longer get past the native agent's destructive-git check. Git for Windows read them as the repository root, so they could discard uncommitted work across the tree.
 - The Director uses the CLI its profile names. Direct AI was running cycles and chat first whenever its surface was on, so choosing Codex still went to the Direct AI provider. Direct AI now serves only a profile set to Native.
 - A brand-new project gets its push guard and leak guard again. Since 2026-10-24 the scaffold's `/.aidd/` ignore rule was read as the project declining them, so projects created in that window still have neither.
 - `news:digest advisories` accepts `--start previous`, which starts where the last complete run ended, so daily windows leave no gaps. A failed run, or one whose window doesn't join the recorded end, leaves that mark where it was.
@@ -53,6 +54,10 @@ All notable public aidd releases are documented here.
 - Isolated Bun audits install frozen development and production dependencies before starting the agent, using copied package files instead of writable cache hardlinks. Setup failures, escaping local dependencies, tracked edits and stop requests fail before provider execution; setup output is retained canonically, and uncertain child cleanup keeps the checkout for diagnosis.
 - Audit benchmark scoring accepts a finding's citation to the exact source span of a cataloged function, as well as its name. The span is recorded from the original fixture before the agent runs; citations to another file or a neighboring function do not count.
 - Audit agents now run in a disposable checkout of the project's committed HEAD by default, so ordinary relative writes from audit probes stay in that checkout. Explicit absolute host paths remain subject to the agent account's permissions. aidd persists accepted reports and findings into the live `.aidd/`, discards the audit checkout without merging, and records leftover tracked edits as an audit integrity violation. `--audit-live-tree` explicitly opts out with a warning; otherwise a committed Git HEAD is required.
+
+### Known issues
+
+- The native agent's shell policy is a text check, not a boundary, and a command spelled to get around it can still pass. Audits on 2026-11-01 reproduced eight such spellings, accepted for this release: targetless `cd` forms that reach the home directory, variable expansion the check models differently from bash, quote handling that hides whole commands, colon-list assignments such as `CDPATH`, short options with an attached path, glob-matched and dangling symlinks, a git command held in a variable, and `--no-verify` or `core.hooksPath` getting a force push past the pre-push guard. None is new since 3.6.0, and other agent CLIs run outside this policy entirely.
 
 ## [3.6.0] - 2026-10-19
 

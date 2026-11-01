@@ -19,7 +19,7 @@
 import { gitReadings } from './shell-policy-git-input.ts';
 import { isDestructive, JUDGED } from './shell-policy-git-options.ts';
 import { commandPositions, commandWord, isAssignment } from './shell-policy-shells.ts';
-import { QUOTED_SPAN, tokenizeShell } from './shell-policy-tokens.ts';
+import { QUOTED_SPAN, type ShellToken, tokenizeShell } from './shell-policy-tokens.ts';
 
 /** Global options that take no value. Any other option without `=` may consume the next word. */
 const VALUELESS_GLOBAL_OPTIONS = new Set([
@@ -90,6 +90,16 @@ export function simpleCommands(command: string, honourQuotes: boolean): string[]
 /** Bash drops a backslash inside a word, so `g\it` and `--ha\rd` run as `git` and `--hard`. */
 function unescaped(word: string): string {
 	return word.split('\\').join('');
+}
+
+/**
+ * Inside quotes bash keeps the backslash, and Git for Windows reads it as a path separator, so
+ * `'src\..'` reaches the repository root. Judge that word with the separator it will have.
+ */
+function wordGitReceives(token: ShellToken): string {
+	return token.unquoted.includes(QUOTED_SPAN)
+		? token.text.replaceAll('\\', '/')
+		: unescaped(token.text);
 }
 
 function fileName(word: string): string {
@@ -176,7 +186,7 @@ function quotedTextDiscards(segment: string, root: string): boolean {
 }
 
 function segmentDiscards(segment: string, root: string, unpackedLater: boolean): boolean {
-	const words = tokenizeShell(segment).map((token) => unescaped(token.text));
+	const words = tokenizeShell(segment).map(wordGitReceives);
 	// `clean.requireForce=false` makes a bare `git clean` delete, with no force flag to see, and
 	// once it is set the `git clean` that follows cannot be told from a safe one.
 	if (words.some((word) => word.toLowerCase().includes('clean.requireforce'))) return true;

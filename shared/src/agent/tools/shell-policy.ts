@@ -12,6 +12,7 @@ import { usesDestructiveGit } from './shell-policy-git.ts';
 import { expandsAtRuntime, isPathWithinWorkspaceRoot } from './shell-policy-paths.ts';
 import { maskNullOutputRedirects } from './shell-policy-redirects.ts';
 import { runsTextAsCommands } from './shell-policy-shells.ts';
+import { shellSyntaxProblem, stripQuotedSpans } from './shell-policy-tokens.ts';
 
 /**
  * Environment variables that name a directory outside the project. Each one is supplied to the
@@ -121,7 +122,7 @@ export function checkBashWorkspacePolicy(command: string, cwd: string): null | s
  */
 function evaluateBashWorkspacePolicy(command: string, cwd: string): null | string {
 	const root = resolve(cwd);
-	const stripped = command.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""');
+	const stripped = stripQuotedSpans(command);
 
 	// --- Destructive git command deny-list (Critical: silent worktree destruction) ---
 	// These discard uncommitted work without naming a path, so the write-allowlist guard's
@@ -150,7 +151,7 @@ function evaluateBashWorkspacePolicy(command: string, cwd: string): null | strin
 	// --- Home directory references ---
 	// Check single-quote-stripped text: `$HOME` is literal inside single quotes
 	// but expands inside double quotes, so double-quoted content must remain visible.
-	const singleQuoteStripped = command.replace(/'[^']*'/g, "''");
+	const singleQuoteStripped = stripQuotedSpans(command, true);
 	const homeError = checkHomeReferences(command, singleQuoteStripped);
 	if (homeError !== null) return homeError;
 
@@ -173,6 +174,12 @@ function evaluateBashWorkspacePolicy(command: string, cwd: string): null | strin
 	// a literal search like `rg '[$](x)' src/` is not substitution.
 	if (usesCommandSubstitution(singleQuoteStripped)) {
 		return 'ERROR: bash command uses command substitution ($(...) or backticks), whose value is produced at runtime and cannot be bounded to the workspace';
+	}
+
+	// --- Quote state: every check below reads words, and these have none bash would agree on ---
+	const syntaxProblem = shellSyntaxProblem(command);
+	if (syntaxProblem !== null) {
+		return `ERROR: bash command has ${syntaxProblem}, so what it would run cannot be read`;
 	}
 
 	// --- General argument containment (relative escapes, quoted absolutes, symlinks) ---

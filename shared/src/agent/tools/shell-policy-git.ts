@@ -19,7 +19,7 @@
 import { gitReadings } from './shell-policy-git-input.ts';
 import { isDestructive, JUDGED } from './shell-policy-git-options.ts';
 import { commandPositions, commandWord, isAssignment } from './shell-policy-shells.ts';
-import { QUOTED_SPAN, tokenizeShell } from './shell-policy-tokens.ts';
+import { commandSegments, QUOTED_SPAN, tokenizeShell } from './shell-policy-tokens.ts';
 
 /** Global options that take no value. Any other option without `=` may consume the next word. */
 const VALUELESS_GLOBAL_OPTIONS = new Set([
@@ -64,19 +64,16 @@ const QUOTES_ARE_TEXT = new Set([
 	'rg',
 ]);
 
-/** Splits on command separators, honouring quotes or not. */
+/**
+ * Splits on command separators. Honouring quotes reads them as bash does; the other reading treats
+ * every separator as real, so a command a quote may be hiding is still judged.
+ */
 export function simpleCommands(command: string, honourQuotes: boolean): string[] {
+	if (honourQuotes) return commandSegments(command);
 	const commands: string[] = [];
 	let current = '';
-	let quote: '"' | "'" | null = null;
 	for (const ch of command) {
-		if (quote !== null) {
-			if (ch === quote) quote = null;
-			current += ch;
-		} else if (honourQuotes && (ch === '"' || ch === "'")) {
-			quote = ch;
-			current += ch;
-		} else if (COMMAND_SEPARATORS.has(ch)) {
+		if (COMMAND_SEPARATORS.has(ch)) {
 			commands.push(current);
 			current = '';
 		} else {

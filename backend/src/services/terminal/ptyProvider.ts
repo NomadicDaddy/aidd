@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 
 import { webLogger } from '../../logger.ts';
@@ -31,7 +32,7 @@ let cachedProvider: Promise<null | PtySpawn> | undefined;
 
 // bun-pty's import succeeds even when its native library can't load, and only spawn reports that.
 // Spawning a program that doesn't exist starts nothing, and the error says which case this is.
-const NO_SUCH_PROGRAM = join(import.meta.dir, '.no-such-program-for-pty-probe');
+const NO_SUCH_PROGRAM = join(import.meta.dir, `.no-such-program-${randomUUID()}`);
 const LIBRARY_UNUSABLE = /could not load its native library|needs Bun/;
 
 /**

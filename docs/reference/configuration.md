@@ -278,19 +278,19 @@ provider whose own key is missing. `NATIVE_API_KEY` is the only provider-agnosti
 
 `directAi` controls direct web-backed AI surfaces:
 
-| Config path                        | Type             | Default                    | Purpose                                                 |
-| ---------------------------------- | ---------------- | -------------------------- | ------------------------------------------------------- |
-| `directAi.baseUrl`                 | string           | selected provider          | Base URL override for direct AI calls only.             |
-| `directAi.enabled`                 | boolean          | `false`                    | Enables configured direct AI web surfaces.              |
-| `directAi.model`                   | string           | selected provider          | Model override for direct AI calls only.                |
-| `directAi.provider`                | string           | `defaultProvider`          | Provider override for direct AI calls only.             |
-| `directAi.reasoningEffort`         | reasoning effort | provider/top-level effort  | Reasoning-effort override for direct AI calls only.     |
-| `directAi.surfaces`                | object           | follows `directAi.enabled` | Per-surface enablement overrides.                       |
-| `directAi.surfaces.directorChat`   | boolean          | `directAi.enabled`         | Enables direct AI for Director chat.                    |
-| `directAi.surfaces.directorCycle`  | boolean          | `directAi.enabled`         | Enables direct AI for Director cycles.                  |
-| `directAi.surfaces.projectAdvisor` | boolean          | `directAi.enabled`         | Enables direct AI for project-creation recommendations. |
-| `directAi.surfaces.runSummaries`   | boolean          | `directAi.enabled`         | Enables direct AI for run summaries.                    |
-| `directAi.timeoutSeconds`          | positive integer | `120`                      | Direct AI request timeout.                              |
+| Config path                        | Type             | Default                    | Purpose                                                                          |
+| ---------------------------------- | ---------------- | -------------------------- | -------------------------------------------------------------------------------- |
+| `directAi.baseUrl`                 | string           | selected provider          | Base URL override for direct AI calls only.                                      |
+| `directAi.enabled`                 | boolean          | `false`                    | Enables configured direct AI web surfaces.                                       |
+| `directAi.model`                   | string           | selected provider          | Model override for direct AI calls only.                                         |
+| `directAi.provider`                | string           | `defaultProvider`          | Provider override for direct AI calls only.                                      |
+| `directAi.reasoningEffort`         | reasoning effort | provider/top-level effort  | Reasoning-effort override for direct AI calls only.                              |
+| `directAi.surfaces`                | object           | follows `directAi.enabled` | Per-surface enablement overrides.                                                |
+| `directAi.surfaces.directorChat`   | boolean          | `directAi.enabled`         | Enables direct AI for Director chat when the Director Profile's CLI is Native.   |
+| `directAi.surfaces.directorCycle`  | boolean          | `directAi.enabled`         | Enables direct AI for Director cycles when the Director Profile's CLI is Native. |
+| `directAi.surfaces.projectAdvisor` | boolean          | `directAi.enabled`         | Enables direct AI for project-creation recommendations.                          |
+| `directAi.surfaces.runSummaries`   | boolean          | `directAi.enabled`         | Enables direct AI for run summaries.                                             |
+| `directAi.timeoutSeconds`          | positive integer | `120`                      | Direct AI request timeout.                                                       |
 
 `provider`, `model`, `baseUrl`, and `reasoningEffort` are overrides only. Direct AI inherits
 them from `defaultProvider`, `providers.<provider>.*`, and the top-level `reasoningEffort` when

@@ -51,7 +51,7 @@ export function DirectorProfileSection({
 				<CardHeader
 					action={<Badge tone="neutral">Own record</Badge>}
 					className="mb-0"
-					description="CLI, model, and behavior used when running cycles and chat."
+					description="CLI, model, and behavior used when running cycles and chat. Direct AI serves only a profile set to Native."
 					id="director-profile-heading"
 					title="Director Profile"
 				/>

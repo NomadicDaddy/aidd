@@ -10,6 +10,7 @@ import { type BackendName, requireBackendName } from 'aidd-shared/plan/types';
 
 import type { directorChatMessages } from '../../db/schema.ts';
 import type { ProjectSummaryDto } from '../../types.ts';
+import type { DirectAiRunner } from '../directAiService.ts';
 import type { DirectorRecipeSummary, FleetSummary, ProfileRow } from './types.ts';
 
 export const defaultProfileId = 'default';
@@ -111,6 +112,15 @@ export function mapChatMessage(
 		role,
 		sessionId: message.sessionId,
 	};
+}
+
+// The profile's CLI is the operator's choice, so Direct AI serves only a profile set to Native.
+export function directAiServesProfile(
+	directAi: Pick<DirectAiRunner, 'isSurfaceEnabled'>,
+	surface: 'directorChat' | 'directorCycle',
+	profile: { backend: string },
+): boolean {
+	return profile.backend === 'native' && directAi.isSurfaceEnabled(surface);
 }
 
 export function normalizeBackend(value: string): BackendName {

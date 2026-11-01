@@ -25,6 +25,7 @@ import {
 } from './directCycleNormalizer.ts';
 import {
 	cleanText,
+	directAiServesProfile,
 	maxProfileTextLength,
 	normalizeBackend,
 	normalizeReasoningEffort,
@@ -76,11 +77,11 @@ export async function runDirectCycle(
 	fleetSummary: FleetSummary,
 	cycleContext: CycleContext,
 ): Promise<DirectCycleResult> {
-	if (!deps.directAiService.isSurfaceEnabled('directorCycle')) {
+	const profile = cycleContext?.profile ?? (await deps.profileService.getProfile());
+	if (!directAiServesProfile(deps.directAiService, 'directorCycle', profile)) {
 		return { directAiError: null, output: null };
 	}
 	const config = deps.getConfig();
-	const profile = cycleContext?.profile ?? (await deps.profileService.getProfile());
 	const reasoningEffort = normalizeReasoningEffort(profile.reasoningEffort);
 	const meta = deps.directAiService.resolveSurfaceMeta('directorCycle', reasoningEffort);
 	deps.setCycleStage(cycleId, 'running_direct_ai', meta);

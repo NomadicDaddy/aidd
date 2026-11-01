@@ -25,6 +25,7 @@ All notable public aidd releases are documented here.
 
 ### Fixed
 
+- The Director uses the CLI its profile names. Direct AI was running cycles and chat first whenever its surface was on, so choosing Codex still went to the Direct AI provider. Direct AI now serves only a profile set to Native.
 - A brand-new project gets its push guard and leak guard again. Since 2026-10-24 the scaffold's `/.aidd/` ignore rule was read as the project declining them, so projects created in that window still have neither.
 - `news:digest advisories` accepts `--start previous`, which starts where the last complete run ended, so daily windows leave no gaps. A failed run, or one whose window doesn't join the recorded end, leaves that mark where it was.
 - A run that hits Zhipu's 5-hour limit now reads the reset date in the provider's message and waits for it, or ends as rate-limited when that falls past its time limit. It used to retry on the five-minute fallback. The weekly limit stays on that retry, because its calls have usually come back well before the date it names.

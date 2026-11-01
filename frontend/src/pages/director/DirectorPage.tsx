@@ -53,10 +53,12 @@ export function DirectorPage() {
 	const now = useNow(Boolean(activeCycle) || director.triggerCycle.isPending);
 	const settings = useSettingsConfig();
 	const profile = director.profile.data;
-	// Cycles run on the persisted director profile (or the Direct-AI surface when enabled) —
-	// there is no per-cycle override, so the badge is read-only and points at the profile editor.
+	// Cycles run on the persisted director profile, or Direct AI when that profile is Native. There
+	// is no per-cycle override, so the badge is read-only and points at the profile editor.
 	const directAiActive = Boolean(
-		settings.data?.directAi.enabled && settings.data.directAi.surfaces.directorCycle,
+		profile?.backend === 'native' &&
+		settings.data?.directAi.enabled &&
+		settings.data.directAi.surfaces.directorCycle,
 	);
 	const directProvider =
 		settings.data?.directAi.provider ?? settings.data?.defaultProvider ?? undefined;

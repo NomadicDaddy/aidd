@@ -112,6 +112,54 @@ describe('extractRateLimitResetAt', () => {
 	});
 });
 
+describe('a quota reset given as a full date', () => {
+	// Captured from logs/ai-calls.jsonl, 2026-10-27T09:13:15Z.
+	const captured =
+		'zhipu request failed: HTTP 429 {"error":{"code":"1310","message":"Weekly/Monthly Limit Exhausted. Your limit will reset at 2026-10-30 17:54:36"}}';
+
+	test('reads the date as UTC+8, whatever the local zone', () => {
+		expect(parseRateLimitReset(captured)?.toISOString()).toBe('2026-10-30T09:54:36.000Z');
+	});
+
+	test('the run waits until that reset instead of retrying on the fallback', () => {
+		const now = new Date('2026-10-27T09:13:15.279Z');
+		const decision = computeRateLimitSleep(captured, now, 60, 300);
+
+		expect(decision.reason).toBe('until_reset');
+		expect(decision.resetAt?.toISOString()).toBe('2026-10-30T09:54:36.000Z');
+		expect(decision.sleepMs).toBe(
+			Date.parse('2026-10-30T09:54:36.000Z') - now.getTime() + 60_000,
+		);
+	});
+
+	test('a named date already past retries at once', () => {
+		const decision = computeRateLimitSleep(captured, new Date('2026-10-31T00:00:00Z'), 60, 300);
+
+		expect(decision.reason).toBe('passed');
+		expect(decision.sleepMs).toBe(0);
+	});
+
+	test('an impossible date falls back rather than sleeping on nonsense', () => {
+		const message = 'Your limit will reset at 2026-13-45 99:99:99';
+
+		expect(parseRateLimitReset(message)).toBeUndefined();
+		expect(computeRateLimitSleep(message, new Date(), 60, 300).reason).toBe('fallback');
+	});
+
+	test('a retry-after still outranks the date in the message', () => {
+		const structured = new Date('2026-10-27T10:00:00Z');
+		const decision = computeRateLimitSleep(
+			captured,
+			new Date('2026-10-27T09:13:15Z'),
+			60,
+			300,
+			structured,
+		);
+
+		expect(decision.resetAt).toEqual(structured);
+	});
+});
+
 describe('computeRateLimitSleep with structured resetAt', () => {
 	const now = new Date('2026-05-05T03:00:00Z');
 

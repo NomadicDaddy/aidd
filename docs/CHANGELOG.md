@@ -11,6 +11,7 @@ All notable public aidd releases are documented here.
 
 ### Fixed
 
+- A run that exhausts a Zhipu quota now reads the reset date in the provider's message and waits for it, or ends as rate-limited when that falls past its time limit. It used to retry on the five-minute fallback, which on 10-16 meant 63 failed calls across two runs.
 - Asking the panel's API for an audit that has no definition now answers 404 naming the audit, not a 500 whose message held the audits folder's full path. Saving a schedule that names such an audit is refused the same way.
 - Feature validation now reports a `createdAt`, `updatedAt` or `completedAt` more than 10 minutes in the future, naming the field and its value. These came from agents typing a time by hand, and they misordered every age and recency reading that trusts the field.
 - A coding run can now declare that a record's own spec holds it until something outside the run happens, with `AIDD_RESULT: {"featureId":"<id>","status":"parked","reason":"..."}`, instead of being recorded as exit 73. The iteration must make no commit. The run ends there and shows "Completed · work parked", because the record would otherwise be selected again.

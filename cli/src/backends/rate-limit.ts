@@ -32,7 +32,10 @@ const resetTimePattern = /(?:resets|try again at)\s+(\d{1,2})(?::(\d{2}))?\s*([a
 // Zhipu's exhausted quota (HTTP 429, code 1310) names its reset with no time zone: "Your limit will
 // reset at 2026-10-27 17:02:08". The clock is UTC+8. In logs/ai-calls.jsonl that reset's failures
 // ran to 09:00:06Z and calls succeeded again from 09:02:35Z, and 17:02:08 at UTC+8 is 09:02:08Z.
-const datedResetPattern = /limit will reset at (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/;
+// That one measurement is the only evidence, so the rule holds for this provider's own envelope:
+// another provider's zone-less date stays unparsed and takes the fallback backoff.
+const datedResetPattern =
+	/^zhipu request failed: HTTP 429 .*"code":"1310".*limit will reset at (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/;
 const datedResetUtcOffset = '+08:00';
 
 function parseDatedReset(message: string): Date | undefined {

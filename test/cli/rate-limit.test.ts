@@ -140,8 +140,17 @@ describe('a quota reset given as a full date', () => {
 	});
 
 	test('an impossible date falls back rather than sleeping on nonsense', () => {
-		const message = 'Your limit will reset at 2026-13-45 99:99:99';
+		const message = captured.replace('2026-10-30 17:54:36', '2026-13-45 99:99:99');
 
+		expect(parseRateLimitReset(message)).toBeUndefined();
+		expect(computeRateLimitSleep(message, new Date(), 60, 300).reason).toBe('fallback');
+	});
+
+	test.each([
+		['another provider', captured.replace('zhipu', 'openai')],
+		['another code', captured.replace('1310', '1302')],
+		['bare text', 'Your limit will reset at 2026-10-30 17:54:36'],
+	])('%s saying the same words is not read as UTC+8', (_label, message) => {
 		expect(parseRateLimitReset(message)).toBeUndefined();
 		expect(computeRateLimitSleep(message, new Date(), 60, 300).reason).toBe('fallback');
 	});

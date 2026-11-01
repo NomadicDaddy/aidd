@@ -31,7 +31,7 @@ const resetTimePattern = /(?:resets|try again at)\s+(\d{1,2})(?::(\d{2}))?\s*([a
 
 // Zhipu's 5-hour limit (HTTP 429, code 1308) names its reset with no time zone: "Your limit will
 // reset at 2026-10-27 17:02:08". It is read as UTC+8. Across the nine such resets in the call logs
-// to 2026-11-01, no call failed after the named time and none succeeded before it, and four
+// to 2026-11-01, no call naming that reset failed after it and none succeeded before it, and four
 // succeeded within 65 seconds after. This is inferred from those logs, not documented by Zhipu.
 // The weekly limit (code 1310) words its reset the same way but stays on the fallback backoff:
 // calls came back 24 to 129 hours before the named time in five of six resets, cause unknown, so

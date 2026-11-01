@@ -112,7 +112,7 @@ function namesWholeTree(args: string[], root: string): boolean {
 			const target = resolve(normalizePosixDrivePath(arg, process.platform)).toLowerCase();
 			return rootPath === target || rootPath.startsWith(target.replace(/[\\/]$/, '') + sep);
 		}
-		const normalized = posix.normalize(arg);
+		const normalized = posix.normalize(arg.replaceAll('\\', '/'));
 		return normalized === '.' || normalized === './' || normalized.startsWith('..');
 	});
 }

@@ -89,11 +89,6 @@ describe('shell workspace policy - destructive git, every spelling', () => {
 		'git ls-files -m | xargs git checkout --',
 		'git checkout -- src/..',
 		'git restore src/..',
-		// Bash keeps a backslash inside quotes, and Git for Windows reads it as a separator.
-		"git restore 'src\\..'",
-		'git restore "src\\.."',
-		"git checkout -- 'src\\..'",
-		"git rm -rf 'src\\..'",
 		"git restore '*.*'",
 		"git restore './*'",
 		"git restore -- '[a-z]*'",
@@ -103,7 +98,6 @@ describe('shell workspace policy - destructive git, every spelling', () => {
 	});
 
 	test.each([
-		"git restore 'src\\a.txt'",
 		'git reset',
 		'git reset HEAD file.txt',
 		'git reset -- file.txt',

@@ -55,7 +55,10 @@ describe('CI workflow', () => {
 		) as PackageManifest;
 
 		expect(workflow).toContain('pull_request:\n        branches: [main]');
-		expect(manifest.scripts?.['audit:dependencies']).toBe('bun audit');
+		// The owner accepted exactly these three for 3.7.0. Adding an ID here is a loosening.
+		expect(manifest.scripts?.['audit:dependencies']).toBe(
+			'bun audit --ignore=GHSA-rmxm-3fg6-px4f --ignore=GHSA-g3hv-75wg-m249 --ignore=GHSA-6pq8-jhm2-2vcw',
+		);
 		expect([...quality.matchAll(/^\s+run: (.+)$/gm)].map((match) => match[1])).toEqual([
 			'bun install --frozen-lockfile',
 			'bun run audit:dependencies',

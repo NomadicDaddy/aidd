@@ -10,8 +10,8 @@
 		"aidd-shared": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/bun": "1.4.3",
-		"@types/node": "26.6.5",
+		"@types/bun": "1.4.4",
+		"@types/node": "26.6.6",
 		"typescript": "6.0.3"
 	},
 	"scripts": {

@@ -26,6 +26,12 @@ describe('shell workspace policy - quote state follows bash', () => {
 		'echo done # see ../outside/sentinel.txt',
 		'echo done # uses $UNSET_NAME',
 		'echo done # ; cd',
+		'echo $[1<<E]\ncat ../outside/sentinel.txt\nE]',
+		'a[1<<E]=1\ncat ../outside/sentinel.txt\nE]=1',
+		'[[ x == @(a<<E) ]]\ncat ../outside/sentinel.txt\nE',
+		'cat <<E\nE\r\ncat ../outside/sentinel.txt\nE',
+		"cat <<EOF\nit's ../x\nEOF",
+		"cat <<'EOF'\nit's $NOT_SET\nEOF",
 	])('denies %j', (command) => {
 		expect(verdict(command)).toContain('ERROR');
 	});
@@ -42,8 +48,8 @@ describe('shell workspace policy - quote state follows bash', () => {
 	test.each([
 		'echo "quoted \\"inner\\" text" src/a.txt',
 		"echo done # it's fine\ncat src/a.txt",
-		"cat <<EOF\nit's ../x and more\nEOF\ncat src/a.txt",
-		"cat <<'EOF' > src/out.txt\nit's ../x and $LITERAL\nEOF",
+		"cat <<EOF\nit's fine and more\nEOF\ncat src/a.txt",
+		"cat <<'EOF' > src/out.txt\nit's plain text\nEOF",
 		"cat <<-EOF\n\tit's\n\tEOF",
 		'echo $((1<<2))',
 		'echo a#b src/a.txt',
@@ -117,8 +123,16 @@ describe('tokenizeShell', () => {
 		expect(words('""#x')).toEqual(['#x']);
 	});
 
-	test('a heredoc body yields no words, and the line after it does', () => {
-		expect(words('cat <<EOF x\nbody ../y\nEOF\nnext')).toEqual(['cat', 'EOF', 'x', 'next']);
+	test('a heredoc body opens no quote, and its words are still judged', () => {
+		expect(words("cat <<EOF x\nit's ../y\nEOF\nnext")).toEqual([
+			'cat',
+			'EOF',
+			'x',
+			'its',
+			'../y',
+			'EOF',
+			'next',
+		]);
 	});
 
 	test('a backslash outside quotes stays, so a Windows path keeps its separator', () => {

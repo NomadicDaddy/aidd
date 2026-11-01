@@ -10,8 +10,14 @@
  * is read as ending at the escaped quote, the next quote opens a span that swallows the commands
  * after it. So a backslash escapes `"`, `$`, a backtick or a backslash inside double quotes, and
  * nothing inside single quotes. A comment or a heredoc body holds no quotes at all, which is why
- * an apostrophe in either one must not open a span. A comment's words are still judged; a heredoc
- * body's mostly are not (see {@link heredocArguments}).
+ * an apostrophe in either one must not open a span.
+ *
+ * Their words are still judged, always. Four rounds of review found the same mistake: where this
+ * scan reads a comment or a heredoc and bash doesn't (`(( a #b )) ; cat x`, `echo $[1<<E]` over a
+ * line that runs), skipping the text hides a real command from every check. Bash's rules for both
+ * need grammar a text scan lacks, so the only reading that can't hide one is to skip nothing. A
+ * comment or heredoc naming an outside path or an unset variable is denied in exchange; a file
+ * with such text goes through the file-writing tool.
  *
  * Outside quotes a backslash stays literal in the token rather than being removed. Under `bash -c`
  * it is an escape, but dropping it would erase the separator in Windows spellings like
@@ -29,7 +35,7 @@ import { type Heredoc, peekDelimiter, readHeredocBodies } from './shell-policy-h
  * inside a longer blob.
  */
 const OPERATOR_CHARS = new Set([';', '(', ')', '&', '<', '>', '|']);
-const COMMENT_WORD_END = /[\s;()&<>|]+/;
+const TEXT_WORD_END = /[\s;()&<>|]+/;
 
 /** Inside double quotes, the characters a backslash escapes. */
 const DOUBLE_QUOTE_ESCAPES = new Set(['"', '\\', '`', '$']);
@@ -63,17 +69,11 @@ interface QuotedRange extends Range {
 	quote: '"' | "'";
 }
 
-interface InertRange extends Range {
-	kind: 'expanding-body' | 'literal-body';
-}
-
 interface Scan {
 	/** Unquoted `((` not yet closed: `<<` inside is a shift, not a heredoc. */
 	arithmetic: number;
 	chars: string[];
 	index: number;
-	/** Heredoc bodies. */
-	inert: InertRange[];
 	pending: Heredoc[];
 	problem: null | string;
 	quoted: QuotedRange[];
@@ -151,15 +151,16 @@ function readDoubleQuoted(scan: Scan): void {
 function readComment(scan: Scan): void {
 	const start = scan.index;
 	while (scan.index < scan.chars.length && scan.chars[scan.index] !== '\n') scan.index += 1;
-	const words = scan.chars
-		.slice(start, scan.index)
-		.join('')
-		.replace(/["']/g, '')
-		.split(COMMENT_WORD_END);
+	pushTextWords(scan, start, scan.index);
+	scan.index -= 1;
+}
+
+/** Text that holds no quotes to bash, read as words so the checks still see all of it. */
+function pushTextWords(scan: Scan, start: number, end: number): void {
+	const words = scan.chars.slice(start, end).join('').replace(/["']/g, '').split(TEXT_WORD_END);
 	for (const text of words) {
 		if (text !== '') scan.tokens.push({ text, unquoted: text });
 	}
-	scan.index -= 1;
 }
 
 /** Called on the first `<` of `<<`. The delimiter word still tokenizes as an ordinary word. */
@@ -171,21 +172,15 @@ function noteHeredoc(scan: Scan): void {
 	}
 	const stripTabs = scan.chars[scan.index + 2] === '-';
 	const delimiter = peekDelimiter(scan.chars, scan.index + (stripTabs ? 3 : 2), endsBashWord);
-	if (delimiter !== null) scan.pending.push({ ...delimiter, stripTabs });
+	if (delimiter !== null) scan.pending.push({ delimiter, stripTabs });
 	scan.index += 1;
 }
 
 /** Called on the newline that ends a heredoc's command. Leaves the index on the terminator's end. */
-function skipHeredocBodies(scan: Scan): void {
-	const { bodies, cursor, terminated } = readHeredocBodies(
-		scan.chars,
-		scan.pending,
-		scan.index + 1,
-	);
+function readHeredocs(scan: Scan): void {
+	const { cursor, terminated } = readHeredocBodies(scan.chars, scan.pending, scan.index + 1);
 	if (!terminated) scan.problem = 'a heredoc with no terminator';
-	for (const { end, literal, start } of bodies) {
-		scan.inert.push({ end, kind: literal ? 'literal-body' : 'expanding-body', start });
-	}
+	pushTextWords(scan, scan.index + 1, Math.min(cursor, scan.chars.length));
 	scan.pending = [];
 	scan.index = cursor - 1;
 }
@@ -225,7 +220,7 @@ function scanUnquoted(scan: Scan, ch: string): void {
 		// `((` may be nested subshells instead, once bash finds no `))`, and then a `<<` skipped as
 		// a shift was a heredoc. A line ending inside one can't be read either way.
 		if (ch === '\n' && scan.arithmetic > 0) scan.problem = 'a `((` still open across lines';
-		if (ch === '\n' && scan.pending.length > 0) skipHeredocBodies(scan);
+		if (ch === '\n' && scan.pending.length > 0) readHeredocs(scan);
 	} else {
 		scan.text += ch;
 		scan.unquoted += ch;
@@ -237,7 +232,6 @@ export function scanShell(command: string): Scan {
 		arithmetic: 0,
 		chars: Array.from(command),
 		index: 0,
-		inert: [],
 		pending: [],
 		problem: null,
 		quoted: [],
@@ -253,25 +247,8 @@ export function scanShell(command: string): Scan {
 	return scan;
 }
 
-/**
- * A heredoc body is input, not arguments, with two exceptions. `xargs` turns it back into arguments,
- * so its words are judged like any others, the way `echo ../x | xargs cat` is. And a body whose
- * delimiter is unquoted still expands, so a word with a `$` in it is judged like the same word on
- * the command line: `cat <<EOF` around `$SECRET` prints the secret.
- */
-function heredocArguments(scan: Scan, command: string): ShellToken[] {
-	const asArguments = /\bxargs\b/.test(command);
-	return scan.inert.flatMap(({ end, kind, start }) => {
-		const body = scan.chars.slice(start, end).join('');
-		if (asArguments) return tokenizeShell(body);
-		if (kind === 'literal-body') return [];
-		return (body.match(/\S*\$\S*/g) ?? []).map((text) => ({ text, unquoted: text }));
-	});
-}
-
 export function tokenizeShell(command: string): ShellToken[] {
-	const scan = scanShell(command);
-	return [...scan.tokens, ...heredocArguments(scan, command)];
+	return scanShell(command).tokens;
 }
 
 /** Why bash and this policy could not agree on the command's words, or null when they can. */

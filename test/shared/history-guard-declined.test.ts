@@ -75,6 +75,14 @@ describe('ensureHistoryGuard leaves a repository that declined it alone', () => 
 		expect(existsSync(join(dir, '.githooks', 'leak-guard.sh'))).toBe(true);
 	});
 
+	test('a repository on an unborn orphan branch still has commits, so its decline stands', async () => {
+		const dir = await makeRepo('orphan');
+		await commitFile(dir, '.gitignore', '/.aidd/\n', 'ignore aidd');
+		git(dir, ['checkout', '-q', '--orphan', 'fresh-start']);
+		expect(await ensureHistoryGuard(dir, AIDD_ROOT)).toBe('aidd-ignored');
+		expect(existsSync(join(dir, '.githooks'))).toBe(false);
+	});
+
 	test('a repository that tracks the guard keeps being guarded even when it ignores .aidd/', async () => {
 		const dir = await makeRepo('tracked');
 		await commitFile(dir, '.gitignore', '/.aidd/\n', 'ignore aidd');

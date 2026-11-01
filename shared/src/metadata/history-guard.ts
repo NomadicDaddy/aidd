@@ -93,8 +93,8 @@ export type GuardOutcome =
 async function guardDeclined(projectDir: string): Promise<GuardOutcome | undefined> {
 	const tracked = await git(projectDir, ['ls-files', '--', `.githooks/${HOOK}`]);
 	if (tracked.ok && tracked.stdout !== '') return undefined;
-	const hasCommits = await git(projectDir, ['rev-parse', '--verify', '-q', 'HEAD']);
-	if (!hasCommits.ok) return undefined;
+	const commits = await git(projectDir, ['rev-list', '-n', '1', '--all']);
+	if (commits.ok && commits.stdout === '') return undefined;
 	// A path inside .aidd/features, so a rule ignoring only some .aidd subfolders doesn't count.
 	const ignored = await git(projectDir, ['check-ignore', '-q', '.aidd/features/feature.json']);
 	if (ignored.ok) return 'aidd-ignored';

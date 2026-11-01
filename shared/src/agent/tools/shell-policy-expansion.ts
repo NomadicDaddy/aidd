@@ -23,6 +23,7 @@ const NAME = '[A-Za-z_][A-Za-z0-9_]*';
 const REFERENCE = new RegExp(`\\$(?:\\{(${NAME})\\}|(${NAME}))`, 'g');
 const PARAMETER_OPERATION = new RegExp(`\\$\\{(?!${NAME}\\})`);
 const ASSIGNMENT = new RegExp(`^(${NAME})=(.*)$`, 's');
+const APPEND_ASSIGNMENT = new RegExp(`^${NAME}\\+=`);
 const NAME_ONLY = new RegExp(`^${NAME}$`);
 /** `$0`, `$1`, `$@`, `$*`, `$-`: set by the invocation, not by the command. */
 const POSITIONAL_OR_SPECIAL = /\$[0-9@*-]/;
@@ -53,8 +54,15 @@ const BINDING_BUILTINS = new Set([
 	'typeset',
 ]);
 const BRACE_EXPANSION = /\{[^{}]*(?:,|\.\.)[^{}]*\}/;
-/** `.*`, `.?`, `.[..]` as a path segment: bash without `globskipdots` matches `..` with these. */
-const DOT_GLOB = /(?:^|\/)\.[*?[]/;
+/**
+ * `.*`, `.?`, `.[..]`, `..*` as a path segment: bash without `globskipdots` matches `..` with
+ * these.
+ */
+const DOT_GLOB = /(?:^|\/)\.\.?[*?[]/;
+const DOT_GLOB_DENIAL =
+	'ERROR: bash command uses a dot-glob (.*, .?), which can match the parent directory and escape the workspace';
+/** Words that start a body bash may run again, or later, with different values. */
+const BODY_OPENERS = new Set(['for', 'function', 'select', 'until', 'while']);
 const MAX_VARIANTS = 64;
 
 export type ExpansionResult = { error: string } | { tokens: string[] };
@@ -75,7 +83,8 @@ function expandReferences(
 	let cursor = 0;
 	for (const match of token.matchAll(REFERENCE)) {
 		const name = match[1] ?? match[2] ?? '';
-		const values = NUMERIC_NAMES.has(name) ? ['0'] : bindings.get(name);
+		// The command's own value first: `SHLVL=.` makes `$SHLVL` a dot, whatever bash keeps there.
+		const values = bindings.get(name) ?? (NUMERIC_NAMES.has(name) ? ['0'] : undefined);
 		if (values === undefined) return name;
 		const start = match.index ?? 0;
 		const literal = token.slice(cursor, start);
@@ -91,8 +100,27 @@ function expandReferences(
 	return variants.map((variant) => variant + tail);
 }
 
+/**
+ * What changes how bash splits or globs a value, so the values judged here would not be the ones
+ * it uses. Read with quotes removed, because `"shopt"` runs just the same.
+ */
+function rejectWordRules(tokens: ShellToken[], index: number): null | string {
+	const word = (at: number): string => (tokens[at]?.text ?? '').split('\\').join('');
+	const text = word(index);
+	if (APPEND_ASSIGNMENT.test(text)) return unbounded('appends to a variable with +=');
+	if (text.startsWith('IFS=')) return unbounded('assigns IFS, which changes how values split');
+	if (text === 'shopt') return unbounded("changes shell options with 'shopt'");
+	const isGlobToggle =
+		/^[-+][a-zA-Z]*f/.test(word(index + 1)) ||
+		(/^[-+]o$/.test(word(index + 1)) && word(index + 2) === 'noglob');
+	if (text === 'set' && isGlobToggle) return unbounded("changes globbing with 'set'");
+	return null;
+}
+
 function rejectRuntimeRewrites(tokens: ShellToken[]): null | string {
 	for (const [index, token] of tokens.entries()) {
+		const wordRule = rejectWordRules(tokens, index);
+		if (wordRule !== null) return wordRule;
 		if (token.unquoted.includes(`$${QUOTED_SPAN}`)) {
 			return unbounded(`uses $'...' quoting`);
 		}
@@ -106,7 +134,7 @@ function rejectRuntimeRewrites(tokens: ShellToken[]): null | string {
 			return unbounded('uses brace expansion ({a,b} or {x..y})');
 		}
 		if (DOT_GLOB.test(token.unquoted)) {
-			return 'ERROR: bash command uses a dot-glob (.*, .?), which can match the parent directory and escape the workspace';
+			return DOT_GLOB_DENIAL;
 		}
 		const next = tokens[index + 1]?.unquoted ?? '';
 		if (
@@ -127,14 +155,29 @@ function rejectRuntimeRewrites(tokens: ShellToken[]): null | string {
  * token that expands to several values contributes each of them. `$?`-style specials and bash's
  * numeric variables (`$RANDOM`, `$SECONDS`) are digits and expand to `0`; `$PWD` is the
  * workspace, so it expands to `.` and `$PWD/../x` is judged as `./../x`.
+ *
+ * This is one pass over text that bash may run differently, so a later assignment adds to a name's
+ * values rather than replacing them: `b=.; true || b=z` leaves both possible. And a body that runs
+ * again or later reads the value at that moment, so assigning a name once such a body has read it
+ * is denied. `declaresFunction` says the command defines a function, whose `()` the tokens lost.
  */
-export function expandShellTokens(tokens: ShellToken[]): ExpansionResult {
+export function expandShellTokens(tokens: ShellToken[], declaresFunction = false): ExpansionResult {
 	const rejected = rejectRuntimeRewrites(tokens);
 	if (rejected !== null) return { error: rejected };
 
 	const bindings = new Map<string, string[]>([['PWD', ['.']]]);
 	const expanded: string[] = [];
+	const readInBody = new Set<string>();
+	let inBody = declaresFunction;
+	const rebound = (name: string): { error: string } | null =>
+		readInBody.has(name)
+			? { error: unbounded(`assigns $${name} after a loop or function body reads it`) }
+			: null;
 	const expand = (text: string): { error: string } | string[] => {
+		if (inBody) {
+			for (const match of text.matchAll(REFERENCE))
+				readInBody.add(match[1] ?? match[2] ?? '');
+		}
 		const result = expandReferences(text.replace(NUMERIC_SPECIAL, '0'), bindings);
 		if (result === null) {
 			return { error: 'ERROR: bash command expands to too many variants to check' };
@@ -144,17 +187,23 @@ export function expandShellTokens(tokens: ShellToken[]): ExpansionResult {
 				error: `ERROR: bash command expands $${result}, which the command does not set; its value is unknown and cannot be bounded to the workspace (assign it in the command, or spell the path out)`,
 			};
 		}
+		if (result.some((value) => value !== text && DOT_GLOB.test(value))) {
+			return { error: DOT_GLOB_DENIAL };
+		}
 		return result;
 	};
 
 	for (const [index, token] of tokens.entries()) {
 		const text = token.text;
 		const loopName = tokens[index + 1]?.text ?? '';
+		if (BODY_OPENERS.has(text)) inBody = true;
 		if (
 			(text === 'for' || text === 'select') &&
 			NAME_ONLY.test(loopName) &&
 			tokens[index + 2]?.text === 'in'
 		) {
+			const loopRebound = rebound(loopName);
+			if (loopRebound !== null) return loopRebound;
 			const values: string[] = [];
 			for (let cursor = index + 3; cursor < tokens.length; cursor += 1) {
 				const item = tokens[cursor]?.text ?? '';
@@ -174,10 +223,10 @@ export function expandShellTokens(tokens: ShellToken[]): ExpansionResult {
 
 		const name = ASSIGNMENT.exec(text)?.[1];
 		if (name !== undefined) {
-			bindings.set(
-				name,
-				values.map((value) => value.slice(name.length + 1)),
-			);
+			const assignRebound = rebound(name);
+			if (assignRebound !== null) return assignRebound;
+			const assigned = values.map((value) => value.slice(name.length + 1));
+			bindings.set(name, [...new Set([...(bindings.get(name) ?? []), ...assigned])]);
 		}
 	}
 	return { tokens: expanded };

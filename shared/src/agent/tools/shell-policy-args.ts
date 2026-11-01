@@ -5,7 +5,7 @@ import { resolve as win32Resolve } from 'node:path/win32';
 import { resolveRealRoot, verifyRealPathWithinRoot } from './constants.ts';
 import { expandShellTokens } from './shell-policy-expansion.ts';
 import { isPathWithinWorkspaceRoot, normalizePosixDrivePath } from './shell-policy-paths.ts';
-import { tokenizeShell } from './shell-policy-tokens.ts';
+import { stripQuotedSpans, tokenizeShell } from './shell-policy-tokens.ts';
 
 /**
  * General argument containment for the bash workspace policy.
@@ -23,6 +23,8 @@ import { tokenizeShell } from './shell-policy-tokens.ts';
 
 const ASSIGNMENT_NAME = /^([A-Za-z_][A-Za-z0-9_]*)=/;
 const CDPATH_ASSIGNMENT = /^CDPATH\+?=/;
+/** `f()`, whose body is `{ ... }` or `( ... )`. */
+const FUNCTION_DEFINITION = /[\w.-]\s*\(\s*\)/;
 
 /**
  * True when the command contains command substitution — `$(...)`, backticks, or the process
@@ -58,7 +60,7 @@ export function checkArgumentContainment(command: string, root: string): null | 
 	const canResolveLinks = existsSync(realRoot);
 	// Arguments are judged after static expansion (`shell-policy-expansion.ts`): a token spelled
 	// `$a$a` or `$PWD/../x` is checked as the `..` that bash will actually hand to the program.
-	const expansion = expandShellTokens(words);
+	const expansion = expandShellTokens(words, FUNCTION_DEFINITION.test(stripQuotedSpans(command)));
 	if ('error' in expansion) return expansion.error;
 	for (const token of expansion.tokens) {
 		for (const candidate of pathCandidates(token)) {

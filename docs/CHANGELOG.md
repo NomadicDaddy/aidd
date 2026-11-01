@@ -61,7 +61,7 @@ All notable public aidd releases are documented here.
 - A destructive git command that needs a different reading of its backslashes per word, such as `git re\store 'src\..'`, can still pass that check. It also predates this release, and it's the same kind of spelling as those above.
 - `@hono/node-server` (GHSA-rmxm-3fg6-px4f) and `qs` report moderate advisories through `@modelcontextprotocol/sdk`. aidd's MCP server uses only the SDK's stdio transport, so neither is reached by its imports. `minimatch` (GHSA-g3hv-75wg-m249) is in the lint toolchain only and not in what runs.
 - This release was run live on one agent CLI, `claude-code`. The others are covered by test fixtures only.
-- At phone sizes, a crawl of the Features tab intermittently finds a filtered row's controls missing. The cause isn't known yet; desktop and tablet sizes aren't affected in the checks run.
+- At phone sizes, a crawl of the Features tab intermittently finds a filtered row's controls missing. The cause isn't known yet. The same crawl passes at desktop size, and it wasn't run at tablet sizes, where only page loads were checked.
 
 ## [3.6.0] - 2026-10-19
 

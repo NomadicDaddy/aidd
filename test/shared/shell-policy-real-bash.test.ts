@@ -41,6 +41,9 @@ const ATTACKS: [string, string][] = [
 		`cat <<${NBSP}EOF\nit's\n${NBSP}EOF\ncat ${X} # it's`,
 	],
 	['an unclosed ((', `((echo a) ; cat <<EOF\nit's\nEOF\n) ; cat ${X} # it's`],
+	['a # inside (( ))', `(( a = 1 #b )) ; cat ${X}`],
+	['a # inside @( )', `[[ x == @(a #b) ]] ; cat ${X}`],
+	['a # inside !( )', `[[ x == !(a #b) ]] ; cat ${X}`],
 	['an escaped space before #', `echo a\\ # ; cat ${X}`],
 	['an escaped tab before #', `echo a\\\t# ; cat ${X}`],
 	['three backslashes before #', `echo a\\\\\\ # ; cat ${X}`],
@@ -117,8 +120,8 @@ describe('shell workspace policy against real bash', () => {
 		});
 	}
 
-	test.skipIf(!available)('a real comment stays allowed and reads nothing', () => {
-		const command = `echo a\\\\ # ; cat ${X}`;
+	test.skipIf(!available)('a real comment stays allowed', () => {
+		const command = "echo a\\\\ # it's only a note";
 		expect(checkBashWorkspacePolicy(command, cwd)).toBeNull();
 		expect(readsSentinel(command)).toBe(false);
 	});

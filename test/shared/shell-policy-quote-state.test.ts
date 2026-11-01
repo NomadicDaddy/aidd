@@ -20,6 +20,12 @@ describe('shell workspace policy - quote state follows bash', () => {
 		"cat <<A <<B\nit's\nA\nit's\nB\ncat ../outside/sentinel.txt",
 		'xargs cat <<EOF\n../outside/sentinel.txt\nEOF',
 		"cat <<EOF\nit's $SECRET_VALUE\nEOF",
+		'(( a = 1 #b )) ; cat ../outside/sentinel.txt',
+		'[[ x == @(a #b) ]] ; cat ../outside/sentinel.txt',
+		'[[ x == !(a #b) ]] ; cat ../outside/sentinel.txt',
+		'echo done # see ../outside/sentinel.txt',
+		'echo done # uses $UNSET_NAME',
+		'echo done # ; cd',
 	])('denies %j', (command) => {
 		expect(verdict(command)).toContain('ERROR');
 	});
@@ -106,8 +112,8 @@ describe('tokenizeShell', () => {
 		expect(words("echo 'a\\' b")).toEqual(['echo', 'a\\', 'b']);
 	});
 
-	test('a comment starts only at the start of a word', () => {
-		expect(words("a#b # it's\nc")).toEqual(['a#b', 'c']);
+	test('a comment opens no quote, and its words are still judged', () => {
+		expect(words("a#b # it's ../x; y\nc")).toEqual(['a#b', '#', 'its', '../x', 'y', 'c']);
 		expect(words('""#x')).toEqual(['#x']);
 	});
 

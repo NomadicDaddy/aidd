@@ -10,7 +10,8 @@
  * is read as ending at the escaped quote, the next quote opens a span that swallows the commands
  * after it. So a backslash escapes `"`, `$`, a backtick or a backslash inside double quotes, and
  * nothing inside single quotes. A comment or a heredoc body holds no quotes at all, which is why
- * an apostrophe in either one must not open a span.
+ * an apostrophe in either one must not open a span. A comment's words are still judged; a heredoc
+ * body's mostly are not (see {@link heredocArguments}).
  *
  * Outside quotes a backslash stays literal in the token rather than being removed. Under `bash -c`
  * it is an escape, but dropping it would erase the separator in Windows spellings like
@@ -28,6 +29,7 @@ import { type Heredoc, peekDelimiter, readHeredocBodies } from './shell-policy-h
  * inside a longer blob.
  */
 const OPERATOR_CHARS = new Set([';', '(', ')', '&', '<', '>', '|']);
+const COMMENT_WORD_END = /[\s;()&<>|]+/;
 
 /** Inside double quotes, the characters a backslash escapes. */
 const DOUBLE_QUOTE_ESCAPES = new Set(['"', '\\', '`', '$']);
@@ -62,7 +64,7 @@ interface QuotedRange extends Range {
 }
 
 interface InertRange extends Range {
-	kind: 'comment' | 'expanding-body' | 'literal-body';
+	kind: 'expanding-body' | 'literal-body';
 }
 
 interface Scan {
@@ -70,7 +72,7 @@ interface Scan {
 	arithmetic: number;
 	chars: string[];
 	index: number;
-	/** Comments and heredoc bodies. */
+	/** Heredoc bodies. */
 	inert: InertRange[];
 	pending: Heredoc[];
 	problem: null | string;
@@ -137,11 +139,26 @@ function readDoubleQuoted(scan: Scan): void {
 	scan.problem = 'an unterminated quote';
 }
 
-/** Leaves the index before the newline, which then ends the word stream as usual. */
-function skipComment(scan: Scan): void {
+/**
+ * A comment holds no quotes, so an apostrophe in one opens no span, but its words are still judged.
+ * Bash's rule for where a comment starts needs grammar a text scan lacks: `(( a = 1 #b )) ; cat x`
+ * and `[[ x == @(a #b) ]] ; cat x` both run the `cat`. Each time this read a comment where bash
+ * didn't, a real command vanished from every check, so the only reading that can't hide one is to
+ * keep the text. A comment naming an outside path or an unset variable is denied in exchange.
+ *
+ * Leaves the index before the newline, which then ends the word stream as usual.
+ */
+function readComment(scan: Scan): void {
 	const start = scan.index;
 	while (scan.index < scan.chars.length && scan.chars[scan.index] !== '\n') scan.index += 1;
-	scan.inert.push({ end: scan.index, kind: 'comment', start });
+	const words = scan.chars
+		.slice(start, scan.index)
+		.join('')
+		.replace(/["']/g, '')
+		.split(COMMENT_WORD_END);
+	for (const text of words) {
+		if (text !== '') scan.tokens.push({ text, unquoted: text });
+	}
 	scan.index -= 1;
 }
 
@@ -198,7 +215,7 @@ function scanUnquoted(scan: Scan, ch: string): void {
 	} else if (ch === '"') {
 		readDoubleQuoted(scan);
 	} else if (startsComment(scan, ch)) {
-		skipComment(scan);
+		readComment(scan);
 	} else if (ch === '<' && next === '<' && scan.arithmetic === 0) {
 		noteHeredoc(scan);
 	} else if (endsWord(ch)) {
@@ -246,7 +263,6 @@ function heredocArguments(scan: Scan, command: string): ShellToken[] {
 	const asArguments = /\bxargs\b/.test(command);
 	return scan.inert.flatMap(({ end, kind, start }) => {
 		const body = scan.chars.slice(start, end).join('');
-		if (kind === 'comment') return [];
 		if (asArguments) return tokenizeShell(body);
 		if (kind === 'literal-body') return [];
 		return (body.match(/\S*\$\S*/g) ?? []).map((text) => ({ text, unquoted: text }));

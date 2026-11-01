@@ -27,7 +27,8 @@ export function stripQuotedSpans(command: string, singleOnly = false): string {
 
 /**
  * The simple commands bash would run, split where it splits them. A quoted separator stays in its
- * command, and comments and heredoc bodies are gone.
+ * command and heredoc bodies are gone. A comment stays and still splits, because reading a comment
+ * where bash doesn't would hide a real command.
  */
 export function commandSegments(command: string): string[] {
 	const { chars, inert, quoted } = scanShell(command);

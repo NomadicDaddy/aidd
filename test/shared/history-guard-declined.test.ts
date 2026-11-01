@@ -65,6 +65,16 @@ describe('ensureHistoryGuard leaves a repository that declined it alone', () => 
 		expect(existsSync(join(dir, '.githooks', 'pre-push'))).toBe(true);
 	});
 
+	test('a brand-new repository whose scaffold ignores /.aidd/ is guarded', async () => {
+		// The scaffold has carried /.aidd/ since db44af5b, and a project's first commit comes after
+		// this runs: with no history yet, nobody has decided anything.
+		const dir = await makeRepo('fresh');
+		await writeFile(join(dir, '.gitignore'), '/.aidd/\n');
+		expect(await ensureHistoryGuard(dir, AIDD_ROOT)).toBe('installed');
+		expect(existsSync(join(dir, '.githooks', 'pre-push'))).toBe(true);
+		expect(existsSync(join(dir, '.githooks', 'leak-guard.sh'))).toBe(true);
+	});
+
 	test('a repository that tracks the guard keeps being guarded even when it ignores .aidd/', async () => {
 		const dir = await makeRepo('tracked');
 		await commitFile(dir, '.gitignore', '/.aidd/\n', 'ignore aidd');

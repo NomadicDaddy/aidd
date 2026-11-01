@@ -87,12 +87,15 @@ export type GuardOutcome =
  * one whose own history deleted the hook decided against it, and a stale local core.hooksPath
  * still naming `.githooks` is not consent to put it back. A Director run on github-profile
  * (2026-10-23) re-installed and staged six hook files that Phillip's own commit 8bf69bf had removed
- * from that public repository.
+ * from that public repository. A repository with no commits has decided nothing, and the scaffold
+ * gives every fresh project a `/.aidd/` ignore rule, so it takes the hooks and their leak guard.
  */
 async function guardDeclined(projectDir: string): Promise<GuardOutcome | undefined> {
 	const tracked = await git(projectDir, ['ls-files', '--', `.githooks/${HOOK}`]);
 	if (tracked.ok && tracked.stdout !== '') return undefined;
-	// A path inside .aidd/features: fresh scaffolds ignore some .aidd subfolders, never this one.
+	const hasCommits = await git(projectDir, ['rev-parse', '--verify', '-q', 'HEAD']);
+	if (!hasCommits.ok) return undefined;
+	// A path inside .aidd/features, so a rule ignoring only some .aidd subfolders doesn't count.
 	const ignored = await git(projectDir, ['check-ignore', '-q', '.aidd/features/feature.json']);
 	if (ignored.ok) return 'aidd-ignored';
 	const removal = ['log', '-1', '--format=%H', '--diff-filter=D', '--', `.githooks/${HOOK}`];

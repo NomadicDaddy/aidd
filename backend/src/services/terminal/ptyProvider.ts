@@ -28,10 +28,11 @@ export type PtySpawn = (file: string, args: string[], options: PtySpawnOptions) 
 let cachedProvider: Promise<null | PtySpawn> | undefined;
 
 /**
- * Loads the `bun-pty` FFI backend lazily and memoizes the result. A load failure (missing prebuilt
- * binary for this platform, FFI incompatibility) resolves to `null` — the terminal feature then
- * reports itself unavailable instead of crashing backend startup.
- * @returns The spawn function, or `null` when no PTY backend is usable on this host.
+ * Loads the `bun-pty` FFI backend lazily and memoizes the result. Since bun-pty 0.5.2 a missing or
+ * unloadable native library no longer makes the import throw: the terminal reads as available and
+ * each `spawn` fails with the library's error. Only a failed import resolves to `null`, which then
+ * reports the terminal unavailable instead of crashing backend startup.
+ * @returns The spawn function, or `null` when the `bun-pty` package itself cannot be imported.
  */
 export function loadPtyProvider(): Promise<null | PtySpawn> {
 	cachedProvider ??= (async () => {

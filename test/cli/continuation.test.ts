@@ -258,7 +258,9 @@ describe('windDownNote', () => {
 		const note = windDownNote(5 * 60 * 1000);
 		expect(note).toContain('only');
 		expect(note).toContain('genuinely completed and verified');
-		expect(note).toContain('emit no marker');
+		expect(note).toContain('emit no completed marker');
+		// A record its own spec holds still has an honest ending near the deadline.
+		expect(note).toContain('`parked` marker');
 	});
 });
 

@@ -1,8 +1,46 @@
 import { describe, expect, test } from 'bun:test';
+
+import { checkBashWorkspacePolicy } from '../../shared/src/agent/tools/shell-policy';
 import {
 	isPathWithinWorkspaceRoot,
 	normalizePosixDrivePath,
 } from '../../shared/src/agent/tools/shell-policy-paths.ts';
+
+// An assignment's right-hand side was judged as one path, so `ab:..` resolved as a harmless
+// in-workspace name while bash read a list whose second element left the workspace.
+describe('shell workspace policy - colon lists in assignments', () => {
+	const cwd = '/workspace/project';
+	const verdict = (command: string) => checkBashWorkspacePolicy(command, cwd);
+
+	test.each([
+		'CDPATH=ab:..; cd outside; cat sentinel.txt',
+		'CDPATH=ab:~; cd .aidd; cat config.json',
+		'CDPATH=ab:/c/fakehome; cd .aidd; cat config.json',
+		'CDPATH=src; cd x',
+		'"CDPATH"=src; cd x',
+		'PATH=ab:../outside/inner:/usr/bin; sentineltool',
+		'PATH=ab:/usr/bin tool',
+		'PATH=x://usr/bin tool',
+		'OTHER=ab:../outside tool',
+		'x=a:~/y',
+	])('denies %s', (command) => {
+		expect(verdict(command)).toContain('ERROR');
+	});
+
+	test('says what an assigned CDPATH does', () => {
+		expect(verdict('CDPATH=src; cd x')).toContain("changes where 'cd' resolves");
+	});
+
+	test.each([
+		'PATH=node_modules/.bin:src tool',
+		'DATABASE_URL=sqlite:data/x.db tool',
+		'API_URL=https://example.com/x tool',
+		'git show HEAD~1',
+		'rg CDPATH src',
+	])('allows %s', (command) => {
+		expect(verdict(command)).toBeNull();
+	});
+});
 
 describe('normalizePosixDrivePath', () => {
 	test('rewrites WSL-style /mnt/<drive> paths on win32', () => {

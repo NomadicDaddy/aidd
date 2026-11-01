@@ -21,6 +21,9 @@ import { tokenizeShell } from './shell-policy-tokens.ts';
  * becomes rather than as the spelling that produced it.
  */
 
+const ASSIGNMENT_NAME = /^([A-Za-z_][A-Za-z0-9_]*)=/;
+const CDPATH_ASSIGNMENT = /^CDPATH\+?=/;
+
 /**
  * True when the command contains command substitution — `$(...)`, backticks, or the process
  * substitutions `<(...)`/`>(...)` — whose value is produced by another command at runtime and
@@ -43,6 +46,10 @@ export function usesCommandSubstitution(command: string): boolean {
  * on CI and macOS) and a realpath-vs-lexical comparison would then reject everything.
  */
 export function checkArgumentContainment(command: string, root: string): null | string {
+	const words = tokenizeShell(command);
+	if (words.some(({ text }) => CDPATH_ASSIGNMENT.test(text.split('\\').join('')))) {
+		return "ERROR: bash command assigns CDPATH, which changes where 'cd' resolves and cannot be bounded to the workspace";
+	}
 	const realRoot = resolveRealRoot(root);
 	// The realpath walk climbs ancestors until it finds one that exists. If the root itself does
 	// not exist on disk (unit tests use notional roots like `/projects/app`) the walk sails past
@@ -51,7 +58,7 @@ export function checkArgumentContainment(command: string, root: string): null | 
 	const canResolveLinks = existsSync(realRoot);
 	// Arguments are judged after static expansion (`shell-policy-expansion.ts`): a token spelled
 	// `$a$a` or `$PWD/../x` is checked as the `..` that bash will actually hand to the program.
-	const expansion = expandShellTokens(tokenizeShell(command));
+	const expansion = expandShellTokens(words);
 	if ('error' in expansion) return expansion.error;
 	for (const token of expansion.tokens) {
 		for (const candidate of pathCandidates(token)) {
@@ -69,13 +76,41 @@ export function checkArgumentContainment(command: string, root: string): null | 
  * is what keeps `git log --oneline -5` and `ls -la` working. A token with an `=` contributes its
  * right-hand side as well as itself, so `dd of=../out`, `--output=../out` and `VAR=../out` are
  * all inspected; without it the `..` sits behind a prefix and resolves to a harmless literal
- * segment.
+ * segment. A `NAME=value` right-hand side is a colon list to `PATH` and its kin, so each element
+ * is its own candidate: `PATH=ab:../outside` runs a program from outside.
  */
 function pathCandidates(token: string): string[] {
 	if (token === '') return [];
 	const equals = token.indexOf('=');
 	if (token.startsWith('-')) return equals > 0 ? [token.slice(equals + 1)] : [];
-	return equals > 0 ? [token, token.slice(equals + 1)] : [token];
+	if (equals <= 0) return [token];
+	const value = token.slice(equals + 1);
+	const assignment = ASSIGNMENT_NAME.exec(token);
+	if (assignment === null) return [token, value];
+	return [token, value, ...colonElements(value, assignment[1] === 'PATH')];
+}
+
+/**
+ * The elements of a colon list. `C:/x` stays whole, and so does a URL's `scheme://`, except in
+ * `PATH`, where bash really would search `//x`.
+ */
+function colonElements(value: string, isPath: boolean): string[] {
+	const elements: string[] = [];
+	const parts = value.split(':');
+	for (let index = 0; index < parts.length; index += 1) {
+		const part = parts[index] as string;
+		const next = parts[index + 1];
+		const isDrive = /^[A-Za-z]$/.test(part) && /^[\\/]/.test(next ?? '');
+		const isScheme =
+			!isPath && /^[A-Za-z][A-Za-z0-9+.-]*$/.test(part) && next?.startsWith('//');
+		if (isDrive || isScheme) {
+			elements.push(`${part}:${next as string}`);
+			index += 1;
+		} else {
+			elements.push(part);
+		}
+	}
+	return elements;
 }
 
 function checkCandidate(

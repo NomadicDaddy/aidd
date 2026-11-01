@@ -55,7 +55,8 @@ function buildHomeReferencePattern(): RegExp {
 			`\\$env:(?:${names})\\b`,
 			// A `~` only expands at the start of a word, which is why it is anchored to a
 			// delimiter: `HEAD~1` and `file~` are ordinary arguments.
-			'(?:^|[\\s;|&(`<>"\'=])~',
+			// After `:` too, because bash expands it there in an assignment: `CDPATH=a:~`.
+			'(?:^|[\\s;|&(`<>"\'=:])~',
 		].join('|'),
 		'i',
 	);

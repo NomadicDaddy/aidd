@@ -16,8 +16,8 @@
  * it is an escape, but dropping it would erase the separator in Windows spellings like
  * `..\outside.txt` and hand back the harmless token `..outside.txt`. Leaving it can only over-split
  * (an escaped space becomes two tokens), and every extra token is one more thing that gets
- * checked. A backslash before a quote or another backslash still pairs with it, as it does in bash,
- * so `\"` opens no span and `\\"` does.
+ * checked. A backslash before a quote, a `<` or another backslash still pairs with it, as it does
+ * in bash, so `\"` opens no span and `\\"` does, and `\<<` starts no heredoc.
  */
 
 import { type Heredoc, peekDelimiter, readHeredocBodies } from './shell-policy-heredoc.ts';
@@ -176,12 +176,20 @@ function skipHeredocBodies(scan: Scan): void {
 function startsComment(scan: Scan, ch: string): boolean {
 	if (ch !== '#' || scan.text !== '' || scan.unquoted !== '') return false;
 	const previous = scan.chars[scan.index - 1];
-	return previous === undefined || endsBashWord(previous);
+	if (previous === undefined) return true;
+	return endsBashWord(previous) && !isEscaped(scan.chars, scan.index - 1);
+}
+
+/** An odd run of backslashes before a character escapes it, so `a\ #` is one word to bash. */
+function isEscaped(chars: string[], index: number): boolean {
+	let backslashes = 0;
+	while (chars[index - 1 - backslashes] === '\\') backslashes += 1;
+	return backslashes % 2 === 1;
 }
 
 function scanUnquoted(scan: Scan, ch: string): void {
 	const next = scan.chars[scan.index + 1];
-	if (ch === '\\' && (next === '"' || next === "'" || next === '\\')) {
+	if (ch === '\\' && (next === '"' || next === "'" || next === '\\' || next === '<')) {
 		scan.text += ch + next;
 		scan.unquoted += ch + next;
 		scan.index += 1;

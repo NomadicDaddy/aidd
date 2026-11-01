@@ -286,7 +286,7 @@ provider whose own key is missing. `NATIVE_API_KEY` is the only provider-agnosti
 | `directAi.provider`                | string           | `defaultProvider`          | Provider override for direct AI calls only.                                      |
 | `directAi.reasoningEffort`         | reasoning effort | provider/top-level effort  | Reasoning-effort override for direct AI calls only.                              |
 | `directAi.surfaces`                | object           | follows `directAi.enabled` | Per-surface enablement overrides.                                                |
-| `directAi.surfaces.directorChat`   | boolean          | `directAi.enabled`         | Enables direct AI for Director chat when the Director Profile's CLI is Native.   |
+| `directAi.surfaces.directorChat`   | boolean          | `directAi.enabled`         | Enables direct AI for Director chat, whatever CLI the profile names.             |
 | `directAi.surfaces.directorCycle`  | boolean          | `directAi.enabled`         | Enables direct AI for Director cycles when the Director Profile's CLI is Native. |
 | `directAi.surfaces.projectAdvisor` | boolean          | `directAi.enabled`         | Enables direct AI for project-creation recommendations.                          |
 | `directAi.surfaces.runSummaries`   | boolean          | `directAi.enabled`         | Enables direct AI for run summaries.                                             |

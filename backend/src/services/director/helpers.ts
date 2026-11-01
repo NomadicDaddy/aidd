@@ -114,13 +114,14 @@ export function mapChatMessage(
 	};
 }
 
-// The profile's CLI is the operator's choice, so Direct AI serves only a profile set to Native.
-export function directAiServesProfile(
+// The profile's CLI is the operator's choice for a cycle, so Direct AI runs one only for a profile
+// set to Native. Chat stays on Direct AI whatever the profile says, because its tools exist only
+// in that agent: on a CLI it could talk but not act (Phillip #30575).
+export function directAiRunsCycle(
 	directAi: Pick<DirectAiRunner, 'isSurfaceEnabled'>,
-	surface: 'directorChat' | 'directorCycle',
 	profile: { backend: string },
 ): boolean {
-	return profile.backend === 'native' && directAi.isSurfaceEnabled(surface);
+	return profile.backend === 'native' && directAi.isSurfaceEnabled('directorCycle');
 }
 
 export function normalizeBackend(value: string): BackendName {

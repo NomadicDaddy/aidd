@@ -123,9 +123,8 @@ web-launched process records, PID/lifecycle state, pipeline links, and run-log p
 page combines that live supervision data with project-local `.aidd/runs.jsonl` and iteration
 metadata where available.
 
-The `/director` page has separate persisted chat state. When the Director Profile's CLI is Native,
-the `directorChat` Direct AI surface is enabled and a tool-calling provider resolves, a bounded agent
-loop can inspect the fleet and
+The `/director` page has separate persisted chat state. When the `directorChat` Direct AI surface
+is enabled and a tool-calling provider resolves, a bounded agent loop can inspect the fleet and
 launch supervised work. `director.chat.allowFileEdits` additionally enables project-scoped file
 tools. Otherwise chat falls back to a text-only turn; external CLI fallback runs in the isolated
 `data/director/chat-work` cwd and rejects reported file modifications. User/assistant messages and

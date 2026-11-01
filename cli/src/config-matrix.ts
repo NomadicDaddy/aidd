@@ -105,7 +105,7 @@ function directAiSurfaceRow(config: ResolvedConfig, surface: DirectAiSurface): C
 		backend: 'direct-ai',
 		model: directAiModel(config, provider, requestModel),
 		notes: directorSurface
-			? 'Uses config-derived default director profile; persisted profile state is not inspected.'
+			? `${surface === 'directorCycle' ? 'Runs on Direct AI only for a Native profile; a named CLI runs instead. ' : ''}Uses config-derived default director profile; persisted profile state is not inspected.`
 			: 'Uses Direct AI provider config.',
 		provider,
 		reasoning: directAiReasoning(config, provider, requestReasoning),

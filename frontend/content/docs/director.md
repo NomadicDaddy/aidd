@@ -29,4 +29,4 @@ By default the chat does not edit project files itself; changes flow through sup
 
 ## Director profile
 
-The Director's behavior (CLI, model, reasoning effort, role, and instructions) comes from the **Director profile**, configured separately from any project's profile.
+The Director's behavior (CLI, model, reasoning effort, role, and instructions) comes from the **Director profile**, configured separately from any project's profile. A cycle runs on the profile's CLI, and Direct AI runs it only when that CLI is Native. Chat uses Direct AI whenever it's on, whatever the profile names, because its tools need it.

@@ -27,7 +27,6 @@ import {
 	cleanText,
 	createChatMessageId,
 	createChatSessionId,
-	directAiServesProfile,
 	mapChatMessage,
 	maxChatContextMessages,
 	maxChatMessageLength,
@@ -246,7 +245,7 @@ export class DirectorChatService {
 		sessionId: string,
 		recipeCatalog: DirectorRecipeSummary[],
 	): Promise<{ actions: ChatAgentAction[]; text: string }> {
-		if (directAiServesProfile(this.directAiService, 'directorChat', profile)) {
+		if (this.directAiService.isSurfaceEnabled('directorChat')) {
 			try {
 				return await this.chatAgent.runTurn({
 					allowFileEdits: this.allowChatFileEdits(),

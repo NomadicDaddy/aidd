@@ -17,7 +17,6 @@ import type {
 
 import {
 	buildChatPrompt,
-	directAiServesProfile,
 	maxChatMessageLength,
 	normalizeBackend,
 	normalizeReasoningEffort,
@@ -50,7 +49,7 @@ export async function runTextOnlyChatTurn(
 	const cwd = join(config.web.dataDir, 'director', 'chat-work');
 	await mkdir(cwd, { recursive: true });
 	const prompt = buildChatPrompt(profile, fleetSummary, messages, recipeCatalog);
-	if (directAiServesProfile(deps.directAiService, 'directorChat', profile)) {
+	if (deps.directAiService.isSurfaceEnabled('directorChat')) {
 		const directReply = await deps.directAiService.completeText({
 			cwd,
 			prompt,

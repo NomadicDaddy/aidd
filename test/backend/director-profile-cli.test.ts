@@ -5,11 +5,12 @@ import type { CycleExecutorDeps } from '../../backend/src/services/director/cycl
 
 import { runTextOnlyChatTurn } from '../../backend/src/services/director/chatTextTurn.ts';
 import { runDirectCycle } from '../../backend/src/services/director/cycleExecutor.ts';
-import { directAiServesProfile } from '../../backend/src/services/director/helpers.ts';
+import { directAiRunsCycle } from '../../backend/src/services/director/helpers.ts';
 import { testTempDir } from '../_helpers/temp.ts';
 import { removeTempTree } from './_helpers/remove-temp-tree.ts';
 
 // Phillip #30547: he set the Director's CLI to Codex and the cycle still went to Direct AI.
+// #30575: cycles follow the profile, and chat stays on Direct AI, where its tools are.
 const fleetSummary = { fleetAggregations: { fleetHealthScore: 90 }, projects: [] } as never;
 
 function cycleDeps(backend: string, calls: string[]): CycleExecutorDeps {
@@ -38,13 +39,13 @@ function cycleDeps(backend: string, calls: string[]): CycleExecutorDeps {
 }
 
 describe("the Director Profile's CLI", () => {
-	test('Direct AI serves only a Native profile, and only with its surface on', () => {
+	test('Direct AI runs a cycle only for a Native profile with its surface on', () => {
 		const on = { isSurfaceEnabled: () => true };
 		const off = { isSurfaceEnabled: () => false };
-		expect(directAiServesProfile(on, 'directorCycle', { backend: 'native' })).toBe(true);
-		expect(directAiServesProfile(off, 'directorCycle', { backend: 'native' })).toBe(false);
-		expect(directAiServesProfile(on, 'directorChat', { backend: 'codex' })).toBe(false);
-		expect(directAiServesProfile(on, 'directorChat', { backend: 'claude-code' })).toBe(false);
+		expect(directAiRunsCycle(on, { backend: 'native' })).toBe(true);
+		expect(directAiRunsCycle(off, { backend: 'native' })).toBe(false);
+		expect(directAiRunsCycle(on, { backend: 'codex' })).toBe(false);
+		expect(directAiRunsCycle(on, { backend: 'claude-code' })).toBe(false);
 	});
 
 	test('a cycle on a named CLI never asks Direct AI, even with its surface on', async () => {
@@ -72,39 +73,37 @@ describe("the Director Profile's CLI", () => {
 		expect(calls).toEqual(['direct']);
 	});
 
-	test('a chat turn on a named CLI goes to that CLI, not Direct AI', async () => {
+	test('a chat turn stays on Direct AI whatever CLI the profile names', async () => {
 		const asked: string[] = [];
-		const stop = new Error('reached the CLI');
 		const dataDir = await testTempDir('aidd-director-chat-');
 		try {
-			await expect(
-				runTextOnlyChatTurn(
-					{
-						backendFactory: (name: string) => {
-							asked.push(name);
-							throw stop;
+			const reply = await runTextOnlyChatTurn(
+				{
+					backendFactory: (name: string) => {
+						asked.push(name);
+						throw new Error('reached the CLI');
+					},
+					directAiService: {
+						completeText: async () => {
+							asked.push('direct');
+							return 'reply';
 						},
-						directAiService: {
-							completeText: async () => {
-								asked.push('direct');
-								return 'reply';
-							},
-							isSurfaceEnabled: () => true,
-						},
-						getConfig: () => ({ web: { dataDir } }),
-					} as never,
-					{
-						backend: 'codex',
-						instructions: '',
-						model: null,
-						reasoningEffort: 'low',
-						role: 'r',
-					} as never,
-					fleetSummary,
-					[],
-				),
-			).rejects.toBe(stop);
-			expect(asked).toEqual(['codex']);
+						isSurfaceEnabled: () => true,
+					},
+					getConfig: () => ({ web: { dataDir } }),
+				} as never,
+				{
+					backend: 'codex',
+					instructions: '',
+					model: null,
+					reasoningEffort: 'low',
+					role: 'r',
+				} as never,
+				fleetSummary,
+				[],
+			);
+			expect(reply).toBe('reply');
+			expect(asked).toEqual(['direct']);
 		} finally {
 			await removeTempTree(dataDir);
 		}

@@ -102,18 +102,23 @@ function colonElements(value: string, isPath: boolean): string[] {
 	const parts = value.split(':');
 	for (let index = 0; index < parts.length; index += 1) {
 		const part = parts[index] as string;
-		const next = parts[index + 1];
-		const isDrive = /^[A-Za-z]$/.test(part) && /^[\\/]/.test(next ?? '');
-		const isScheme =
-			!isPath && /^[A-Za-z][A-Za-z0-9+.-]*$/.test(part) && next?.startsWith('//');
-		if (isDrive || isScheme) {
-			elements.push(`${part}:${next as string}`);
+		const next = parts[index + 1] ?? '';
+		if (isDriveAndPath(part, next) || (!isPath && isUrlScheme(part, next))) {
+			elements.push(`${part}:${next}`);
 			index += 1;
 		} else {
 			elements.push(part);
 		}
 	}
 	return elements;
+}
+
+function isDriveAndPath(part: string, next: string): boolean {
+	return /^[A-Za-z]$/.test(part) && /^[\\/]/.test(next);
+}
+
+function isUrlScheme(part: string, next: string): boolean {
+	return /^[A-Za-z][A-Za-z0-9+.-]*$/.test(part) && next.startsWith('//');
 }
 
 function checkCandidate(

@@ -29,26 +29,30 @@ function onlyLooksUp(words: string[], index: number): boolean {
 	return before.includes('command') && before.some((word) => /^-[vV]$/.test(word));
 }
 
+function noteAssignments(words: string[], bindings: Map<string, string>): void {
+	for (const word of words) {
+		const assigned = ASSIGNMENT.exec(word);
+		if (assigned !== null) bindings.set(assigned[1] as string, assigned[2] as string);
+	}
+}
+
+function goesHome(words: string[], index: number, bindings: Map<string, string>): boolean {
+	const name = (words[index] as string).replace(
+		REFERENCE,
+		(_reference, variable: string) => bindings.get(variable) ?? '',
+	);
+	if (name !== 'cd' && name !== 'pushd') return false;
+	return !onlyLooksUp(words, index) && !words.slice(index + 1).some(isOperand);
+}
+
 export function leavesForHome(command: string): boolean {
 	const bindings = new Map<string, string>();
 	// A backtick ends a simple command, so without this `cd `x`` reads as a `cd` with no target and
 	// loses the "expanded at runtime" denial that names its real problem.
 	const substitutionsAsWords = command.replace(/`[^`]*`/g, '$');
-	for (const segment of simpleCommands(substitutionsAsWords, true)) {
+	return simpleCommands(substitutionsAsWords, true).some((segment) => {
 		const words = wordsOf(segment);
-		for (const word of words) {
-			const assigned = ASSIGNMENT.exec(word);
-			if (assigned !== null) bindings.set(assigned[1] as string, assigned[2] as string);
-		}
-		for (const index of commandPositions(words)) {
-			const name = (words[index] as string).replace(
-				REFERENCE,
-				(_reference, variable: string) => bindings.get(variable) ?? '',
-			);
-			if (name !== 'cd' && name !== 'pushd') continue;
-			if (onlyLooksUp(words, index)) continue;
-			if (!words.slice(index + 1).some(isOperand)) return true;
-		}
-	}
-	return false;
+		noteAssignments(words, bindings);
+		return commandPositions(words).some((index) => goesHome(words, index, bindings));
+	});
 }

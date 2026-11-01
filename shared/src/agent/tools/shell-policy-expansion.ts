@@ -110,11 +110,37 @@ function rejectWordRules(tokens: ShellToken[], index: number): null | string {
 	if (APPEND_ASSIGNMENT.test(text)) return unbounded('appends to a variable with +=');
 	if (text.startsWith('IFS=')) return unbounded('assigns IFS, which changes how values split');
 	if (text === 'shopt') return unbounded("changes shell options with 'shopt'");
-	const isGlobToggle =
-		/^[-+][a-zA-Z]*f/.test(word(index + 1)) ||
-		(/^[-+]o$/.test(word(index + 1)) && word(index + 2) === 'noglob');
-	if (text === 'set' && isGlobToggle) return unbounded("changes globbing with 'set'");
+	if (text === 'set' && togglesGlobbing(word(index + 1), word(index + 2))) {
+		return unbounded("changes globbing with 'set'");
+	}
 	return null;
+}
+
+function togglesGlobbing(option: string, value: string): boolean {
+	return /^[-+][a-zA-Z]*f/.test(option) || (/^[-+]o$/.test(option) && value === 'noglob');
+}
+
+function noteBodyReads(text: string, readInBody: Set<string>): void {
+	for (const match of text.matchAll(REFERENCE)) readInBody.add(match[1] ?? match[2] ?? '');
+}
+
+/** What a token's expansion means: the values to judge, or why it can't be judged. */
+function judgeExpansion(
+	text: string,
+	result: null | string | string[],
+): { error: string } | string[] {
+	if (result === null) {
+		return { error: 'ERROR: bash command expands to too many variants to check' };
+	}
+	if (typeof result === 'string') {
+		return {
+			error: `ERROR: bash command expands $${result}, which the command does not set; its value is unknown and cannot be bounded to the workspace (assign it in the command, or spell the path out)`,
+		};
+	}
+	if (result.some((value) => value !== text && DOT_GLOB.test(value))) {
+		return { error: DOT_GLOB_DENIAL };
+	}
+	return result;
 }
 
 function rejectRuntimeRewrites(tokens: ShellToken[]): null | string {
@@ -174,23 +200,8 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 			? { error: unbounded(`assigns $${name} after a loop or function body reads it`) }
 			: null;
 	const expand = (text: string): { error: string } | string[] => {
-		if (inBody) {
-			for (const match of text.matchAll(REFERENCE))
-				readInBody.add(match[1] ?? match[2] ?? '');
-		}
-		const result = expandReferences(text.replace(NUMERIC_SPECIAL, '0'), bindings);
-		if (result === null) {
-			return { error: 'ERROR: bash command expands to too many variants to check' };
-		}
-		if (typeof result === 'string') {
-			return {
-				error: `ERROR: bash command expands $${result}, which the command does not set; its value is unknown and cannot be bounded to the workspace (assign it in the command, or spell the path out)`,
-			};
-		}
-		if (result.some((value) => value !== text && DOT_GLOB.test(value))) {
-			return { error: DOT_GLOB_DENIAL };
-		}
-		return result;
+		if (inBody) noteBodyReads(text, readInBody);
+		return judgeExpansion(text, expandReferences(text.replace(NUMERIC_SPECIAL, '0'), bindings));
 	};
 
 	for (const [index, token] of tokens.entries()) {

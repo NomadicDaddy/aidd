@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
 import { checkArgumentContainment, usesCommandSubstitution } from './shell-policy-args.ts';
+import { leavesForHome } from './shell-policy-cd.ts';
 import { denialMessage } from './shell-policy-denial.ts';
 import {
 	checkFileDestCommands,
@@ -205,21 +206,10 @@ function checkHomeReferences(command: string, singleQuoteStripped: string): null
 	return null;
 }
 
-/**
- * `cd` or `pushd` in command position with no target (or `--` alone). `cd -` is left to bash: the
- * tool environment carries no OLDPWD, so with no earlier `cd` in the command it fails, and after
- * one it returns to a directory this policy already bounded.
- */
-const HOMEWARD_CD_PATTERN =
-	/(?:^|[;|&(`{\n]|\b(?:builtin|command|do|else|then|time)\s)\s*(?:cd|pushd)(?:\s+--)?[ \t]*(?:$|[;|&)}\n])/;
-
 /** The position-aware checks: `cd`/`pushd` destinations, redirects, and write destinations. */
 function checkPositionalTargets(command: string, root: string): null | string {
 	// --- cd/pushd destination check ---
-	// `cd` with no target goes to the home directory, and every relative path after it is then
-	// read from there while this policy still judges it against the workspace: `cd; cat
-	// .aidd/config.json` read the user-level config.
-	if (HOMEWARD_CD_PATTERN.test(command)) {
+	if (leavesForHome(command)) {
 		return "ERROR: bash command uses 'cd' with no target, which leaves the workspace for the home directory";
 	}
 	const cdPattern = /(?:^|[;|&(`]|\s)(?:cd|pushd)\s+(?:--\s+)?("[^"]*"|'[^']*'|[^\s;|&)]+)/g;

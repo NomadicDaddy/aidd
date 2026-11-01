@@ -24,9 +24,11 @@ const WRAPPERS = new Set([
 	'builtin',
 	'command',
 	'do',
+	'elif',
 	'else',
 	'env',
 	'exec',
+	'if',
 	'ionice',
 	'nice',
 	'nohup',
@@ -35,6 +37,8 @@ const WRAPPERS = new Set([
 	'then',
 	'time',
 	'timeout',
+	'until',
+	'while',
 	'winpty',
 	'xargs',
 ]);
@@ -81,7 +85,7 @@ export function commandWord(words: string[]): string {
 }
 
 /** Redirections are lifted first: bash removes them, so `< cmds.txt sh` runs `sh`. */
-function wordsOf(segment: string): string[] {
+export function wordsOf(segment: string): string[] {
 	return tokenizeShell(liftRedirections(segment)).map((token) => token.text.split('\\').join(''));
 }
 

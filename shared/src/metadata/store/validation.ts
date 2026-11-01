@@ -19,7 +19,8 @@ export async function evaluateFeatureValidation(
 	features: Feature[],
 	readRoadmap: () => Promise<Roadmap>,
 ): Promise<FeatureValidationResult> {
-	const issues = features.flatMap((feature) => validateFeatureContract(feature));
+	const validatedAtMs = Date.now();
+	const issues = features.flatMap((feature) => validateFeatureContract(feature, validatedAtMs));
 	const collectionResult = validateFeatureCollection(features);
 	issues.push(...collectionResult.issues);
 	const warnings: NonNullable<FeatureValidationResult['warnings']> = [

@@ -1,6 +1,7 @@
 import { classifyDependencyCycles, findDanglingDependencies } from './graph.ts';
 import { indexFeaturesByRef } from './indexByRef.ts';
 import { isAuditFinding, isFeatureComplete, isRemediationFeature } from './query.ts';
+import { futureTimestampIssues } from './timestamps.ts';
 import {
 	type Feature,
 	FEATURE_ID_PATTERN,
@@ -40,9 +41,12 @@ function hasResolutionNote(notes: unknown): boolean {
 	return false;
 }
 
-export function validateFeatureContract(feature: Feature): FeatureValidationIssue[] {
-	const issues: FeatureValidationIssue[] = [];
+export function validateFeatureContract(
+	feature: Feature,
+	validatedAtMs: number,
+): FeatureValidationIssue[] {
 	const id = feature.directory ?? feature.id ?? 'unknown';
+	const issues = futureTimestampIssues(feature, id, validatedAtMs);
 	if (!feature.id) {
 		issues.push({ id, message: 'Missing required field: id' });
 	} else if (!FEATURE_ID_PATTERN.test(feature.id)) {

@@ -18,8 +18,9 @@
 
 import { gitReadings } from './shell-policy-git-input.ts';
 import { isDestructive, JUDGED } from './shell-policy-git-options.ts';
+import { COMMAND_SEPARATORS, commandSegments } from './shell-policy-segments.ts';
 import { commandPositions, commandWord, isAssignment } from './shell-policy-shells.ts';
-import { commandSegments, QUOTED_SPAN, tokenizeShell } from './shell-policy-tokens.ts';
+import { QUOTED_SPAN, tokenizeShell } from './shell-policy-tokens.ts';
 
 /** Global options that take no value. Any other option without `=` may consume the next word. */
 const VALUELESS_GLOBAL_OPTIONS = new Set([
@@ -43,9 +44,6 @@ const VALUELESS_GLOBAL_OPTIONS = new Set([
 
 /** Subcommands whose trailing words are themselves a command line that git will run. */
 const RUNS_A_COMMAND = new Set(['bisect', 'filter-branch', 'rebase', 'submodule']);
-
-/** Characters that end one simple command and start the next. */
-const COMMAND_SEPARATORS = new Set(['\n', ';', '(', ')', '&', '`', '|']);
 
 /**
  * Commands whose quoted arguments are text to print or search for, never a command to run. Any

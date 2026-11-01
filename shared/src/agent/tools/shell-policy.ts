@@ -12,8 +12,9 @@ import { dumpsEnvironment } from './shell-policy-env.ts';
 import { usesDestructiveGit } from './shell-policy-git.ts';
 import { expandsAtRuntime, isPathWithinWorkspaceRoot } from './shell-policy-paths.ts';
 import { maskNullOutputRedirects } from './shell-policy-redirects.ts';
+import { stripQuotedSpans } from './shell-policy-segments.ts';
 import { runsTextAsCommands } from './shell-policy-shells.ts';
-import { shellSyntaxProblem, stripQuotedSpans } from './shell-policy-tokens.ts';
+import { shellSyntaxProblem } from './shell-policy-tokens.ts';
 
 /**
  * Environment variables that name a directory outside the project. Each one is supplied to the

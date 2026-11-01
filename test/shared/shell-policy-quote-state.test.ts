@@ -49,6 +49,52 @@ describe('shell workspace policy - quote state follows bash', () => {
 	});
 });
 
+// Characters `\s` matches and bash does not. Morticia's probes ran each of these against real bash,
+// which read the file: to bash they are ordinary word characters, so the `#` starts no comment and
+// the form feed belongs to the delimiter.
+describe('shell workspace policy - where bash ends a word', () => {
+	const cwd = '/workspace/project';
+	const verdict = (command: string) => checkBashWorkspacePolicy(command, cwd);
+	const NBSP = String.fromCodePoint(0xa0);
+	const FF = String.fromCodePoint(0x0c);
+	const VT = String.fromCodePoint(0x0b);
+	const CR = String.fromCodePoint(0x0d);
+
+	test.each([
+		['non-breaking space', NBSP],
+		['form feed', FF],
+		['vertical tab', VT],
+		['carriage return', CR],
+	])('a %s before # does not start a comment', (_name, space) => {
+		expect(verdict(`echo a${space}# ; cat ../outside/x`)).toContain('ERROR');
+		expect(verdict(`echo a${space}# ; cd; cat .aidd/config.json`)).toContain('ERROR');
+	});
+
+	test.each([
+		['form feed', FF],
+		['non-breaking space', NBSP],
+	])('a %s before the delimiter still makes a heredoc', (_name, space) => {
+		const body = `\nit's\n${space}EOF\ncat ../outside/x # it's`;
+		expect(verdict(`cat <<${space}EOF${body}`)).toContain('ERROR');
+	});
+
+	test('an unclosed (( does not turn heredocs off', () => {
+		const command = "((echo a) ; cat <<EOF\nit's\nEOF\n) ; cat ../outside/x # it's";
+		expect(verdict(command)).toContain('ERROR');
+	});
+
+	test('a (( still open across lines is denied by name', () => {
+		expect(verdict('(( 1\n+ 1 ))')).toContain('still open across lines');
+	});
+
+	test.each(['echo $((1 + 1))', '(( 1 + 1 ))\necho done', 'echo a # note'])(
+		'allows %j',
+		(command) => {
+			expect(verdict(command)).toBeNull();
+		},
+	);
+});
+
 describe('tokenizeShell', () => {
 	const words = (command: string) => tokenizeShell(command).map((token) => token.text);
 

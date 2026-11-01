@@ -29,9 +29,6 @@ import { type Heredoc, peekDelimiter, readHeredocBodies } from './shell-policy-h
  */
 const OPERATOR_CHARS = new Set([';', '(', ')', '&', '<', '>', '|']);
 
-/** Characters that end one simple command and start the next. */
-const COMMAND_SEPARATORS = new Set(['\n', ';', '(', ')', '&', '`', '|']);
-
 /** Inside double quotes, the characters a backslash escapes. */
 const DOUBLE_QUOTE_ESCAPES = new Set(['"', '\\', '`', '$']);
 
@@ -83,8 +80,21 @@ interface Scan {
 	unquoted: string;
 }
 
+/**
+ * Word splitting here is wider than bash's on purpose: splitting on a form feed or a non-breaking
+ * space only over-splits, and every extra token is checked.
+ */
 function endsWord(ch: string): boolean {
 	return /\s/.test(ch) || OPERATOR_CHARS.has(ch);
+}
+
+/**
+ * Where bash itself ends a word. Anything that decides what is text rather than words must use
+ * this one: to bash, `a<NBSP>#` is one word, so reading that `#` as a comment hid the rest of the
+ * line, and a form feed before a heredoc's delimiter is part of the delimiter.
+ */
+function endsBashWord(ch: string): boolean {
+	return ch === ' ' || ch === '\t' || ch === '\n' || OPERATOR_CHARS.has(ch);
 }
 
 function flush(scan: Scan): void {
@@ -143,7 +153,7 @@ function noteHeredoc(scan: Scan): void {
 		return;
 	}
 	const stripTabs = scan.chars[scan.index + 2] === '-';
-	const delimiter = peekDelimiter(scan.chars, scan.index + (stripTabs ? 3 : 2), endsWord);
+	const delimiter = peekDelimiter(scan.chars, scan.index + (stripTabs ? 3 : 2), endsBashWord);
 	if (delimiter !== null) scan.pending.push({ ...delimiter, stripTabs });
 	scan.index += 1;
 }
@@ -163,6 +173,12 @@ function skipHeredocBodies(scan: Scan): void {
 	scan.index = cursor - 1;
 }
 
+function startsComment(scan: Scan, ch: string): boolean {
+	if (ch !== '#' || scan.text !== '' || scan.unquoted !== '') return false;
+	const previous = scan.chars[scan.index - 1];
+	return previous === undefined || endsBashWord(previous);
+}
+
 function scanUnquoted(scan: Scan, ch: string): void {
 	const next = scan.chars[scan.index + 1];
 	if (ch === '\\' && (next === '"' || next === "'" || next === '\\')) {
@@ -173,7 +189,7 @@ function scanUnquoted(scan: Scan, ch: string): void {
 		readSingleQuoted(scan);
 	} else if (ch === '"') {
 		readDoubleQuoted(scan);
-	} else if (ch === '#' && scan.text === '' && scan.unquoted === '') {
+	} else if (startsComment(scan, ch)) {
 		skipComment(scan);
 	} else if (ch === '<' && next === '<' && scan.arithmetic === 0) {
 		noteHeredoc(scan);
@@ -181,6 +197,9 @@ function scanUnquoted(scan: Scan, ch: string): void {
 		flush(scan);
 		if (ch === '(' && next === '(') scan.arithmetic += 1;
 		if (ch === ')' && next === ')') scan.arithmetic = Math.max(0, scan.arithmetic - 1);
+		// `((` may be nested subshells instead, once bash finds no `))`, and then a `<<` skipped as
+		// a shift was a heredoc. A line ending inside one can't be read either way.
+		if (ch === '\n' && scan.arithmetic > 0) scan.problem = 'a `((` still open across lines';
 		if (ch === '\n' && scan.pending.length > 0) skipHeredocBodies(scan);
 	} else {
 		scan.text += ch;
@@ -188,7 +207,7 @@ function scanUnquoted(scan: Scan, ch: string): void {
 	}
 }
 
-function scanShell(command: string): Scan {
+export function scanShell(command: string): Scan {
 	const scan: Scan = {
 		arithmetic: 0,
 		chars: Array.from(command),
@@ -234,52 +253,6 @@ export function tokenizeShell(command: string): ShellToken[] {
 /** Why bash and this policy could not agree on the command's words, or null when they can. */
 export function shellSyntaxProblem(command: string): null | string {
 	return scanShell(command).problem;
-}
-
-/**
- * The command with each quoted span emptied, read the way bash reads it. `singleOnly` keeps the
- * content of double quotes, where `$HOME` and `$(...)` still expand. Comments and heredoc bodies
- * stay in the text, because the sweeps over this text are allowed to over-deny.
- */
-export function stripQuotedSpans(command: string, singleOnly = false): string {
-	const { chars, quoted } = scanShell(command);
-	let out = '';
-	let cursor = 0;
-	for (const { end, quote, start } of quoted) {
-		if (singleOnly && quote === '"') continue;
-		out += chars.slice(cursor, start).join('') + quote + quote;
-		cursor = end;
-	}
-	return out + chars.slice(cursor).join('');
-}
-
-/**
- * The simple commands bash would run, split where it splits them. A quoted separator stays in its
- * command, and comments and heredoc bodies are gone.
- */
-export function commandSegments(command: string): string[] {
-	const { chars, inert, quoted } = scanShell(command);
-	const segments: string[] = [];
-	let current = '';
-	for (let index = 0; index < chars.length; index += 1) {
-		const skipped = inert.find(({ end, start }) => index >= start && index < end);
-		if (skipped !== undefined) {
-			index = skipped.end - 1;
-			continue;
-		}
-		const span = quoted.find(({ start }) => start === index);
-		if (span !== undefined) {
-			current += chars.slice(span.start, span.end).join('');
-			index = span.end - 1;
-		} else if (COMMAND_SEPARATORS.has(chars[index] as string)) {
-			segments.push(current);
-			current = '';
-		} else {
-			current += chars[index];
-		}
-	}
-	segments.push(current);
-	return segments;
 }
 
 /** The literal spelling of a token once the single-quote protection is no longer needed. */

@@ -5,7 +5,8 @@ import { resolve as win32Resolve } from 'node:path/win32';
 import { resolveRealRoot, verifyRealPathWithinRoot } from './constants.ts';
 import { expandShellTokens } from './shell-policy-expansion.ts';
 import { isPathWithinWorkspaceRoot, normalizePosixDrivePath } from './shell-policy-paths.ts';
-import { stripQuotedSpans, tokenizeShell } from './shell-policy-tokens.ts';
+import { stripQuotedSpans } from './shell-policy-segments.ts';
+import { tokenizeShell } from './shell-policy-tokens.ts';
 
 /**
  * General argument containment for the bash workspace policy.

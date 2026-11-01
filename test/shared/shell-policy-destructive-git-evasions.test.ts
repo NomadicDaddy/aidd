@@ -169,6 +169,7 @@ describe('shell workspace policy - destructive git, what bash and git do to the 
 		"git checkout -- 'src\\..'",
 		"git rm -rf 'src\\..'",
 		"git restore '.\\src\\..'",
+		'git restore src\\..',
 		'git restore src\\\\..',
 		'git checkout -- src\\\\..',
 		'git restore .\\\\src\\\\..',

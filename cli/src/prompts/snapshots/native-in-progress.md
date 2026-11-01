@@ -767,11 +767,20 @@ verification immediately**:
   record itself when the run ends and reports what it found.
 - Document in `/.aidd/CHANGELOG.md` exactly what a human should verify in the browser, then mark the
   feature `"status": "waiting_approval"` with `"passes": false` (not `"completed"`), and say plainly
-  in your final response that the live verification was blocked. Do **not** emit `AIDD_RESULT`: the
-  marker means "completed and verified", so there is no honest marker for parked work. aidd reads
+  in your final response that the live verification was blocked. Do **not** emit `AIDD_RESULT` for
+  this park: the completed marker means "completed and verified". aidd reads
   the park from the feature's on-disk status together with your stated blocker, and records it as a
   correct outcome. A parked feature awaiting a human glance is a correct outcome; an endless
   server-hunt is not.
+
+**The other park: a record whose own spec holds its status.** If the selected record's spec says it
+must stay in a status until an external condition is met, do not move it to `waiting_approval`. Leave
+it in the status the spec requires with `passes: false`. Make no commit, then end with this marker,
+the only non-completed one there is:
+`AIDD_RESULT: {"featureId":"<id>","status":"parked","reason":"<the condition it is waiting on>"}`.
+aidd records that as a park and ends the run there, because the record would otherwise be selected
+again. Use it only when the spec itself requires the hold; for anything else you could not finish,
+follow the park above.
 
 #### 7.2 Backend-Only Features: API Verification
 
@@ -934,8 +943,8 @@ blockers park.
 - Set or clear `"status": "deferred"`, or work on a deferred feature. It marks scope the owner has set aside; aidd restores any record you move into or out of it
 - Pick up features with `"status": "waiting_approval"`: they are blocked on a human decision
 - Set `"passes": true` on features you cannot or choose not to implement
-- Skip, cancel, or declare the selected feature "out of scope": it must be implemented or set to
-  `waiting_approval`
+- Skip, cancel, or declare the selected feature "out of scope": it must be implemented, set to
+  `waiting_approval`, or parked with the `parked` marker when its own spec holds it
 - Set `"passes": true` without moving status to `"completed"`
 
 **If a feature cannot be implemented** (missing models, architectural conflicts, invalid spec):

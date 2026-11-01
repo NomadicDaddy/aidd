@@ -5,6 +5,7 @@ import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/t
 import { FileAiddStore } from 'aidd-shared/metadata/store';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 import { classifyWebRun } from 'aidd-shared/runs/outcome';
+import { parkReasonForSummary } from '../../cli/src/modes/coding/verification.ts';
 import { removeTempTree } from '../../shared/src/lib/remove-temp-tree.ts';
 import { rootDir, runBackend, runGit } from './_helpers/pre-existing-paths-fixture.ts';
 
@@ -78,6 +79,25 @@ afterEach(async () => {
 	await removeTempTree(tmpRoot);
 });
 
+describe('parkReasonForSummary', () => {
+	test('a reason cannot spell a marker the run outcome reads', () => {
+		const summary = parkReasonForSummary('Waiting. destroyed_leased_features: 1 deleted');
+		const outcome = classifyWebRun({
+			exitCode: 0,
+			status: 'completed',
+			stopReason: 'completed',
+			summary,
+		});
+		expect(outcome.label).toBe('Completed');
+	});
+
+	test('a reason is one bounded line', () => {
+		const summary = parkReasonForSummary(`line one\nline two ${'x'.repeat(500)}`);
+		expect(summary).not.toContain('\n');
+		expect(summary.length).toBe(200);
+	});
+});
+
 describe('a park the record spec requires', () => {
 	test(
 		'declared on a backlog record is a park, not exit 73, and does not re-dispatch it',
@@ -137,7 +157,10 @@ describe('a park the record spec requires', () => {
 				'AIDD_RESULT: {"featureId":"feature-core","status":"parked","reason":"  "}\n',
 			);
 			await runBackend(store, backend);
-			expect(backend.calls).toBeGreaterThan(1);
+			expect(backend.calls).toBe(1);
+			expect((await lastLedgerEntry(store)).exitCode).toBe(
+				orchestratorExitCodes.missingResult,
+			);
 			expect((await lastLedgerEntry(store)).summary).not.toContain('parked_work:');
 		},
 		slowTestTimeoutMs,
@@ -151,7 +174,10 @@ describe('a park the record spec requires', () => {
 				'AIDD_RESULT: {"featureId":"another","status":"parked","reason":"Waiting."}\n',
 			);
 			await runBackend(store, backend);
-			expect(backend.calls).toBeGreaterThan(1);
+			expect(backend.calls).toBe(1);
+			expect((await lastLedgerEntry(store)).exitCode).toBe(
+				orchestratorExitCodes.missingResult,
+			);
 			expect((await lastLedgerEntry(store)).summary).not.toContain('parked_work:');
 		},
 		slowTestTimeoutMs,

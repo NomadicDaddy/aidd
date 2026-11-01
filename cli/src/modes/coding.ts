@@ -20,6 +20,7 @@ import {
 	roadmapScopedQuery,
 	type RoadmapScopedQuery,
 } from './coding/selection.ts';
+import { parkReasonForSummary } from './coding/verification.ts';
 import { featureWorkBreakdown, noWorkDescription, noWorkSummary } from './coding/work-breakdown.ts';
 
 // When an iteration is skipped because selectWork returned no actionable work, that call has
@@ -144,7 +145,7 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 				return {
 					artifacts: resultArtifacts,
 					complete: true,
-					summary: `coding declared ${String(selectedFeatureId)} parked: ${String(result.structuredResult?.reason)}; ${breakdown.remaining} incomplete feature(s) remain; ${parkedWorkMarker} ${String(selectedFeatureId)} was parked, not completed`,
+					summary: `coding declared ${String(selectedFeatureId)} parked: ${parkReasonForSummary(result.structuredResult?.reason)};${breakdown.remaining} incomplete feature(s) remain; ${parkedWorkMarker} ${String(selectedFeatureId)} was parked, not completed`,
 				};
 			}
 			// The run exits 0 with stopReason 'completed' even though the feature it selected is not

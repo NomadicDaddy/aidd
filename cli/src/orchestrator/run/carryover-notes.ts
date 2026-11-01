@@ -1,7 +1,8 @@
 // Notes injected into the *next* iteration's prompt, alongside the compiled mode prompt. They are
 // runtime instructions to the agent, so they compete with prompts/coding.md — any guidance here
 // must agree with that prompt's result contract, especially on when AIDD_RESULT may be emitted.
-// The marker means "completed and verified"; there is no marker shape for parked or partial work.
+// The completed marker means "completed and verified". The one other shape is status parked with a
+// reason, for a record its own spec holds; partial work and blocked verification have no marker.
 
 // Corrective note injected after a flailing trip, so the agent sees the feedback at the start of its
 // retry instead of repeating the loop. This is the blocked-server scenario the STOP-AND-PARK hatch
@@ -17,9 +18,9 @@ export function flailingNudgeNote(): string {
 		'- If you cannot verify the UI via `agent-browser`/`curl` after one more honest attempt, run the ' +
 		'headless gates (`bun run smoke:qc`, typecheck, lint), document the manual ' +
 		'verification steps in `/.aidd/CHANGELOG.md`, mark the feature `waiting_approval` (`passes: false`), ' +
-		'and say plainly that the live verification was blocked. Do **not** emit `AIDD_RESULT` for parked ' +
-		'work — the marker means "completed and verified", and aidd records the park from the feature ' +
-		'status plus your stated blocker.\n' +
+		'and say plainly that the live verification was blocked. Do **not** emit `AIDD_RESULT` for this ' +
+		'park — the completed marker means "completed and verified", and aidd records the park from the ' +
+		'feature status plus your stated blocker.\n' +
 		'- Otherwise, make concrete progress (edit files) toward completing the selected feature.'
 	);
 }
@@ -217,9 +218,10 @@ export function windDownNote(remainingMs: number): string {
 		'- Finish or safely checkpoint the change you are in the middle of, run the required gates, and ' +
 		'`git commit` completed work immediately.\n' +
 		'- Update the feature `feature.json` to its true status (completed+passing only if the gates ran ' +
-		'clean; otherwise leave it honest). Emit `AIDD_RESULT` before the deadline **only** if the ' +
-		'feature is genuinely completed and verified; for anything less, leave the status honest and ' +
-		'emit no marker — a deadline is not a reason to claim a completion.\n' +
+		'clean; otherwise leave it honest). Emit the completed `AIDD_RESULT` before the deadline **only** ' +
+		'if the feature is genuinely completed and verified; for anything less, leave the status honest ' +
+		'and emit no completed marker — a deadline is not a reason to claim a completion. A record its ' +
+		'own spec holds still ends with its `parked` marker.\n' +
 		'- Leaving uncommitted changes behind will block the next run.'
 	);
 }

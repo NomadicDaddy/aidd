@@ -183,6 +183,12 @@ export function trailingAgentExplanation(events: AgentEvent[]): string | undefin
 	return undefined;
 }
 
+/** The declared reason as it goes into the run summary, which the run outcome scans for marker
+ * tokens: bounded, one line, and with no colon, so a reason cannot spell a marker. */
+export function parkReasonForSummary(reason: unknown): string {
+	return String(reason).replace(/\s+/g, ' ').replaceAll(':', ' -').trim().slice(0, 200);
+}
+
 function namesAParkWithAReason(result: AgentRunResult, featureId: string): boolean {
 	const marker = result.structuredResult;
 	if (marker?.featureId !== featureId || marker.status !== 'parked') return false;

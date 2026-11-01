@@ -86,6 +86,9 @@ export async function classifyIterationOutcome(input: {
 	// exempt it the way a settled audit exempts an audit iteration.
 	const verificationBlockedParked =
 		typeof modeResult.artifacts?.verificationBlockedParked === 'string';
+	// A refused parked marker is no result: as a marker it would repeat until maxIterations.
+	const parkAccepted = typeof modeResult.artifacts?.declaredPark === 'string';
+	const refusedParkMarker = structuredResult?.status === 'parked' && !parkAccepted;
 	const missingDirectiveResult =
 		plan.mode === 'directive' &&
 		work.kind !== 'phase' &&
@@ -107,7 +110,7 @@ export async function classifyIterationOutcome(input: {
 			// attempt as missing_aidd_result would end the run at exit 73 before the mode's
 			// escalating retries ever run.
 			plan.mode !== 'interview' &&
-			structuredResult === undefined &&
+			(structuredResult === undefined || refusedParkMarker) &&
 			exitCode === orchestratorExitCodes.success &&
 			completedResultFeature === undefined &&
 			iterationCommits.length === 0 &&
@@ -133,7 +136,11 @@ export async function classifyIterationOutcome(input: {
 		);
 	}
 	if (missingAiddResult && !askedUserQuestion) {
-		if (malformedResultMarker) {
+		if (refusedParkMarker) {
+			console.warn(
+				'[orchestrator] Backend emitted a parked AIDD_RESULT that was not accepted: it needs the selected featureId and a non-empty reason; recording missing_aidd_result.',
+			);
+		} else if (malformedResultMarker) {
 			console.warn(
 				`[orchestrator] Backend emitted an AIDD_RESULT marker whose body was not valid JSON — typically a placeholder such as \`AIDD_RESULT: { ... }\` instead of the real payload — so the result could not be parsed and the iteration's work was not recorded; recording missing_aidd_result.`,
 			);

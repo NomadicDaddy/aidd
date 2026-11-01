@@ -1,6 +1,11 @@
 import { orchestratorExitCodes } from '../orchestrator/exit-codes.ts';
 import { decodeExitCode } from './outcome-exit-code.ts';
-import { completedWithPreExistingChange, preExistingChangedMarker } from './outcome-preexisting.ts';
+import {
+	completedWithPreExistingChange,
+	completedWithPreExistingCommit,
+	hasPreExistingChangeMarker,
+	hasPreExistingCommitMarker,
+} from './outcome-preexisting.ts';
 
 export { decodeExitCode, isProcessExitCode } from './outcome-exit-code.ts';
 
@@ -164,9 +169,10 @@ const completedWithDestroyedLeasedFeatures: WebRunOutcome = {
 
 function completedOutcome(summary: null | string | undefined): WebRunOutcome {
 	if (hasDestroyedLeasedFeatureMarker(summary)) return completedWithDestroyedLeasedFeatures;
-	if ((summary ?? '').includes(preExistingChangedMarker)) return completedWithPreExistingChange;
+	if (hasPreExistingChangeMarker(summary)) return completedWithPreExistingChange;
 	if (hasParkedWorkMarker(summary)) return completedWithParkedWork;
 	if (hasUncommittedSourceMarker(summary)) return completedWithUncommittedSource;
+	if (hasPreExistingCommitMarker(summary)) return completedWithPreExistingCommit;
 	return executionStatusPresentation.completed;
 }
 

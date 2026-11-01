@@ -83,12 +83,26 @@ describe('what a run may be delegated', () => {
 		{ how: 'committed', path: 'a.ts' },
 	];
 
-	test('a commit skill that only stages or commits is named without the amber outcome', () => {
+	test('a commit skill that only stages or commits gets a neutral label, not plain Completed', () => {
 		const plan = planFor('.', 'directive', commitSkill);
 		const summary = preExistingChangeSummary(accWith(committed), plan);
 		expect(summary).toContain('a.ts');
 		expect(summary).toContain('commit-bundles');
-		expect(outcomeLabel(summary)).toBe('Completed');
+		expect(outcomeLabel(summary)).toBe('Completed · existing work committed');
+		const outcome = classifyWebRun({
+			exitCode: 0,
+			status: 'completed',
+			stopReason: 'completed',
+			summary: summary ?? null,
+		});
+		expect(outcome.tone).toBe('neutral');
+	});
+
+	test('the neutral label never hides a dirty tree the run left', () => {
+		const plan = planFor('.', 'directive', commitSkill);
+		const summary = preExistingChangeSummary(accWith(committed), plan);
+		const withDirt = `${summary ?? ''}; uncommitted_source_files: this run left 1 source file(s)`;
+		expect(outcomeLabel(withDirt)).toBe('Completed · dirty tree');
 	});
 
 	test('a commit skill that changes content is not delegated, and every path is named', () => {

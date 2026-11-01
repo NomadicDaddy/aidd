@@ -1,7 +1,10 @@
 import type { RunPlan } from 'aidd-shared/plan/types';
 
 import { runRepoDir } from 'aidd-shared/plan/types';
-import { preExistingChangedMarker } from 'aidd-shared/runs/outcome-preexisting';
+import {
+	preExistingChangedMarker,
+	preExistingCommittedMarker,
+} from 'aidd-shared/runs/outcome-preexisting';
 import { stat } from 'node:fs/promises';
 import { join } from 'node:path';
 
@@ -287,5 +290,5 @@ export function preExistingChangeSummary(acc: RunAccumulator, plan: RunPlan): st
 	if (changesOfConcern(plan, changes).length > 0) {
 		return `${preExistingChangedMarker} ${listed} changed during it, by this run or by someone else: ${paths.join(', ')}`;
 	}
-	return `${listed} were staged or committed during this ${plan.prompt.skillId ?? ''} run, which is that skill's job if its task delegated them: ${paths.join(', ')}`;
+	return `${preExistingCommittedMarker} ${listed} were staged or committed during this ${plan.prompt.skillId ?? ''} run, which is that skill's job if its task delegated them; aidd cannot verify that: ${paths.join(', ')}`;
 }

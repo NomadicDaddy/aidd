@@ -1,3 +1,5 @@
+import { join } from 'node:path';
+
 import { webLogger } from '../../logger.ts';
 
 /**
@@ -27,12 +29,28 @@ export type PtySpawn = (file: string, args: string[], options: PtySpawnOptions) 
 
 let cachedProvider: Promise<null | PtySpawn> | undefined;
 
+// bun-pty's import succeeds even when its native library can't load, and only spawn reports that.
+// Spawning a program that doesn't exist starts nothing, and the error says which case this is.
+const NO_SUCH_PROGRAM = join(import.meta.dir, '.no-such-program-for-pty-probe');
+const LIBRARY_UNUSABLE = /could not load its native library|needs Bun/;
+
 /**
- * Loads the `bun-pty` FFI backend lazily and memoizes the result. Since bun-pty 0.5.2 a missing or
- * unloadable native library no longer makes the import throw: the terminal reads as available and
- * each `spawn` fails with the library's error. Only a failed import resolves to `null`, which then
- * reports the terminal unavailable instead of crashing backend startup.
- * @returns The spawn function, or `null` when the `bun-pty` package itself cannot be imported.
+ * Throws when `bun-pty` can't use its native library on this host.
+ * @param spawn The package's spawn function, taken as the provider's own wrapper.
+ */
+function assertNativeLibraryUsable(spawn: PtySpawn): void {
+	try {
+		spawn(NO_SUCH_PROGRAM, [], { cols: 80, cwd: import.meta.dir, env: {}, rows: 24 }).kill();
+	} catch (err) {
+		if (err instanceof Error && LIBRARY_UNUSABLE.test(err.message)) throw err;
+	}
+}
+
+/**
+ * Loads the `bun-pty` FFI backend lazily and memoizes the result. A load failure (missing prebuilt
+ * binary for this platform, FFI incompatibility) resolves to `null` — the terminal feature then
+ * reports itself unavailable instead of crashing backend startup.
+ * @returns The spawn function, or `null` when no PTY backend is usable on this host.
  */
 export function loadPtyProvider(): Promise<null | PtySpawn> {
 	cachedProvider ??= (async () => {
@@ -46,6 +64,7 @@ export function loadPtyProvider(): Promise<null | PtySpawn> {
 					name: 'xterm-256color',
 					rows: options.rows,
 				});
+			assertNativeLibraryUsable(spawn);
 			return spawn;
 		} catch (err) {
 			webLogger.warn(

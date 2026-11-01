@@ -113,43 +113,46 @@ describe('extractRateLimitResetAt', () => {
 });
 
 describe('a quota reset given as a full date', () => {
-	// Captured from logs/ai-calls.jsonl, 2026-10-27T09:13:15Z.
+	// Both captured from logs/ai-calls.jsonl.
 	const captured =
+		'zhipu request failed: HTTP 429 {"error":{"code":"1308","message":"Usage limit reached for 5 hour. Your limit will reset at 2026-10-27 17:02:08"}}';
+	const weekly =
 		'zhipu request failed: HTTP 429 {"error":{"code":"1310","message":"Weekly/Monthly Limit Exhausted. Your limit will reset at 2026-10-30 17:54:36"}}';
 
 	test('reads the date as UTC+8, whatever the local zone', () => {
-		expect(parseRateLimitReset(captured)?.toISOString()).toBe('2026-10-30T09:54:36.000Z');
+		expect(parseRateLimitReset(captured)?.toISOString()).toBe('2026-10-27T09:02:08.000Z');
 	});
 
 	test('the run waits until that reset instead of retrying on the fallback', () => {
-		const now = new Date('2026-10-27T09:13:15.279Z');
+		const now = new Date('2026-10-27T08:09:36.579Z');
 		const decision = computeRateLimitSleep(captured, now, 60, 300);
 
 		expect(decision.reason).toBe('until_reset');
-		expect(decision.resetAt?.toISOString()).toBe('2026-10-30T09:54:36.000Z');
+		expect(decision.resetAt?.toISOString()).toBe('2026-10-27T09:02:08.000Z');
 		expect(decision.sleepMs).toBe(
-			Date.parse('2026-10-30T09:54:36.000Z') - now.getTime() + 60_000,
+			Date.parse('2026-10-27T09:02:08.000Z') - now.getTime() + 60_000,
 		);
 	});
 
 	test('a named date already past retries at once', () => {
-		const decision = computeRateLimitSleep(captured, new Date('2026-10-31T00:00:00Z'), 60, 300);
+		const decision = computeRateLimitSleep(captured, new Date('2026-10-28T00:00:00Z'), 60, 300);
 
 		expect(decision.reason).toBe('passed');
 		expect(decision.sleepMs).toBe(0);
 	});
 
 	test('an impossible date falls back rather than sleeping on nonsense', () => {
-		const message = captured.replace('2026-10-30 17:54:36', '2026-13-45 99:99:99');
+		const message = captured.replace('2026-10-27 17:02:08', '2026-13-45 99:99:99');
 
 		expect(parseRateLimitReset(message)).toBeUndefined();
 		expect(computeRateLimitSleep(message, new Date(), 60, 300).reason).toBe('fallback');
 	});
 
 	test.each([
+		['the weekly limit', weekly],
 		['another provider', captured.replace('zhipu', 'openai')],
-		['another code', captured.replace('1310', '1302')],
-		['bare text', 'Your limit will reset at 2026-10-30 17:54:36'],
+		['another code', captured.replace('1308', '1302')],
+		['bare text', 'Your limit will reset at 2026-10-27 17:02:08'],
 	])('%s saying the same words is not read as UTC+8', (_label, message) => {
 		expect(parseRateLimitReset(message)).toBeUndefined();
 		expect(computeRateLimitSleep(message, new Date(), 60, 300).reason).toBe('fallback');

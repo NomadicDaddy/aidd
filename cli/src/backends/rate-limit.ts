@@ -29,13 +29,15 @@ export function extractRateLimitMessage(events: AgentEvent[]): string | undefine
 
 const resetTimePattern = /(?:resets|try again at)\s+(\d{1,2})(?::(\d{2}))?\s*([aApP][mM])/;
 
-// Zhipu's exhausted quota (HTTP 429, code 1310) names its reset with no time zone: "Your limit will
-// reset at 2026-10-27 17:02:08". It is read as UTC+8. In logs/ai-calls.jsonl that reset's failures
-// ran to 09:00:06Z and calls succeeded again from 09:02:35Z, and 17:02:08 at UTC+8 is 09:02:08Z.
-// That one measurement is the only evidence, so the rule holds for this provider's own envelope:
-// another provider's zone-less date stays unparsed and takes the fallback backoff.
+// Zhipu's 5-hour limit (HTTP 429, code 1308) names its reset with no time zone: "Your limit will
+// reset at 2026-10-27 17:02:08". It is read as UTC+8. Across the nine such resets in the call logs
+// to 2026-11-01, no call failed after the named time and none succeeded before it, and four
+// succeeded within 65 seconds after. This is inferred from those logs, not documented by Zhipu.
+// The weekly limit (code 1310) words its reset the same way but stays on the fallback backoff:
+// calls came back 24 to 129 hours before the named time in five of six resets, cause unknown, so
+// waiting for it would end runs that could recover. Other providers' dates are not read at all.
 const datedResetPattern =
-	/^zhipu request failed: HTTP 429 .*"code":"1310".*limit will reset at (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/;
+	/^zhipu request failed: HTTP 429 .*"code":"1308".*limit will reset at (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/;
 const datedResetUtcOffset = '+08:00';
 
 function parseDatedReset(message: string): Date | undefined {

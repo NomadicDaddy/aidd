@@ -6,6 +6,7 @@ import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 
 import {
 	detectBlockedVerificationAdmission,
+	detectSpecMandatedPark,
 	featureStatusAtSelection,
 	parkBlockedVerificationFeature,
 	recordOwesLiveVerification,
@@ -22,6 +23,8 @@ export interface CompletionEvaluation {
 	completionOutcome: CompletionOutcome | undefined;
 	selectedFeatureId: string | undefined;
 	shouldComplete: boolean;
+	/** The agent claimed nothing, said why, and left the feature in the status its own spec requires. */
+	specMandatedPark: boolean;
 	/** The selected feature ended the iteration parked as waiting_approval because its live
 	 * verification was blocked — either rejected from a false completion claim, or parked by the
 	 * agent itself. Either way the iteration produced a correct outcome, not nothing. */
@@ -64,6 +67,7 @@ export async function evaluateFeatureCompletion(
 		completionOutcome: undefined,
 		selectedFeatureId,
 		shouldComplete: false,
+		specMandatedPark: false,
 		verificationBlockedParked: false,
 	};
 
@@ -133,14 +137,25 @@ export async function evaluateFeatureCompletion(
 		// No completion was claimed. If this iteration moved the selected feature into
 		// waiting_approval, the agent invoked the STOP-AND-PARK hatch — a correct outcome, not the
 		// "backend produced nothing" case missing_aidd_result exists to catch.
+		const statusAtSelection = featureStatusAtSelection(result.selectedWork);
+		const explanation = trailingAgentExplanation(result.events);
+		const verificationBlockedParked = await recordVerificationSelfPark(
+			store,
+			selectedFeatureId,
+			statusAtSelection,
+			explanation,
+		);
 		return {
 			...base,
-			verificationBlockedParked: await recordVerificationSelfPark(
-				store,
-				selectedFeatureId,
-				featureStatusAtSelection(result.selectedWork),
-				trailingAgentExplanation(result.events),
-			),
+			specMandatedPark:
+				!verificationBlockedParked &&
+				(await detectSpecMandatedPark(
+					store,
+					selectedFeatureId,
+					statusAtSelection,
+					explanation,
+				)),
+			verificationBlockedParked,
 		};
 	}
 

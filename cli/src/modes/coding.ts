@@ -84,6 +84,7 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 				completionOutcome,
 				selectedFeatureId,
 				shouldComplete,
+				specMandatedPark,
 				verificationBlockedParked,
 			} = await evaluateFeatureCompletion(context.store, result);
 
@@ -133,7 +134,19 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 				...(verificationBlockedParked && selectedFeatureId !== undefined
 					? { verificationBlockedParked: selectedFeatureId }
 					: {}),
+				...(specMandatedPark && selectedFeatureId !== undefined
+					? { specMandatedPark: selectedFeatureId }
+					: {}),
 			};
+			// A record held in its required status is still selectable, so continuing would hand the
+			// next iteration the same record and pay for the same park until maxIterations. End here.
+			if (specMandatedPark) {
+				return {
+					artifacts: resultArtifacts,
+					complete: true,
+					summary: `coding left ${String(selectedFeatureId)} in the status its spec requires; ${breakdown.remaining} incomplete feature(s) remain; ${parkedWorkMarker} ${String(selectedFeatureId)} was parked, not completed`,
+				};
+			}
 			// The run exits 0 with stopReason 'completed' even though the feature it selected is not
 			// done, so the summary is the only place the parking survives into the runs table. The
 			// prose already says it; classifyWebRun needs a token it can match, or a pipeline

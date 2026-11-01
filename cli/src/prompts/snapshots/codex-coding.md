@@ -962,6 +962,14 @@ attempts, **STOP browser verification immediately**:
   correct outcome. A parked feature awaiting a human glance is a correct outcome; an endless
   server-hunt is not.
 
+**The other park: the status the record's own spec requires.** If the selected record's spec says it
+must stay in its current status until an external condition is met (for example "stays backlog and
+`passes: false` until the operator rotates the token"), do not move it to `waiting_approval`. aidd
+marks a selected `backlog` record `in_progress` before you start, so set it back to the status the
+spec requires with `passes: false`. Make no commit, emit no `AIDD_RESULT`, and say in your final
+response which condition it is waiting on. aidd reads that as a park and ends the run there, because
+the record would otherwise be selected again.
+
 #### 8.2 Backend-Only Features: API Verification
 
 For features with no UI component:

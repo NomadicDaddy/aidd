@@ -182,6 +182,39 @@ export function trailingAgentExplanation(events: AgentEvent[]): string | undefin
 	return undefined;
 }
 
+/** Whether a record's own spec says it must hold the given status ("stays backlog", "remain in
+ * in_progress"). Only reached when the agent also claimed nothing and said why, so a spec describing
+ * some other record's status costs a labelled stop rather than a false completion. */
+export function specRequiresStatus(spec: unknown, status: string): boolean {
+	if (typeof spec !== 'string') return false;
+	const holds = new RegExp(
+		`\\b(?:stays?|remains?|keeps?|kept|left)\\s+(?:in\\s+|as\\s+)?${status}\\b`,
+		'i',
+	);
+	return holds.test(spec);
+}
+
+/**
+ * The other park the prompt allows: a record whose spec requires it to hold a status until an
+ * external condition is met cannot move to waiting_approval, so the honest ending is no marker and
+ * the status it was selected in. Claiming moves a backlog record to in_progress before the agent
+ * starts, so ending in backlog means the agent put it back; an agent that did nothing ends in_progress
+ * and is not this. The spec's own words and a stated reason are still required, because a record
+ * selected in_progress needs no such step and would otherwise look the same as a forgotten marker.
+ */
+export async function detectSpecMandatedPark(
+	store: AiddStore,
+	featureId: string,
+	statusAtSelection: string | undefined,
+	explanation: string | undefined,
+): Promise<boolean> {
+	if (statusAtSelection === undefined || explanation === undefined) return false;
+	const feature = await readFeatureIfPresent(store, featureId);
+	if (feature === undefined || feature.status !== statusAtSelection) return false;
+	if (feature.status === 'completed' || feature.passes === true) return false;
+	return specRequiresStatus(feature.spec, feature.status);
+}
+
 /**
  * The honest counterpart to parkBlockedVerificationFeature: the agent claimed no completion at
  * all, parked the selected feature itself, and (per the result contract's "do not emit the marker

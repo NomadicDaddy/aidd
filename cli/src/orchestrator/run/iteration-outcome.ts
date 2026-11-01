@@ -86,6 +86,8 @@ export async function classifyIterationOutcome(input: {
 	// exempt it the way a settled audit exempts an audit iteration.
 	const verificationBlockedParked =
 		typeof modeResult.artifacts?.verificationBlockedParked === 'string';
+	// The other honest park: the record's own spec requires the status the agent left it in.
+	const specMandatedPark = typeof modeResult.artifacts?.specMandatedPark === 'string';
 	const missingDirectiveResult =
 		plan.mode === 'directive' &&
 		work.kind !== 'phase' &&
@@ -96,6 +98,7 @@ export async function classifyIterationOutcome(input: {
 		missingDirectiveResult ||
 		(!missingAuditArtifacts &&
 			!verificationBlockedParked &&
+			!specMandatedPark &&
 			// Initializer/onboarding phase iterations run a phase prompt that never emits an
 			// AIDD_RESULT marker and complete no backlog feature, so the phase-agnostic
 			// missing-result heuristic must not classify a successful phase iteration as a failure

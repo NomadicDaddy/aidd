@@ -962,15 +962,15 @@ attempts, **STOP browser verification immediately**:
   correct outcome. A parked feature awaiting a human glance is a correct outcome; an endless
   server-hunt is not.
 
-**The other park: a record its own spec holds in backlog.** If the selected record's spec says it must
-stay in `backlog` until an external condition is met (for example "keep this feature backlog until
-the operator rotates the token"), do not move it to `waiting_approval`. aidd marks a selected
-`backlog` record `in_progress` before you start, so set it back to `backlog` with `passes: false`.
-Make no commit, emit no `AIDD_RESULT`, and say in your final response which condition it is waiting
-on. aidd reads that as a park and ends the run there, because the record would otherwise be selected
-again. This applies only to `backlog`: aidd has no such park for a record that was already
-`in_progress` when selected, so an iteration that stops there with no marker is recorded as a missing
-result. Say plainly what it is waiting on, so that result can be read for what it is.
+**The other park: a record whose own spec holds its status.** If the selected record's spec says it
+must stay in a status until an external condition is met (for example "keep this feature backlog
+until the operator rotates the token"), do not move it to `waiting_approval`. aidd marks a selected
+`backlog` record `in_progress` before you start, so set it back to the status the spec requires with
+`passes: false`. Make no commit, then end with this marker, the only non-completed one there is:
+`AIDD_RESULT: {"featureId":"<id>","status":"parked","reason":"<the condition it is waiting on>"}`.
+aidd records that as a park and ends the run there, because the record would otherwise be selected
+again. Use it only when the spec itself requires the hold; for anything else you could not finish,
+follow the parks above.
 
 #### 8.2 Backend-Only Features: API Verification
 

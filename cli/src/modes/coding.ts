@@ -80,9 +80,9 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 				return await processPhaseResult(plan, context, result, setupProgress);
 			}
 			const {
-				backlogHoldPark,
 				completionMarkerIgnored,
 				completionOutcome,
+				declaredPark,
 				selectedFeatureId,
 				shouldComplete,
 				verificationBlockedParked,
@@ -134,17 +134,17 @@ export function createCodingMode(plan: RunPlan): ModeHandler {
 				...(verificationBlockedParked && selectedFeatureId !== undefined
 					? { verificationBlockedParked: selectedFeatureId }
 					: {}),
-				...(backlogHoldPark && selectedFeatureId !== undefined
-					? { backlogHoldPark: selectedFeatureId }
+				...(declaredPark && selectedFeatureId !== undefined
+					? { declaredPark: selectedFeatureId }
 					: {}),
 			};
-			// A record held in backlog is still selectable, so continuing would hand the next iteration
+			// A record its spec holds is still selectable, so continuing would hand the next iteration
 			// the same record and pay for the same park until maxIterations. End here.
-			if (backlogHoldPark) {
+			if (declaredPark) {
 				return {
 					artifacts: resultArtifacts,
 					complete: true,
-					summary: `coding put ${String(selectedFeatureId)} back in backlog and gave a reason; ${breakdown.remaining} incomplete feature(s) remain; ${parkedWorkMarker} ${String(selectedFeatureId)} was parked, not completed`,
+					summary: `coding declared ${String(selectedFeatureId)} parked: ${String(result.structuredResult?.reason)}; ${breakdown.remaining} incomplete feature(s) remain; ${parkedWorkMarker} ${String(selectedFeatureId)} was parked, not completed`,
 				};
 			}
 			// The run exits 0 with stopReason 'completed' even though the feature it selected is not

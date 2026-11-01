@@ -1,6 +1,7 @@
 import type { AgentEvent } from 'aidd-shared/backends/types';
 import type { AiddStore } from 'aidd-shared/metadata/store';
 import type { SelectedWork } from 'aidd-shared/modes/types';
+import type { AgentRunResult } from 'aidd-shared/orchestrator/result';
 
 import { readFeatureIfPresent } from 'aidd-shared/metadata/store/read-optional';
 
@@ -182,26 +183,31 @@ export function trailingAgentExplanation(events: AgentEvent[]): string | undefin
 	return undefined;
 }
 
+function namesAParkWithAReason(result: AgentRunResult, featureId: string): boolean {
+	const marker = result.structuredResult;
+	if (marker?.featureId !== featureId || marker.status !== 'parked') return false;
+	return typeof marker.reason === 'string' && marker.reason.trim() !== '';
+}
+
 /**
- * The other park the prompt allows: a record whose spec requires it to stay in backlog until an
- * external condition is met cannot move to waiting_approval, so the honest ending is no marker, no
- * commit, a stated reason and the record back in backlog.
+ * The park a record's own spec requires: it must hold its status until an external condition is met,
+ * so it cannot move to waiting_approval. The agent declares this with a parked marker and a reason.
  *
- * The signal is the agent's act, not the spec's wording. Claiming moves a backlog record to
- * in_progress before the agent starts, so ending in backlog means the agent put it back; an agent that
- * did nothing ends in_progress and is not this. A record selected in_progress has no such step, so
- * it cannot qualify. Reading the spec was tried and dropped: across every spec in D:\applications the
- * real holds are worded too many ways to match, and the only matches described other records.
+ * It has to be declared. An unchanged status looks the same as an agent that did nothing, the spec's
+ * wording is too varied to match (across every spec in D:\applications the real holds missed and the
+ * only matches described other records), and any assistant text would pass for a reason.
+ *
+ * The record cannot be completed, and the iteration cannot have committed: work that landed is not a
+ * park, whatever the marker says.
  */
-export async function detectBacklogHoldPark(
+export async function isDeclaredPark(
 	store: AiddStore,
 	featureId: string,
-	evidence: { commitsMade: number; explanation?: string; statusAtSelection?: string },
+	result: AgentRunResult,
 ): Promise<boolean> {
-	if (evidence.statusAtSelection !== 'backlog' || evidence.commitsMade > 0) return false;
-	if (evidence.explanation === undefined) return false;
+	if ((result.commitsMade ?? 0) > 0 || !namesAParkWithAReason(result, featureId)) return false;
 	const feature = await readFeatureIfPresent(store, featureId);
-	return feature?.status === 'backlog' && feature.passes !== true;
+	return feature !== undefined && feature.status !== 'completed' && feature.passes !== true;
 }
 
 /**

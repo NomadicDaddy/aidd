@@ -5,9 +5,9 @@ import { readFeatureIfPresent } from 'aidd-shared/metadata/store/read-optional';
 import { orchestratorExitCodes } from 'aidd-shared/orchestrator/result';
 
 import {
-	detectBacklogHoldPark,
 	detectBlockedVerificationAdmission,
 	featureStatusAtSelection,
+	isDeclaredPark,
 	parkBlockedVerificationFeature,
 	recordOwesLiveVerification,
 	recordVerificationSelfPark,
@@ -18,11 +18,11 @@ export type CompletionOutcome =
 	'completed_after_backend_abort' | 'completed_after_backend_idle' | 'completed';
 
 export interface CompletionEvaluation {
-	/** The agent claimed nothing, committed nothing, said why, and put the feature back in backlog. */
-	backlogHoldPark: boolean;
 	/** Why a completion claim was rejected, when one was made and not honored. */
 	completionMarkerIgnored: string | undefined;
 	completionOutcome: CompletionOutcome | undefined;
+	/** The agent declared a park with a reason, on a record whose spec holds it, and made no commit. */
+	declaredPark: boolean;
 	selectedFeatureId: string | undefined;
 	shouldComplete: boolean;
 	/** The selected feature ended the iteration parked as waiting_approval because its live
@@ -35,9 +35,9 @@ export interface CompletionEvaluation {
  * Decide what an iteration's AIDD_RESULT marker (or its absence) actually means for the selected
  * feature: an honored completion, a rejected claim, a verification-blocked park, or none of those.
  *
- * The marker is only ever a completion signal — there is no marker shape for parked work — so both
- * park paths are recognized from the agent's prose plus the feature's on-disk state rather than
- * from the marker itself.
+ * A blocked-verification park has no marker shape, so it is recognized from the agent's prose plus
+ * the feature's on-disk state. A park the record's own spec requires is declared with a parked
+ * marker, because state alone cannot tell it from an agent that did nothing.
  */
 export async function evaluateFeatureCompletion(
 	store: AiddStore,
@@ -63,9 +63,9 @@ export async function evaluateFeatureCompletion(
 			abortedAfterCompletion);
 
 	const base: CompletionEvaluation = {
-		backlogHoldPark: false,
 		completionMarkerIgnored: undefined,
 		completionOutcome: undefined,
+		declaredPark: false,
 		selectedFeatureId,
 		shouldComplete: false,
 		verificationBlockedParked: false,
@@ -147,13 +147,9 @@ export async function evaluateFeatureCompletion(
 		);
 		return {
 			...base,
-			backlogHoldPark:
+			declaredPark:
 				!verificationBlockedParked &&
-				(await detectBacklogHoldPark(store, selectedFeatureId, {
-					commitsMade: result.commitsMade ?? 0,
-					...(explanation !== undefined ? { explanation } : {}),
-					...(statusAtSelection !== undefined ? { statusAtSelection } : {}),
-				})),
+				(await isDeclaredPark(store, selectedFeatureId, result)),
 			verificationBlockedParked,
 		};
 	}

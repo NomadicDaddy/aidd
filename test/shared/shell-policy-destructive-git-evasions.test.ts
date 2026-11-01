@@ -169,13 +169,27 @@ describe('shell workspace policy - destructive git, what bash and git do to the 
 		"git checkout -- 'src\\..'",
 		"git rm -rf 'src\\..'",
 		"git restore '.\\src\\..'",
+		'git restore src\\\\..',
+		'git checkout -- src\\\\..',
+		'git restore .\\\\src\\\\..',
 	])('denies a quoted Windows pathspec that reaches the root: %s', (command) => {
 		expect(verdict(command)).toContain('destructive git');
 	});
 
-	test("allows a quoted Windows pathspec that stays in the tree: git restore 'src\\x.ts'", () => {
-		expect(verdict("git restore 'src\\x.ts'")).toBeNull();
-	});
+	// A word with a quoted span still has its unquoted backslashes dropped by bash (Morticia, eaa82f00).
+	test.each(["git reset --ha\\rd''", "git re\\set'' --hard", "g\\it'' reset --hard"])(
+		'denies an escape in a word that also has a quoted span: %s',
+		(command) => {
+			expect(verdict(command)).toContain('destructive git');
+		},
+	);
+
+	test.each(["git restore 'src\\x.ts'", 'git restore src\\\\x.ts'])(
+		'allows a Windows pathspec that stays in the tree: %s',
+		(command) => {
+			expect(verdict(command)).toBeNull();
+		},
+	);
 
 	test.each(['git rm --no-cached --cached -rf .', 'git rm --cach -r .'])(
 		'allows a whole-tree rm that ends with --cached on: %s',

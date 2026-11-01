@@ -13,7 +13,7 @@ import {
 	writeAuditProfileMapping,
 } from 'aidd-shared/metadata/audit-profile-mapping';
 import { discoverAuditNames } from 'aidd-shared/modes/audit-shared';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import type { WebDatabase } from '../db/client.ts';
@@ -42,6 +42,7 @@ import {
 	definitionSummary,
 	normalizeAuditName,
 	type ProjectProfileCache,
+	readDefinitionContent,
 	scoreAuditCatalog,
 } from './audit/auditHelpers.ts';
 import { recordAuditRunStart } from './audit/auditTelemetry.ts';
@@ -143,7 +144,7 @@ export class AuditService {
 			this.config.auditsEnabled ?? true,
 			(n) => this.auditPath(n),
 		);
-		return { ...definition, content: await readFile(definition.path, 'utf8') };
+		return { ...definition, content: await readDefinitionContent(definition) };
 	}
 
 	async getAuditProfileMapping(): Promise<AuditProfileMappingDto> {

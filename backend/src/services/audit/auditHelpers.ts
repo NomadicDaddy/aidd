@@ -26,6 +26,7 @@ import { stat } from 'node:fs/promises';
 import type { AuditDefinitionDto } from './auditTypes.ts';
 
 import { HttpError } from '../errors.ts';
+import { readTextOrNull } from '../fsHelpers.ts';
 import { mapSettledWithConcurrency } from '../project/listings/shared.ts';
 import { auditReportFreshness } from './auditReportFreshness.ts';
 
@@ -58,6 +59,19 @@ export function normalizeAuditName(name: string): string {
 	const normalized = name.trim().toUpperCase();
 	if (!auditNamePattern.test(normalized)) throw new HttpError('Invalid audit name.', 400);
 	return normalized;
+}
+
+// A definition's text. A missing file is a 404 naming the audit, so the reply carries no path.
+export async function readDefinitionContent({
+	name,
+	path,
+}: {
+	name: string;
+	path: string;
+}): Promise<string> {
+	const content = await readTextOrNull(path);
+	if (content === null) throw new HttpError(`Audit ${name} has no definition.`, 404);
+	return content;
 }
 
 export function normalizeAuditNames(names: string[]): string[] {

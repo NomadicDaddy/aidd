@@ -208,15 +208,28 @@ async function recordCommittedPaths(
 	}
 }
 
-// A task may delegate existing changes for committing (criteria 7 and 8 of this rule), and only a
-// directive carries a task of that kind. The plan does not say whether this one did, so in a directive
-// that can write, staging or committing such a file is reported without being treated as damage.
-// Changing its content never is delegated, and neither is anything in any other mode.
+// Skills whose whole job is committing existing work. A task may delegate that (criteria 7 and 8 of
+// this rule), and the plan has no signal for whether one did, so running one of these is the nearest
+// evidence available. Any other directive might also have been told to commit; it goes amber anyway,
+// because the same plan could be a directive to edit one file that staged someone else's.
+const skillsCommittingExistingWork = new Set(['commit-bundles', 'document-changes', 'ship-pr']);
+
+function mayCommitExistingWork(plan: RunPlan): boolean {
+	const skillId = plan.prompt.skillId;
+	return (
+		plan.mode === 'directive' &&
+		plan.prompt.customDirectiveReadonly !== true &&
+		skillId !== undefined &&
+		skillsCommittingExistingWork.has(skillId)
+	);
+}
+
+// Staging or committing is all such a skill may do: changing a file's content is never delegated.
 function changesOfConcern(
 	plan: RunPlan,
 	changes: readonly PreExistingChange[],
 ): readonly PreExistingChange[] {
-	if (plan.mode !== 'directive' || plan.prompt.customDirectiveReadonly === true) return changes;
+	if (!mayCommitExistingWork(plan)) return changes;
 	return changes.filter((change) => change.how !== 'staged' && change.how !== 'committed');
 }
 
@@ -269,10 +282,10 @@ function uniquePaths(changes: readonly PreExistingChange[]): string[] {
 export function preExistingChangeSummary(acc: RunAccumulator, plan: RunPlan): string | undefined {
 	const changes = acc.preExistingPathWatch?.changes ?? [];
 	if (changes.length === 0) return undefined;
-	const concerning = uniquePaths(changesOfConcern(plan, changes));
-	if (concerning.length > 0) {
-		return `${preExistingChangedMarker} ${String(concerning.length)} file(s) already uncommitted when this run started changed during it, by this run or by someone else: ${concerning.join(', ')}`;
+	const paths = uniquePaths(changes);
+	const listed = `${String(paths.length)} file(s) already uncommitted when this run started`;
+	if (changesOfConcern(plan, changes).length > 0) {
+		return `${preExistingChangedMarker} ${listed} changed during it, by this run or by someone else: ${paths.join(', ')}`;
 	}
-	const staged = uniquePaths(changes);
-	return `${String(staged.length)} file(s) already uncommitted when this run started were staged or committed during it, which a directive may be delegated to do: ${staged.join(', ')}`;
+	return `${listed} were staged or committed during this ${plan.prompt.skillId ?? ''} run, which is that skill's job if its task delegated them: ${paths.join(', ')}`;
 }

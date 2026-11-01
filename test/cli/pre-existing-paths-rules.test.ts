@@ -21,7 +21,9 @@ import {
 	committedContent,
 	dirtyPath,
 	makeProject,
+	resolvePlan,
 	rootDir,
+	runGit,
 	teammateContent,
 } from './_helpers/pre-existing-paths-fixture.ts';
 
@@ -31,13 +33,11 @@ import {
 const tmpRoot = join(rootDir, '.tmp-pre-existing-paths-rules-tests');
 const toolEvent = { args: {}, tool: 'bash', type: 'tool_call' } as const;
 
-function planFor(projectDir: string, mode: string, readonly = false): RunPlan {
-	return {
-		mode,
-		projectDir,
-		prompt: readonly ? { customDirectiveReadonly: true } : {},
-	} as unknown as RunPlan;
+function planFor(projectDir: string, mode: string, prompt: Record<string, unknown> = {}): RunPlan {
+	return { mode, projectDir, prompt } as unknown as RunPlan;
 }
+
+const commitSkill = { skillId: 'commit-bundles' };
 
 function accWith(changes: PreExistingChange[]): RunAccumulator {
 	return {
@@ -83,37 +83,56 @@ describe('what a run may be delegated', () => {
 		{ how: 'committed', path: 'a.ts' },
 	];
 
-	test('a directive that only stages or commits is reported without the amber outcome', () => {
-		const summary = preExistingChangeSummary(accWith(committed), planFor('.', 'directive'));
+	test('a commit skill that only stages or commits is named without the amber outcome', () => {
+		const plan = planFor('.', 'directive', commitSkill);
+		const summary = preExistingChangeSummary(accWith(committed), plan);
 		expect(summary).toContain('a.ts');
-		expect(summary).not.toContain('preexisting_paths_changed:');
+		expect(summary).toContain('commit-bundles');
 		expect(outcomeLabel(summary)).toBe('Completed');
 	});
 
-	test('a directive that changes the content is not delegated', () => {
+	test('a commit skill that changes content is not delegated, and every path is named', () => {
 		const changes: PreExistingChange[] = [...committed, { how: 'changed', path: 'b.ts' }];
-		const summary = preExistingChangeSummary(accWith(changes), planFor('.', 'directive'));
+		const plan = planFor('.', 'directive', commitSkill);
+		const summary = preExistingChangeSummary(accWith(changes), plan);
 		expect(outcomeLabel(summary)).toBe('Completed · existing work changed');
 		expect(summary).toContain('b.ts');
-		expect(summary).not.toContain('a.ts');
+		expect(summary).toContain('a.ts');
 	});
 
-	test('a read-only directive and a coding run committing the same file are not delegated', () => {
-		for (const plan of [planFor('.', 'directive', true), planFor('.', 'coding')]) {
+	test('committing is not delegated to anything but a writable commit skill', () => {
+		const plans = [
+			planFor('.', 'coding'),
+			planFor('.', 'directive'),
+			planFor('.', 'directive', { skillId: 'feature-review' }),
+			planFor('.', 'directive', { ...commitSkill, customDirectiveReadonly: true }),
+		];
+		for (const plan of plans) {
 			const summary = preExistingChangeSummary(accWith(committed), plan);
 			expect(outcomeLabel(summary)).toBe('Completed · existing work changed');
 		}
 	});
 
-	test('a directive that only commits gets no do-not-touch note', async () => {
-		const store = await makeProject('delegated-note', tmpRoot);
+	test('a real --skill launch carries the skill the rule reads', () => {
+		const prompt = resolvePlan('.', ['--directive', '--skill', 'commit-bundles']).prompt;
+		expect(prompt.skillId).toBe('commit-bundles');
+	});
+
+	test('an ordinary directive that stages a file is told about it', async () => {
+		const store = await makeProject('undelegated-note', tmpRoot);
 		const plan = planFor(store.projectDir, 'directive');
 		const { acc, toolCall } = await watching(store.projectDir, [dirtyPath], plan);
-		await Bun.spawn(['git', '-C', store.projectDir, 'add', dirtyPath], {
-			stderr: 'ignore',
-			stdout: 'ignore',
-			windowsHide: true,
-		}).exited;
+		await runGit(store.projectDir, ['add', dirtyPath]);
+		await toolCall();
+		await settlePreExistingPathWatch(acc, plan, undefined, undefined);
+		expect(acc.pendingCarryoverNotes.join('')).toContain(dirtyPath);
+	});
+
+	test('a commit skill that only stages gets no do-not-touch note', async () => {
+		const store = await makeProject('delegated-note', tmpRoot);
+		const plan = planFor(store.projectDir, 'directive', commitSkill);
+		const { acc, toolCall } = await watching(store.projectDir, [dirtyPath], plan);
+		await runGit(store.projectDir, ['add', dirtyPath]);
 		await toolCall();
 		await settlePreExistingPathWatch(acc, plan, undefined, undefined);
 		expect(hows(acc, dirtyPath)).toEqual(['staged']);

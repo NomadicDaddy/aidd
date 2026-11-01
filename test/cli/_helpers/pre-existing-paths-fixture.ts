@@ -4,6 +4,7 @@ import type { AgentEvent, CLIBackend, PromptInput } from 'aidd-shared/backends/t
 import { parseArgs } from 'aidd-shared/args/index';
 import { defaultWebConfig, type ResolvedConfig } from 'aidd-shared/config';
 import { FileAiddStore } from 'aidd-shared/metadata/store';
+import type { RunPlan } from 'aidd-shared/plan/types';
 import { runOrchestrator } from '../../../cli/src/orchestrator/orchestrator.ts';
 import { resolveRunPlan } from '../../../cli/src/plan/resolve.ts';
 
@@ -116,11 +117,13 @@ async function lastLedgerEntry(store: FileAiddStore): Promise<LedgerEntry> {
 	return JSON.parse(content.trim().split('\n').at(-1) ?? '{}') as LedgerEntry;
 }
 
+export function resolvePlan(projectDir: string, extraArgs: string[] = []): RunPlan {
+	const args = ['--project-dir', projectDir, '--cli', 'native', ...extraArgs];
+	return resolveRunPlan(parseArgs(args), config);
+}
+
 export async function runBackend(store: FileAiddStore, backend: CLIBackend): Promise<void> {
-	await runOrchestrator(
-		resolveRunPlan(parseArgs(['--project-dir', store.projectDir, '--cli', 'native']), config),
-		{ backend, rootDir, store },
-	);
+	await runOrchestrator(resolvePlan(store.projectDir), { backend, rootDir, store });
 }
 
 /** Commit a feature as a run would: its record and one file of its own, nothing else by path. */

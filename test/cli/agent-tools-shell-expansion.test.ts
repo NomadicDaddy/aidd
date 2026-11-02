@@ -32,18 +32,31 @@ describe('bash policy judges runtime-expanded paths by their value', () => {
 		expect(denial('for f in . .; do ls $f$f; done')).toContain('outside workspace');
 	});
 
-	// A name an argument, a prefix, a skipped branch or a subshell "set" may be empty to bash.
+	// A name an argument, a prefix, a skipped branch or a subshell "set" still holds whatever it held
+	// before, here the environment's value, which the policy can't see.
 	for (const command of [
 		'echo a=x; cat .$a./outside.txt',
 		'a=x true; cat .$a./outside.txt',
 		'false && a=x; cat .$a./outside.txt',
 		'(a=x); cat .$a./outside.txt',
 		'# a=x\ncat .$a./outside.txt',
+		'TMP=src true; ls "$TMP"',
+		'false && for TMP in src; do :; done; ls "$TMP"',
+		'for TMP in; do :; done; ls "$TMP"',
 	]) {
-		test(`judges a name that may be unset as empty: ${command}`, () => {
-			expect(denial(command)).toContain('outside workspace');
+		test(`denies a name the command may not have set: ${command}`, () => {
+			expect(denial(command)).toMatch(
+				/expands \$(a|TMP), which the command does not set for certain/,
+			);
 		});
 	}
+
+	test('a name set for certain and then perhaps reassigned may hold either value', () => {
+		expect(denial('a=src; false && a=..; cat $a/x')).toContain('outside workspace');
+		expect(denial('a=src; false && for a in ..; do :; done; cat $a/x')).toContain(
+			'outside workspace',
+		);
+	});
 
 	test('a for list is itself a set of arguments', () => {
 		expect(denial('for f in ../*.ts; do echo $f; done')).toContain('outside workspace');
@@ -90,6 +103,8 @@ describe('bash policy still allows references it can bound', () => {
 		'd=src; cat $d/x.ts',
 		'x=s y=rc; ls $x$y',
 		'cd src; f=main.ts; cat $f',
+		'd="src"; cat $d/x.ts',
+		'd=\'src dir\'; ls "$d"',
 		'rg "a=b" src',
 		'for f in *.ts; do wc -l $f; done',
 		'for f in src test; do rg pattern $f; done',

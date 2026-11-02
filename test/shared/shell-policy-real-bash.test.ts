@@ -94,6 +94,15 @@ const ATTACKS: [string, string][] = [
 	['a quoted read', 'a=x; "read" a <<< .; cat $a$a/outside/sentinel.txt'],
 	['an escaped read', 'a=x; r\\ead a <<< .; cat $a$a/outside/sentinel.txt'],
 	['a sibling config through an unset name', `echo a=x; cat .$a./profile/.aidd/config.json`],
+	// Bash assigns only when the name and = are unquoted; each of these is a command named a=x.
+	['a double-quoted name', `"a"=x; cat ${UNSET}`],
+	['a single-quoted name', `'a'=x; cat ${UNSET}`],
+	['a wholly quoted assignment', `"a=x"; cat ${UNSET}`],
+	['an empty quote after the name', `a""=x; cat ${UNSET}`],
+	['an empty quote before the name', `""a=x; cat ${UNSET}`],
+	['a half-quoted name', `"a"b=x; cat .$ab./outside/sentinel.txt`],
+	['a quoted equals sign', `a"="x; cat ${UNSET}`],
+	['an escaped equals sign', `a\\=x; cat ${UNSET}`],
 ];
 
 describe('shell workspace policy against real bash', () => {
@@ -102,12 +111,13 @@ describe('shell workspace policy against real bash', () => {
 	let cwd = '';
 	let script = '';
 	let env: Record<string, string> = {};
+	let outside = '';
 
-	function readsSentinel(command: string): boolean {
+	function readsSentinel(command: string, extraEnv: Record<string, string> = {}): boolean {
 		writeFileSync(script, command);
 		const run = Bun.spawnSync([(bash as { path: string }).path, '../case.sh'], {
 			cwd,
-			env,
+			env: { ...env, ...extraEnv },
 			stderr: 'pipe',
 			stdin: 'ignore',
 			stdout: 'pipe',
@@ -122,8 +132,9 @@ describe('shell workspace policy against real bash', () => {
 		const base = await testTempDir('shell-policy-real-bash-');
 		cwd = join(base, 'project');
 		mkdirSync(cwd);
-		mkdirSync(join(base, 'outside'));
-		writeFileSync(join(base, 'outside', 'sentinel.txt'), `${SENTINEL}\n`);
+		outside = join(base, 'outside');
+		mkdirSync(outside);
+		writeFileSync(join(outside, 'sentinel.txt'), `${SENTINEL}\n`);
 		mkdirSync(join(base, 'profile', '.aidd'), { recursive: true });
 		writeFileSync(join(base, 'profile', '.aidd', 'config.json'), `${SENTINEL}\n`);
 		script = join(base, 'case.sh');
@@ -149,6 +160,29 @@ describe('shell workspace policy against real bash', () => {
 		const command = `echo a=x; cat "\${a}${absolute}"`;
 		const allowed = checkBashWorkspacePolicy(command, cwd) === null;
 		expect(allowed && readsSentinel(command)).toBe(false);
+	});
+
+	// The tool environment forwards TMP, so bash holds a value the policy never sees. An assignment
+	// that may not run, or may not last, leaves that inherited value in place.
+	const INHERITED: [string, string][] = [
+		['the inherited value itself', 'cat "$TMP/sentinel.txt"'],
+		['an environment prefix', 'TMP=src true; cat "$TMP/sentinel.txt"'],
+		['an assignment behind &&', 'false && TMP=src; cat "$TMP/sentinel.txt"'],
+		['an argument shaped like an assignment', 'echo TMP=src; cat "$TMP/sentinel.txt"'],
+		['a loop that may not run', 'false && for TMP in src; do :; done; cat "$TMP/sentinel.txt"'],
+		['a loop over nothing', 'for TMP in; do :; done; cat "$TMP/sentinel.txt"'],
+	];
+	test.skipIf(!available)('the instrument reads the sentinel through an inherited TMP', () => {
+		expect(readsSentinel('cat "$TMP/sentinel.txt"', { TMP: outside })).toBe(true);
+	});
+	for (const [name, command] of INHERITED) {
+		test.skipIf(!available)(`${name} over an inherited TMP is not an allowed read`, () => {
+			const allowed = checkBashWorkspacePolicy(command, cwd) === null;
+			expect(allowed && readsSentinel(command, { TMP: outside })).toBe(false);
+		});
+	}
+	test.skipIf(!available)('a loop bash is sure to run still binds its name', () => {
+		expect(checkBashWorkspacePolicy('for d in src test; do ls "$d"; done', cwd)).toBeNull();
 	});
 
 	test.skipIf(!available)('a redirect through an unset name writes nothing outside', () => {

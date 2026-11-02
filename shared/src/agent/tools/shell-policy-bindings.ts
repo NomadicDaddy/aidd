@@ -7,7 +7,7 @@ import type { ShellToken } from './shell-policy-tokens.ts';
  */
 
 /** `NAME=value`, with the name in group 1. */
-export const ASSIGNMENT = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/s;
+const ASSIGNMENT = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/s;
 /** A separator after which the next command may not run, or runs in a subshell. */
 const UNSURE_SEPARATOR = /[&|()]/;
 /** Words of compound commands, inside which an assignment may not run or may run again. */
@@ -54,6 +54,33 @@ export function sureAssignments(tokens: ShellToken[], declaresFunction: boolean)
 	return sure;
 }
 
+/**
+ * True when bash is sure to reach the word at `index`: nothing before it is conditional, piped,
+ * backgrounded, in a subshell or compound, and the command defines no function.
+ */
+export function reachedSurely(
+	tokens: ShellToken[],
+	index: number,
+	declaresFunction: boolean,
+): boolean {
+	if (declaresFunction || UNSURE_SEPARATOR.test(tokens[index]?.separators ?? '')) return false;
+	return !tokens.slice(0, index).some(makesLaterUnsure);
+}
+
+/** The index of the `done` that closes the loop whose `do` is at `start`, or past the end. */
+export function closingDone(tokens: ShellToken[], start: number): number {
+	let depth = 0;
+	for (let index = start; index < tokens.length; index += 1) {
+		const token = tokens[index] as ShellToken;
+		if (token.inert) continue;
+		if (token.text === 'do') depth += 1;
+		if (token.text !== 'done') continue;
+		depth -= 1;
+		if (depth === 0) return index;
+	}
+	return tokens.length;
+}
+
 /** A separator or compound word after which no assignment is sure to run or to last. */
 function makesLaterUnsure(token: ShellToken): boolean {
 	return UNSURE_SEPARATOR.test(token.separators) || COMPOUND_WORDS.has(token.text);
@@ -80,5 +107,65 @@ function endsCommand(after: ShellToken | undefined): boolean {
 }
 
 function isAssignment(token: ShellToken | undefined): boolean {
-	return token !== undefined && !token.inert && ASSIGNMENT.test(token.text);
+	return assignedName(token) !== undefined;
+}
+
+/** `NAME=` opening a word. Read on the unquoted view, where every quoted span is one marker. */
+const UNQUOTED_NAME = /^[A-Za-z_][A-Za-z0-9_]*=/;
+
+/**
+ * The name a word assigns, or undefined when bash reads it as an ordinary word. Bash assigns only
+ * when the name and the `=` are unquoted and unescaped: `"a"=x`, `a""=x`, `"a=x"` and `a\=x` are
+ * commands or arguments, so `a` keeps whatever it held. The value may be quoted (`a="x y"`).
+ */
+export function assignedName(token: ShellToken | undefined): string | undefined {
+	if (token === undefined || token.inert || !UNQUOTED_NAME.test(token.unquoted)) return undefined;
+	return ASSIGNMENT.exec(token.text)?.[1];
+}
+
+/** Where a loop bash may skip ends: its name, and the values the name held before the loop. */
+export type LoopEnd = { before: string[] | undefined; name: string };
+
+/**
+ * After a loop bash may have skipped, its name holds either what it held before or a value from
+ * the loop. A name the command hadn't set before keeps the environment's value, so it becomes
+ * uncertain.
+ */
+export function settleLoopEnd(
+	end: LoopEnd | undefined,
+	bindings: Map<string, string[]>,
+	uncertain: Set<string>,
+): void {
+	if (end === undefined) return;
+	if (end.before === undefined) {
+		uncertain.add(end.name);
+		bindings.delete(end.name);
+		return;
+	}
+	bindings.set(end.name, [...new Set([...end.before, ...(bindings.get(end.name) ?? [])])]);
+}
+
+/**
+ * Records an assignment's values. One bash is sure to make sets the name to them, alongside any
+ * value the command set before, since this pass can't tell which one a later word sees. One that
+ * may not run or may not last leaves the name as it was: when the command set it before, either
+ * value is possible, and when it didn't, the name keeps whatever the environment holds, which the
+ * policy can't see. `TMP=src true; ls "$TMP"` lists the inherited TMP, not `src`, so such a name
+ * becomes uncertain and any reference to it is denied.
+ */
+export function recordAssignment(
+	name: string,
+	assigned: string[],
+	isSure: boolean,
+	bindings: Map<string, string[]>,
+	uncertain: Set<string>,
+): void {
+	const before = bindings.get(name);
+	if (!isSure && (before === undefined || uncertain.has(name))) {
+		uncertain.add(name);
+		bindings.delete(name);
+		return;
+	}
+	if (isSure) uncertain.delete(name);
+	bindings.set(name, [...new Set([...(before ?? []), ...assigned])]);
 }

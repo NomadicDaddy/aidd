@@ -1,4 +1,12 @@
-import { ASSIGNMENT, sureAssignments } from './shell-policy-bindings.ts';
+import {
+	assignedName,
+	closingDone,
+	type LoopEnd,
+	reachedSurely,
+	recordAssignment,
+	settleLoopEnd,
+	sureAssignments,
+} from './shell-policy-bindings.ts';
 import { QUOTED_SPAN, restoreProtectedDollars, type ShellToken } from './shell-policy-tokens.ts';
 
 /**
@@ -15,7 +23,9 @@ import { QUOTED_SPAN, restoreProtectedDollars, type ShellToken } from './shell-p
  * only when the command itself binds it (`NAME=value`, `for NAME in ...`); every reference is
  * replaced by the bound literal, so the containment sweep judges the value bash will actually use.
  * An assignment bash may skip or not keep (an argument, an environment prefix, one behind `&&`, in
- * a subshell or a compound command) leaves the name possibly empty, and empty is judged too:
+ * a subshell or a compound command) leaves the name as it was. When the command set it before,
+ * either value is judged; when it didn't, the name still holds whatever the environment gave it,
+ * so it is denied like any other unknown: `TMP=src true; ls "$TMP"` lists the inherited TMP, and
  * `echo a=x; cat .$a./x` is `../x` to bash. `unset` is denied outright. A reference to anything
  * else — the environment, positional parameters, a `read`-bound name — has a value the policy
  * cannot see, so the command is denied and the denial says which variable to spell out. The
@@ -81,11 +91,13 @@ function unbounded(construct: string): string {
 function expandReferences(
 	token: string,
 	bindings: Map<string, string[]>,
+	uncertain: Set<string>,
 ): null | string | string[] {
 	let variants = [''];
 	let cursor = 0;
 	for (const match of token.matchAll(REFERENCE)) {
 		const name = match[1] ?? match[2] ?? '';
+		if (uncertain.has(name)) return name;
 		// The command's own value first: `SHLVL=.` makes `$SHLVL` a dot, whatever bash keeps there.
 		const values = bindings.get(name) ?? (NUMERIC_NAMES.has(name) ? ['0'] : undefined);
 		if (values === undefined) return name;
@@ -137,7 +149,7 @@ function judgeExpansion(
 	}
 	if (typeof result === 'string') {
 		return {
-			error: `ERROR: bash command expands $${result}, which the command does not set; its value is unknown and cannot be bounded to the workspace (assign it in the command, or spell the path out)`,
+			error: `ERROR: bash command expands $${result}, which the command does not set for certain; its value is unknown and cannot be bounded to the workspace (assign it in the command, or spell the path out)`,
 		};
 	}
 	if (result.some((value) => value !== text && DOT_GLOB.test(value))) {
@@ -201,6 +213,10 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 	if (rejected !== null) return { error: rejected };
 
 	const bindings = new Map<string, string[]>([['PWD', ['.']]]);
+	// Names an assignment may or may not have set, over a value the policy can't see.
+	const uncertain = new Set<string>();
+	// Where a loop bash may skip ends, and the name's values before it.
+	const loopEnds = new Map<number, LoopEnd>();
 	const sure = sureAssignments(tokens, declaresFunction);
 	const expanded: string[] = [];
 	const readInBody = new Set<string>();
@@ -211,10 +227,14 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 			: null;
 	const expand = (text: string): { error: string } | string[] => {
 		if (inBody) noteBodyReads(text, readInBody);
-		return judgeExpansion(text, expandReferences(text.replace(NUMERIC_SPECIAL, '0'), bindings));
+		return judgeExpansion(
+			text,
+			expandReferences(text.replace(NUMERIC_SPECIAL, '0'), bindings, uncertain),
+		);
 	};
 
 	for (const [index, token] of tokens.entries()) {
+		settleLoopEnd(loopEnds.get(index), bindings, uncertain);
 		const text = token.text;
 		const loopName = tokens[index + 1]?.text ?? '';
 		if (BODY_OPENERS.has(text)) inBody = true;
@@ -226,7 +246,8 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 			const loopRebound = rebound(loopName);
 			if (loopRebound !== null) return loopRebound;
 			const values: string[] = [];
-			for (let cursor = index + 3; cursor < tokens.length; cursor += 1) {
+			let cursor = index + 3;
+			for (; cursor < tokens.length; cursor += 1) {
 				const item = tokens[cursor]?.text ?? '';
 				if (item === 'do') break;
 				const itemValues = expand(item);
@@ -234,7 +255,17 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 				values.push(...itemValues);
 				for (const value of itemValues) expanded.push(restoreProtectedDollars(value));
 			}
-			bindings.set(loopName, values.length > 0 ? values : ['']);
+			// An empty list runs no iteration and leaves the name as it was.
+			if (values.length === 0) continue;
+			// A loop bash may skip leaves the name as it was once the loop ends, or holds an item.
+			if (!reachedSurely(tokens, index, declaresFunction)) {
+				loopEnds.set(closingDone(tokens, cursor), {
+					before: bindings.get(loopName),
+					name: loopName,
+				});
+			}
+			uncertain.delete(loopName);
+			bindings.set(loopName, values);
 			continue;
 		}
 
@@ -242,14 +273,12 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 		if (!Array.isArray(values)) return values;
 		for (const value of values) expanded.push(restoreProtectedDollars(value));
 
-		const name = ASSIGNMENT.exec(text)?.[1];
+		const name = assignedName(token);
 		if (name !== undefined) {
 			const assignRebound = rebound(name);
 			if (assignRebound !== null) return assignRebound;
 			const assigned = values.map((value) => value.slice(name.length + 1));
-			// One that may not run leaves the name as it was, and unset when nothing set it before.
-			const before = bindings.get(name) ?? (sure.has(index) ? [] : ['']);
-			bindings.set(name, [...new Set([...before, ...assigned])]);
+			recordAssignment(name, assigned, sure.has(index), bindings, uncertain);
 		}
 	}
 	return { tokens: expanded };

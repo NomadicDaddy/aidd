@@ -49,6 +49,7 @@ data/*.db.lock
 data/director/
 data/exports/
 data/migration-history.json
+data/provider-rest/
 data/run-logs/
 data/scratch/
 data/smoke-qc/

@@ -1,6 +1,7 @@
 import {
 	assignedName,
 	closingDone,
+	endsInSubshell,
 	isReservedWord,
 	type LoopEnd,
 	loopName,
@@ -255,12 +256,11 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 			}
 			// An empty list runs no iteration and leaves the name as it was.
 			if (values.length === 0) continue;
-			// A loop bash may skip leaves the name as it was once the loop ends, or holds an item.
-			if (!reachedSurely(tokens, index, declaresFunction)) {
-				loopEnds.set(closingDone(tokens, cursor), {
-					before: bindings.get(bound),
-					name: bound,
-				});
+			// A loop bash may skip, or one run in the background or a pipeline, leaves the name as it
+			// was once the loop ends, or holding an item.
+			const end = closingDone(tokens, cursor);
+			if (!reachedSurely(tokens, index, declaresFunction) || endsInSubshell(tokens, end)) {
+				loopEnds.set(end, { before: bindings.get(bound), name: bound });
 			}
 			uncertain.delete(bound);
 			bindings.set(bound, values);

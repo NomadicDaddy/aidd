@@ -79,6 +79,72 @@ export function closingDone(tokens: ShellToken[], start: number): number {
 	return tokens.length;
 }
 
+/**
+ * True when the command ending at `index` runs in a subshell, so nothing it assigns lasts. Scans
+ * the rest of its `&&`/`||` list: a lone `&` puts the whole list in the background
+ * (`done & wait`, `done && true && true & wait`), and a pipe before any `&&` or `||` puts the
+ * command itself in a pipeline, even with a redirect in between (`done 2>&1 | cat`). A pipe after
+ * one belongs to a later command (`done && true | cat` runs the loop in this shell). `;` or a
+ * newline ends the list.
+ */
+export function endsInSubshell(tokens: ShellToken[], index: number): boolean {
+	const scan: ListScan = { afterAndOr: false, depth: 0 };
+	for (let at = index + 1; at < tokens.length; at += 1) {
+		const verdict = readSeparators((tokens[at] as ShellToken).separators, scan);
+		if (verdict !== undefined) return verdict;
+		// A case pattern's bare `)` defeats the paren count, so assume the worst.
+		if (isReservedWord(tokens, at, 'case')) return true;
+		scan.depth += compoundStep(tokens, at);
+	}
+	return false;
+}
+
+/**
+ * Where a scan of the rest of an `&&`/`||` list stands. A later `{ }`, `( )`, if, while or for
+ * keeps its own `;` and `|` (`done && { true; } & wait` still backgrounds the loop), so separators
+ * count only outside them, at depth 0.
+ */
+type ListScan = { afterAndOr: boolean; depth: number };
+
+const PAREN_STEP: Record<string, number> = { '(': 1, ')': -1 };
+const COMPOUND_OPENERS = ['{', 'for', 'if', 'select', 'until', 'while'];
+const COMPOUND_CLOSERS = ['}', 'done', 'fi'];
+
+/** One word's separators: true for a subshell, false when the list ends, else undefined. */
+function readSeparators(separators: string, scan: ListScan): boolean | undefined {
+	if (scan.depth === 0 && /&&|\|\|/.test(separators)) scan.afterAndOr = true;
+	for (const ch of withoutAndOr(separators)) {
+		const verdict = readSeparator(ch, scan);
+		if (verdict !== undefined) return verdict;
+	}
+	return undefined;
+}
+
+function readSeparator(ch: string, scan: ListScan): boolean | undefined {
+	scan.depth += PAREN_STEP[ch] ?? 0;
+	if (scan.depth < 0) return false;
+	if (scan.depth > 0) return undefined;
+	return separatorVerdict(ch, scan.afterAndOr);
+}
+
+/** At depth 0: a lone `&`, or a pipe before any `&&`/`||`, is a subshell; `;` or a newline ends it. */
+function separatorVerdict(ch: string, afterAndOr: boolean): boolean | undefined {
+	if (ch === '&' || (ch === '|' && !afterAndOr)) return true;
+	if (ch === ';' || ch === '\n') return false;
+	return undefined;
+}
+
+/** +1 for a reserved word that opens a compound command, -1 for one that closes it, else 0. */
+function compoundStep(tokens: ShellToken[], at: number): number {
+	if (COMPOUND_OPENERS.some((word) => isReservedWord(tokens, at, word))) return 1;
+	return COMPOUND_CLOSERS.some((word) => isReservedWord(tokens, at, word)) ? -1 : 0;
+}
+
+/** Separators with `&&` and `||` removed, along with the newlines that may follow them. */
+function withoutAndOr(separators: string): string {
+	return separators.replace(/(?:&&|\|\|)\n*/g, '');
+}
+
 /** Reserved words after which the next word starts a command too. */
 const COMMAND_OPENERS = new Set([
 	'!',

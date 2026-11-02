@@ -181,6 +181,45 @@ describe('shell workspace policy against real bash', () => {
 			'a skipped loop whose body echoes a quoted do',
 			'false && for TMP in src; do echo "do"; done; cat "$TMP/sentinel.txt"',
 		],
+		// A loop in the background or a pipeline runs in a subshell, so its name doesn't last.
+		['a loop in the background', 'for TMP in src; do :; done & wait; cat "$TMP/sentinel.txt"'],
+		[
+			'a loop in the background, then a newline',
+			'for TMP in src; do :; done &\nwait; cat "$TMP/sentinel.txt"',
+		],
+		['a loop in a pipeline', 'for TMP in src; do :; done | cat; cat "$TMP/sentinel.txt"'],
+		[
+			'a loop in a backgrounded && list',
+			'for TMP in src; do :; done && true & wait; cat "$TMP/sentinel.txt"',
+		],
+		[
+			'a loop in a backgrounded || list',
+			'for TMP in src; do :; done || true & wait; cat "$TMP/sentinel.txt"',
+		],
+		[
+			'a loop in a longer backgrounded && list',
+			'for TMP in src; do :; done && true && true & wait; cat "$TMP/sentinel.txt"',
+		],
+		// A later compound command keeps its own `;`, so the trailing & still backgrounds the loop.
+		...[
+			'{ true; }',
+			'(true)',
+			'if true; then :; fi',
+			'while false; do :; done',
+			'case x in x) :;; esac',
+			'for y in a; do :; done',
+		].map((later): [string, string] => [
+			`a loop before a backgrounded ${later}`,
+			`for TMP in src; do :; done && ${later} & wait; cat "$TMP/sentinel.txt"`,
+		]),
+		[
+			'a loop piped on after a redirect',
+			'for TMP in src; do :; done 2>&1 | cat; cat "$TMP/sentinel.txt"',
+		],
+		[
+			'a loop in a backgrounded list across a line',
+			'for TMP in src; do :; done &&\ntrue & wait; cat "$TMP/sentinel.txt"',
+		],
 		[
 			'a loop in a branch not taken',
 			'if false; then for TMP in src; do echo do; done; fi; cat "$TMP/sentinel.txt"',
@@ -201,6 +240,12 @@ describe('shell workspace policy against real bash', () => {
 	}
 	test.skipIf(!available)('a loop bash is sure to run still binds its name', () => {
 		expect(checkBashWorkspacePolicy('for d in src test; do ls "$d"; done', cwd)).toBeNull();
+		// && only makes the next command conditional; the loop ran in this shell.
+		expect(checkBashWorkspacePolicy('for d in src; do :; done && ls "$d"', cwd)).toBeNull();
+		// A pipe later in the list belongs to the later command, so the loop still ran here.
+		expect(
+			checkBashWorkspacePolicy('for d in src; do :; done && true | cat; ls "$d"', cwd),
+		).toBeNull();
 	});
 
 	test.skipIf(!available)('a redirect through an unset name writes nothing outside', () => {

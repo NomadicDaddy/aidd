@@ -1,7 +1,9 @@
 import {
 	assignedName,
 	closingDone,
+	isReservedWord,
 	type LoopEnd,
+	loopName,
 	reachedSurely,
 	recordAssignment,
 	settleLoopEnd,
@@ -37,7 +39,6 @@ const NAME = '[A-Za-z_][A-Za-z0-9_]*';
 const REFERENCE = new RegExp(`\\$(?:\\{(${NAME})\\}|(${NAME}))`, 'g');
 const PARAMETER_OPERATION = new RegExp(`\\$\\{(?!${NAME}\\})`);
 const APPEND_ASSIGNMENT = new RegExp(`^${NAME}\\+=`);
-const NAME_ONLY = new RegExp(`^${NAME}$`);
 /** `$0`, `$1`, `$@`, `$*`, `$-`: set by the invocation, not by the command. */
 const POSITIONAL_OR_SPECIAL = /\$[0-9@*-]/;
 /** `$?`, `$$`, `$!`, `$#`: always digits, never a path. */
@@ -236,20 +237,17 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 	for (const [index, token] of tokens.entries()) {
 		settleLoopEnd(loopEnds.get(index), bindings, uncertain);
 		const text = token.text;
-		const loopName = tokens[index + 1]?.text ?? '';
 		if (BODY_OPENERS.has(text)) inBody = true;
-		if (
-			(text === 'for' || text === 'select') &&
-			NAME_ONLY.test(loopName) &&
-			tokens[index + 2]?.text === 'in'
-		) {
-			const loopRebound = rebound(loopName);
+		// Only a loop bash reads as one: `echo "for" x in a "do"` binds nothing.
+		const bound = loopName(tokens, index);
+		if (bound !== undefined) {
+			const loopRebound = rebound(bound);
 			if (loopRebound !== null) return loopRebound;
 			const values: string[] = [];
 			let cursor = index + 3;
 			for (; cursor < tokens.length; cursor += 1) {
+				if (isReservedWord(tokens, cursor, 'do')) break;
 				const item = tokens[cursor]?.text ?? '';
-				if (item === 'do') break;
 				const itemValues = expand(item);
 				if (!Array.isArray(itemValues)) return itemValues;
 				values.push(...itemValues);
@@ -260,12 +258,12 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 			// A loop bash may skip leaves the name as it was once the loop ends, or holds an item.
 			if (!reachedSurely(tokens, index, declaresFunction)) {
 				loopEnds.set(closingDone(tokens, cursor), {
-					before: bindings.get(loopName),
-					name: loopName,
+					before: bindings.get(bound),
+					name: bound,
 				});
 			}
-			uncertain.delete(loopName);
-			bindings.set(loopName, values);
+			uncertain.delete(bound);
+			bindings.set(bound, values);
 			continue;
 		}
 

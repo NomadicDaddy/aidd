@@ -171,6 +171,24 @@ describe('shell workspace policy against real bash', () => {
 		['an argument shaped like an assignment', 'echo TMP=src; cat "$TMP/sentinel.txt"'],
 		['a loop that may not run', 'false && for TMP in src; do :; done; cat "$TMP/sentinel.txt"'],
 		['a loop over nothing', 'for TMP in; do :; done; cat "$TMP/sentinel.txt"'],
+		// Loop words bash reads as plain text: quoted, or not starting a command.
+		['quoted loop words', 'echo "for" TMP in src "do"; cat "$TMP/sentinel.txt"'],
+		['single-quoted loop words', `echo 'for' TMP in src 'do'; cat "$TMP/sentinel.txt"`],
+		['loop words as arguments', 'echo for TMP in src "do"; cat "$TMP/sentinel.txt"'],
+		['unquoted loop words as arguments', 'echo for TMP in src do; cat "$TMP/sentinel.txt"'],
+		['a quoted select', 'echo "select" TMP in src "do"; cat "$TMP/sentinel.txt"'],
+		[
+			'a skipped loop whose body echoes a quoted do',
+			'false && for TMP in src; do echo "do"; done; cat "$TMP/sentinel.txt"',
+		],
+		[
+			'a loop in a branch not taken',
+			'if false; then for TMP in src; do echo do; done; fi; cat "$TMP/sentinel.txt"',
+		],
+		[
+			'a skipped loop whose body echoes do',
+			'false && for TMP in src; do echo do; done; cat "$TMP/sentinel.txt"',
+		],
 	];
 	test.skipIf(!available)('the instrument reads the sentinel through an inherited TMP', () => {
 		expect(readsSentinel('cat "$TMP/sentinel.txt"', { TMP: outside })).toBe(true);

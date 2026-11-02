@@ -71,14 +71,62 @@ export function reachedSurely(
 export function closingDone(tokens: ShellToken[], start: number): number {
 	let depth = 0;
 	for (let index = start; index < tokens.length; index += 1) {
-		const token = tokens[index] as ShellToken;
-		if (token.inert) continue;
-		if (token.text === 'do') depth += 1;
-		if (token.text !== 'done') continue;
+		if (isReservedWord(tokens, index, 'do')) depth += 1;
+		if (!isReservedWord(tokens, index, 'done')) continue;
 		depth -= 1;
 		if (depth === 0) return index;
 	}
 	return tokens.length;
+}
+
+/** Reserved words after which the next word starts a command too. */
+const COMMAND_OPENERS = new Set([
+	'!',
+	'{',
+	'do',
+	'elif',
+	'else',
+	'if',
+	'then',
+	'time',
+	'until',
+	'while',
+]);
+/** A name a `for` or `select` loop can bind. */
+const LOOP_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/** True when the word at `index` starts a command, where bash reads a reserved word as one. */
+function inCommandPosition(tokens: ShellToken[], index: number): boolean {
+	for (let at = index; at > 0; at -= 1) {
+		if ((tokens[at] as ShellToken).separators !== '') return true;
+		const previous = tokens[at - 1] as ShellToken;
+		if (previous.inert || !COMMAND_OPENERS.has(previous.unquoted)) return false;
+	}
+	return true;
+}
+
+/**
+ * True when the word at `index` is the reserved word `word` as bash reads it: unquoted, unescaped
+ * and starting a command. `echo "for" x in a "do"` and `echo for x in a` contain no loop.
+ */
+export function isReservedWord(tokens: ShellToken[], index: number, word: string): boolean {
+	const token = tokens[index];
+	if (token === undefined || token.inert || token.unquoted !== word) return false;
+	return inCommandPosition(tokens, index);
+}
+
+/** The name a `for` or `select` loop starting at `index` binds, or undefined when there is none. */
+export function loopName(tokens: ShellToken[], index: number): string | undefined {
+	const opensLoop =
+		isReservedWord(tokens, index, 'for') || isReservedWord(tokens, index, 'select');
+	const name = tokens[index + 1];
+	if (!opensLoop || !continuesAs(name, (word) => LOOP_NAME.test(word))) return undefined;
+	return continuesAs(tokens[index + 2], (word) => word === 'in') ? name?.unquoted : undefined;
+}
+
+/** True when `token` continues the same command and, read unquoted, is what `matches` wants. */
+function continuesAs(token: ShellToken | undefined, matches: (word: string) => boolean): boolean {
+	return token !== undefined && token.separators === '' && matches(token.unquoted);
 }
 
 /** A separator or compound word after which no assignment is sure to run or to last. */

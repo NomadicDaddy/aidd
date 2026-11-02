@@ -1,3 +1,4 @@
+import { ASSIGNMENT, sureAssignments } from './shell-policy-bindings.ts';
 import { QUOTED_SPAN, restoreProtectedDollars, type ShellToken } from './shell-policy-tokens.ts';
 
 /**
@@ -13,16 +14,18 @@ import { QUOTED_SPAN, restoreProtectedDollars, type ShellToken } from './shell-p
  * This pass expands what can be expanded statically and refuses what cannot. A variable is known
  * only when the command itself binds it (`NAME=value`, `for NAME in ...`); every reference is
  * replaced by the bound literal, so the containment sweep judges the value bash will actually use.
- * A reference to anything else — the environment, positional parameters, a `read`-bound name —
- * has a value the policy cannot see, so the command is denied and the denial says which variable
- * to spell out. The remaining runtime rewrites (brace expansion, `${...}` operations, `$'...'`,
- * dot-globs) are denied outright: none of them is needed to work inside a project.
+ * An assignment bash may skip or not keep (an argument, an environment prefix, one behind `&&`, in
+ * a subshell or a compound command) leaves the name possibly empty, and empty is judged too:
+ * `echo a=x; cat .$a./x` is `../x` to bash. `unset` is denied outright. A reference to anything
+ * else — the environment, positional parameters, a `read`-bound name — has a value the policy
+ * cannot see, so the command is denied and the denial says which variable to spell out. The
+ * remaining runtime rewrites (brace expansion, `${...}` operations, `$'...'`, dot-globs) are denied
+ * outright: none of them is needed to work inside a project.
  */
 
 const NAME = '[A-Za-z_][A-Za-z0-9_]*';
 const REFERENCE = new RegExp(`\\$(?:\\{(${NAME})\\}|(${NAME}))`, 'g');
 const PARAMETER_OPERATION = new RegExp(`\\$\\{(?!${NAME}\\})`);
-const ASSIGNMENT = new RegExp(`^(${NAME})=(.*)$`, 's');
 const APPEND_ASSIGNMENT = new RegExp(`^${NAME}\\+=`);
 const NAME_ONLY = new RegExp(`^${NAME}$`);
 /** `$0`, `$1`, `$@`, `$*`, `$-`: set by the invocation, not by the command. */
@@ -105,12 +108,12 @@ function expandReferences(
  * it uses. Read with quotes removed, because `"shopt"` runs just the same.
  */
 function rejectWordRules(tokens: ShellToken[], index: number): null | string {
-	const word = (at: number): string => (tokens[at]?.text ?? '').split('\\').join('');
-	const text = word(index);
+	const text = decodedWord(tokens[index]);
 	if (APPEND_ASSIGNMENT.test(text)) return unbounded('appends to a variable with +=');
 	if (text.startsWith('IFS=')) return unbounded('assigns IFS, which changes how values split');
 	if (text === 'shopt') return unbounded("changes shell options with 'shopt'");
-	if (text === 'set' && togglesGlobbing(word(index + 1), word(index + 2))) {
+	const [option, value] = [decodedWord(tokens[index + 1]), decodedWord(tokens[index + 2])];
+	if (text === 'set' && togglesGlobbing(option, value)) {
 		return unbounded("changes globbing with 'set'");
 	}
 	return null;
@@ -143,6 +146,12 @@ function judgeExpansion(
 	return result;
 }
 
+function decodedWord(token: ShellToken | undefined): string {
+	return restoreProtectedDollars(token?.text ?? '')
+		.split('\\')
+		.join('');
+}
+
 function rejectRuntimeRewrites(tokens: ShellToken[]): null | string {
 	for (const [index, token] of tokens.entries()) {
 		const wordRule = rejectWordRules(tokens, index);
@@ -162,13 +171,13 @@ function rejectRuntimeRewrites(tokens: ShellToken[]): null | string {
 		if (DOT_GLOB.test(token.unquoted)) {
 			return DOT_GLOB_DENIAL;
 		}
-		const next = tokens[index + 1]?.unquoted ?? '';
-		if (
-			BINDING_BUILTINS.has(token.unquoted) ||
-			(token.unquoted === 'printf' && /^-[a-zA-Z]*v/.test(next))
-		) {
-			return unbounded(`binds a variable with '${token.unquoted}'`);
+		// Read as bash runs it: `"read"` and `r\ead` are `read` too.
+		const name = decodedWord(token);
+		const next = decodedWord(tokens[index + 1]);
+		if (BINDING_BUILTINS.has(name) || (name === 'printf' && /^-[a-zA-Z]*v/.test(next))) {
+			return unbounded(`binds a variable with '${name}'`);
 		}
+		if (name === 'unset') return unbounded("unsets a variable with 'unset'");
 	}
 	return null;
 }
@@ -192,6 +201,7 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 	if (rejected !== null) return { error: rejected };
 
 	const bindings = new Map<string, string[]>([['PWD', ['.']]]);
+	const sure = sureAssignments(tokens, declaresFunction);
 	const expanded: string[] = [];
 	const readInBody = new Set<string>();
 	let inBody = declaresFunction;
@@ -237,7 +247,9 @@ export function expandShellTokens(tokens: ShellToken[], declaresFunction = false
 			const assignRebound = rebound(name);
 			if (assignRebound !== null) return assignRebound;
 			const assigned = values.map((value) => value.slice(name.length + 1));
-			bindings.set(name, [...new Set([...(bindings.get(name) ?? []), ...assigned])]);
+			// One that may not run leaves the name as it was, and unset when nothing set it before.
+			const before = bindings.get(name) ?? (sure.has(index) ? [] : ['']);
+			bindings.set(name, [...new Set([...before, ...assigned])]);
 		}
 	}
 	return { tokens: expanded };

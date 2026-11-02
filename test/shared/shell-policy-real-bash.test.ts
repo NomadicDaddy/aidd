@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
@@ -20,6 +20,8 @@ const NBSP = String.fromCodePoint(0xa0);
 const FF = String.fromCodePoint(0x0c);
 const VT = String.fromCodePoint(0x0b);
 const CR = String.fromCodePoint(0x0d);
+/** `..` once bash expands an `$a` it left unset. */
+const UNSET = '.$a./outside/sentinel.txt';
 
 /** Each one read the sentinel on some version of the policy. */
 const ATTACKS: [string, string][] = [
@@ -77,6 +79,21 @@ const ATTACKS: [string, string][] = [
 	['a branch not taken', 'a=.; b=.; false || b=z; cat $a$b/outside/sentinel.txt'],
 	['a dot-glob after shopt', 'shopt -u globskipdots; a=.*; cat $a/outside/sentinel.txt'],
 	['CDPATH with a parent', 'CDPATH=ab:..; cd outside; cat sentinel.txt'],
+	// A name the policy thought was set, which bash had left empty.
+	['a variable unset again', `a=x; unset a; cat ${UNSET}`],
+	['unset through builtin', `a=x; builtin unset a; cat ${UNSET}`],
+	['an argument shaped like an assignment', `echo a=x; cat ${UNSET}`],
+	['an environment prefix', `a=x true; cat ${UNSET}`],
+	['an assignment behind &&', `false && a=x; cat ${UNSET}`],
+	['an assignment in a branch not taken', `if false; then a=x; fi; cat ${UNSET}`],
+	['an assignment in a subshell', `(a=x); cat ${UNSET}`],
+	['an assignment in a pipeline', `a=x | true; cat ${UNSET}`],
+	['an assignment in the background', `a=x & wait; cat ${UNSET}`],
+	['an assignment in a comment', `# a=x\ncat ${UNSET}`],
+	['an assignment in a heredoc body', `cat <<EOF\na=x\nEOF\ncat ${UNSET}`],
+	['a quoted read', 'a=x; "read" a <<< .; cat $a$a/outside/sentinel.txt'],
+	['an escaped read', 'a=x; r\\ead a <<< .; cat $a$a/outside/sentinel.txt'],
+	['a sibling config through an unset name', `echo a=x; cat .$a./profile/.aidd/config.json`],
 ];
 
 describe('shell workspace policy against real bash', () => {
@@ -107,6 +124,8 @@ describe('shell workspace policy against real bash', () => {
 		mkdirSync(cwd);
 		mkdirSync(join(base, 'outside'));
 		writeFileSync(join(base, 'outside', 'sentinel.txt'), `${SENTINEL}\n`);
+		mkdirSync(join(base, 'profile', '.aidd'), { recursive: true });
+		writeFileSync(join(base, 'profile', '.aidd', 'config.json'), `${SENTINEL}\n`);
 		script = join(base, 'case.sh');
 		env = augmentEnvPathForGitBash((bash as { path: string }).path, {
 			PATH: process.env.PATH ?? '',
@@ -124,6 +143,21 @@ describe('shell workspace policy against real bash', () => {
 			expect(allowed && readsSentinel(command)).toBe(false);
 		});
 	}
+
+	test.skipIf(!available)('an absolute path behind an unset name is not an allowed read', () => {
+		const absolute = join(cwd, '..', 'outside', 'sentinel.txt').split('\\').join('/');
+		const command = `echo a=x; cat "\${a}${absolute}"`;
+		const allowed = checkBashWorkspacePolicy(command, cwd) === null;
+		expect(allowed && readsSentinel(command)).toBe(false);
+	});
+
+	test.skipIf(!available)('a redirect through an unset name writes nothing outside', () => {
+		const command = 'echo a=x; echo hi > .$a./outside/written.txt';
+		const allowed = checkBashWorkspacePolicy(command, cwd) === null;
+		if (allowed) readsSentinel(command);
+		expect(allowed).toBe(false);
+		expect(existsSync(join(cwd, '..', 'outside', 'written.txt'))).toBe(false);
+	});
 
 	test.skipIf(!available)('a real comment stays allowed', () => {
 		const command = "echo a\\\\ # it's only a note";

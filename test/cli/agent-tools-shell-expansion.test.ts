@@ -32,6 +32,19 @@ describe('bash policy judges runtime-expanded paths by their value', () => {
 		expect(denial('for f in . .; do ls $f$f; done')).toContain('outside workspace');
 	});
 
+	// A name an argument, a prefix, a skipped branch or a subshell "set" may be empty to bash.
+	for (const command of [
+		'echo a=x; cat .$a./outside.txt',
+		'a=x true; cat .$a./outside.txt',
+		'false && a=x; cat .$a./outside.txt',
+		'(a=x); cat .$a./outside.txt',
+		'# a=x\ncat .$a./outside.txt',
+	]) {
+		test(`judges a name that may be unset as empty: ${command}`, () => {
+			expect(denial(command)).toContain('outside workspace');
+		});
+	}
+
 	test('a for list is itself a set of arguments', () => {
 		expect(denial('for f in ../*.ts; do echo $f; done')).toContain('outside workspace');
 	});
@@ -55,6 +68,8 @@ describe('bash policy judges runtime-expanded paths by their value', () => {
 		['cat "${TEMP:-/tmp}/x"', 'parameter operation'],
 		['printf .. | while read d; do ls $d; done', "binds a variable with 'read'"],
 		['echo $1', 'positional or special parameter'],
+		['a=x; "read" a <<< .; cat $a', "binds a variable with 'read'"],
+		['a=x; unset a; cat $a/x', "unsets a variable with 'unset'"],
 		['cat $0', 'positional or special parameter'],
 	]) {
 		test(`denies the runtime rewrite in ${command}`, () => {
@@ -72,6 +87,10 @@ describe('bash policy still allows references it can bound', () => {
 	for (const command of [
 		'f=src; ls $f',
 		'a=.; b=$a; cat $b/x',
+		'd=src; cat $d/x.ts',
+		'x=s y=rc; ls $x$y',
+		'cd src; f=main.ts; cat $f',
+		'rg "a=b" src',
 		'for f in *.ts; do wc -l $f; done',
 		'for f in src test; do rg pattern $f; done',
 		'bun test; echo $?',

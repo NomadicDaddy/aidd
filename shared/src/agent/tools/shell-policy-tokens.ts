@@ -36,6 +36,8 @@ import { type Heredoc, peekDelimiter, readHeredocBodies } from './shell-policy-h
  */
 const OPERATOR_CHARS = new Set([';', '(', ')', '&', '<', '>', '|']);
 const TEXT_WORD_END = /[\s;()&<>|]+/;
+/** The characters that end one simple command, as {@link ShellToken.separators} records them. */
+const COMMAND_SEPARATOR_CHARS = new Set(['\n', ';', '(', ')', '&', '|']);
 
 /** Inside double quotes, the characters a backslash escapes. */
 const DOUBLE_QUOTE_ESCAPES = new Set(['"', '\\', '`', '$']);
@@ -44,6 +46,16 @@ const DOUBLE_QUOTE_ESCAPES = new Set(['"', '\\', '`', '$']);
 export const QUOTED_SPAN = String.fromCharCode(2);
 
 export interface ShellToken {
+	/**
+	 * A word from a comment or a heredoc body, which bash may not run as words. Its words are still
+	 * judged, but nothing in it binds a variable.
+	 */
+	inert: boolean;
+	/**
+	 * The command separators (`;`, newline, `&`, `|`, `(`, `)`) between the previous word and this
+	 * one, in order. Empty when this word continues the same simple command.
+	 */
+	separators: string;
 	/**
 	 * The word bash would see, quotes removed. A `$` that sat inside single quotes is replaced by
 	 * {@link PROTECTED_DOLLAR}, because single quotes are the one context bash never expands in.
@@ -77,6 +89,8 @@ interface Scan {
 	pending: Heredoc[];
 	problem: null | string;
 	quoted: QuotedRange[];
+	/** Separators seen since the last word, for the next one. */
+	separators: string;
 	text: string;
 	tokens: ShellToken[];
 	unquoted: string;
@@ -100,7 +114,11 @@ function endsBashWord(ch: string): boolean {
 }
 
 function flush(scan: Scan): void {
-	if (scan.text !== '') scan.tokens.push({ text: scan.text, unquoted: scan.unquoted });
+	if (scan.text !== '') {
+		const { separators, text, unquoted } = scan;
+		scan.tokens.push({ inert: false, separators, text, unquoted });
+		scan.separators = '';
+	}
 	scan.text = '';
 	scan.unquoted = '';
 }
@@ -159,7 +177,7 @@ function readComment(scan: Scan): void {
 function pushTextWords(scan: Scan, start: number, end: number): void {
 	const words = scan.chars.slice(start, end).join('').replace(/["']/g, '').split(TEXT_WORD_END);
 	for (const text of words) {
-		if (text !== '') scan.tokens.push({ text, unquoted: text });
+		if (text !== '') scan.tokens.push({ inert: true, separators: '', text, unquoted: text });
 	}
 }
 
@@ -215,6 +233,7 @@ function scanUnquoted(scan: Scan, ch: string): void {
 		noteHeredoc(scan);
 	} else if (endsWord(ch)) {
 		flush(scan);
+		if (COMMAND_SEPARATOR_CHARS.has(ch)) scan.separators += ch;
 		if (ch === '(' && next === '(') scan.arithmetic += 1;
 		if (ch === ')' && next === ')') scan.arithmetic = Math.max(0, scan.arithmetic - 1);
 		// `((` may be nested subshells instead, once bash finds no `))`, and then a `<<` skipped as
@@ -235,6 +254,7 @@ export function scanShell(command: string): Scan {
 		pending: [],
 		problem: null,
 		quoted: [],
+		separators: '',
 		text: '',
 		tokens: [],
 		unquoted: '',

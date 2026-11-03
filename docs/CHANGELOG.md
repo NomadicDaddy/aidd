@@ -2,6 +2,16 @@
 
 All notable public aidd releases are documented here.
 
+## [3.7.1] - 2026-11-02
+
+### Security
+
+- The native agent's bash tool now parses each command the way bash does before deciding which of its variables it can trust: lists, `&&` and `||`, pipelines, background jobs, subshells, `{ }` groups, if, while, until, for, select, case, `[[ ]]`, `(( ))` and functions. A command it cannot read is refused with the construct named, instead of being judged by a looser scan. Each fix below closes a way a command could read or write files outside the workspace.
+- A variable counts as set only after an assignment bash is sure to make in this shell. An argument shaped like an assignment (`echo a=x`), an environment prefix (`a=x true`), an assignment behind `&&` or `||`, in a branch not taken, in a subshell, pipeline or background job, and a quoted or escaped name (`"a"=x`, `a\=x`) all leave the variable unknown, and a path that uses it is denied.
+- A `for` loop's variable keeps its loop value only when bash surely runs the loop here. A loop that may be skipped, runs in the background or a pipeline, or has a redirection that can fail (`done >nodir/x`, `done <nofile`, `done 3999>&1`) leaves it unknown, while `done 2>&1` still keeps it. A `select` loop's variable is never trusted, because bash sets it from the reply it reads. Loop words count only where bash reads them as keywords, so `echo for x in a do` binds nothing.
+- Outside quotes a backslash keeps the next character in the word, so `echo foo\; TMP=src` is one echo command rather than an echo followed by an assignment. Quote state, comments and heredocs follow bash too: an escaped quote, an apostrophe in a comment or heredoc, or an escaped space before `#` no longer hides the command after it, and the words inside a comment or heredoc body are still checked.
+- `cd` with no target is judged by the words bash runs, including `"cd"`, `c\d` and `if cd; then`. Each element of a colon list such as `PATH=a:../outside` is checked on its own, and assigning `CDPATH` is denied. Expansions bash would run differently from the policy's reading are denied: `+=`, assigning `IFS`, `shopt`, `set -f`, and reusing a name a loop or function body has already read.
+
 ## [3.7.0] - 2026-11-01
 
 ### Added

@@ -36,8 +36,6 @@ import { type Heredoc, peekDelimiter, readHeredocBodies } from './shell-policy-h
  */
 const OPERATOR_CHARS = new Set([';', '(', ')', '&', '<', '>', '|']);
 const TEXT_WORD_END = /[\s;()&<>|]+/;
-/** The characters that end one simple command, as {@link ShellToken.separators} records them. */
-const COMMAND_SEPARATOR_CHARS = new Set(['\n', ';', '(', ')', '&', '|']);
 
 /** Inside double quotes, the characters a backslash escapes. */
 const DOUBLE_QUOTE_ESCAPES = new Set(['"', '\\', '`', '$']);
@@ -45,17 +43,20 @@ const DOUBLE_QUOTE_ESCAPES = new Set(['"', '\\', '`', '$']);
 /** Stands in for a whole quoted span in {@link ShellToken.unquoted}. */
 export const QUOTED_SPAN = String.fromCharCode(2);
 
+/** Stands in for a word that quotes made empty (`""`), which {@link ShellToken.gap} keeps. */
+export const EMPTY_WORD = String.fromCharCode(3);
+
 export interface ShellToken {
+	/**
+	 * Everything bash reads between the previous word and this one: whitespace, operators
+	 * (redirections and heredoc `<<` too) and {@link EMPTY_WORD}. The parser reads structure here.
+	 */
+	gap: string;
 	/**
 	 * A word from a comment or a heredoc body, which bash may not run as words. Its words are still
 	 * judged, but nothing in it binds a variable.
 	 */
 	inert: boolean;
-	/**
-	 * The command separators (`;`, newline, `&`, `|`, `(`, `)`) between the previous word and this
-	 * one, in order. Empty when this word continues the same simple command.
-	 */
-	separators: string;
 	/**
 	 * The word bash would see, quotes removed. A `$` that sat inside single quotes is replaced by
 	 * {@link PROTECTED_DOLLAR}, because single quotes are the one context bash never expands in.
@@ -85,12 +86,12 @@ interface Scan {
 	/** Unquoted `((` not yet closed: `<<` inside is a shift, not a heredoc. */
 	arithmetic: number;
 	chars: string[];
+	/** The gap since the last word; after the scan, the gap after the last word. */
+	gap: string;
 	index: number;
 	pending: Heredoc[];
 	problem: null | string;
 	quoted: QuotedRange[];
-	/** Separators seen since the last word, for the next one. */
-	separators: string;
 	text: string;
 	tokens: ShellToken[];
 	unquoted: string;
@@ -115,9 +116,11 @@ function endsBashWord(ch: string): boolean {
 
 function flush(scan: Scan): void {
 	if (scan.text !== '') {
-		const { separators, text, unquoted } = scan;
-		scan.tokens.push({ inert: false, separators, text, unquoted });
-		scan.separators = '';
+		const { gap, text, unquoted } = scan;
+		scan.tokens.push({ gap, inert: false, text, unquoted });
+		scan.gap = '';
+	} else if (scan.unquoted !== '') {
+		scan.gap += EMPTY_WORD;
 	}
 	scan.text = '';
 	scan.unquoted = '';
@@ -177,7 +180,7 @@ function readComment(scan: Scan): void {
 function pushTextWords(scan: Scan, start: number, end: number): void {
 	const words = scan.chars.slice(start, end).join('').replace(/["']/g, '').split(TEXT_WORD_END);
 	for (const text of words) {
-		if (text !== '') scan.tokens.push({ inert: true, separators: '', text, unquoted: text });
+		if (text !== '') scan.tokens.push({ gap: '', inert: true, text, unquoted: text });
 	}
 }
 
@@ -185,9 +188,11 @@ function pushTextWords(scan: Scan, start: number, end: number): void {
 function noteHeredoc(scan: Scan): void {
 	flush(scan);
 	if (scan.chars[scan.index + 2] === '<') {
+		scan.gap += '<<<';
 		scan.index += 2;
 		return;
 	}
+	scan.gap += '<<';
 	const stripTabs = scan.chars[scan.index + 2] === '-';
 	const delimiter = peekDelimiter(scan.chars, scan.index + (stripTabs ? 3 : 2), endsBashWord);
 	if (delimiter !== null) scan.pending.push({ delimiter, stripTabs });
@@ -233,7 +238,7 @@ function scanUnquoted(scan: Scan, ch: string): void {
 		noteHeredoc(scan);
 	} else if (endsWord(ch)) {
 		flush(scan);
-		if (COMMAND_SEPARATOR_CHARS.has(ch)) scan.separators += ch;
+		scan.gap += ch;
 		if (ch === '(' && next === '(') scan.arithmetic += 1;
 		if (ch === ')' && next === ')') scan.arithmetic = Math.max(0, scan.arithmetic - 1);
 		// `((` may be nested subshells instead, once bash finds no `))`, and then a `<<` skipped as
@@ -250,11 +255,11 @@ export function scanShell(command: string): Scan {
 	const scan: Scan = {
 		arithmetic: 0,
 		chars: Array.from(command),
+		gap: '',
 		index: 0,
 		pending: [],
 		problem: null,
 		quoted: [],
-		separators: '',
 		text: '',
 		tokens: [],
 		unquoted: '',

@@ -1,229 +1,14 @@
 import type { ShellToken } from './shell-policy-tokens.ts';
 
 /**
- * Which assignments in a command bash is sure to have made, for the static expansion in
- * `shell-policy-expansion.ts`. A name the expansion takes as set when bash left it empty is a path
- * it never judged: `echo a=x; cat .$a./x` reads `../x`.
+ * How assignments and loops change a name's possible values, for the static expansion in
+ * `shell-policy-expansion.ts`. Which of them bash surely makes in this shell comes from the parsed
+ * structure (`shell-policy-structure.ts`). A name the expansion takes as set when bash left it
+ * empty is a path it never judged: `echo a=x; cat .$a./x` reads `../x`.
  */
 
 /** `NAME=value`, with the name in group 1. */
 const ASSIGNMENT = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/s;
-/** A separator after which the next command may not run, or runs in a subshell. */
-const UNSURE_SEPARATOR = /[&|()]/;
-/** Words of compound commands, inside which an assignment may not run or may run again. */
-const COMPOUND_WORDS = new Set([
-	'!',
-	'{',
-	'}',
-	'case',
-	'do',
-	'done',
-	'elif',
-	'else',
-	'esac',
-	'fi',
-	'for',
-	'function',
-	'if',
-	'select',
-	'then',
-	'until',
-	'while',
-]);
-
-/**
- * The indices of the assignments bash is sure to have made by the time later words run: a run of
- * `NAME=value` words that is a whole simple command, at the top level of the command, after `;` or
- * a newline. Anything else may not happen or may not last: an argument (`echo a=x`), a prefix that
- * only sets the next program's environment (`a=x true`), one behind `&&` or `||`, one in a pipeline,
- * a subshell or the background, one inside any compound command, and one in a comment or heredoc.
- * Once a command uses any of those forms, no later assignment counts as sure either.
- */
-export function sureAssignments(tokens: ShellToken[], declaresFunction: boolean): Set<number> {
-	const sure = new Set<number>();
-	// A function body may run later or never, so nothing in it is sure.
-	if (declaresFunction) return sure;
-	for (let index = 0; index < tokens.length; index += 1) {
-		if (makesLaterUnsure(tokens[index] as ShellToken)) break;
-		if (!startsAssignmentCommand(tokens, index)) continue;
-		const end = assignmentRunEnd(tokens, index);
-		if (!endsCommand(tokens[end])) continue;
-		for (let cursor = index; cursor < end; cursor += 1) sure.add(cursor);
-		index = end - 1;
-	}
-	return sure;
-}
-
-/**
- * True when bash is sure to reach the word at `index`: nothing before it is conditional, piped,
- * backgrounded, in a subshell or compound, and the command defines no function.
- */
-export function reachedSurely(
-	tokens: ShellToken[],
-	index: number,
-	declaresFunction: boolean,
-): boolean {
-	if (declaresFunction || UNSURE_SEPARATOR.test(tokens[index]?.separators ?? '')) return false;
-	return !tokens.slice(0, index).some(makesLaterUnsure);
-}
-
-/** The index of the `done` that closes the loop whose `do` is at `start`, or past the end. */
-export function closingDone(tokens: ShellToken[], start: number): number {
-	let depth = 0;
-	for (let index = start; index < tokens.length; index += 1) {
-		if (isReservedWord(tokens, index, 'do')) depth += 1;
-		if (!isReservedWord(tokens, index, 'done')) continue;
-		depth -= 1;
-		if (depth === 0) return index;
-	}
-	return tokens.length;
-}
-
-/**
- * True when the command ending at `index` runs in a subshell, so nothing it assigns lasts. Scans
- * the rest of its `&&`/`||` list: a lone `&` puts the whole list in the background
- * (`done & wait`, `done && true && true & wait`), and a pipe before any `&&` or `||` puts the
- * command itself in a pipeline, even with a redirect in between (`done 2>&1 | cat`). A pipe after
- * one belongs to a later command (`done && true | cat` runs the loop in this shell). `;` or a
- * newline ends the list.
- */
-export function endsInSubshell(tokens: ShellToken[], index: number): boolean {
-	const scan: ListScan = { afterAndOr: false, depth: 0 };
-	for (let at = index + 1; at < tokens.length; at += 1) {
-		const verdict = readSeparators((tokens[at] as ShellToken).separators, scan);
-		if (verdict !== undefined) return verdict;
-		// A case pattern's bare `)` defeats the paren count, so assume the worst.
-		if (isReservedWord(tokens, at, 'case')) return true;
-		scan.depth += compoundStep(tokens, at);
-	}
-	return false;
-}
-
-/**
- * Where a scan of the rest of an `&&`/`||` list stands. A later `{ }`, `( )`, if, while or for
- * keeps its own `;` and `|` (`done && { true; } & wait` still backgrounds the loop), so separators
- * count only outside them, at depth 0.
- */
-type ListScan = { afterAndOr: boolean; depth: number };
-
-const PAREN_STEP: Record<string, number> = { '(': 1, ')': -1 };
-const COMPOUND_OPENERS = ['{', 'for', 'if', 'select', 'until', 'while'];
-const COMPOUND_CLOSERS = ['}', 'done', 'fi'];
-
-/** One word's separators: true for a subshell, false when the list ends, else undefined. */
-function readSeparators(separators: string, scan: ListScan): boolean | undefined {
-	if (scan.depth === 0 && /&&|\|\|/.test(separators)) scan.afterAndOr = true;
-	for (const ch of withoutAndOr(separators)) {
-		const verdict = readSeparator(ch, scan);
-		if (verdict !== undefined) return verdict;
-	}
-	return undefined;
-}
-
-function readSeparator(ch: string, scan: ListScan): boolean | undefined {
-	scan.depth += PAREN_STEP[ch] ?? 0;
-	if (scan.depth < 0) return false;
-	if (scan.depth > 0) return undefined;
-	return separatorVerdict(ch, scan.afterAndOr);
-}
-
-/** At depth 0: a lone `&`, or a pipe before any `&&`/`||`, is a subshell; `;` or a newline ends it. */
-function separatorVerdict(ch: string, afterAndOr: boolean): boolean | undefined {
-	if (ch === '&' || (ch === '|' && !afterAndOr)) return true;
-	if (ch === ';' || ch === '\n') return false;
-	return undefined;
-}
-
-/** +1 for a reserved word that opens a compound command, -1 for one that closes it, else 0. */
-function compoundStep(tokens: ShellToken[], at: number): number {
-	if (COMPOUND_OPENERS.some((word) => isReservedWord(tokens, at, word))) return 1;
-	return COMPOUND_CLOSERS.some((word) => isReservedWord(tokens, at, word)) ? -1 : 0;
-}
-
-/** Separators with `&&` and `||` removed, along with the newlines that may follow them. */
-function withoutAndOr(separators: string): string {
-	return separators.replace(/(?:&&|\|\|)\n*/g, '');
-}
-
-/** Reserved words after which the next word starts a command too. */
-const COMMAND_OPENERS = new Set([
-	'!',
-	'{',
-	'do',
-	'elif',
-	'else',
-	'if',
-	'then',
-	'time',
-	'until',
-	'while',
-]);
-/** A name a `for` or `select` loop can bind. */
-const LOOP_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
-
-/** True when the word at `index` starts a command, where bash reads a reserved word as one. */
-function inCommandPosition(tokens: ShellToken[], index: number): boolean {
-	for (let at = index; at > 0; at -= 1) {
-		if ((tokens[at] as ShellToken).separators !== '') return true;
-		const previous = tokens[at - 1] as ShellToken;
-		if (previous.inert || !COMMAND_OPENERS.has(previous.unquoted)) return false;
-	}
-	return true;
-}
-
-/**
- * True when the word at `index` is the reserved word `word` as bash reads it: unquoted, unescaped
- * and starting a command. `echo "for" x in a "do"` and `echo for x in a` contain no loop.
- */
-export function isReservedWord(tokens: ShellToken[], index: number, word: string): boolean {
-	const token = tokens[index];
-	if (token === undefined || token.inert || token.unquoted !== word) return false;
-	return inCommandPosition(tokens, index);
-}
-
-/** The name a `for` or `select` loop starting at `index` binds, or undefined when there is none. */
-export function loopName(tokens: ShellToken[], index: number): string | undefined {
-	const opensLoop =
-		isReservedWord(tokens, index, 'for') || isReservedWord(tokens, index, 'select');
-	const name = tokens[index + 1];
-	if (!opensLoop || !continuesAs(name, (word) => LOOP_NAME.test(word))) return undefined;
-	return continuesAs(tokens[index + 2], (word) => word === 'in') ? name?.unquoted : undefined;
-}
-
-/** True when `token` continues the same command and, read unquoted, is what `matches` wants. */
-function continuesAs(token: ShellToken | undefined, matches: (word: string) => boolean): boolean {
-	return token !== undefined && token.separators === '' && matches(token.unquoted);
-}
-
-/** A separator or compound word after which no assignment is sure to run or to last. */
-function makesLaterUnsure(token: ShellToken): boolean {
-	return UNSURE_SEPARATOR.test(token.separators) || COMPOUND_WORDS.has(token.text);
-}
-
-/** True when the word at `index` is an assignment that starts a command. */
-function startsAssignmentCommand(tokens: ShellToken[], index: number): boolean {
-	const token = tokens[index];
-	return (index === 0 || token?.separators !== '') && isAssignment(token);
-}
-
-/** Where a run of assignments in one simple command ends. */
-function assignmentRunEnd(tokens: ShellToken[], start: number): number {
-	let end = start + 1;
-	while (tokens[end]?.separators === '' && isAssignment(tokens[end])) end += 1;
-	return end;
-}
-
-/** True when the word after the run starts a new command after `;` or a newline, or there is none. */
-function endsCommand(after: ShellToken | undefined): boolean {
-	return (
-		after === undefined || (after.separators !== '' && !UNSURE_SEPARATOR.test(after.separators))
-	);
-}
-
-function isAssignment(token: ShellToken | undefined): boolean {
-	return assignedName(token) !== undefined;
-}
-
 /** `NAME=` opening a word. Read on the unquoted view, where every quoted span is one marker. */
 const UNQUOTED_NAME = /^[A-Za-z_][A-Za-z0-9_]*=/;
 
@@ -231,6 +16,9 @@ const UNQUOTED_NAME = /^[A-Za-z_][A-Za-z0-9_]*=/;
  * The name a word assigns, or undefined when bash reads it as an ordinary word. Bash assigns only
  * when the name and the `=` are unquoted and unescaped: `"a"=x`, `a""=x`, `"a=x"` and `a\=x` are
  * commands or arguments, so `a` keeps whatever it held. The value may be quoted (`a="x y"`).
+ *
+ * Every such word counts, wherever it sits, because some commands make an argument an assignment
+ * (`export a=x`); only the ones the structure marks as sure replace what the name held.
  */
 export function assignedName(token: ShellToken | undefined): string | undefined {
 	if (token === undefined || token.inert || !UNQUOTED_NAME.test(token.unquoted)) return undefined;

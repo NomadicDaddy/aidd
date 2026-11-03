@@ -1,16 +1,18 @@
+import type { ShellLoop, ShellStructure } from './shell-policy-structure.ts';
+
 import {
 	assignedName,
-	closingDone,
-	endsInSubshell,
-	isReservedWord,
 	type LoopEnd,
-	loopName,
-	reachedSurely,
 	recordAssignment,
 	settleLoopEnd,
-	sureAssignments,
 } from './shell-policy-bindings.ts';
-import { QUOTED_SPAN, restoreProtectedDollars, type ShellToken } from './shell-policy-tokens.ts';
+import {
+	DOT_GLOB,
+	DOT_GLOB_DENIAL,
+	rejectRuntimeRewrites,
+	unbounded,
+} from './shell-policy-rewrites.ts';
+import { restoreProtectedDollars, type ShellToken } from './shell-policy-tokens.ts';
 
 /**
  * Static expansion for the bash workspace policy.
@@ -38,10 +40,6 @@ import { QUOTED_SPAN, restoreProtectedDollars, type ShellToken } from './shell-p
 
 const NAME = '[A-Za-z_][A-Za-z0-9_]*';
 const REFERENCE = new RegExp(`\\$(?:\\{(${NAME})\\}|(${NAME}))`, 'g');
-const PARAMETER_OPERATION = new RegExp(`\\$\\{(?!${NAME}\\})`);
-const APPEND_ASSIGNMENT = new RegExp(`^${NAME}\\+=`);
-/** `$0`, `$1`, `$@`, `$*`, `$-`: set by the invocation, not by the command. */
-const POSITIONAL_OR_SPECIAL = /\$[0-9@*-]/;
 /** `$?`, `$$`, `$!`, `$#`: always digits, never a path. */
 const NUMERIC_SPECIAL = /\$[?$!#]/g;
 /** Bash-maintained variables that can only ever expand to digits. */
@@ -57,34 +55,9 @@ const NUMERIC_NAMES = new Set([
 	'SHLVL',
 	'UID',
 ]);
-/** Builtins that bind a name to data produced at runtime (or alias it to another variable). */
-const BINDING_BUILTINS = new Set([
-	'declare',
-	'getopts',
-	'let',
-	'local',
-	'mapfile',
-	'read',
-	'readarray',
-	'typeset',
-]);
-const BRACE_EXPANSION = /\{[^{}]*(?:,|\.\.)[^{}]*\}/;
-/**
- * `.*`, `.?`, `.[..]`, `..*` as a path segment: bash without `globskipdots` matches `..` with
- * these.
- */
-const DOT_GLOB = /(?:^|\/)\.\.?[*?[]/;
-const DOT_GLOB_DENIAL =
-	'ERROR: bash command uses a dot-glob (.*, .?), which can match the parent directory and escape the workspace';
-/** Words that start a body bash may run again, or later, with different values. */
-const BODY_OPENERS = new Set(['for', 'function', 'select', 'until', 'while']);
 const MAX_VARIANTS = 64;
 
 export type ExpansionResult = { error: string } | { tokens: string[] };
-
-function unbounded(construct: string): string {
-	return `ERROR: bash command ${construct}; its value is produced at runtime and cannot be bounded to the workspace`;
-}
 
 /**
  * Expand `$NAME`/`${NAME}` in one token from the known bindings. Returns the name of the first
@@ -117,26 +90,6 @@ function expandReferences(
 	return variants.map((variant) => variant + tail);
 }
 
-/**
- * What changes how bash splits or globs a value, so the values judged here would not be the ones
- * it uses. Read with quotes removed, because `"shopt"` runs just the same.
- */
-function rejectWordRules(tokens: ShellToken[], index: number): null | string {
-	const text = decodedWord(tokens[index]);
-	if (APPEND_ASSIGNMENT.test(text)) return unbounded('appends to a variable with +=');
-	if (text.startsWith('IFS=')) return unbounded('assigns IFS, which changes how values split');
-	if (text === 'shopt') return unbounded("changes shell options with 'shopt'");
-	const [option, value] = [decodedWord(tokens[index + 1]), decodedWord(tokens[index + 2])];
-	if (text === 'set' && togglesGlobbing(option, value)) {
-		return unbounded("changes globbing with 'set'");
-	}
-	return null;
-}
-
-function togglesGlobbing(option: string, value: string): boolean {
-	return /^[-+][a-zA-Z]*f/.test(option) || (/^[-+]o$/.test(option) && value === 'noglob');
-}
-
 function noteBodyReads(text: string, readInBody: Set<string>): void {
 	for (const match of text.matchAll(REFERENCE)) readInBody.add(match[1] ?? match[2] ?? '');
 }
@@ -160,42 +113,6 @@ function judgeExpansion(
 	return result;
 }
 
-function decodedWord(token: ShellToken | undefined): string {
-	return restoreProtectedDollars(token?.text ?? '')
-		.split('\\')
-		.join('');
-}
-
-function rejectRuntimeRewrites(tokens: ShellToken[]): null | string {
-	for (const [index, token] of tokens.entries()) {
-		const wordRule = rejectWordRules(tokens, index);
-		if (wordRule !== null) return wordRule;
-		if (token.unquoted.includes(`$${QUOTED_SPAN}`)) {
-			return unbounded(`uses $'...' quoting`);
-		}
-		if (PARAMETER_OPERATION.test(token.text)) {
-			return unbounded('uses a ${...} parameter operation');
-		}
-		if (POSITIONAL_OR_SPECIAL.test(token.text)) {
-			return unbounded('expands a positional or special parameter ($0, $1, $@)');
-		}
-		if (BRACE_EXPANSION.test(token.unquoted)) {
-			return unbounded('uses brace expansion ({a,b} or {x..y})');
-		}
-		if (DOT_GLOB.test(token.unquoted)) {
-			return DOT_GLOB_DENIAL;
-		}
-		// Read as bash runs it: `"read"` and `r\ead` are `read` too.
-		const name = decodedWord(token);
-		const next = decodedWord(tokens[index + 1]);
-		if (BINDING_BUILTINS.has(name) || (name === 'printf' && /^-[a-zA-Z]*v/.test(next))) {
-			return unbounded(`binds a variable with '${name}'`);
-		}
-		if (name === 'unset') return unbounded("unsets a variable with 'unset'");
-	}
-	return null;
-}
-
 /**
  * The words bash will run, with every reference the command itself bound replaced by its value.
  *
@@ -208,76 +125,136 @@ function rejectRuntimeRewrites(tokens: ShellToken[]): null | string {
  * This is one pass over text that bash may run differently, so a later assignment adds to a name's
  * values rather than replacing them: `b=.; true || b=z` leaves both possible. And a body that runs
  * again or later reads the value at that moment, so assigning a name once such a body has read it
- * is denied. `declaresFunction` says the command defines a function, whose `()` the tokens lost.
+ * is denied. Which assignments and loops bash surely runs in this shell comes from the command's
+ * parsed `structure`; a command the parser couldn't read arrives as the construct that stopped it.
  */
-export function expandShellTokens(tokens: ShellToken[], declaresFunction = false): ExpansionResult {
+export function expandShellTokens(
+	tokens: ShellToken[],
+	structure: ShellStructure | string,
+): ExpansionResult {
 	const rejected = rejectRuntimeRewrites(tokens);
 	if (rejected !== null) return { error: rejected };
-
-	const bindings = new Map<string, string[]>([['PWD', ['.']]]);
-	// Names an assignment may or may not have set, over a value the policy can't see.
-	const uncertain = new Set<string>();
-	// Where a loop bash may skip ends, and the name's values before it.
-	const loopEnds = new Map<number, LoopEnd>();
-	const sure = sureAssignments(tokens, declaresFunction);
-	const expanded: string[] = [];
-	const readInBody = new Set<string>();
-	let inBody = declaresFunction;
-	const rebound = (name: string): { error: string } | null =>
-		readInBody.has(name)
-			? { error: unbounded(`assigns $${name} after a loop or function body reads it`) }
-			: null;
-	const expand = (text: string): { error: string } | string[] => {
-		if (inBody) noteBodyReads(text, readInBody);
-		return judgeExpansion(
-			text,
-			expandReferences(text.replace(NUMERIC_SPECIAL, '0'), bindings, uncertain),
-		);
-	};
-
-	for (const [index, token] of tokens.entries()) {
-		settleLoopEnd(loopEnds.get(index), bindings, uncertain);
-		const text = token.text;
-		if (BODY_OPENERS.has(text)) inBody = true;
-		// Only a loop bash reads as one: `echo "for" x in a "do"` binds nothing.
-		const bound = loopName(tokens, index);
-		if (bound !== undefined) {
-			const loopRebound = rebound(bound);
-			if (loopRebound !== null) return loopRebound;
-			const values: string[] = [];
-			let cursor = index + 3;
-			for (; cursor < tokens.length; cursor += 1) {
-				if (isReservedWord(tokens, cursor, 'do')) break;
-				const item = tokens[cursor]?.text ?? '';
-				const itemValues = expand(item);
-				if (!Array.isArray(itemValues)) return itemValues;
-				values.push(...itemValues);
-				for (const value of itemValues) expanded.push(restoreProtectedDollars(value));
-			}
-			// An empty list runs no iteration and leaves the name as it was.
-			if (values.length === 0) continue;
-			// A loop bash may skip, or one run in the background or a pipeline, leaves the name as it
-			// was once the loop ends, or holding an item.
-			const end = closingDone(tokens, cursor);
-			if (!reachedSurely(tokens, index, declaresFunction) || endsInSubshell(tokens, end)) {
-				loopEnds.set(end, { before: bindings.get(bound), name: bound });
-			}
-			uncertain.delete(bound);
-			bindings.set(bound, values);
-			continue;
-		}
-
-		const values = expand(text);
-		if (!Array.isArray(values)) return values;
-		for (const value of values) expanded.push(restoreProtectedDollars(value));
-
-		const name = assignedName(token);
-		if (name !== undefined) {
-			const assignRebound = rebound(name);
-			if (assignRebound !== null) return assignRebound;
-			const assigned = values.map((value) => value.slice(name.length + 1));
-			recordAssignment(name, assigned, sure.has(index), bindings, uncertain);
-		}
+	if (typeof structure === 'string') {
+		return {
+			error: `ERROR: bash command has ${structure}, which the policy cannot read as bash would, so what it would run cannot be judged`,
+		};
 	}
-	return { tokens: expanded };
+	const state: Expansion = {
+		bindings: new Map([['PWD', ['.']]]),
+		expanded: [],
+		inBody: false,
+		loopEnds: new Map(),
+		readInBody: new Set(),
+		uncertain: new Set(),
+	};
+	for (const [index, token] of tokens.entries()) {
+		settleLoopEnd(state.loopEnds.get(index), state.bindings, state.uncertain);
+		if (index >= structure.bodyStart) state.inBody = true;
+		const loop = structure.loops.get(index);
+		const error =
+			loop?.name === undefined
+				? expandWord(state, token, index, structure)
+				: bindLoop(state, tokens, loop, loop.name);
+		if (error !== null) return error;
+	}
+	return { tokens: state.expanded };
+}
+
+type Expansion = {
+	bindings: Map<string, string[]>;
+	expanded: string[];
+	inBody: boolean;
+	/** Where a loop bash may skip, or runs in a subshell, ends, and the name's values before it. */
+	loopEnds: Map<number, LoopEnd>;
+	readInBody: Set<string>;
+	/** Names an assignment may or may not have set, over a value the policy can't see. */
+	uncertain: Set<string>;
+};
+
+type Failure = { error: string } | null;
+
+function rebound(state: Expansion, name: string): Failure {
+	return state.readInBody.has(name)
+		? { error: unbounded(`assigns $${name} after a loop or function body reads it`) }
+		: null;
+}
+
+/** The name now holds a value the policy can't see, so any reference to it is denied. */
+function forget(state: Expansion, name: string): void {
+	state.uncertain.add(name);
+	state.bindings.delete(name);
+}
+
+function expandText(state: Expansion, text: string): { error: string } | string[] {
+	if (state.inBody) noteBodyReads(text, state.readInBody);
+	const references = expandReferences(
+		text.replace(NUMERIC_SPECIAL, '0'),
+		state.bindings,
+		state.uncertain,
+	);
+	const values = judgeExpansion(text, references);
+	if (!Array.isArray(values)) return values;
+	for (const value of values) state.expanded.push(restoreProtectedDollars(value));
+	return values;
+}
+
+function expandWord(
+	state: Expansion,
+	token: ShellToken,
+	index: number,
+	structure: ShellStructure,
+): Failure {
+	const values = expandText(state, token.text);
+	if (!Array.isArray(values)) return values;
+	const name = assignedName(token);
+	if (name === undefined) return null;
+	const failure = rebound(state, name);
+	if (failure !== null) return failure;
+	if (structure.arrays.has(index)) {
+		forget(state, name);
+		return null;
+	}
+	const assigned = values.map((value) => value.slice(name.length + 1));
+	recordAssignment(name, assigned, structure.sure.has(index), state.bindings, state.uncertain);
+	return null;
+}
+
+/**
+ * Only a loop bash reads as one binds its name: `echo "for" x in a "do"` binds nothing. With no `in`
+ * list it walks the positional parameters, which the policy can't see.
+ */
+function bindLoop(state: Expansion, tokens: ShellToken[], loop: ShellLoop, name: string): Failure {
+	const failure = rebound(state, name);
+	if (failure !== null) return failure;
+	if (loop.items === undefined) {
+		forget(state, name);
+		return null;
+	}
+	const values = loopValues(state, tokens, loop.items);
+	if (!Array.isArray(values)) return values;
+	// An empty list runs no iteration and leaves the name as it was.
+	if (values.length === 0) return null;
+	// A loop bash may skip, or one run in a subshell, leaves the name as it was or holding an item.
+	if (!loop.lasting) {
+		state.loopEnds.set(loop.end, { before: state.bindings.get(name), name });
+	}
+	state.uncertain.delete(name);
+	state.bindings.set(name, values);
+	return null;
+}
+
+/** Every value a loop's items expand to; a word quotes made empty is the empty value. */
+function loopValues(
+	state: Expansion,
+	tokens: ShellToken[],
+	items: (number | undefined)[],
+): { error: string } | string[] {
+	const values: string[] = [];
+	for (const item of items) {
+		const text = item === undefined ? '' : (tokens[item]?.text ?? '');
+		const itemValues = expandText(state, text);
+		if (!Array.isArray(itemValues)) return itemValues;
+		values.push(...itemValues);
+	}
+	return values;
 }

@@ -216,6 +216,20 @@ describe('shell workspace policy against real bash', () => {
 			'a loop piped on after a redirect',
 			'for TMP in src; do :; done 2>&1 | cat; cat "$TMP/sentinel.txt"',
 		],
+		// A redirection that fails stops the loop before it runs.
+		[
+			'a loop whose output redirect fails',
+			'for TMP in src; do :; done >nodir/x; cat "$TMP/sentinel.txt"',
+		],
+		[
+			'a loop whose input redirect fails',
+			'for TMP in src; do :; done <nofile; cat "$TMP/sentinel.txt"',
+		],
+		['a group whose redirect fails', '{ TMP=src; } >nodir/x; cat "$TMP/sentinel.txt"'],
+		[
+			'a duplication onto a descriptor the group closed',
+			'{ for TMP in src; do :; done 2>&1; } 1>&-; cat "$TMP/sentinel.txt"',
+		],
 		[
 			'a loop in a backgrounded list across a line',
 			'for TMP in src; do :; done &&\ntrue & wait; cat "$TMP/sentinel.txt"',
@@ -246,6 +260,14 @@ describe('shell workspace policy against real bash', () => {
 		expect(
 			checkBashWorkspacePolicy('for d in src; do :; done && true | cat; ls "$d"', cwd),
 		).toBeNull();
+		// The & in 2>&1 is a duplication, not the background, and only a closed descriptor fails it.
+		expect(checkBashWorkspacePolicy('for d in src; do :; done 2>&1; ls "$d"', cwd)).toBeNull();
+		// A case in the list is parsed, so it no longer stands in for a subshell.
+		const withCase = 'for d in src; do :; done && case x in x) :;; esac; ls "$d"';
+		expect(checkBashWorkspacePolicy(withCase, cwd)).toBeNull();
+		// A group runs what it holds in this shell.
+		expect(checkBashWorkspacePolicy('{ d=src; }; ls "$d"', cwd)).toBeNull();
+		expect(checkBashWorkspacePolicy('false && d=x; d=src; ls "$d"', cwd)).toBeNull();
 	});
 
 	test.skipIf(!available)('a redirect through an unset name writes nothing outside', () => {

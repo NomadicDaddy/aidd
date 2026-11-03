@@ -88,12 +88,20 @@ describe('commands bash surely runs in this shell', () => {
 		expect(lasting('for x in a; do :; done | cat')).toEqual([false]);
 		expect(lasting('for x in a; do :; done && true & wait')).toEqual([false]);
 		expect(lasting('false && for x in a; do :; done')).toEqual([false]);
+		// select takes its name from the reply it reads, not its list.
+		const select = [...parsed('select x in a; do break; done').loops.values()];
+		expect(select.map(({ items, lasting: kept }) => ({ items, kept }))).toEqual([
+			{ items: undefined, kept: false },
+		]);
 	});
 
 	test('a redirection that can fail, or a closed descriptor, leaves nothing sure', () => {
 		expect(lasting('for x in a; do :; done >nodir/x')).toEqual([false]);
 		expect(lasting('for x in a; do :; done <nofile')).toEqual([false]);
 		expect(lasting('{ for x in a; do :; done 2>&1; } 1>&-')).toEqual([false]);
+		expect(lasting('for x in a; do :; done 3999>&1')).toEqual([false]);
+		expect(lasting('for x in a; do :; done 0>&2')).toEqual([true]);
+		expect(sureWords('{ a=x; } 99999<&2')).toEqual([]);
 		expect(sureWords('a=x; true 2>&-')).toEqual([]);
 		expect(sureWords('a=x; true >&"$f"')).toEqual([]);
 	});

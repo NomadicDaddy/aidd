@@ -21,10 +21,11 @@
  *
  * Outside quotes a backslash stays literal in the token rather than being removed. Under `bash -c`
  * it is an escape, but dropping it would erase the separator in Windows spellings like
- * `..\outside.txt` and hand back the harmless token `..outside.txt`. Leaving it can only over-split
- * (an escaped space becomes two tokens), and every extra token is one more thing that gets
- * checked. A backslash before a quote, a `<` or another backslash still pairs with it, as it does
- * in bash, so `\"` opens no span and `\\"` does, and `\<<` starts no heredoc.
+ * `..\outside.txt` and hand back the harmless token `..outside.txt`. The character after it stays in
+ * the word, as it does in bash: `\"` opens no span and `\\"` does, `\<<` starts no heredoc, and an
+ * escaped `;`, `&`, `|`, parenthesis, redirection or space ends no word. The structure parser reads
+ * the gaps between words, so an escaped separator read as a real one would turn an argument
+ * (`echo foo\; TMP=src`) into a command bash never runs.
  */
 
 import { type Heredoc, peekDelimiter, readHeredocBodies } from './shell-policy-heredoc.ts';
@@ -224,7 +225,7 @@ function isEscaped(chars: string[], index: number): boolean {
 
 function scanUnquoted(scan: Scan, ch: string): void {
 	const next = scan.chars[scan.index + 1];
-	if (ch === '\\' && (next === '"' || next === "'" || next === '\\' || next === '<')) {
+	if (ch === '\\' && next !== undefined) {
 		scan.text += ch + next;
 		scan.unquoted += ch + next;
 		scan.index += 1;

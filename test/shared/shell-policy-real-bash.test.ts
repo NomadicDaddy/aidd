@@ -216,20 +216,30 @@ describe('shell workspace policy against real bash', () => {
 			'a loop piped on after a redirect',
 			'for TMP in src; do :; done 2>&1 | cat; cat "$TMP/sentinel.txt"',
 		],
-		// A redirection that fails stops the loop before it runs.
-		[
-			'a loop whose output redirect fails',
-			'for TMP in src; do :; done >nodir/x; cat "$TMP/sentinel.txt"',
-		],
-		[
-			'a loop whose input redirect fails',
-			'for TMP in src; do :; done <nofile; cat "$TMP/sentinel.txt"',
-		],
-		['a group whose redirect fails', '{ TMP=src; } >nodir/x; cat "$TMP/sentinel.txt"'],
-		[
-			'a duplication onto a descriptor the group closed',
-			'{ for TMP in src; do :; done 2>&1; } 1>&-; cat "$TMP/sentinel.txt"',
-		],
+		// An escaped operator is part of a word, so the assignment after it is an echo argument.
+		...[';', '&', '|', '(', ')', '>', '<', ' '].map((op): [string, string] => [
+			`an assignment after an escaped ${op === ' ' ? 'space' : op}`,
+			`echo foo\\${op} TMP=src; cat "$TMP/sentinel.txt"`,
+		]),
+		// A redirection that can fail stops the loop or group before it runs: a missing file, a
+		// closed descriptor, or a source descriptor past the open-file limit. And select sets its name
+		// only from the reply it reads, which is EOF here.
+		...[
+			'for TMP in src; do :; done >nodir/x',
+			'for TMP in src; do :; done <nofile',
+			'for TMP in src; do :; done <>nodir/x',
+			'for TMP in src; do :; done {fd}>nodir/x',
+			'time for TMP in src; do :; done >nodir/x',
+			'{ TMP=src; } >nodir/x',
+			'{ for TMP in src; do :; done 2>&1; } 1>&-',
+			'for TMP in src; do :; done 3999>&1',
+			'for TMP in src; do :; done 99999<&2',
+			'for TMP in src; do :; done 3999>& 1',
+			'{ TMP=src; } 99999>&1',
+			'select TMP in src; do break; done',
+			'select TMP in src src2; do :; done',
+			'select TMP in src; do break; done 2>&1',
+		].map((form): [string, string] => [form, `${form}; cat "$TMP/sentinel.txt"`]),
 		[
 			'a loop in a backgrounded list across a line',
 			'for TMP in src; do :; done &&\ntrue & wait; cat "$TMP/sentinel.txt"',

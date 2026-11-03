@@ -90,14 +90,7 @@ function walkNode(node: ShellNode, standing: boolean, walk: Walk): void {
 			walkList(node.body, sure, walk);
 			return;
 		case 'loop':
-			walk.loops.set(node.start, {
-				end: node.end,
-				items: node.items,
-				lasting: sure,
-				name: node.name,
-			});
-			noteBody(node.start, walk);
-			walkList(node.body, false, walk);
+			walkLoop(node, sure, walk);
 			return;
 		case 'other':
 			walkOther(node, walk);
@@ -105,6 +98,21 @@ function walkNode(node: ShellNode, standing: boolean, walk: Walk): void {
 		case 'simple':
 			walkSimple(node, sure, walk);
 	}
+}
+
+/**
+ * A for or select loop. A select's name comes from the reply it reads (empty, or nothing at EOF),
+ * never from its list, so it is treated like a loop with no list: the name is unknown.
+ */
+function walkLoop(node: Extract<ShellNode, { kind: 'loop' }>, sure: boolean, walk: Walk): void {
+	walk.loops.set(node.start, {
+		end: node.end,
+		items: node.select ? undefined : node.items,
+		lasting: sure && !node.select,
+		name: node.name,
+	});
+	noteBody(node.start, walk);
+	walkList(node.body, false, walk);
 }
 
 /** A subshell, conditional, case or while loop: nothing inside it is surely run in this shell. */
@@ -127,9 +135,15 @@ function noteBody(start: number | undefined, walk: Walk): void {
 	if (start !== undefined) walk.bodyStart = Math.min(walk.bodyStart, start);
 }
 
-/** `2>&1`, `>&2`: a duplication onto a standard descriptor, which only a closed one can fail. */
-function cannotFail({ op, target }: Redirect): boolean {
-	return (op === '>&' || op === '<&') && (target === '1' || target === '2');
+const STANDARD = new Set(['0', '1', '2']);
+
+/**
+ * `2>&1`, `>&2`: a duplication onto a standard descriptor, which only a closed one can fail. Its own
+ * descriptor must be standard too: one past the open-file limit (`3999>&1`) fails as well.
+ */
+function cannotFail({ fd, op, target }: Redirect): boolean {
+	if (op !== '>&' && op !== '<&') return false;
+	return (fd === undefined || STANDARD.has(fd)) && (target === '1' || target === '2');
 }
 
 /** `>&-`, `<&-`, `2>&1-`, and any target bash only knows once it expands, which may be `-`. */

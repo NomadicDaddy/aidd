@@ -8,7 +8,8 @@ import { REDIRECTIONS, type ShellItem } from './shell-policy-items.ts';
  * the reserved word.
  */
 
-export type Redirect = { op: string; target: string };
+/** A redirection: its operator, its target word, and the descriptor before it (`2` in `2>&1`). */
+export type Redirect = { fd: string | undefined; op: string; target: string };
 
 export type ShellNode =
 	| {
@@ -37,6 +38,8 @@ export type ShellNode =
 			kind: 'loop';
 			name: string | undefined;
 			redirects: Redirect[];
+			/** A `select`, which sets its name only from the reply it reads, never from its list. */
+			select: boolean;
 			start: number;
 	  }
 	| { body: ShellList; kind: 'group'; redirects: Redirect[] }
@@ -128,18 +131,25 @@ export abstract class ShellCursor {
 		return next.glued && REDIRECTIONS.has(next.op);
 	}
 
+	/** Consumes the descriptor before a redirection and returns it, if there is one. */
+	ioNumber(): string | undefined {
+		if (!this.isIoNumber()) return undefined;
+		this.pos += 1;
+		return this.wordAt(this.pos - 1);
+	}
+
 	isRedirect(): boolean {
 		return this.isIoNumber() || REDIRECTIONS.has(this.opAt(this.pos));
 	}
 
 	redirect(): Redirect {
-		if (this.isIoNumber()) this.pos += 1;
+		const fd = this.ioNumber();
 		const op = this.peek();
 		const target = this.items[this.pos + 1];
 		if (op?.kind !== 'op' || target?.kind !== 'word') this.fail('a redirection with no target');
 		this.pos += 2;
 		const text = target.token === undefined ? '' : this.unquoted(target.token);
-		return { op: op.op, target: text };
+		return { fd, op: op.op, target: text };
 	}
 
 	/** The redirections after a compound command, which apply to all of it. */

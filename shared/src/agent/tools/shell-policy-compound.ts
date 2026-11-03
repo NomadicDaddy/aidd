@@ -67,6 +67,7 @@ type LoopHeader = { items: (number | undefined)[] | undefined; name: string | un
 
 export function forCommand(p: ShellCursor): ShellNode {
 	const start = p.tokenAt(p.pos) as number;
+	const select = p.wordAt(p.pos) === 'select';
 	p.pos += 1;
 	const { items, name } =
 		p.isOp('(') && p.isOp('(', 1, true) ? arithmeticHeader(p) : loopHeader(p);
@@ -74,7 +75,7 @@ export function forCommand(p: ShellCursor): ShellNode {
 	p.expectWord('do');
 	const body = p.list();
 	const end = p.expectWord('done');
-	return { body, end, items, kind: 'loop', name, redirects: [], start };
+	return { body, end, items, kind: 'loop', name, redirects: [], select, start };
 }
 
 /** `for (( ... ))`, which binds no name the policy follows. */

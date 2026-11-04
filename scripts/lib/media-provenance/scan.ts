@@ -2,14 +2,14 @@ import { type Dirent } from 'node:fs';
 import { readdir, readFile } from 'node:fs/promises';
 import { extname, join, relative, sep } from 'node:path';
 
-// `site` is the GitHub Pages upload root (.github/workflows/pages.yml uploads it as-is), so an
-// image that only ever lives there is still distributed and must be scanned before publication.
+// Every root whose images ship: the docs, the control panel's public assets and the built bundles.
+// An image that only ever lives in one of them is still distributed and must be scanned before
+// publication.
 export const DISTRIBUTED_MEDIA_ROOTS = [
 	'docs/assets',
 	'frontend/public',
 	'frontend/dist',
 	'dist',
-	'site',
 ] as const;
 
 const MEDIA_EXTENSIONS = new Set(['.jpeg', '.jpg', '.png', '.webp']);

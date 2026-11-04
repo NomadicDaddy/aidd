@@ -166,20 +166,20 @@ describe('distributed materials registry', () => {
 		);
 	});
 
-	// audit-licensing-1790863167: the GitHub Pages site/ tree was published outside the registry;
-	// a static root that ships must be declared, and its files classified, like any other surface.
+	// audit-licensing-1790863167: a published static tree once shipped outside the registry; a
+	// static root that ships must be declared, and its files classified, like any other surface.
 	test('rejects a published static-asset root the registry leaves out', async () => {
 		const value = registry();
-		value.trackedSurfaces.publicStaticAssetRoots = ['frontend/public'];
+		value.trackedSurfaces.publicStaticAssetRoots = [];
 		expect((await issuesFor(value)).join('\n')).toContain(
-			'trackedSurfaces.publicStaticAssetRoots is missing packaged path: site',
+			'trackedSurfaces.publicStaticAssetRoots is missing packaged path: frontend/public',
 		);
 	});
 
-	test('rejects an unclassified file under the site root', async () => {
-		const paths = [...PATHS, 'site/new-asset.woff2'];
+	test('rejects an unclassified file under a static-asset root', async () => {
+		const paths = [...PATHS, 'frontend/public/new-asset.woff2'];
 		expect(await issuesFor(registry(), paths, paths)).toContain(
-			'Distributed path is unclassified: site/new-asset.woff2',
+			'Distributed path is unclassified: frontend/public/new-asset.woff2',
 		);
 	});
 

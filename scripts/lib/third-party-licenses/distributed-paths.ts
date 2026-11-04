@@ -9,11 +9,12 @@ const CORE_CATALOG_DIRS: string[] = ['audits', 'skills', 'scaffolding', 'prompts
 
 /**
  * Static trees that ship verbatim to a public surface: the control panel's public assets inside
- * the built bundle, and the site/ tree that .github/workflows/pages.yml publishes to GitHub Pages.
+ * the built bundle. aidd's public front door is now beazley.org/projects/aidd/, built in that
+ * repository, so no other tree here is published.
  * A root listed here must appear in the registry's publicStaticAssetRoots, so its files are
  * classified like any other distributed material.
  */
-const PUBLIC_STATIC_ASSET_ROOTS: string[] = ['frontend/public', 'site'];
+const PUBLIC_STATIC_ASSET_ROOTS: string[] = ['frontend/public'];
 
 const REQUIRED_FILE_ASSETS: string[] = [
 	'VERSION',

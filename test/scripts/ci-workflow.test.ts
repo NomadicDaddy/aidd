@@ -90,13 +90,13 @@ describe('CI workflow', () => {
 	});
 
 	// A deploy job that only calls a marketplace action still occupies a runner until GitHub's
-	// six-hour ceiling when the action hangs, which is how the Pages job sat unbounded: it has no
-	// `run:` step, so a check that looked at commands would never have covered it. Every job in
-	// every workflow is required to carry its own bound, deployment-only jobs included.
+	// six-hour ceiling when the action hangs, which is how the retired Pages job once sat unbounded:
+	// it had no `run:` step, so a check that looked at commands would never have covered it. Every
+	// job in every workflow is required to carry its own bound, deployment-only jobs included.
 	test('bounds every job in every workflow with timeout-minutes', async () => {
 		const dir = join(process.cwd(), WORKFLOW_DIR);
 		const files = (await readdir(dir)).filter((name) => name.endsWith('.yml')).sort();
-		expect(files).toContain('pages.yml');
+		expect(files).toEqual(['ci.yml', 'release.yml']);
 
 		const unbounded: string[] = [];
 		let jobCount = 0;
@@ -109,6 +109,6 @@ describe('CI workflow', () => {
 		}
 
 		expect(unbounded).toEqual([]);
-		expect(jobCount).toBeGreaterThanOrEqual(4);
+		expect(jobCount).toBeGreaterThanOrEqual(3);
 	});
 });

@@ -60,27 +60,26 @@ try {
 		);
 	}
 
-	// The GitHub Pages root ships straight to the public site without passing through a build,
-	// so a marked image that only lives there must still fail the gate by name.
+	// docs/assets ships without passing through a build, so a marked image that only lives there
+	// must still fail the gate by name.
 	rmSync(join(fixtureRoot, 'frontend'), { force: true, recursive: true });
-	write('site/og-image.jpg', Buffer.from('JFIF c2pa.watermarked caBX', 'ascii'));
+	write('docs/assets/og-image.jpg', Buffer.from('JFIF c2pa.watermarked caBX', 'ascii'));
 	result = runCheck();
-	assert(result.exitCode === 1, `A marked Pages fixture must fail:\n${result.output}`);
+	assert(result.exitCode === 1, `A marked docs fixture must fail:\n${result.output}`);
 	assert(
-		result.output.includes('site/og-image.jpg'),
-		`The finding must name the Pages path:\n${result.output}`,
+		result.output.includes('docs/assets/og-image.jpg'),
+		`The finding must name the docs path:\n${result.output}`,
 	);
 	assert(
 		result.output.includes('c2pa.watermarked'),
-		`The finding must name the Pages marker:\n${result.output}`,
+		`The finding must name the docs marker:\n${result.output}`,
 	);
 	assert(
 		result.output.includes('2 distributed media file(s)'),
-		`The Pages root must be counted as examined:\n${result.output}`,
+		`The docs root must be counted as examined:\n${result.output}`,
 	);
 
 	rmSync(join(fixtureRoot, 'docs'), { force: true, recursive: true });
-	rmSync(join(fixtureRoot, 'site'), { force: true, recursive: true });
 	result = runCheck();
 	assert(
 		result.exitCode === 1 && result.output.includes('examined no distributed media files'),

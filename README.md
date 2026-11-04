@@ -16,7 +16,7 @@ OpenAI-compatible API, including xAI/Grok), the **openai** preset, a local
 orchestration, structured results, audits, and run history. See
 [docs/reference/backends.md](docs/reference/backends.md) for all ten.
 
-Product overview and audience guides: **[nomadicdaddy.github.io/aidd](https://nomadicdaddy.github.io/aidd/)**.
+Product overview and audience guides: **[beazley.org/projects/aidd](https://beazley.org/projects/aidd/)**.
 
 ## Highlights
 

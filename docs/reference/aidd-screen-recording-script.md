@@ -245,7 +245,7 @@ the fixture. Never edit the displayed status or substitute a prior result.
 Create a three-second card containing:
 
 ```text
-nomadicdaddy.github.io/aidd
+beazley.org/projects/aidd
 Local control panel for AI coding work
 ```
 
@@ -299,7 +299,7 @@ Inspect readability and keep the GIF below 10 MB; use MP4 for the full walkthrou
   1440px-wide source.
 - The full MP4 is legible at normal playback speed.
 - The teaser GIF is short, readable, and below 10 MB.
-- `nomadicdaddy.github.io/aidd` is spelled correctly.
+- `beazley.org/projects/aidd` is spelled correctly.
 - The browser session is closed and the source-release panel is stopped after capture.
 
 Cleanup with `agent-browser --session $browserSession close`, then run `bun run stop:web` from

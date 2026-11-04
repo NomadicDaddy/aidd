@@ -48,7 +48,6 @@ describe('fresh release baseline validation', () => {
 			'README.md': 'Upgrade to aidd Pro.\n',
 			'docs/reference/licensing.md': 'A paid edition is available.\n',
 			'frontend/content/docs/plans.md': 'aidd has pricing tiers.\n',
-			'site/index.html': '<p>Paste your product key to activate.</p>\n',
 		});
 		const issues = await validateFreshRelease(root);
 		expect(issues).toContain('README.md: references a paid or gated aidd product variant');
@@ -57,9 +56,6 @@ describe('fresh release baseline validation', () => {
 		);
 		expect(issues).toContain(
 			'frontend/content/docs/plans.md: references a paid or gated aidd product variant',
-		);
-		expect(issues).toContain(
-			'site/index.html: references a paid or gated aidd product variant',
 		);
 	});
 

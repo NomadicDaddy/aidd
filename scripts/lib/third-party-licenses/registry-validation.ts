@@ -142,7 +142,7 @@ function validateTrackedSurfaces(
 		issues,
 	);
 	// Published static roots are checked against packaging like the other three surfaces, so a
-	// root that ships (the GitHub Pages site/ tree) cannot be left out of the registry and go
+	// root that ships (frontend/public) cannot be left out of the registry and go
 	// unclassified; the earlier exactness-and-duplicates loop never asked whether a root was missing.
 	validateSurfacePaths(
 		'trackedSurfaces.publicStaticAssetRoots',

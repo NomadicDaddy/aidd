@@ -20,7 +20,7 @@ const POLICY_FIXTURES = new Set([
 	'test/scripts/fresh-release.test.ts',
 ]);
 
-const PUBLIC_COPY_ROOTS = ['docs/', 'frontend/content/', 'site/'] as const;
+const PUBLIC_COPY_ROOTS = ['docs/', 'frontend/content/'] as const;
 const PUBLIC_COPY_FILES = new Set(['README.md']);
 
 const PAID_PRODUCT_REFERENCES = [

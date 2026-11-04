@@ -316,8 +316,9 @@ missing helper is a blocker.
 3. **Write the new `notes` array from the whole history.** It replaces `notes`; `updatedAt` is the
    only other field that changes.
     - The first entry names the archive: `Notes trimmed {YYYY-MM-DD}: {N} characters of history archived at .aidd/reports/consolidation/{YYYYMMDD}-notes-trim/originals/{dir}.feature.json (sha256 {hash}).`
-      The path must be the archive's exact path from `.aidd/` on, with forward slashes; verify
-      matches the whole path, not only the file name.
+      Write `archived at {path} (sha256 {hash})` exactly as shown, where the path is the
+      archive's own path from `.aidd/` on, with forward slashes. verify matches that text whole,
+      so a different folder, a longer name or an added prefix fails.
     - Then the current state, meaning everything a run still needs: each decision, ruling or
       approval that still binds, with its reference; each hold and what releases it; each
       accepted limitation; each open question; and the latest revision line for every spec

@@ -116,6 +116,19 @@ describe('notes trim helper', () => {
 				}),
 				'notes-missing-archive-link',
 			],
+			// Morticia's f3f808b9 Low: a longer path containing the link passed a substring match.
+			[
+				record({ notes: trimmedNotes(result.sha256, `${LINK}.old`) }),
+				'notes-missing-archive-link',
+			],
+			[
+				record({ notes: trimmedNotes(result.sha256, `${LINK}-v2.json`) }),
+				'notes-missing-archive-link',
+			],
+			[
+				record({ notes: trimmedNotes(result.sha256, `D:/other/${LINK}`) }),
+				'notes-missing-archive-link',
+			],
 			[record({ notes: [...notes, LONG] }), 'notes-not-shorter'],
 		];
 		for (const [value, reason] of cases) {

@@ -121,11 +121,13 @@ export function archiveLink(archive: string): null | string {
 	return at === -1 ? null : path.slice(at + 1);
 }
 
+// The skill's template text, exactly: a bare substring match let a longer path that merely
+// contains the link (`<link>.old`, `D:/other/<link>`) pass as the citation.
 function linksArchive(notes: unknown, link: string, sha256: string): boolean {
 	if (!Array.isArray(notes) || notes.some((entry) => typeof entry !== 'string')) return false;
-	return notes.some(
-		(entry: string) => entry.includes(link) && entry.toLowerCase().includes(sha256),
-	);
+	const escaped = link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const citation = new RegExp(`(?:^|\\s)archived at ${escaped} \\(sha256 ${sha256}\\)`, 'i');
+	return notes.some((entry: string) => citation.test(entry));
 }
 
 function trimReason(

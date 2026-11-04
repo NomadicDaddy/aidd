@@ -7,7 +7,7 @@ All notable public aidd releases are documented here.
 ### Added
 
 - `consolidate-features` can trim a feature record's notes once their history passes 3,000 characters. It first archives the exact original under `.aidd/reports/consolidation/`, then replaces the notes with one current-state entry that cites the archive by path and hash. Its helper refuses any trim that changes another field, drops the citation or doesn't shorten the notes. `document-changes` runs the trim on the records it touched before each commit it prepares, and feature validation warns about records whose notes are due one.
-- Feature validation warns when more than two features are in progress at once. Coding runs resume started work before any higher-priority backlog, so a third open feature waits behind the first two.
+- Feature validation warns when more than two features are in progress at once. It is a warning, not a limit: coding runs rank every in-progress feature ahead of the backlog, by priority, so each one opened delays the backlog further.
 
 ### Changed
 

@@ -234,7 +234,7 @@ describe('planMilestoneReassign with an app version', () => {
 		expect(plan.roadmap.features.open?.milestone).toBe('v2.0');
 	});
 
-	test('a dependency in a later milestone still wins over the shipped-version seed', () => {
+	test('a dependency in a later milestone does not hold a completed feature back from its shipped milestone', () => {
 		const roadmap = roadmapSchema.parse({
 			features: { dep: { milestone: 'v2.0' }, done: { milestone: 'v2.0' } },
 			milestones: THREE_MILESTONES,
@@ -244,8 +244,13 @@ describe('planMilestoneReassign with an app version', () => {
 			[completed('done', { dependencies: ['dep'], shippedVersion: '1.3.0' }), feature('dep')],
 			{},
 		);
-		// The seed wanted v1.0, but the dependency pass pushes it back — no net move.
-		expect(plan.moves).toEqual([]);
-		expect(plan.roadmap.features.done?.milestone).toBe('v2.0');
+		// Phillip #34088: a completed feature's milestone is when it shipped. The later dependency
+		// stays visible as a violation until the record explains it in a dated note.
+		expect(plan.moves).toEqual([
+			{ featureDirectory: 'done', from: 'v2.0', reason: 'shipped-version', to: 'v1.0' },
+		]);
+		expect(
+			plan.violations.map((entry) => [entry.featureDirectory, entry.featurePasses]),
+		).toEqual([['done', true]]);
 	});
 });

@@ -4,6 +4,7 @@ import type { CrossMilestoneViolation } from './types.ts';
 
 import { featureNodeId } from '../features/graph.ts';
 import { indexFeaturesByRef } from '../features/indexByRef.ts';
+import { isFeatureComplete } from '../features/query.ts';
 import { orderedMilestoneNames } from '../roadmap.ts';
 
 /** Milestone name to its position in priority order — lower rank runs earlier. */
@@ -73,10 +74,45 @@ export function dependencyEdges(roadmap: Roadmap, features: Feature[]): Dependen
 	return { dangling, requires };
 }
 
+const DATED_NOTE = /^\d{4}-\d{2}-\d{2}\b/;
+const ID_CHARACTER = /[\w-]/;
+
+/**
+ * Whether a completed feature explains its edge to `dependency` in a dated note: a note that starts
+ * with a `YYYY-MM-DD` date and names the dependency by directory or by id.
+ */
+function notesExplainEdge(feature: Feature, dependency: Feature | undefined): boolean {
+	if (!dependency) return false;
+	const names = [dependency.directory, dependency.id].filter(
+		(name): name is string => typeof name === 'string' && name.length > 0,
+	);
+	const notes: unknown[] = Array.isArray(feature.notes) ? feature.notes : [feature.notes];
+	return notes.some(
+		(note) =>
+			typeof note === 'string' &&
+			DATED_NOTE.test(note) &&
+			names.some((name) => namesToken(note, name)),
+	);
+}
+
+/** `name` appears in `text` as a whole id, not inside a longer one (`late` is not in `latest`). */
+function namesToken(text: string, name: string): boolean {
+	for (let at = text.indexOf(name); at !== -1; at = text.indexOf(name, at + 1)) {
+		const before = text[at - 1] ?? ' ';
+		const after = text[at + name.length] ?? ' ';
+		if (!ID_CHARACTER.test(before) && !ID_CHARACTER.test(after)) return true;
+	}
+	return false;
+}
+
 /**
  * Features scheduled earlier than something they depend on. Nothing else in the pipeline reports
  * this: `evaluateRoadmapCodingGate` checks only that mappings exist and resolve, never that the
  * ordering they imply is satisfiable.
+ *
+ * A completed feature keeps the milestone it shipped in (Phillip #34088), so its edge to later work
+ * is allowed when the record explains it in a dated note naming the dependency, and reported, as
+ * passing, when it does not. An unfinished feature in that position is always reported.
  */
 export function findCrossMilestoneViolations(
 	roadmap: Roadmap,
@@ -84,11 +120,13 @@ export function findCrossMilestoneViolations(
 ): CrossMilestoneViolation[] {
 	const ranks = milestoneRanks(roadmap);
 	const { requires } = dependencyEdges(roadmap, features);
+	const byNode = new Map(features.map((feature) => [featureNodeId(feature), feature]));
 	const passing = new Set(
 		features
 			.filter((feature) => feature.passes === true)
 			.map((feature) => featureNodeId(feature)),
 	);
+	const completed = new Set(features.filter(isFeatureComplete).map(featureNodeId));
 	const violations: CrossMilestoneViolation[] = [];
 	for (const [node, deps] of requires) {
 		const milestone = roadmap.features[node]?.milestone;
@@ -100,6 +138,9 @@ export function findCrossMilestoneViolations(
 				dependencyMilestone === undefined ? undefined : ranks.get(dependencyMilestone);
 			if (dependencyMilestone === undefined || dependencyRank === undefined) continue;
 			if (dependencyRank <= rank) continue;
+			const own = byNode.get(node);
+			if (completed.has(node) && own && notesExplainEdge(own, byNode.get(dependency)))
+				continue;
 			violations.push({
 				dependency,
 				dependencyMilestone,

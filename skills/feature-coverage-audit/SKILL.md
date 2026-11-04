@@ -183,9 +183,13 @@ Never auto-fix:
 
 If new feature JSON files are created and `.aidd/roadmap.json` exists:
 
-1. Add each new feature ID to the current milestone: the first milestone in priority order with
-   unfinished work, or the last existing milestone when all work is complete. Do not create a new
-   milestone; if the roadmap defines none, report the missing assignment instead.
+1. Add each new feature ID to a milestone. A backfilled record of shipped work goes in the
+   milestone it shipped in: the one whose version range covers its `shippedVersion` (or, without
+   one, the app's version when the capability shipped), because a completed record's milestone
+   records when it shipped. Every other new record goes in the current milestone: the first
+   milestone in priority order with unfinished work, or the last existing milestone when all work
+   is complete. Do not create a new milestone; if the roadmap defines none, report the missing
+   assignment instead.
 2. Preserve existing roadmap structure and feature assignments.
 3. Do not shell into the aidd installation to propagate this. aidd applies the roadmap itself when the run ends — resolved dependency IDs land in the feature.json files (each feature's `priority` is its own and is left alone), and the `updated / unchanged / errors` summary is reported with the run. That covers the project this run targets; if you changed assignments in another project, report it as needing a separate pass instead of reaching outside the workspace.
 

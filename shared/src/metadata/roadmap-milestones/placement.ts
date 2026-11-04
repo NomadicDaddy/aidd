@@ -8,6 +8,7 @@ import type {
 } from './types.ts';
 
 import { featureNodeId, isAuditFinding, isRemediationFeature } from '../features.ts';
+import { isFeatureComplete } from '../features/query.ts';
 import { orderedMilestoneNames } from '../roadmap.ts';
 import { isMilestoneBeyondMvp } from '../store/status-policy.ts';
 import {
@@ -31,6 +32,11 @@ import {
  * constraint, but it grows the milestone the gate is currently admitting work from — silently, and
  * possibly while a run is in flight. Pushing the dependent is the choice that cannot surprise a
  * running agent.
+ *
+ * A completed feature is never pushed. Its milestone records when it shipped, and a dependency on
+ * later work (a revision, or acceptance still open) does not make it planned work again; the record
+ * explains that edge in a dated note, which `findCrossMilestoneViolations` looks for (Phillip
+ * #34088). Features that depend on a completed one are still placed after it.
  */
 export function repairPlacement(
 	roadmap: Roadmap,
@@ -80,9 +86,11 @@ export function repairPlacement(
 	}
 
 	const { dangling, requires } = dependencyEdges(normalized, features);
+	const completed = new Set(features.filter(isFeatureComplete).map(featureNodeId));
 	const finalRank = new Map(startRank);
 	const order = topologicalOrder(requires);
 	for (const node of order) {
+		if (completed.has(node)) continue;
 		let rank = finalRank.get(node) ?? lastRank;
 		for (const dependency of requires.get(node) ?? []) {
 			const dependencyRank = finalRank.get(dependency);

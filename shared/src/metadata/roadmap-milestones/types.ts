@@ -13,10 +13,11 @@ export interface CrossMilestoneViolation {
 	dependencyMilestone: string;
 	featureDirectory: string;
 	/**
-	 * Whether the depending feature already passes. A violation on a completed feature is roadmap
-	 * accounting after the fact: the ordering is wrong on paper, but there is no work left for it to
-	 * strand. One on an unfinished feature is the real thing -- that feature can never be selected
-	 * while its own milestone is active, and the gate reports nothing.
+	 * Whether the depending feature already passes. A completed feature keeps the milestone it
+	 * shipped in, so its edge to later work is reported only while the record has no dated note
+	 * explaining it: there is no work left for it to strand, only a record to complete. One on an
+	 * unfinished feature is the real thing -- that feature can never be selected while its own
+	 * milestone is active, and the gate reports nothing.
 	 */
 	featurePasses: boolean;
 	milestone: string;

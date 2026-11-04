@@ -1,7 +1,8 @@
 import type { Feature, FeatureValidationIssue } from './types.ts';
 
-// Selection resumes a started record before any unstarted one, whatever their priorities, so every
-// extra in_progress record is a lower-priority item that can run ahead of a higher one. Phillip
+// Selection resumes a started record before any unstarted one, whatever their priorities, so each
+// extra in_progress record risks running ahead of higher-priority backlog work, when there is any.
+// The count alone can't tell whether that work exists; it only shows when the risk grows. Phillip
 // chose resume-first plus a visible count over a hard cap (#33685 on #33682, team rule R24): a
 // warning, never an issue, so a run is never blocked by it.
 export const MAX_OPEN_FEATURES = 2;

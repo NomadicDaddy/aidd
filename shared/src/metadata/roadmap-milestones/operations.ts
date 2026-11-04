@@ -233,10 +233,10 @@ export interface ReassignOptions {
 /**
  * Dependency-safe re-placement with no milestone change: repairs unmapped features and violations,
  * and pulls completed features back from milestones ahead of the version they actually shipped in
- * (never forward — see reconcileShippedPlacement). Only completed features are seeded earlier — the
- * dependency pass still only pushes later, so a completed feature whose dependency sits in a later
- * milestone is pushed back (reason `dependency`) rather than the invariant being silently violated;
- * the conflict stays visible in the plan preview.
+ * (never forward — see reconcileShippedPlacement). Only completed features are seeded earlier, and
+ * the dependency pass never pushes a completed feature: it stays at the milestone it shipped in even
+ * when a dependency sits later (Phillip #34088). That edge stays visible in the plan preview's
+ * violations until the record explains it in a dated note (findCrossMilestoneViolations).
  */
 export function planMilestoneReassign(
 	roadmap: Roadmap,

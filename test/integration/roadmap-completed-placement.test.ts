@@ -64,6 +64,24 @@ describe('placement keeps a completed feature where it shipped', () => {
 		expect(plan.moves).toEqual([]);
 	});
 
+	test('reordering milestones does not push a completed feature to its dependency', () => {
+		// MVP moves after v1.0, so `done` (MVP) and its dependency `late` (v2.0) keep their order,
+		// while the unfinished `open` (v1.0), which depends on `late`, still moves.
+		const plan = planMilestoneUpdate(
+			roadmap({ done: 'MVP', late: 'v2.0', open: 'v1.0' }),
+			[
+				completed('done', { dependencies: ['late'] }),
+				feature('open', { dependencies: ['late'] }),
+				feature('late'),
+			],
+			'MVP',
+			{ position: 2 },
+		);
+		expect(plan.roadmap.milestones.MVP?.priority).toBe(2);
+		expect(plan.roadmap.features.done?.milestone).toBe('MVP');
+		expect(plan.roadmap.features.open?.milestone).toBe('v2.0');
+	});
+
 	test('adding a milestone does not push a completed feature to its dependency', () => {
 		const plan = planMilestoneCreate(
 			roadmap({ done: 'MVP', late: 'v1.0' }),
@@ -106,6 +124,28 @@ describe('the check requires a dated note on a completed feature’s later edge'
 
 	test('a dated note naming the dependency explains the edge', () => {
 		expect(edges(completed('done', { dependencies: ['late'], notes: [NOTED] }))).toEqual([]);
+	});
+
+	test('the date may sit anywhere in the note, as the fleet already writes it', () => {
+		// The forms leads used on 2026-11-04 under #34088: spernakit, starsync and deeper.
+		for (const note of [
+			'Milestone-edge note 2026-11-04: depends on late, which ships in v2.0.',
+			'Roadmap convention (2026-11-04): the late revision is later work.',
+			'[2026-11-04] Depends on late for its remaining acceptance.',
+		]) {
+			expect(edges(completed('done', { dependencies: ['late'], notes: [note] }))).toEqual([]);
+		}
+	});
+
+	test('a date and the name must be in the same note, and a version is not a date', () => {
+		const split = ['2026-11-04: shipped in 1.0.0.', 'Depends on late.'];
+		expect(edges(completed('done', { dependencies: ['late'], notes: split }))).toEqual([
+			['done', true],
+		]);
+		const version = 'Version 2026-11-040 depends on late.';
+		expect(edges(completed('done', { dependencies: ['late'], notes: [version] }))).toEqual([
+			['done', true],
+		]);
 	});
 
 	test('without a note, or with an undated one, the edge is reported as passing', () => {

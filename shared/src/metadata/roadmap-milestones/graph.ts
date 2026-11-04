@@ -74,12 +74,14 @@ export function dependencyEdges(roadmap: Roadmap, features: Feature[]): Dependen
 	return { dangling, requires };
 }
 
-const DATED_NOTE = /^\d{4}-\d{2}-\d{2}\b/;
+const DATED_NOTE = /(?<![\d-])\d{4}-\d{2}-\d{2}(?![\d-])/;
 const ID_CHARACTER = /[\w-]/;
 
 /**
- * Whether a completed feature explains its edge to `dependency` in a dated note: a note that starts
- * with a `YYYY-MM-DD` date and names the dependency by directory or by id.
+ * Whether a completed feature explains its edge to `dependency` in a dated note: one note that holds
+ * a `YYYY-MM-DD` date anywhere (`2026-11-04: …`, `[2026-11-04] …`, `Roadmap convention (2026-11-04):
+ * …`) and names the dependency by directory or by id. The note must be on the feature itself; a
+ * template-owned feature in a derived app gets its note through the template.
  */
 function notesExplainEdge(feature: Feature, dependency: Feature | undefined): boolean {
 	if (!dependency) return false;

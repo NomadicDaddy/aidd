@@ -3,7 +3,7 @@ name: spernakit-bump
 description: 'Ship a new Spernakit template version from <spernakit-root>: validate the template, update template metadata, and publish the release tag. Use to cut, bump, or release a new Spernakit template version.'
 metadata:
     aidd-category: spernakit-fleet
-    aidd-contracts: document-changes, humanize-docs
+    aidd-contracts: document-changes, humanize-docs, consolidate-features
     aidd-references: docs/reference/documentation-standard.md, docs/reference/feature-fields.md, docs/reference/artifacts.md
 ---
 

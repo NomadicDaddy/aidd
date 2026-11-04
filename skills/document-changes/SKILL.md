@@ -3,7 +3,7 @@ name: document-changes
 description: "Document any project's changes by updating its changelog, internal version, and feature metadata, then commit logical bundles without pushing or tagging. Use for change documentation, release notes, or version recording."
 metadata:
     aidd-category: metadata
-    aidd-contracts: humanize-docs
+    aidd-contracts: humanize-docs, consolidate-features
     aidd-references: docs/reference/documentation-standard.md, docs/reference/feature-fields.md, docs/reference/artifacts.md
 ---
 
@@ -218,6 +218,15 @@ common optional `priority`, `spec`, `affectedFiles`, `summary`, `notes`, `create
     `shippedVersion` to the newer version. Revision detail must be specific (what behavior/area
     changed), not a generic "updated".
 
+    **Trim notes that have grown too long.** Notes only ever grow, and this step is where they grow
+    before each push. After appending, list the project's records whose notes pass 3,000
+    characters with `bun .aidd/skills/consolidate-features/scripts/trim-notes.ts list --features .aidd/features`
+    (inside the aidd checkout: `skills/consolidate-features/scripts/trim-notes.ts`). If the list
+    names a record this run wrote to, trim that record with `consolidate-features` Phase 5a (notes
+    only, exact original archived first) before the commit phase. List the other records in the
+    summary as due a trim; they don't hold up this pass. aidd's feature validation warns about the
+    same records.
+
     **Milestone follows shipped version**: after stamping `shippedVersion` on a completed
     feature, check its entry in `.aidd/roadmap.json` (`features.<dir>.milestone`). A completed
     feature belongs in the milestone whose `v<major>.<minor>`-named bound is the greatest one at
@@ -344,6 +353,7 @@ user rather than praising the change.
     - Version: `<old>` → `<new>` (bump type and why)
     - Changelog file(s) updated and the section header added
     - feature.json: N created, M updated (list IDs)
+    - Notes trimmed this pass (with characters before and after), and other records due a trim
     - All files written
     - Commits created: N (list short SHA + subject for each)
     - Any anomalies (ambiguous feature matches, unclassifiable changes, validator warnings)

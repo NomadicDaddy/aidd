@@ -162,6 +162,18 @@ describe('notes trim helper', () => {
 		}
 	});
 
+	test('document-changes stages the helper its pre-push trim step runs', async () => {
+		const dir = await testTempDir('trim-document-changes-');
+		const metadata = join(dir, '.aidd');
+		const root = resolve(import.meta.dir, '../..');
+		const deps = skillContractDeps(await readSkillDefinition(root, 'document-changes'));
+		expect(deps?.contracts).toContain('consolidate-features');
+		await copySkillContracts(deps, root, metadata, undefined, undefined);
+		const staged = join(metadata, 'skills/consolidate-features/scripts/trim-notes.ts');
+		const source = join(root, 'skills/consolidate-features/scripts/trim-notes.ts');
+		expect(await readFile(staged)).toEqual(await readFile(source));
+	});
+
 	test('stages a runnable helper with the consolidate-features contract', async () => {
 		const dir = await testTempDir('trim-staged-');
 		const metadata = join(dir, '.aidd');

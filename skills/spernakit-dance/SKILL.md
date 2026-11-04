@@ -7,7 +7,7 @@ metadata:
         humanize-docs, spernakit-bump, spernakit-template-upgrade,
         spernakit-template-refactor, spernakit-diff-sync, spernakit-tester, bug2feature,
         feature-review, devdiary-update, document-changes, tester, testing-scenarios,
-        prompt-guidelines
+        prompt-guidelines, consolidate-features
     aidd-references: docs/reference/documentation-standard.md, docs/reference/feature-fields.md, docs/reference/artifacts.md
     spernakit-references: docs/template/STACK.md, docs/template/DEVELOPMENT.md, docs/template/TESTING.md, docs/template/CHANGELOG.md
 ---

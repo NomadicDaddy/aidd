@@ -6,7 +6,8 @@ metadata:
     aidd-contracts: >-
         review-or-create-doc, update-roadmap, update-screen-map, testing-scenarios,
         onboarding-interview, feature-review, bug2feature, doc2feature, deployment-readiness,
-        document-changes, diary-entry, execute-audit, humanize-docs, prompt-guidelines
+        document-changes, diary-entry, execute-audit, humanize-docs, prompt-guidelines,
+        consolidate-features
     aidd-references: >-
         docs/reference/artifacts.md, docs/reference/external-skills.md,
         docs/reference/documentation-standard.md, docs/reference/feature-fields.md,

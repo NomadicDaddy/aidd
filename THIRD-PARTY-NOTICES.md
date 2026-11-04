@@ -1160,7 +1160,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-### @tanstack/query-core@5.105.0
+### @tanstack/query-core@5.105.3
 
 License: MIT
 
@@ -1188,7 +1188,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### @tanstack/react-query@5.105.0
+### @tanstack/react-query@5.105.3
 
 License: MIT
 
@@ -3216,7 +3216,7 @@ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-### lucide-react@1.66.0
+### lucide-react@1.67.0
 
 License: ISC
 

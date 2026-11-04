@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { copyFile, lstat, mkdir, readdir, readFile } from 'node:fs/promises';
-import { basename, dirname, join } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
-// Staged into each app's .aidd/skills with no aidd packages beside it, so it uses only Node
-// built-ins. The threshold and the length rule match aidd-shared's metadata/features/notes-size.ts,
+// Staged into each app's .aidd/skills with no aidd packages beside it, so it uses only Node and
+// Bun built-ins. The threshold and the length rule match aidd-shared's metadata/features/notes-size.ts,
 // which raises the warning this trim answers; change both together.
 export const NOTES_TRIM_THRESHOLD = 3000;
 
@@ -111,22 +111,34 @@ function changedProtectedField(
 	return null;
 }
 
-function linksArchive(notes: unknown, archiveName: string, sha256: string): boolean {
+/**
+ * The archive's path from its `.aidd` folder on, with forward slashes: the exact text a trimmed
+ * note must cite. A file name alone would also match the same name in a different folder.
+ */
+export function archiveLink(archive: string): null | string {
+	const path = resolve(archive).replaceAll('\\', '/');
+	const at = path.lastIndexOf('/.aidd/');
+	return at === -1 ? null : path.slice(at + 1);
+}
+
+function linksArchive(notes: unknown, link: string, sha256: string): boolean {
 	if (!Array.isArray(notes) || notes.some((entry) => typeof entry !== 'string')) return false;
 	return notes.some(
-		(entry: string) => entry.includes(archiveName) && entry.toLowerCase().includes(sha256),
+		(entry: string) => entry.includes(link) && entry.toLowerCase().includes(sha256),
 	);
 }
 
 function trimReason(
 	live: Record<string, unknown>,
 	original: Record<string, unknown>,
-	archiveName: string,
+	archive: string,
 	sha256: string,
 ): string {
 	const changed = changedProtectedField(live, original);
 	if (changed !== null) return `field-changed:${changed}`;
-	if (!linksArchive(live.notes, archiveName, sha256)) return 'notes-missing-archive-link';
+	const link = archiveLink(archive);
+	if (link === null) return 'archive-outside-aidd';
+	if (!linksArchive(live.notes, link, sha256)) return 'notes-missing-archive-link';
 	if (noteTextLength(live.notes) >= noteTextLength(original.notes)) return 'notes-not-shorter';
 	return 'trimmed';
 }
@@ -146,7 +158,7 @@ export async function verifyTrim(
 	const live = parseRecord(await readRegularFile(source));
 	const reason =
 		sha256 === expectedSha256.toLowerCase()
-			? trimReason(live, original, basename(archive), sha256)
+			? trimReason(live, original, archive, sha256)
 			: 'archive-changed';
 	const id = typeof live.id === 'string' ? live.id : null;
 	const before = noteTextLength(original.notes);

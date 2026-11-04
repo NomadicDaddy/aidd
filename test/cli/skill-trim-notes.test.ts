@@ -40,17 +40,20 @@ async function writeFeature(root: string, directory: string, value: unknown): Pr
 	return path;
 }
 
+const ORIGINALS = '.aidd/reports/consolidation/20261103-notes-trim/originals';
+const LINK = `${ORIGINALS}/run-list.feature.json`;
+
 async function archived(prefix: string) {
 	const root = await testTempDir(prefix);
-	const source = await writeFeature(join(root, 'features'), 'run-list', record());
+	const source = await writeFeature(join(root, '.aidd/features'), 'run-list', record());
 	const original = await readFile(source);
-	const result = await archiveFeature(source, join(root, 'archive'));
+	const result = await archiveFeature(source, join(root, ORIGINALS));
 	return { original, result, root, source };
 }
 
-function trimmedNotes(sha256: string): string[] {
+function trimmedNotes(sha256: string, link = LINK): string[] {
 	return [
-		`Trimmed 2026-11-03: history archived at run-list.feature.json (sha256 ${sha256}).`,
+		`Notes trimmed 2026-11-03: history archived at ${link} (sha256 ${sha256}).`,
 		'Current state: shipped; no open decision.',
 	];
 }
@@ -73,9 +76,9 @@ describe('notes trim helper', () => {
 		const { original, result, root, source } = await archived('trim-archive-');
 		expect(await readFile(result.archive)).toEqual(original);
 		expect(result.chars).toBe(LONG.length);
-		expect(await archiveFeature(source, join(root, 'archive'))).toEqual(result);
+		expect(await archiveFeature(source, join(root, ORIGINALS))).toEqual(result);
 		await writeFile(source, JSON.stringify(record({ notes: ['changed'] })));
-		await expect(archiveFeature(source, join(root, 'archive'))).rejects.toThrow(
+		await expect(archiveFeature(source, join(root, ORIGINALS))).rejects.toThrow(
 			'different archive',
 		);
 		expect(await readFile(result.archive)).toEqual(original);
@@ -102,6 +105,17 @@ describe('notes trim helper', () => {
 			[{ ...record({ notes }), summary: 'added' }, 'field-changed:summary'],
 			[record({ notes: ['Current state: shipped.'] }), 'notes-missing-archive-link'],
 			[record({ notes: notes.join(' ') }), 'notes-missing-archive-link'],
+			[
+				// Positive control for Roger's 4dddb529 Low: the same file name and hash under another
+				// folder passed when only the name was matched.
+				record({
+					notes: trimmedNotes(
+						result.sha256,
+						'.aidd/reports/consolidation/WRONG/originals/run-list.feature.json',
+					),
+				}),
+				'notes-missing-archive-link',
+			],
 			[record({ notes: [...notes, LONG] }), 'notes-not-shorter'],
 		];
 		for (const [value, reason] of cases) {
@@ -111,6 +125,16 @@ describe('notes trim helper', () => {
 				reason,
 			});
 		}
+	});
+
+	test('refuses an archive kept outside a .aidd folder, which no note can cite', async () => {
+		const root = await testTempDir('trim-outside-');
+		const source = await writeFeature(join(root, 'features'), 'run-list', record());
+		const result = await archiveFeature(source, join(root, 'elsewhere'));
+		await writeFile(source, JSON.stringify(record({ notes: trimmedNotes(result.sha256) })));
+		expect((await verifyTrim(source, result.archive, result.sha256)).reason).toBe(
+			'archive-outside-aidd',
+		);
 	});
 
 	test('refuses when the archive no longer matches its recorded hash', async () => {

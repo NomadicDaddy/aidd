@@ -316,6 +316,8 @@ missing helper is a blocker.
 3. **Write the new `notes` array from the whole history.** It replaces `notes`; `updatedAt` is the
    only other field that changes.
     - The first entry names the archive: `Notes trimmed {YYYY-MM-DD}: {N} characters of history archived at .aidd/reports/consolidation/{YYYYMMDD}-notes-trim/originals/{dir}.feature.json (sha256 {hash}).`
+      The path must be the archive's exact path from `.aidd/` on, with forward slashes; verify
+      matches the whole path, not only the file name.
     - Then the current state, meaning everything a run still needs: each decision, ruling or
       approval that still binds, with its reference; each hold and what releases it; each
       accepted limitation; each open question; and the latest revision line for every spec
@@ -328,7 +330,8 @@ missing helper is a blocker.
       shows the spec is wrong, report that to the owner instead of fixing it here.
 4. **Verify each trim:** `bun <helper> verify --source .aidd/features/<dir>/feature.json --archive <archive> --expect-sha256 <hash>`.
    Only exit 0 with `reason: trimmed` passes. Every other reason (`field-changed:<name>`,
-   `notes-missing-archive-link`, `notes-not-shorter`, `archive-changed`) means correct the record,
+   `notes-missing-archive-link`, `notes-not-shorter`, `archive-changed`, `archive-outside-aidd`)
+   means correct the record,
    or restore it from the archive and report it untrimmed.
 5. **Record the trim ledger:** one line per record with its id, the `before` and `after`
    characters from verify, and the archive path and `sha256`, plus totals for the pass. It goes

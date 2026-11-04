@@ -2,6 +2,24 @@
 
 All notable public aidd releases are documented here.
 
+## [3.8.0] - 2026-11-04
+
+### Added
+
+- `consolidate-features` can trim a feature record's notes once their history passes 3,000 characters. It first archives the exact original under `.aidd/reports/consolidation/`, then replaces the notes with one current-state entry that cites the archive by path and hash. Its helper refuses any trim that changes another field, drops the citation or doesn't shorten the notes. `document-changes` runs the trim on the records it touched before each commit it prepares, and feature validation warns about records whose notes are due one.
+- Feature validation warns when more than two features are in progress at once. Coding runs resume started work before any higher-priority backlog, so a third open feature waits behind the first two.
+
+### Changed
+
+- A completed feature keeps the milestone it shipped in. Adding, deleting, reordering, renaming or reassigning milestones no longer moves it to a later milestone because it depends on later work. The milestone checks accept that dependency when one of the feature's own notes is dated and names it, and keep reporting it otherwise. `feature-coverage-audit` files a backfilled record of shipped work in the milestone it shipped in.
+- aidd's product overview and audience guides moved to [beazley.org/projects/aidd](https://beazley.org/projects/aidd/). The GitHub Pages site and its workflow are removed, so `site/` is no longer a published root for the licence, media and public-copy checks.
+- The artifact reference lists `.aidd/specs/` and `.aidd/evidence/` as tracked project records, and says how evidence is named.
+- Dependencies moved to the versions the main apps now share, among them @tanstack/react-query 5.105.3, lucide-react 1.67.0, Tailwind CSS 4.3.4, @vitejs/plugin-react 6.2.1, eslint-plugin-jsdoc 65.4.3 and globals 17.14.0.
+
+### Fixed
+
+- `check:licenses` passes again. The notes-trim helper shipped without an entry in the distributed-materials registry, so the licence check had failed since it landed.
+
 ## [3.7.1] - 2026-11-02
 
 ### Security

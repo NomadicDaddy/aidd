@@ -107,6 +107,18 @@ function namesToken(text: string, name: string): boolean {
 	return false;
 }
 
+/** A completed feature whose own dated note explains its edge to a later-milestone dependency. */
+function explainedLaterEdge(
+	byNode: Map<string, Feature>,
+	node: string,
+	dependency: string,
+): boolean {
+	const own = byNode.get(node);
+	return (
+		own !== undefined && isFeatureComplete(own) && notesExplainEdge(own, byNode.get(dependency))
+	);
+}
+
 /**
  * Features scheduled earlier than something they depend on. Nothing else in the pipeline reports
  * this: `evaluateRoadmapCodingGate` checks only that mappings exist and resolve, never that the
@@ -121,34 +133,27 @@ export function findCrossMilestoneViolations(
 	features: Feature[],
 ): CrossMilestoneViolation[] {
 	const ranks = milestoneRanks(roadmap);
-	const { requires } = dependencyEdges(roadmap, features);
-	const byNode = new Map(features.map((feature) => [featureNodeId(feature), feature]));
-	const passing = new Set(
-		features
-			.filter((feature) => feature.passes === true)
-			.map((feature) => featureNodeId(feature)),
-	);
-	const completed = new Set(features.filter(isFeatureComplete).map(featureNodeId));
-	const violations: CrossMilestoneViolation[] = [];
-	for (const [node, deps] of requires) {
+	const placed = (node: string): { milestone: string; rank: number } | undefined => {
 		const milestone = roadmap.features[node]?.milestone;
 		const rank = milestone === undefined ? undefined : ranks.get(milestone);
-		if (milestone === undefined || rank === undefined) continue;
+		return milestone === undefined || rank === undefined ? undefined : { milestone, rank };
+	};
+	const { requires } = dependencyEdges(roadmap, features);
+	const byNode = new Map(features.map((feature) => [featureNodeId(feature), feature]));
+	const violations: CrossMilestoneViolation[] = [];
+	for (const [node, deps] of requires) {
+		const own = placed(node);
+		if (own === undefined) continue;
 		for (const dependency of deps) {
-			const dependencyMilestone = roadmap.features[dependency]?.milestone;
-			const dependencyRank =
-				dependencyMilestone === undefined ? undefined : ranks.get(dependencyMilestone);
-			if (dependencyMilestone === undefined || dependencyRank === undefined) continue;
-			if (dependencyRank <= rank) continue;
-			const own = byNode.get(node);
-			if (completed.has(node) && own && notesExplainEdge(own, byNode.get(dependency)))
-				continue;
+			const later = placed(dependency);
+			if (later === undefined || later.rank <= own.rank) continue;
+			if (explainedLaterEdge(byNode, node, dependency)) continue;
 			violations.push({
 				dependency,
-				dependencyMilestone,
+				dependencyMilestone: later.milestone,
 				featureDirectory: node,
-				featurePasses: passing.has(node),
-				milestone,
+				featurePasses: byNode.get(node)?.passes === true,
+				milestone: own.milestone,
 			});
 		}
 	}

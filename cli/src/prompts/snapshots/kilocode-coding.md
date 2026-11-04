@@ -1139,7 +1139,9 @@ The rule is scoped by **whose** feature file you are editing. The feature you cl
 Before either kind of `notes` append, normalize the existing value at the write boundary: a missing
 or null value becomes `[]`, a string becomes `[existingString]`, and an array is copied. Preserve
 every existing string, append the new entry, and persist an array. Never spread, join, or replace the
-raw value before this normalization.
+raw value before this normalization. A coding run never shortens or removes a note, however long the
+history is: the only step that does is consolidate-features' notes trim, which archives the exact
+original first.
 
 `notes` is required, not optional, when the selected feature is an audit finding or a remediation
 item: the result contract and the feature validator both reject `status: completed` with

@@ -1,6 +1,7 @@
 import { classifyDependencyCycles, findDanglingDependencies } from './graph.ts';
 import { indexFeaturesByRef } from './indexByRef.ts';
 import { notesSizeWarnings } from './notes-size.ts';
+import { openFeatureWarnings } from './open-features.ts';
 import { isAuditFinding, isFeatureComplete, isRemediationFeature } from './query.ts';
 import { futureTimestampIssues } from './timestamps.ts';
 import {
@@ -188,6 +189,7 @@ export function validateFeatureCollection(features: Feature[]): FeatureCollectio
 	}
 
 	warnings.push(...notesSizeWarnings(features));
+	warnings.push(...openFeatureWarnings(features));
 
 	const edges = validateDependencyEdges(features);
 	issues.push(...edges.issues);

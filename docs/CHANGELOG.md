@@ -19,6 +19,8 @@ All notable public aidd releases are documented here.
 ### Fixed
 
 - `check:licenses` passes again. The notes-trim helper shipped without an entry in the distributed-materials registry, so the licence check had failed since it landed.
+- New projects pin globals 17.14.0, the version aidd itself now uses; the scaffold had stayed at 17.13.0 when the dependencies moved.
+- The full quality gate passes again: the compiled prompt snapshots carry the coding prompts' new note-retention sentence, and the milestone violation check is split back under the 40-line function-size ratchet without changing what it reports.
 
 ## [3.7.1] - 2026-11-02
 

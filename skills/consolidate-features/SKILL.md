@@ -40,7 +40,8 @@ The goal is to ensure every fix, audit finding, and remediation spec is represen
     a note, normalize only at the write boundary: missing/null becomes `[]`, a string becomes
     `[existingString]`, and an array is copied as-is; then append the new note. Never drop or split
     an existing string while normalizing. Any helper script that maps, filters, spreads, or pushes
-    `notes` must apply this normalization first.
+    `notes` must apply this normalization first. Phase 5a's notes trim is the only step that
+    shortens notes, and it archives the exact original first.
 
 2. **Classify features** into four buckets:
 
@@ -296,6 +297,46 @@ Beyond remediation folding, look for consolidation opportunities among base feat
    change (a file outside `.aidd` that the run may not edit) instead of leaving it silently
    stale.
 
+### Phase 5a: Notes Trim
+
+Everywhere else, notes are append-only. Coding runs add a revision entry each time a finding closes
+its loop, and this skill adds fold notes, so a record's history only grows until it buries what a
+run needs. This phase is the one place notes get shorter, and it loses nothing because the exact
+original is archived first. Use the staged helper `.aidd/skills/consolidate-features/scripts/trim-notes.ts`
+(inside the aidd checkout: `skills/consolidate-features/scripts/trim-notes.ts`). An unreadable or
+missing helper is a blocker.
+
+1. **List the records due a trim:** `bun <helper> list --features .aidd/features`. It names every
+   record whose note text passes 3,000 characters, whatever its status, longest first. aidd's
+   feature validation warns about the same records. Skip template-owned records in a derived app
+   (Principle 9), and skip any record a run or another editor is changing now.
+2. **Archive each one before editing it:** `bun <helper> archive --source .aidd/features/<dir>/feature.json --archive-dir .aidd/reports/consolidation/<YYYYMMDD>-notes-trim/originals`.
+   It copies the exact bytes and prints the archive path, its `sha256` and the note characters.
+   Keep all three for the ledger.
+3. **Write the new `notes` array from the whole history.** It replaces `notes`; `updatedAt` is the
+   only other field that changes.
+    - The first entry names the archive: `Notes trimmed {YYYY-MM-DD}: {N} characters of history archived at .aidd/reports/consolidation/{YYYYMMDD}-notes-trim/originals/{dir}.feature.json (sha256 {hash}).`
+    - Then the current state, meaning everything a run still needs: each decision, ruling or
+      approval that still binds, with its reference; each hold and what releases it; each
+      accepted limitation; each open question; and the latest revision line for every spec
+      criterion a note says changed. When a later ruling superseded an earlier one, keep the later
+      one and say what it replaced. A dropped ruling that still binds is the failure to avoid.
+    - Leave out what only records how the record got here: progress logs, superseded plans,
+      review back-and-forth, gate output and repeated revision lines. They stay in the archive.
+    - Never move a requirement into or out of `spec`, and never change `spec`, `description`,
+      `title`, `status`, `passes`, `priority`, `dependencies` or any other field. If the history
+      shows the spec is wrong, report that to the owner instead of fixing it here.
+4. **Verify each trim:** `bun <helper> verify --source .aidd/features/<dir>/feature.json --archive <archive> --expect-sha256 <hash>`.
+   Only exit 0 with `reason: trimmed` passes. Every other reason (`field-changed:<name>`,
+   `notes-missing-archive-link`, `notes-not-shorter`, `archive-changed`) means correct the record,
+   or restore it from the archive and report it untrimmed.
+5. **Record the trim ledger:** one line per record with its id, the `before` and `after`
+   characters from verify, and the archive path and `sha256`, plus totals for the pass. It goes
+   in the report and in this run's `.aidd/CHANGELOG.md` entry, so the fleet's note size stays
+   measurable.
+
+On `--dry-run`, run step 1 only and report the list.
+
 ### Phase 5b: Roadmap Assignment (mandatory)
 
 Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.json`. This phase makes the **positive** assignment of every surviving and renamed feature an explicit, required check: a feature that exists on disk but has no `roadmap.features` entry is a consolidation defect, not an acceptable end state.
@@ -338,7 +379,8 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
     - Every appended criterion continues from the last numbered line in the pre-edit spec, not the
       highest number elsewhere in the document
     - Every edited `notes` value is an array that preserves all pre-existing note content; untouched
-      missing/string/array shapes remain untouched
+      missing/string/array shapes remain untouched. The one exception is a record trimmed in
+      Phase 5a, which instead passes the helper's `verify` against its archive
     - Every deleted record has a complete Phase 3 ledger with no unmapped criterion, every
       `carried` line was confirmed against the base feature as it is on disk now, and every
       `one-off → CHANGELOG` line names its finding in this run's `.aidd/CHANGELOG.md` entry. A deleted record
@@ -361,6 +403,7 @@ Phase 4a and Phase 5 already scrub deleted/renamed IDs out of `.aidd/roadmap.jso
     - Findings left waiting on an owner decision: N (list each with the question asked); a
       completed finding is never left in place for any other reason
     - Criterion ledger for every folded record (Phase 3 step 6)
+    - Notes trimmed: N, with the trim ledger and the pass's characters before and after (Phase 5a)
     - Validation: PASS/FAIL
 
 ### Phase 7: Commit
@@ -373,6 +416,7 @@ Consolidation is a source-of-truth maintenance operation. When changes were made
     - Deleted folded remediation/audit feature directories
     - Renamed feature directories
     - Updated `.aidd/roadmap.json`, `.aidd/screen-map.md`, or equivalent current artifacts
+    - Trimmed feature files and their Phase 5a archives under `.aidd/reports/consolidation/`
 3. Do not stage unrelated dirty files. If unrelated dirty files block a clean commit, commit only the intended paths.
     - Never stage a helper script written to perform this pass. Write such scripts outside the
       repository (the system temp directory) or delete them before committing: nothing uses them
@@ -401,6 +445,7 @@ Template features: {N} ({read-only in a derived app | source records in Spernaki
 Folded: {N} remediation features into {M} base features
 Removed: {N} standalone remediation/audit directories
 Renamed: {N} feature-* directories to clean slugs
+Trimmed: {N} records' notes, {before} → {after} characters, archives in .aidd/reports/consolidation/
 Updated: {list of base feature IDs that were modified}
 Upstream: {list of remediations targeting template features; need the aidd-local consolidate-features skill for Spernakit}
 Created: {new features for unowned lasting requirements, with the findings each holds}
@@ -419,7 +464,7 @@ Commit: {commit hash or "not committed: reason"}
 4. **Validation gate**: Never finish leaving a record you wrote unreadable — aidd's end-of-run feature-contract check is what reports it, and a failure there is your failure.
 5. **Formatting gate**: Format changed feature artifacts before validation and before committing.
 6. **Commit gate**: If consolidation changed files and the run was not `--dry-run`, commit the completed, validated bundle before final reporting unless the user explicitly opts out.
-7. **No data loss**: Base feature semantics must be preserved. Only append/refine spec content, never remove existing requirements. The same holds for the record being folded: each lasting requirement is carried with its measured values into an owning feature (a new one under the Phase 2 rule if none exists), and each one-off change is named in the changelog, before the record is removed.
+7. **No data loss**: Base feature semantics must be preserved. Only append/refine spec content, never remove existing requirements. A notes trim keeps the exact original in its archive and every binding decision in the new notes (Phase 5a). The same holds for the record being folded: each lasting requirement is carried with its measured values into an owning feature (a new one under the Phase 2 rule if none exists), and each one-off change is named in the changelog, before the record is removed.
 8. **Dry-run safety**: When `--dry-run` is specified, report everything but modify nothing.
 9. **Template provenance**: Features with `spernakit_version` are template-owned. In derived apps, never modify, rename, delete, or fold into them. Fixes to template features must be upstreamed to the Spernakit repository. This principle is inert when no feature carries the field.
 10. **Stack independence**: Never decline a consolidation because of the target's stack, framework, or lack of Spernakit provenance. The corpus is the input; if `.aidd/features/` exists, the skill runs. If it genuinely does not exist, say so plainly instead of reporting a scope restriction.
@@ -427,7 +472,7 @@ Commit: {commit hash or "not committed: reason"}
 ## Notes
 
 - This skill works on one application at a time. To consolidate multiple apps, invoke it multiple times.
-- If `--dry-run` is passed, run Phases 1-2 only and report the mapping without making changes.
+- If `--dry-run` is passed, run Phases 1-2 and Phase 5a step 1 only, and report the mapping and the records due a notes trim without making changes.
 - Remediation features from any date should be processed, not just the current session's.
 - The `updatedAt` timestamp should use the current date in ISO format (e.g., `2026-03-11T00:00:00.000Z`).
 - This skill complements the aidd-local `spernakit-template-refactor` skill; run consolidation after refactoring to clean up.
